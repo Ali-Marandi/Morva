@@ -13,7 +13,7 @@ dependencies = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "pydantic>=2.8", "s
 dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]
 
 [project.scripts]
-morva = "morva.api.app:app"
+morva = "morva.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
