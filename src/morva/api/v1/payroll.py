@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
 
@@ -59,5 +60,5 @@ def calculate(payload: CalculateIn) -> dict[str, object]:
         "contributions": str(calculation.contributions),
         "fingerprint": calculation.fingerprint,
         "explanations": calculation.explanations,
-        "lines": [line.model_dump(mode="json") for line in result.lines],
+        "lines": [asdict(line) for line in result.lines],
     }
