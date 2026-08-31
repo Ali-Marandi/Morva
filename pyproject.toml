@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "morva-payroll"
-version = "0.3.0"
+version = "0.4.0"
 description = "Morva Payroll Platform"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
 dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]
 
 [project.scripts]
-morva = "morva.cli:main"
+morva = "morva.api.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
