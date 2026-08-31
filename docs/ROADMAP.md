@@ -1,56 +1,33 @@
-# Morva Roadmap
+# Morva Payroll Platform — Delivery Roadmap
 
-## Phase 0 — Foundation
+## Completed foundation
+- Modular monolith structure
+- FastAPI API v1
+- Pydantic domain models
+- SQLAlchemy persistence models
+- Versioned and effective-dated rule engine
+- Explainable payroll calculations
+- Payroll fingerprinting for reproducibility
+- Tax/contribution policy abstractions
+- Retroactive payroll difference model
+- Personnel order and rank foundations
+- Audit event persistence
+- CI, Docker and PostgreSQL development stack
+- RTL web dashboard foundation
 
-- [x] Replace the beam prototype with the payroll platform foundation
-- [x] Personnel domain models
-- [x] Payroll domain models
-- [x] Effective-dated rule engine
-- [x] SQLAlchemy persistence boundary
-- [x] Initial automated tests
-- [x] CI with pytest and Ruff
+## Next production-critical work
+1. Complete personnel and organization master data plus approval workflow.
+2. Build the full personnel-order lifecycle.
+3. Replace demo policies with reviewed annual legal rule packs from primary sources.
+4. Implement the full component eligibility matrix.
+5. Implement annual coefficients, minimum/maximum pay, rank and allowance rules as versioned data.
+6. Implement payroll lifecycle: draft -> calculate -> validate -> approve -> freeze -> export -> paid.
+7. Implement retroactive recalculation across arbitrary Jalali monthly ranges.
+8. Add tax, pension, insurance and loan ledgers with reconciliation.
+9. Add SINA/external-system adapters behind stable ports.
+10. Add authorization, MFA hooks, immutable audit policies, backup and disaster recovery.
+11. Build employee self-service: payslips, history, explanations, objections and documents.
+12. Build finance dashboards, anomaly detection and budget simulation.
 
-## Phase 1 — Personnel and orders
-
-- Employee master data
-- Organizational hierarchy
-- Positions and assignments
-- Employment events
-- Personnel orders with full history
-- Document/evidence attachments
-- Approval workflows
-
-## Phase 2 — Legal rule platform
-
-- Legal-source registry
-- Rule versions and effective dates
-- Salary-component catalog
-- Eligibility predicates
-- Formula DSL with validation
-- Rule simulation and publication workflow
-
-## Phase 3 — Payroll
-
-- Payroll periods and runs
-- Earnings and deductions
-- Tax, pension and insurance bases
-- Retroactive recalculation
-- Arrears and corrections
-- Payslips and explanations
-- Pre-payment validation
-
-## Phase 4 — Public-sector integrations
-
-- SINA adapters
-- Accounting adapters
-- Treasury/payment adapters
-- Bank reconciliation
-- Import/export and integration audit
-
-## Phase 5 — Intelligence
-
-- Budget forecasting
-- Scenario planning
-- Payroll anomaly detection
-- Explainable variance analysis
-- Management dashboards
+## Production gate
+Morva must not be used for real payroll until every annual rule pack has legal source references, effective dates, review metadata, regression cases and reconciliation results against authoritative payroll samples.
