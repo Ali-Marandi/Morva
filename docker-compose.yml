@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: morva
+      POSTGRES_USER: morva
+      POSTGRES_PASSWORD: morva
+    ports:
+      - "5432:5432"
+    volumes:
+      - morva_pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@db:5432/morva
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  morva_pgdata:
