@@ -63,6 +63,7 @@ def append_audit_event(
             previous_hash=previous_hash,
         )
         record = AuditEventRecord(
+            event_id=event.event_id,
             sequence_no=sequence_no,
             event_type=event.event_type,
             actor_id=event.actor_id,
@@ -93,7 +94,7 @@ def verify_audit_chain() -> None:
             if record.sequence_no != expected_sequence:
                 raise RuntimeError("audit sequence gap detected")
             event = AuditEvent(
-                event_id=str(record.id),
+                event_id=record.event_id,
                 event_type=record.event_type,
                 entity_type=record.entity_type,
                 entity_id=record.entity_id,
@@ -101,13 +102,14 @@ def verify_audit_chain() -> None:
                 payload=record.payload,
                 previous_hash=record.previous_hash,
             )
-            # Stored event_id is the immutable UUID used for verification. New records
-            # created by append_audit_event use the same UUID value as their AuditEvent.
             if record.previous_hash != previous_hash or record.digest != _digest(event):
                 raise RuntimeError("audit chain integrity verification failed")
             previous_hash = record.digest
 
         head = session.get(AuditChainHeadRecord, 1)
-        expected_sequence = len(events)
-        if head is None or head.sequence_no != expected_sequence or head.digest != previous_hash:
+        if head is None:
+            if events:
+                raise RuntimeError("audit chain head is missing")
+            return
+        if head.sequence_no != len(events) or head.digest != previous_hash:
             raise RuntimeError("audit chain head does not match event ledger")
