@@ -43,6 +43,20 @@ class SalaryRuleRecord(Base):
     legal_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class RuleSetApprovalRecord(Base):
+    __tablename__ = "ruleset_approvals"
+    __table_args__ = (UniqueConstraint("version", name="uq_ruleset_approval_version"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    version: Mapped[str] = mapped_column(String(80), index=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    legal_manifest_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    population_scope: Mapped[str] = mapped_column(String(80), default="global")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class PayrollRunRecord(Base):
     __tablename__ = "payroll_runs"
 
@@ -75,6 +89,22 @@ class PayrollRunEventRecord(Base):
     actor_role: Mapped[str] = mapped_column(String(80))
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     correlation_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class EmployeePayrollSnapshotRecord(Base):
+    __tablename__ = "employee_payroll_snapshots"
+    __table_args__ = (UniqueConstraint("payroll_run_id", "employee_no", name="uq_payroll_snapshot_employee"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    payroll_run_id: Mapped[UUID] = mapped_column(index=True)
+    employee_no: Mapped[str] = mapped_column(String(50), index=True)
+    organization_scope: Mapped[str] = mapped_column(String(80), index=True)
+    period: Mapped[str] = mapped_column(String(7), index=True)
+    source_manifest_hash: Mapped[str] = mapped_column(String(64))
+    snapshot_hash: Mapped[str] = mapped_column(String(64), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_by: Mapped[str] = mapped_column(String(100), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
