@@ -16,6 +16,11 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def init_db() -> None:
+    """Initialize local/test schema; production schema must be migration-managed."""
+    if ENVIRONMENT in {"production", "prod"}:
+        if os.getenv("MORVA_MIGRATIONS_READY", "false").lower() != "true":
+            raise RuntimeError("Production database schema must be migrated before application startup")
+        return
     from morva.persistence.models import Base
 
     Base.metadata.create_all(bind=engine)
