@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
+from morva.runtime.config import settings
+
 
 @dataclass(frozen=True, slots=True)
 class TaxBracket:
@@ -49,7 +51,9 @@ class ContributionPolicy:
 
 
 def demo_iranian_policy_pack() -> tuple[TaxPolicy, tuple[ContributionPolicy, ...]]:
-    """Development-only policy examples; not a statement of current Iranian law."""
+    """Development-only policy examples; never available in production."""
+    if settings.production or not settings.allow_demo_policies:
+        raise RuntimeError("demo policy packs are disabled; use an approved Rule Pack")
     tax = TaxPolicy(
         version="demo-1405",
         monthly_exemption=Decimal("400000000"),
