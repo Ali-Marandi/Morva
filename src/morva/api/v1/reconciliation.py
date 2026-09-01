@@ -33,8 +33,8 @@ class SnapshotPayload(BaseModel):
     deductions: Decimal = Field(ge=0)
     net: Decimal
     employer_commitments: Decimal = Field(ge=0)
-    components: dict[str, Decimal] = {}
-    deduction_components: dict[str, Decimal] = {}
+    components: dict[str, Decimal] = Field(default_factory=dict)
+    deduction_components: dict[str, Decimal] = Field(default_factory=dict)
     latest_order: OrderPayload
     loan_installment_total: Decimal = Field(default=Decimal(0), ge=0)
     loan_count: int = Field(default=0, ge=0)
@@ -46,7 +46,7 @@ class SnapshotPayload(BaseModel):
 class ReconciliationRequest(BaseModel):
     snapshots: list[SnapshotPayload] = Field(min_length=1)
     recalculated_components: dict[str, dict[str, Decimal]]
-    recalculated_deductions: dict[str, Decimal] | None = None
+    recalculated_deduction_components: dict[str, dict[str, Decimal]] | None = None
 
 
 def _snapshot(item: SnapshotPayload) -> PayrollSnapshot:
@@ -79,7 +79,7 @@ def reconcile(payload: ReconciliationRequest) -> dict[str, object]:
     result = reconcile_population(
         snapshots,
         payload.recalculated_components,
-        payload.recalculated_deductions,
+        payload.recalculated_deduction_components,
     )
     return {
         "employees": len(result.employees),
