@@ -7,14 +7,17 @@ from morva.payroll.models import PayrollLine, PayrollResult
 from morva.payroll.validation import PayrollValidator, has_blocking_errors
 
 
-def test_payroll_status_transition():
-    assert transition(PayrollStatus.DRAFT, PayrollStatus.CALCULATING) == PayrollStatus.CALCULATING
-    assert transition(PayrollStatus.EXPORTED, PayrollStatus.PAID) == PayrollStatus.PAID
+def test_payroll_status_transition_uses_canonical_lifecycle():
+    assert transition(PayrollStatus.DRAFT, PayrollStatus.DATA_RECEIVED) == PayrollStatus.DATA_RECEIVED
+    assert transition(PayrollStatus.DATA_RECEIVED, PayrollStatus.CALCULATING) == PayrollStatus.CALCULATING
+    assert transition(PayrollStatus.PAYMENT_CONFIRMED, PayrollStatus.RECONCILED) == PayrollStatus.RECONCILED
 
 
 def test_invalid_transition_is_blocked():
     with pytest.raises(ValueError):
-        transition(PayrollStatus.DRAFT, PayrollStatus.PAID)
+        transition(PayrollStatus.DRAFT, PayrollStatus.APPROVED)
+    with pytest.raises(ValueError):
+        transition(PayrollStatus.FROZEN, PayrollStatus.PAYMENT_CONFIRMED)
 
 
 def test_validation_detects_duplicate_components():
