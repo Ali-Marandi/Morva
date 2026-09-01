@@ -1,0 +1,59 @@
+{
+  "period": "1405-05",
+  "source_rows": {
+    "payroll": 3329,
+    "supplementary": 2193,
+    "loans": 20671,
+    "orders": 22696,
+    "health": 2197,
+    "social": 1116
+  },
+  "unique_keys": {
+    "payroll_employees": 3329,
+    "supplementary_employees": 2193,
+    "loan_employees": 3126,
+    "order_employees": 3560,
+    "social_employees": 1116,
+    "health_national_ids": 2197
+  },
+  "coverage": {
+    "payroll_to_orders": 3329,
+    "orders_only_not_in_payroll": 231,
+    "payroll_only_without_orders": 0,
+    "payroll_to_supplementary": 2193,
+    "payroll_to_loans_employees": 3126,
+    "payroll_to_social": 1116,
+    "payroll_to_health_by_national_id": 2169
+  },
+  "duplicates": {
+    "payroll_personnel": {"unique": 3329, "duplicate_keys": 0, "extra_rows": 0},
+    "supplementary_personnel": {"unique": 2193, "duplicate_keys": 0, "extra_rows": 0},
+    "loans_number": {"unique": 6585, "duplicate_keys": 1379, "extra_rows": 14054},
+    "orders_number": {"unique": 18267, "duplicate_keys": 3713, "extra_rows": 4429},
+    "social_personnel": {"unique": 1116, "duplicate_keys": 0, "extra_rows": 0},
+    "health_national_id": {"unique": 2197, "duplicate_keys": 0, "extra_rows": 0}
+  },
+  "aggregate_controls": {
+    "gross": "971405814240",
+    "deductions": "247897427588",
+    "net": "723508386652",
+    "employer_commitments": "156081256435",
+    "loan_installments": "139302749059",
+    "supplementary_employee_share": "32685000000",
+    "supplementary_total": "32722500000",
+    "health_premium": "40874971084",
+    "social_employee_premium": "15492415986",
+    "social_employer_premium": "45669023616"
+  },
+  "reconciliation": {
+    "gross_component_mismatches": 0,
+    "net_mismatches": 0,
+    "deduction_residual_count": 9,
+    "deduction_residual_total": "55625337"
+  },
+  "temporal_indicator": {
+    "order_issue_date_after_effective_date": 15749,
+    "interpretation": "Indicator only. Effective dates preceding issue dates can represent retroactive or corrective orders and are not automatically errors."
+  },
+  "privacy": "This QA artifact contains no raw names or raw national identifiers. Employee exception keys are SHA-256-derived surrogates."
+}
