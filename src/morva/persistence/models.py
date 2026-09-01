@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text
+from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -121,8 +121,18 @@ class RetroCaseRecord(Base):
     created_at: Mapped[date] = mapped_column(Date, default=date.today)
 
 
+class AuditChainHeadRecord(Base):
+    __tablename__ = "audit_chain_heads"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    last_sequence_no: Mapped[int] = mapped_column(default=0)
+    last_hash: Mapped[str] = mapped_column(String(64), default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AuditEventRecord(Base):
     __tablename__ = "audit_events"
+    __table_args__ = (UniqueConstraint("sequence_no", name="uq_audit_event_sequence"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     sequence_no: Mapped[int] = mapped_column(index=True)
