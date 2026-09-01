@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from morva.api.v1.payroll import router as payroll_router
+from morva.api.v1.payroll_run_snapshots import router as payroll_snapshot_router
 from morva.api.v1.payroll_runs import router as payroll_runs_router
 from morva.api.v1.reconciliation import router as reconciliation_router
 from morva.api.v1.rules import router as rules_router
@@ -26,6 +27,7 @@ app = FastAPI(
 )
 app.include_router(payroll_router, prefix="/api/v1")
 app.include_router(payroll_runs_router, prefix="/api/v1")
+app.include_router(payroll_snapshot_router, prefix="/api/v1")
 app.include_router(reconciliation_router, prefix="/api/v1")
 app.include_router(rules_router, prefix="/api/v1")
 app.include_router(validation_router, prefix="/api/v1")
