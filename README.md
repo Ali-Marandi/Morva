@@ -14,6 +14,4 @@ Public web deployment target:
 
 `https://ali-marandi.github.io/Morva/`
 
-## نکته انتشار
-
 این نسخه کاندید انتشار عمومی است. تا زمان تکمیل و تأیید Production Gates، نباید برای پردازش واقعی حقوق کارکنان استفاده شود.
