@@ -4,7 +4,6 @@ from decimal import Decimal
 import pytest
 
 from morva.domain.models import Employee, EmploymentType, Money
-from morva.payroll.models import PayrollLine
 from morva.payroll.service import PayrollService
 from morva.rules.catalog import demo_ruleset
 from morva.rules.engine import RuleContext, RuleDefinition, RuleEngine, RuleNotFoundError
