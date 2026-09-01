@@ -64,13 +64,20 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
     require_distinct_actors([*distinct_from, principal.user_id])
     run.status = transition(PayrollStatus(run.status), target).value
     now = datetime.utcnow()
-    if target is PayrollStatus.REVIEWED: run.reviewed_by, run.reviewed_at = principal.user_id, now
-    elif target is PayrollStatus.APPROVED: run.approved_by, run.approved_at = principal.user_id, now
-    elif target is PayrollStatus.FROZEN: run.frozen_at = now
-    elif target is PayrollStatus.EXPORTED: run.exported_at = now
-    elif target is PayrollStatus.SUBMITTED: run.submitted_by, run.submitted_at = principal.user_id, now
-    elif target is PayrollStatus.PAYMENT_CONFIRMED: run.payment_confirmed_by, run.payment_confirmed_at = principal.user_id, now
-    elif target is PayrollStatus.RECONCILED: run.reconciled_by, run.reconciled_at = principal.user_id, now
+    if target is PayrollStatus.REVIEWED:
+        run.reviewed_by, run.reviewed_at = principal.user_id, now
+    elif target is PayrollStatus.APPROVED:
+        run.approved_by, run.approved_at = principal.user_id, now
+    elif target is PayrollStatus.FROZEN:
+        run.frozen_at = now
+    elif target is PayrollStatus.EXPORTED:
+        run.exported_at = now
+    elif target is PayrollStatus.SUBMITTED:
+        run.submitted_by, run.submitted_at = principal.user_id, now
+    elif target is PayrollStatus.PAYMENT_CONFIRMED:
+        run.payment_confirmed_by, run.payment_confirmed_at = principal.user_id, now
+    elif target is PayrollStatus.RECONCILED:
+        run.reconciled_by, run.reconciled_at = principal.user_id, now
     append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"status": target.value}, reason=reason, session=session)
     session.commit()
 
@@ -79,8 +86,8 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
 def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.calculate")
-        if run.status != PayrollStatus.DRAFT.value:
-            raise HTTPException(status_code=409, detail="payroll run is not in draft state")
+        if run.status != PayrollStatus.DATA_RECEIVED.value:
+            raise HTTPException(status_code=409, detail="payroll run must be in data_received state before calculation")
         if run.source_import_batch_id is None:
             raise HTTPException(status_code=423, detail="calculation is blocked: no immutable source import is attached")
         batch = session.get(ImportBatchRecord, run.source_import_batch_id)
@@ -111,7 +118,7 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
             results[employee_no] = {"gross": str(result.result.gross), "deductions": str(result.result.deductions), "net": str(result.result.net), "fingerprint": result.fingerprint, "personnel_snapshot_hash": snapshot_by_employee[employee_no].snapshot_hash}
         run.input_hash = _hash_lines(lines)
         run.output_hash = _hash_results(results)
-        run.status = transition(PayrollStatus.DRAFT, PayrollStatus.CALCULATING).value
+        run.status = transition(PayrollStatus.DATA_RECEIVED, PayrollStatus.CALCULATING).value
         append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results), "source_import_batch_id": str(batch.id)}, reason="calculate persisted payroll run", session=session)
         session.commit()
         return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "input_hash": run.input_hash, "output_hash": run.output_hash}
@@ -121,7 +128,8 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
 def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.calculate")
-        if not run.input_hash or not run.output_hash: raise HTTPException(status_code=409, detail="calculation evidence is missing")
+        if not run.input_hash or not run.output_hash:
+            raise HTTPException(status_code=409, detail="calculation evidence is missing")
         _transition_run(session=session, run=run, target=PayrollStatus.VALIDATING, principal=principal, permission="payroll.run.calculate", reason=note.reason)
         return {"run_id": str(run.id), "status": run.status}
 
@@ -154,8 +162,10 @@ def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
 def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> None:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
-        if run.status != PayrollStatus.FROZEN.value: raise HTTPException(status_code=409, detail="payroll run must be frozen before export")
-    if not settings.integrations_enabled: raise HTTPException(status_code=503, detail="external integrations are not enabled; export is fail-closed")
+        if run.status != PayrollStatus.FROZEN.value:
+            raise HTTPException(status_code=409, detail="payroll run must be frozen before export")
+    if not settings.integrations_enabled:
+        raise HTTPException(status_code=503, detail="external integrations are not enabled; export is fail-closed")
     raise HTTPException(status_code=503, detail="no approved production export adapter is configured")
 
 
