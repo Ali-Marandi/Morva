@@ -66,7 +66,11 @@ class PayrollRunRecord(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     frozen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     exported_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    submitted_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    payment_confirmed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payment_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reconciled_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     reconciled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
