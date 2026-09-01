@@ -167,6 +167,14 @@ class RetroCaseRecord(Base):
     created_at: Mapped[date] = mapped_column(Date, default=date.today)
 
 
+class AuditChainHeadRecord(Base):
+    __tablename__ = "audit_chain_head"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    sequence_no: Mapped[int] = mapped_column(default=0)
+    digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
 class AuditEventRecord(Base):
     __tablename__ = "audit_events"
 
