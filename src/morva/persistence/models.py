@@ -125,6 +125,20 @@ class ImportBatchRecord(Base):
     provenance: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class ImportRecordRecord(Base):
+    __tablename__ = "import_records"
+    __table_args__ = (UniqueConstraint("import_batch_id", "record_hash", name="uq_import_record_hash"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    import_batch_id: Mapped[UUID] = mapped_column(index=True)
+    source_name: Mapped[str] = mapped_column(String(200), index=True)
+    period: Mapped[str] = mapped_column(String(7), index=True)
+    source_employee_key: Mapped[str] = mapped_column(String(100), index=True)
+    record_hash: Mapped[str] = mapped_column(String(64), index=True)
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class ImportIssueRecord(Base):
     __tablename__ = "import_issues"
 
