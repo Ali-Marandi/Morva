@@ -106,11 +106,19 @@ def calculate_persisted(
                 employee_no=employee_no,
                 principal=principal,
             )
+            transition_result = transition(
+                session,
+                run_id=run_id,
+                target_status="calculated",
+                principal=principal,
+                reason=f"persisted snapshot calculation for {employee_no}",
+                correlation_id=None,
+            )
             session.commit()
         except PermissionError as exc:
             session.rollback()
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
-        except PayrollRunBlockedError as exc:
+        except (PayrollRunBlockedError, ValueError) as exc:
             session.rollback()
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
         result = calculation.result
@@ -118,6 +126,7 @@ def calculate_persisted(
             "employee_no": result.employee_no,
             "period": result.period,
             "ruleset_version": result.ruleset_version,
+            "status": transition_result.to_status,
             "gross": str(result.gross),
             "deductions": str(result.deductions),
             "net": str(result.net),
