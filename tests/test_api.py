@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
@@ -12,31 +14,36 @@ def test_health():
     assert response.json()["status"] == "ok"
 
 
-def test_payroll_calculation_route():
+def test_legacy_payroll_calculation_route_is_blocked():
     response = client.post(
         "/api/v1/payroll/calculate",
         json={
             "employee_no": "E100",
             "period": "2026-09-01",
             "ruleset_version": "demo",
-            "lines": [
-                {
-                    "code": "BASE",
-                    "title": "Base",
-                    "amount": "500000000",
-                    "kind": "earning",
-                    "taxable": True,
-                    "pensionable": True,
-                }
-            ],
-            "apply_demo_policy": False,
+            "lines": [{"code": "BASE", "title": "Base", "amount": "500000000", "kind": "earning"}],
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 410
+
+
+def test_payroll_run_is_persisted_before_calculation():
+    org = "TEST-" + uuid4().hex[:8]
+    response = client.post(
+        "/api/v1/payroll/runs",
+        json={
+            "period": "2099-12",
+            "ruleset_version": "review_required",
+            "organization_unit_id": org,
+        },
+    )
+    assert response.status_code == 201
     body = response.json()
-    assert body["employee_no"] == "E100"
-    assert body["gross"] == "500000000"
-    assert len(body["fingerprint"]) == 64
+    assert body["status"] == "draft"
+
+    calc = client.post(f"/api/v1/payroll/runs/{body['id']}/calculate")
+    assert calc.status_code == 409
+    assert "server-approved source lines" in calc.json()["detail"]
 
 
 def test_rule_evaluation_route():
