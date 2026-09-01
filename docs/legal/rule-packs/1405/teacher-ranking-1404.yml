@@ -1,0 +1,44 @@
+version: "teacher-ranking-1404"
+status: researched_not_activated
+scope: "teachers covered by the Teacher Ranking Law"
+rankings:
+  - code: EDUCATION_ASSISTANT
+    title_fa: آموزشیار معلم
+    minimum_rank_allowance_rate: 0.45
+  - code: INSTRUCTOR
+    title_fa: مربی معلم
+    minimum_rank_allowance_rate: 0.55
+  - code: ASSISTANT_PROFESSOR
+    title_fa: استادیار معلم
+    minimum_rank_allowance_rate: 0.65
+  - code: ASSOCIATE_PROFESSOR
+    title_fa: دانشیار معلم
+    minimum_rank_allowance_rate: 0.75
+  - code: PROFESSOR
+    title_fa: استاد معلم
+    minimum_rank_allowance_rate: 0.90
+assessment_components:
+  general_competency: {share: 0.20}
+  specialized_competency: {share: 0.25}
+  professional_competency: {share: 0.27}
+  experience: {share: 0.28}
+process:
+  case_collection: electronic
+  evidence: required
+  annual_performance: effective
+  appeal_window_days: 20
+  reconsideration_after_failed_promotion_months: 6
+  committees: [district_region, province, central]
+rank_authority:
+  lower_ranks: district_region
+  associate_professor: province_after_district_assessment
+  professor: central_after_district_and_province_assessment
+references:
+  - title: "Executive Regulation of Teacher Ranking Law, approved 1404/10/03"
+    url: "https://www.irancodify.com/b/3cd12301-9dec-462f-8c32-e2266226b05a"
+  - title: "Teacher Ranking Law, approved 1400/12/15"
+    url: "https://www.irancodify.com/b/%D9%82%D8%A7%D9%86%D9%88%D9%86_%D9%86%D8%B8%D8%A7%D9%85_%D8%B1%D8%AA%D8%A8%D9%87_%E2%80%8C%D8%A8%D9%86%D8%AF%DB%8C_%D9%85%D8%B9%D9%84%D9%85%D8%A7%D9%86_%D9%85%D8%B5%D9%88%D8%A8_1400-12-15"
+notes:
+  - "Detailed scoring indicators must be imported from the ministerial implementation instruction before production activation."
+  - "The 1401 executive regulation is historical/superseded by the 1404 regulation."
+  - "Historical court decisions affecting superseded provisions must be preserved in the legal source registry."
