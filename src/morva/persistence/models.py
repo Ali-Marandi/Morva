@@ -93,6 +93,7 @@ class PayrollLineRecord(Base):
     __tablename__ = "payroll_lines"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     payroll_run_id: Mapped[UUID] = mapped_column(index=True)
+    source_record_id: Mapped[UUID | None] = mapped_column(nullable=True, index=True)
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
     code: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -103,6 +104,7 @@ class PayrollLineRecord(Base):
     pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
     insurable: Mapped[bool] = mapped_column(Boolean, default=False)
     rule_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    mapping_status: Mapped[str] = mapped_column(String(30), default="review_required", index=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
