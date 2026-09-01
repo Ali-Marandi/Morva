@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
-from morva.persistence.models import PayrollLineRecord, PayrollRunRecord
+from morva.persistence.models import PayrollLineRecord, PayrollRunRecord, RulePackRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 from morva.payroll.lifecycle import PayrollStatus, transition
 from morva.security.auth import Principal, get_current_principal
@@ -32,16 +32,8 @@ class TransitionNote(BaseModel):
 
 
 @router.post("/runs", status_code=status.HTTP_201_CREATED)
-def create_run(
-    payload: PayrollRunCreate,
-    principal: Principal = Depends(get_current_principal),
-) -> dict[str, object]:
-    authorize(
-        principal,
-        "payroll.run.create",
-        principal.scope,
-        resource_scope_id=payload.organization_unit_id,
-    )
+def create_run(payload: PayrollRunCreate, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
+    authorize(principal, "payroll.run.create", principal.scope, resource_scope_id=payload.organization_unit_id)
     with SessionLocal() as session:
         existing = session.scalar(
             select(PayrollRunRecord).where(
@@ -52,21 +44,15 @@ def create_run(
         if existing and existing.status != PayrollStatus.CANCELLED.value:
             raise HTTPException(status_code=409, detail="payroll run already exists for period and organization")
         record = PayrollRunRecord(
-            id=uuid4(),
-            period=payload.period,
-            organization_unit_id=payload.organization_unit_id,
-            ruleset_version=payload.ruleset_version,
-            ruleset_hash=payload.ruleset_hash,
-            status=PayrollStatus.DRAFT.value,
-            created_by=principal.user_id,
+            id=uuid4(), period=payload.period, organization_unit_id=payload.organization_unit_id,
+            ruleset_version=payload.ruleset_version, ruleset_hash=payload.ruleset_hash,
+            status=PayrollStatus.DRAFT.value, created_by=principal.user_id,
         )
         session.add(record)
         session.commit()
         run_id = str(record.id)
     append_audit_event(
-        event_type="payroll.run.created",
-        entity_type="payroll_run",
-        entity_id=run_id,
+        event_type="payroll.run.created", entity_type="payroll_run", entity_id=run_id,
         actor_id=principal.user_id,
         payload={"period": payload.period, "organization_unit_id": payload.organization_unit_id, "ruleset_version": payload.ruleset_version},
         reason="create payroll run",
@@ -76,11 +62,7 @@ def create_run(
 
 @router.post("/calculate", status_code=status.HTTP_410_GONE)
 def legacy_calculate_blocked(_principal: Principal = Depends(get_current_principal)) -> None:
-    """Legacy caller-supplied-line calculation is permanently removed from the authoritative API."""
-    raise HTTPException(
-        status_code=status.HTTP_410_GONE,
-        detail="direct payroll calculation from caller-supplied lines is disabled; create a PayrollRun and import approved source data",
-    )
+    raise HTTPException(status_code=status.HTTP_410_GONE, detail="direct payroll calculation from caller-supplied lines is disabled; create a PayrollRun and import approved source data")
 
 
 def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> PayrollRunRecord:
@@ -91,16 +73,7 @@ def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> P
     return run
 
 
-def _transition_run(
-    *,
-    session,
-    run: PayrollRunRecord,
-    target: PayrollStatus,
-    principal: Principal,
-    permission: str,
-    reason: str,
-    distinct_from: list[str | None] = (),
-) -> None:
+def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, principal: Principal, permission: str, reason: str, distinct_from: list[str | None] = ()) -> None:
     authorize(principal, permission, principal.scope, resource_scope_id=run.organization_unit_id, privileged=True)
     require_distinct_actors([*distinct_from, principal.user_id])
     run.status = transition(PayrollStatus(run.status), target).value
@@ -121,69 +94,43 @@ def _transition_run(
         run.reconciled_by, run.reconciled_at = principal.user_id, now
     session.commit()
     append_audit_event(
-        event_type=f"payroll.run.{target.value}",
-        entity_type="payroll_run",
-        entity_id=str(run.id),
-        actor_id=principal.user_id,
-        payload={"status": target.value},
-        reason=reason,
+        event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id),
+        actor_id=principal.user_id, payload={"status": target.value}, reason=reason,
     )
 
 
 @router.post("/runs/{run_id}/calculate")
-def calculate_persisted_run(
-    run_id: UUID,
-    principal: Principal = Depends(get_current_principal),
-) -> dict[str, object]:
+def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.calculate")
         if run.status != PayrollStatus.DRAFT.value:
             raise HTTPException(status_code=409, detail="payroll run is not in draft state")
+        pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == run.ruleset_version))
+        if pack is None or pack.status not in {"approved", "published"}:
+            raise HTTPException(status_code=423, detail="payroll calculation is blocked: Rule Pack is not approved/published")
+        if run.ruleset_hash and pack.rules_hash and run.ruleset_hash != pack.rules_hash:
+            raise HTTPException(status_code=409, detail="payroll Rule Pack hash does not match persisted run")
         lines = session.scalars(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id)).all()
         if not lines:
             raise HTTPException(status_code=409, detail="payroll run contains no server-approved source lines")
+        if any(line.currency_code != run.currency_code for line in lines):
+            raise HTTPException(status_code=409, detail="payroll line currency does not match payroll run currency")
         employee_numbers = {line.employee_no for line in lines}
         results: dict[str, object] = {}
         for employee_no in sorted(employee_numbers):
-            employee_lines = [
-                PayrollLine(
-                    code=line.code,
-                    title=line.title,
-                    amount=line.amount,
-                    kind=line.kind,
-                    taxable=line.taxable,
-                    pensionable=line.pensionable,
-                    insurable=line.insurable,
-                    rule_code=line.rule_code,
-                    explanation=line.explanation,
-                )
-                for line in lines
-                if line.employee_no == employee_no
-            ]
+            employee_lines = [PayrollLine(code=line.code, title=line.title, amount=line.amount, kind=line.kind, taxable=line.taxable, pensionable=line.pensionable, insurable=line.insurable, rule_code=line.rule_code, explanation=line.explanation) for line in lines if line.employee_no == employee_no]
             result = calculator.calculate(
                 employee_no=employee_no,
                 period=datetime.strptime(run.period + "-01", "%Y-%m-%d").date(),
                 ruleset_version=run.ruleset_version,
                 lines=employee_lines,
             )
-            results[employee_no] = {
-                "gross": str(result.result.gross),
-                "deductions": str(result.result.deductions),
-                "net": str(result.result.net),
-                "fingerprint": result.fingerprint,
-            }
+            results[employee_no] = {"gross": str(result.result.gross), "deductions": str(result.result.deductions), "net": str(result.result.net), "fingerprint": result.fingerprint}
         run.input_hash = _hash_lines(lines)
         run.output_hash = _hash_results(results)
         run.status = transition(PayrollStatus.DRAFT, PayrollStatus.CALCULATING).value
         session.commit()
-    append_audit_event(
-        event_type="payroll.run.calculated",
-        entity_type="payroll_run",
-        entity_id=str(run_id),
-        actor_id=principal.user_id,
-        payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results)},
-        reason="calculate persisted payroll run",
-    )
+    append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run_id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results)}, reason="calculate persisted payroll run")
     return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "input_hash": run.input_hash, "output_hash": run.output_hash}
 
 
@@ -209,15 +156,7 @@ def review_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
 def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
-        _transition_run(
-            session=session,
-            run=run,
-            target=PayrollStatus.APPROVED,
-            principal=principal,
-            permission="payroll.run.approve",
-            reason=note.reason,
-            distinct_from=[run.created_by, run.reviewed_by],
-        )
+        _transition_run(session=session, run=run, target=PayrollStatus.APPROVED, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by])
         return {"run_id": str(run.id), "status": run.status}
 
 
@@ -225,20 +164,14 @@ def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depen
 def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
-        _transition_run(
-            session=session,
-            run=run,
-            target=PayrollStatus.FROZEN,
-            principal=principal,
-            permission="payroll.run.approve",
-            reason=note.reason,
-            distinct_from=[run.created_by, run.reviewed_by, run.approved_by],
-        )
+        _transition_run(session=session, run=run, target=PayrollStatus.FROZEN, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by, run.approved_by])
         return {"run_id": str(run.id), "status": run.status}
 
 
 @router.post("/runs/{run_id}/export")
-def export_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> None:
+def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> None:
+    with SessionLocal() as session:
+        _load_run(session, run_id, principal, "payroll.run.approve")
     if not settings.integrations_enabled:
         raise HTTPException(status_code=503, detail="external integrations are not enabled; export is fail-closed")
     raise HTTPException(status_code=503, detail="no approved production export adapter is configured")
@@ -246,17 +179,12 @@ def export_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
 
 def _hash_lines(lines: list[PayrollLineRecord]) -> str:
     import hashlib
-
-    canonical = "|".join(
-        f"{line.employee_no}:{line.code}:{line.kind}:{line.amount}:{line.rule_code or ''}"
-        for line in sorted(lines, key=lambda item: (item.employee_no, item.code, item.kind, str(item.amount)))
-    )
+    canonical = "|".join(f"{line.employee_no}:{line.code}:{line.kind}:{line.amount}:{line.rule_code or ''}" for line in sorted(lines, key=lambda item: (item.employee_no, item.code, item.kind, str(item.amount))))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _hash_results(results: dict[str, object]) -> str:
     import hashlib
     import json
-
     canonical = json.dumps(results, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
