@@ -6,7 +6,15 @@
 
 **Morva 1.0.0-rc1 — Production Release Candidate**
 
+نسخه وب عمومی برای GitHub Pages آماده شده و با هر push به `main` از طریق GitHub Actions build/deploy می‌شود.
+
 هسته سامانه، مدل دامنه، موتور قوانین، Payroll، احکام، رتبه‌بندی، معوقات، ledgerها، validation، audit، integration ports، self-service، analytics، security و عملیات PostgreSQL در repository پیاده شده‌اند.
+
+## Web
+
+Public web deployment target:
+
+`https://ali-marandi.github.io/Morva/`
 
 ## معماری
 
@@ -42,12 +50,28 @@ uvicorn morva.api.main:app --reload
 
 `GET /health` برای liveness و `GET /ready` برای readiness استفاده می‌شود.
 
-## تست
+## وب محلی
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+## تست Backend
 
 ```bash
 python -m compileall -q src tests
 ruff check .
 pytest -q
+```
+
+## Build وب
+
+```bash
+cd web
+npm install
+npm run build
 ```
 
 ## Production gate
