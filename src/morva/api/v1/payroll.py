@@ -4,10 +4,12 @@ from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from morva.payroll import PayrollCalculator, PayrollLine, demo_iranian_policy_pack
+from morva.runtime.config import settings
+from morva.security.auth import Permission, Principal, principal_from_headers
 
 router = APIRouter(prefix="/payroll", tags=["payroll"])
 calculator = PayrollCalculator()
@@ -34,11 +36,20 @@ class CalculateIn(BaseModel):
 
 
 @router.post("/calculate")
-def calculate(payload: CalculateIn) -> dict[str, object]:
-    tax_policy = None
-    contribution_policies = ()
+def calculate(
+    payload: CalculateIn,
+    principal: Principal = Depends(principal_from_headers),
+) -> dict[str, object]:
+    principal.require(Permission.CALCULATE_PAYROLL)
+    if settings.production:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="production payroll calculation requires a persisted approved PayrollRun and employee snapshot",
+        )
     if payload.apply_demo_policy:
         tax_policy, contribution_policies = demo_iranian_policy_pack()
+    else:
+        tax_policy, contribution_policies = None, ()
     calculation = calculator.calculate(
         employee_no=payload.employee_no,
         period=payload.period,
