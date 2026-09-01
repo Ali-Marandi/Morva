@@ -17,6 +17,7 @@ class EmployeeRecord(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     employee_no: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    source_employee_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True, nullable=True)
     national_id: Mapped[str] = mapped_column(String(10), unique=True, index=True)
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
@@ -105,7 +106,7 @@ class PayrollLineRecord(Base):
     kind: Mapped[str] = mapped_column(String(20))
     taxable: Mapped[bool] = mapped_column(Boolean, default=False)
     pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
-    insurable: bool = mapped_column(Boolean, default=False)
+    insurable: Mapped[bool] = mapped_column(Boolean, default=False)
     rule_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
