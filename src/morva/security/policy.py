@@ -24,15 +24,17 @@ class Principal:
 ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "employee": frozenset({"self.read", "self.objection.create"}),
     "school_finance": frozenset({"payroll.run.create", "payroll.run.calculate", "payroll.read"}),
-    "district_finance": frozenset({"payroll.run.create", "payroll.run.calculate", "payroll.read", "payroll.review"}),
-    "province_finance": frozenset({"payroll.read", "payroll.review", "payroll.approve"}),
-    "ministry_finance": frozenset({"payroll.read", "payroll.review", "payroll.approve"}),
+    "district_finance": frozenset({"payroll.run.create", "payroll.run.calculate", "payroll.read", "payroll.run.review"}),
+    "province_finance": frozenset({"payroll.read", "payroll.run.review", "payroll.run.approve"}),
+    "ministry_finance": frozenset({"payroll.read", "payroll.run.review", "payroll.run.approve"}),
     "hr_admin": frozenset({"personnel.read", "personnel.write", "payroll.read"}),
     "auditor": frozenset({"audit.read", "payroll.read"}),
     "admin": frozenset({"*"}),
 }
 
-PRIVILEGED_ROLES = frozenset({"admin", "finance_approver", "payroll_approver", "auditor", "district_finance", "province_finance", "ministry_finance"})
+PRIVILEGED_ROLES = frozenset(
+    {"admin", "finance_approver", "payroll_approver", "auditor", "district_finance", "province_finance", "ministry_finance"}
+)
 
 
 def has_permission(principal: Principal, permission: str) -> bool:
