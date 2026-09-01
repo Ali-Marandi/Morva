@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Iterable
 
+from fastapi import HTTPException, status
+
 
 class Scope(StrEnum):
     SCHOOL = "school"
@@ -51,18 +53,18 @@ def authorize(
     privileged: bool = False,
 ) -> None:
     if not has_permission(principal, permission):
-        raise PermissionError("required permission not granted")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="required permission not granted")
     if privileged or principal.role in PRIVILEGED_ROLES:
         if not principal.mfa_verified:
-            raise PermissionError("MFA is required for privileged actions")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="MFA is required for privileged actions")
     if principal.scope is not Scope.MINISTRY:
         if principal.scope is not required_scope:
-            raise PermissionError("organization scope level violation")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="organization scope level violation")
         if resource_scope_id is not None and principal.scope_id != resource_scope_id:
-            raise PermissionError("organization scope violation")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="organization scope violation")
 
 
 def require_distinct_actors(actors: Iterable[str | None]) -> None:
     values = [actor for actor in actors if actor]
     if len(values) != len(set(values)):
-        raise PermissionError("separation of duties violation: actors must be distinct")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="separation of duties violation: actors must be distinct")
