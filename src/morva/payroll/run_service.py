@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from morva.audit.persistence import append_audit_event
 from morva.persistence.models import PayrollRunEventRecord, PayrollRunRecord
 from morva.security.auth import Permission, Principal
 
@@ -65,6 +66,19 @@ def create_run(
     )
     session.add(run)
     session.flush()
+    append_audit_event(
+        session,
+        event_type="PAYROLL_RUN_CREATED",
+        entity_type="PayrollRun",
+        entity_id=str(run.id),
+        actor_id=principal.subject,
+        payload={
+            "period": period,
+            "ruleset_version": ruleset_version,
+            "organization_scope": organization_scope,
+            "status": "draft",
+        },
+    )
     return run
 
 
@@ -107,6 +121,16 @@ def transition(
             reason=reason,
             correlation_id=correlation_id,
         )
+    )
+    append_audit_event(
+        session,
+        event_type="PAYROLL_RUN_TRANSITION",
+        entity_type="PayrollRun",
+        entity_id=str(run.id),
+        actor_id=principal.subject,
+        correlation_id=correlation_id,
+        reason=reason,
+        payload={"from_status": old_status, "to_status": target_status, "version": run.version},
     )
     session.flush()
     return TransitionResult(run.id, old_status, target_status, run.version)
