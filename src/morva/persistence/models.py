@@ -14,7 +14,6 @@ class Base(DeclarativeBase):
 
 class EmployeeRecord(Base):
     __tablename__ = "employees"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     employee_no: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     source_employee_key: Mapped[str | None] = mapped_column(String(100), unique=True, index=True, nullable=True)
@@ -30,7 +29,6 @@ class EmployeeRecord(Base):
 
 class SalaryRuleRecord(Base):
     __tablename__ = "salary_rules"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     code: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(200))
@@ -49,7 +47,6 @@ class SalaryRuleRecord(Base):
 
 class RulePackRecord(Base):
     __tablename__ = "rule_packs"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     version: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
@@ -66,7 +63,6 @@ class RulePackRecord(Base):
 class PayrollRunRecord(Base):
     __tablename__ = "payroll_runs"
     __table_args__ = (UniqueConstraint("period", "organization_unit_id", name="uq_payroll_run_period_org"),)
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     period: Mapped[str] = mapped_column(String(7), index=True)
     organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
@@ -95,7 +91,6 @@ class PayrollRunRecord(Base):
 
 class PayrollLineRecord(Base):
     __tablename__ = "payroll_lines"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     payroll_run_id: Mapped[UUID] = mapped_column(index=True)
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
@@ -113,7 +108,6 @@ class PayrollLineRecord(Base):
 
 class ImportBatchRecord(Base):
     __tablename__ = "import_batches"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     source_name: Mapped[str] = mapped_column(String(200))
     template_version: Mapped[str] = mapped_column(String(50))
@@ -128,7 +122,6 @@ class ImportBatchRecord(Base):
 class ImportRecordRecord(Base):
     __tablename__ = "import_records"
     __table_args__ = (UniqueConstraint("import_batch_id", "record_hash", name="uq_import_record_hash"),)
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     import_batch_id: Mapped[UUID] = mapped_column(index=True)
     source_name: Mapped[str] = mapped_column(String(200), index=True)
@@ -141,7 +134,6 @@ class ImportRecordRecord(Base):
 
 class ImportIssueRecord(Base):
     __tablename__ = "import_issues"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     import_batch_id: Mapped[UUID] = mapped_column(index=True)
     issue_code: Mapped[str] = mapped_column(String(100), index=True)
@@ -156,7 +148,6 @@ class ImportIssueRecord(Base):
 
 class PersonnelOrderRecord(Base):
     __tablename__ = "personnel_orders"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     order_no: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
@@ -172,11 +163,10 @@ class PersonnelOrderRecord(Base):
 class PersonnelSnapshotRecord(Base):
     __tablename__ = "personnel_snapshots"
     __table_args__ = (UniqueConstraint("employee_no", "effective_period", name="uq_personnel_snapshot_employee_period"),)
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
     effective_period: Mapped[str] = mapped_column(String(7), index=True)
-    effective_date: Mapped[date] = mapped_column(Date)
+    effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
     position_id: Mapped[str] = mapped_column(String(50))
     employment_type: Mapped[str] = mapped_column(String(30))
@@ -191,7 +181,6 @@ class PersonnelSnapshotRecord(Base):
 
 class RetroCaseRecord(Base):
     __tablename__ = "retro_cases"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
     from_period: Mapped[str] = mapped_column(String(7))
@@ -205,7 +194,6 @@ class RetroCaseRecord(Base):
 
 class AuditChainHeadRecord(Base):
     __tablename__ = "audit_chain_head"
-
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
     sequence_no: Mapped[int] = mapped_column(default=0)
     digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -213,7 +201,6 @@ class AuditChainHeadRecord(Base):
 
 class AuditEventRecord(Base):
     __tablename__ = "audit_events"
-
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     event_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
     sequence_no: Mapped[int] = mapped_column(index=True)
