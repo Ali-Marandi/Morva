@@ -48,7 +48,7 @@ def add_snapshot(
     run = session.execute(select(PayrollRunRecord).where(PayrollRunRecord.id == run_id).with_for_update()).scalar_one()
     if run.status != "draft":
         raise PayrollRunBlockedError("snapshots may only be admitted while payroll run is draft")
-    if run.organization_scope != principal.organization_scope and principal.organization_scope != "global":
+    if run.organization_scope != principal.organization_unit_id and principal.organization_unit_id != "global":
         raise PermissionError("organization scope mismatch")
     if run.source_manifest_hash and run.source_manifest_hash != source_manifest_hash:
         raise PayrollRunBlockedError("source manifest hash mismatch for payroll run")
@@ -92,20 +92,6 @@ def add_snapshot(
     return record
 
 
-def admit_snapshots(session: Session, *, run_id: UUID, principal: Principal) -> int:
-    principal.require(Permission.CALCULATE_PAYROLL)
-    run = session.execute(select(PayrollRunRecord).where(PayrollRunRecord.id == run_id).with_for_update()).scalar_one()
-    if run.status != "draft":
-        raise PayrollRunBlockedError("snapshot admission is only allowed from draft")
-    count = session.query(EmployeePayrollSnapshotRecord).filter(EmployeePayrollSnapshotRecord.payroll_run_id == run_id).count()
-    if count == 0 or not run.source_manifest_hash:
-        raise PayrollRunBlockedError("payroll run requires at least one snapshot and a source manifest hash")
-    run.status = "data_received"
-    run.version += 1
-    session.flush()
-    return count
-
-
 def _lines_from_payload(payload: dict) -> tuple[PayrollLine, ...]:
     raw_lines = payload.get("lines")
     if not isinstance(raw_lines, list) or not raw_lines:
@@ -143,7 +129,7 @@ def calculate_persisted_snapshot(
 ) -> PayrollCalculation:
     principal.require(Permission.CALCULATE_PAYROLL)
     run = session.execute(select(PayrollRunRecord).where(PayrollRunRecord.id == run_id).with_for_update()).scalar_one()
-    if run.status not in {"data_received", "calculated"}:
+    if run.status != "data_received":
         raise PayrollRunBlockedError(f"payroll run cannot be calculated from status {run.status}")
     approval = session.execute(
         select(RuleSetApprovalRecord).where(
@@ -192,8 +178,6 @@ def calculate_persisted_snapshot(
                 explanation=line.explanation,
             )
         )
-    run.status = "calculated"
-    run.version += 1
     run.payroll_fingerprint = calculation.fingerprint
     session.flush()
     return calculation
