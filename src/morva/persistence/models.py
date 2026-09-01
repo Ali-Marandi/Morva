@@ -49,8 +49,33 @@ class PayrollRunRecord(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     period: Mapped[str] = mapped_column(String(7), index=True)
     ruleset_version: Mapped[str] = mapped_column(String(50))
-    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    organization_scope: Mapped[str] = mapped_column(String(80), default="global", index=True)
+    source_manifest_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payroll_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    exported_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reconciled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    version: Mapped[int] = mapped_column(default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PayrollRunEventRecord(Base):
+    __tablename__ = "payroll_run_events"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    payroll_run_id: Mapped[UUID] = mapped_column(index=True)
+    from_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    to_status: Mapped[str] = mapped_column(String(40), index=True)
+    actor_id: Mapped[str] = mapped_column(String(100), index=True)
+    actor_role: Mapped[str] = mapped_column(String(80))
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
 class PayrollLineRecord(Base):
@@ -100,10 +125,14 @@ class AuditEventRecord(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    sequence_no: Mapped[int] = mapped_column(index=True)
     event_type: Mapped[str] = mapped_column(String(100), index=True)
     actor_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     entity_type: Mapped[str] = mapped_column(String(100), index=True)
     entity_id: Mapped[str] = mapped_column(String(100), index=True)
+    correlation_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    previous_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    current_hash: Mapped[str] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
