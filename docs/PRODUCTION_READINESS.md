@@ -17,6 +17,12 @@ Morva is not production payroll-ready until all of the following are true:
 11. Load tests meet the agreed throughput and latency target for the expected employee population.
 12. Security review, MFA, RBAC, audit logging and secrets management are enabled.
 
+## Current implementation progress
+
+The payroll-run lifecycle now writes durable hash-linked audit events to PostgreSQL through `AuditEventRecord` plus a serialized `AuditChainHeadRecord`. Chain replay verification detects sequence gaps, broken links, event tampering and tail divergence. This advances gate 12, but does not satisfy the full gate: production authorization, MFA, security review and database privilege hardening still require deployment controls and independent acceptance.
+
+The production calculation endpoint remains fail-closed until persisted employee snapshots and an approved legal ruleset are present. No legal value is activated from research-only material.
+
 ## Real-data admission
 
 Real employee or payroll data must enter through an approved import contract with validation, checksum, provenance and audit metadata. No real sample is committed to Git.
