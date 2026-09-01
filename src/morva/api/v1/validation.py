@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
 
@@ -43,5 +44,5 @@ def validate(payload: ValidationRequest) -> dict[str, object]:
         "employee_no": result.employee_no,
         "period": result.period,
         "blocking": any(item.severity == "error" for item in findings),
-        "findings": [item.__dict__ for item in findings],
+        "findings": [asdict(item) for item in findings],
     }
