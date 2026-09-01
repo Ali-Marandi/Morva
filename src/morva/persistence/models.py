@@ -46,6 +46,22 @@ class SalaryRuleRecord(Base):
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class RulePackRecord(Base):
+    __tablename__ = "rule_packs"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    version: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    legal_source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rules_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    effective_from: Mapped[date | None] = mapped_column(Date, nullable=True)
+    effective_to: Mapped[date | None] = mapped_column(Date, nullable=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class PayrollRunRecord(Base):
     __tablename__ = "payroll_runs"
     __table_args__ = (UniqueConstraint("period", "organization_unit_id", name="uq_payroll_run_period_org"),)
@@ -55,6 +71,7 @@ class PayrollRunRecord(Base):
     organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
     ruleset_version: Mapped[str] = mapped_column(String(50))
     ruleset_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    currency_code: Mapped[str] = mapped_column(String(3), default="IRR")
     status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
     input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     output_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -83,12 +100,42 @@ class PayrollLineRecord(Base):
     code: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(200))
     amount: Mapped[Decimal] = mapped_column(Numeric(24, 4))
+    currency_code: Mapped[str] = mapped_column(String(3), default="IRR")
     kind: Mapped[str] = mapped_column(String(20))
     taxable: Mapped[bool] = mapped_column(Boolean, default=False)
     pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
     insurable: Mapped[bool] = mapped_column(Boolean, default=False)
     rule_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class ImportBatchRecord(Base):
+    __tablename__ = "import_batches"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    source_name: Mapped[str] = mapped_column(String(200))
+    template_version: Mapped[str] = mapped_column(String(50))
+    period: Mapped[str] = mapped_column(String(7), index=True)
+    owner: Mapped[str] = mapped_column(String(100))
+    file_sha256: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(30), default="received", index=True)
+    received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class ImportIssueRecord(Base):
+    __tablename__ = "import_issues"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    import_batch_id: Mapped[UUID] = mapped_column(index=True)
+    issue_code: Mapped[str] = mapped_column(String(100), index=True)
+    severity: Mapped[str] = mapped_column(String(20))
+    record_key: Mapped[str] = mapped_column(String(100), index=True)
+    evidence: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(30), default="quarantined")
+    assigned_to: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class PersonnelOrderRecord(Base):
