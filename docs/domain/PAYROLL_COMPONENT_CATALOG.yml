@@ -1,0 +1,112 @@
+version: "0.1-draft"
+status: review_required
+currency: IRR
+components:
+  - code: JOB_RIGHT
+    title_fa: حق شغل
+    kind: earning
+    source: "Civil Service Management Law - Article 65"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [job_points, rial_coefficient]
+  - code: INCUMBENT_RIGHT
+    title_fa: حق شاغل
+    kind: earning
+    source: "Civil Service Management Law - Article 66"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [employee_points, rial_coefficient]
+  - code: JOB_ALLOWANCE
+    title_fa: فوق العاده شغل
+    kind: earning
+    source: "Civil Service Management Law - Article 68(5)"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [job_grade, approved_points]
+  - code: RANK_ALLOWANCE
+    title_fa: فوق العاده رتبه بندی
+    kind: earning
+    source: "Teacher Ranking Law - Article 6; 1404 Executive Regulation - Article 18"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [job_right, incumbent_right, job_allowance, rank_rate]
+  - code: MANAGEMENT
+    title_fa: فوق العاده مدیریت و سرپرستی
+    kind: earning
+    source: "Civil Service Management Law - Articles 65/68"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [management_points, rial_coefficient]
+  - code: REGION_WEATHER
+    title_fa: مناطق کمتر توسعه یافته و بدی آب و هوا
+    kind: earning
+    source: "Civil Service Management Law - Article 68(1)"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [fixed_salary, eligibility]
+  - code: VETERAN_ALLOWANCE
+    title_fa: فوق العاده ایثارگری
+    kind: earning
+    source: "Civil Service Management Law - Article 68(2)"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [veteran_profile, approved_points]
+  - code: PERFORMANCE
+    title_fa: فوق العاده کارایی و عملکرد
+    kind: earning
+    source: "Civil Service Management Law - Article 68(6)"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [performance_score, fixed_salary]
+  - code: FAMILY
+    title_fa: کمک هزینه عائله مندی
+    kind: earning
+    source: "Civil Service Management Law - Article 68(4) and subsequent amendments"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [dependent_eligibility, policy_version]
+  - code: CHILD
+    title_fa: کمک هزینه اولاد
+    kind: earning
+    source: "Civil Service Management Law - Article 68(4) and subsequent amendments"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [eligible_children, policy_version]
+  - code: OVERTIME
+    title_fa: اضافه کار
+    kind: earning
+    source: "Applicable annual budget and executive rules"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [authorized_hours, hourly_rate]
+  - code: TEACHING_FEE
+    title_fa: حق التدریس
+    kind: earning
+    source: "Education-specific annual instructions"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [approved_hours, rate]
+  - code: MISSION
+    title_fa: فوق العاده ماموریت
+    kind: earning
+    source: "Applicable public-sector travel rules"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [mission_days, approved_daily_rate]
+  - code: TAX
+    title_fa: مالیات حقوق
+    kind: deduction
+    source: "Direct Taxes Law + annual Budget Law"
+    treatment: {tax: n_a, pension: n_a, insurance: n_a}
+    bases: [taxable_income, tax_policy_version]
+  - code: PENSION
+    title_fa: کسور بازنشستگی
+    kind: deduction
+    source: "Applicable pension fund rules"
+    treatment: {tax: n_a, pension: n_a, insurance: n_a}
+    bases: [pensionable_base, pension_policy_version]
+  - code: INSURANCE
+    title_fa: بیمه
+    kind: deduction
+    source: "Applicable insurance rules"
+    treatment: {tax: n_a, pension: n_a, insurance: n_a}
+    bases: [insurable_base, insurance_policy_version]
+  - code: LOAN
+    title_fa: وام
+    kind: deduction
+    source: "Loan contract / approved schedule"
+    treatment: {tax: n_a, pension: n_a, insurance: n_a}
+    bases: [amortization_schedule]
+  - code: COURT_ORDER
+    title_fa: کسر بابت حکم قضایی
+    kind: deduction
+    source: "Valid judicial order"
+    treatment: {tax: review_required, pension: review_required, insurance: review_required}
+    bases: [court_order]
