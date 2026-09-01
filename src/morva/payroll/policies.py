@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Iterable
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +60,5 @@ def demo_iranian_policy_pack() -> tuple[TaxPolicy, tuple[ContributionPolicy, ...
             TaxBracket(None, Decimal("0.30")),
         ),
     )
-    contributions = (
-        ContributionPolicy("PENSION_DEMO", Decimal("0.09")),
-    )
+    contributions = (ContributionPolicy("PENSION_DEMO", Decimal("0.09")),)
     return tax, contributions
