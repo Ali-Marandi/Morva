@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
@@ -9,16 +8,7 @@ from fastapi import HTTPException, Request, status
 from jwt import PyJWKClient
 
 from morva.runtime.config import settings
-from morva.security.rbac import Scope
-
-
-@dataclass(frozen=True, slots=True)
-class Principal:
-    user_id: str
-    role: str
-    scope: Scope
-    scope_id: str
-    mfa_verified: bool
+from morva.security.policy import Principal, Scope
 
 
 @lru_cache(maxsize=4)
@@ -59,7 +49,7 @@ def _decode_bearer(token: str) -> dict[str, Any]:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="authentication provider is not configured")
     try:
         signing_key = _jwks_client(settings.oidc_jwks_url).get_signing_key_from_jwt(token).key
-        return jwt.decode(
+        payload = jwt.decode(
             token,
             signing_key,
             algorithms=["RS256", "RS384", "RS512"],
@@ -67,17 +57,20 @@ def _decode_bearer(token: str) -> dict[str, Any]:
             audience=settings.oidc_audience,
             options={"require": ["exp", "iat", "sub"]},
         )
+        if not isinstance(payload, dict):
+            raise ValueError("JWT payload must be an object")
+        return payload
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer token") from exc
 
 
 def get_current_principal(request: Request) -> Principal:
-    """Resolve an authenticated principal; production never trusts caller-supplied identity headers."""
+    """Resolve a trusted identity; production never accepts caller-supplied identity headers."""
     authorization = request.headers.get("Authorization", "")
     if not authorization.startswith("Bearer "):
         if settings.production:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bearer authentication required")
-        # Non-production requests remain explicitly authenticated only for local development.
-        # Tests should override this dependency rather than simulate production identity.
         return Principal("local-dev", "admin", Scope.MINISTRY, "local", True)
     return _required_principal(_decode_bearer(authorization[7:].strip()))
