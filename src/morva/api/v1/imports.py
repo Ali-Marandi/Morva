@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
-from morva.persistence.models import ImportBatchRecord, ImportRecordRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord
+from morva.persistence.models import EmployeeRecord, ImportBatchRecord, ImportIssueRecord, ImportRecordRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord
 from morva.payroll.source_projection import project_components
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import authorize
@@ -36,8 +36,7 @@ def project_import(import_batch_id: UUID, payload: ProjectRequest, principal: Pr
             raise HTTPException(status_code=409, detail="payroll run must be draft before source projection")
         if run.period != batch.period:
             raise HTTPException(status_code=409, detail="import period does not match payroll run period")
-        existing = session.scalar(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id).limit(1))
-        if existing:
+        if session.scalar(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id).limit(1)):
             raise HTTPException(status_code=409, detail="payroll run already has projected lines")
         records = session.scalars(select(ImportRecordRecord).where(ImportRecordRecord.import_batch_id == batch.id, ImportRecordRecord.source_name == "گزارش لیست حقوق.xlsx")).all()
         if not records:
@@ -45,15 +44,20 @@ def project_import(import_batch_id: UUID, payload: ProjectRequest, principal: Pr
         created = 0
         quarantined = 0
         for record in records:
-            employee = session.scalar(select(PersonnelSnapshotRecord).where(PersonnelSnapshotRecord.source_import_batch_id == batch.id, PersonnelSnapshotRecord.effective_period == batch.period, PersonnelSnapshotRecord.employee_no == record.source_employee_key))
+            employee = session.scalar(select(EmployeeRecord).where(EmployeeRecord.source_employee_key == record.source_employee_key))
             if employee is None:
-                session.add(ImportBatchRecord) if False else None
+                session.add(ImportIssueRecord(import_batch_id=batch.id, issue_code="EMPLOYEE_MASTER_MISSING", severity="critical", record_key=record.source_employee_key, evidence={"stage": "projection", "period": batch.period}, status="quarantined"))
                 quarantined += 1
                 continue
-            components = record.payload.get("components", {})
-            for item in project_components(components):
-                status = str(item["status"])
-                if status == "quarantined":
+            snapshot = session.scalar(select(PersonnelSnapshotRecord).where(PersonnelSnapshotRecord.employee_no == employee.employee_no, PersonnelSnapshotRecord.effective_period == batch.period))
+            if snapshot is None:
+                session.add(ImportIssueRecord(import_batch_id=batch.id, issue_code="PERSONNEL_SNAPSHOT_MISSING", severity="critical", record_key=record.source_employee_key, evidence={"employee_no": employee.employee_no, "period": batch.period}, status="quarantined"))
+                quarantined += 1
+                continue
+            for item in project_components(record.payload.get("components", {})):
+                item_status = str(item["status"])
+                if item_status == "quarantined":
+                    session.add(ImportIssueRecord(import_batch_id=batch.id, issue_code="UNMAPPED_PAYROLL_COMPONENT", severity="critical", record_key=record.source_employee_key, evidence=dict(item), status="quarantined"))
                     quarantined += 1
                     continue
                 session.add(PayrollLineRecord(id=uuid4(), payroll_run_id=run.id, source_record_id=record.id, employee_no=employee.employee_no, code=str(item["component_code"]), title=str(item["component_code"]), amount=item["amount"], currency_code=run.currency_code, kind=str(item["kind"]), taxable=False, pensionable=False, insurable=False, rule_code=str(item["component_code"]), mapping_status="review_required", explanation=f"source_column={item['source_column']}; source_record={record.id}"))
