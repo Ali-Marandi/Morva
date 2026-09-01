@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text
+from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -41,16 +41,33 @@ class SalaryRuleRecord(Base):
     pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
     insurable: Mapped[bool] = mapped_column(Boolean, default=False)
     legal_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    review_status: Mapped[str] = mapped_column(String(30), default="review_required", index=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class PayrollRunRecord(Base):
     __tablename__ = "payroll_runs"
+    __table_args__ = (UniqueConstraint("period", "organization_unit_id", name="uq_payroll_run_period_org"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     period: Mapped[str] = mapped_column(String(7), index=True)
+    organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
     ruleset_version: Mapped[str] = mapped_column(String(50))
+    ruleset_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
+    input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    output_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    exported_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reconciled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class PayrollLineRecord(Base):
@@ -63,6 +80,9 @@ class PayrollLineRecord(Base):
     title: Mapped[str] = mapped_column(String(200))
     amount: Mapped[Decimal] = mapped_column(Numeric(24, 4))
     kind: Mapped[str] = mapped_column(String(20))
+    taxable: Mapped[bool] = mapped_column(Boolean, default=False)
+    pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
+    insurable: Mapped[bool] = mapped_column(Boolean, default=False)
     rule_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -100,6 +120,7 @@ class AuditEventRecord(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    sequence_no: Mapped[int] = mapped_column(index=True)
     event_type: Mapped[str] = mapped_column(String(100), index=True)
     actor_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     entity_type: Mapped[str] = mapped_column(String(100), index=True)
@@ -107,3 +128,5 @@ class AuditEventRecord(Base):
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    previous_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    digest: Mapped[str] = mapped_column(String(64))
