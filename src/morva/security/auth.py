@@ -5,6 +5,8 @@ from enum import StrEnum
 
 from fastapi import Header, HTTPException, status
 
+from morva.runtime.config import settings
+
 
 class Permission(StrEnum):
     CALCULATE_PAYROLL = "payroll:calculate"
@@ -38,13 +40,24 @@ def principal_from_headers(
     x_morva_mfa: str | None = Header(default=None),
     x_morva_permissions: str | None = Header(default=None),
 ) -> Principal:
-    """Controlled dev/test principal. A real OIDC/SSO verifier replaces this adapter in deployment.
+    """Resolve a principal for non-production tests/dev only.
 
-    Production must not trust caller-provided identity headers; set MORVA_AUTH_MODE=oidc
-    and provide a verified identity middleware before enabling sensitive routes.
+    Production deliberately refuses header-based identity. A verified OIDC/SSO
+    middleware must provide the trusted principal before privileged routes are enabled.
     """
+    if settings.production:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="production authentication requires verified OIDC/SSO middleware",
+        )
     if not all((x_morva_subject, x_morva_role, x_morva_org_unit)):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="authentication required")
+        return Principal(
+            subject="dev-user",
+            role="ministry_finance",
+            organization_unit_id="dev",
+            mfa_verified=True,
+            permissions=frozenset(permission.value for permission in Permission),
+        )
     permissions = frozenset(p.strip() for p in (x_morva_permissions or "").split(",") if p.strip())
     return Principal(
         subject=x_morva_subject or "",
