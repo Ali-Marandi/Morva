@@ -179,6 +179,7 @@ class AuditEventRecord(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    event_id: Mapped[str] = mapped_column(String(36), unique=True, index=True)
     sequence_no: Mapped[int] = mapped_column(index=True)
     event_type: Mapped[str] = mapped_column(String(100), index=True)
     actor_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
