@@ -75,6 +75,7 @@ class PayrollRunRecord(Base):
     status: Mapped[str] = mapped_column(String(30), default="draft", index=True)
     input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     output_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_import_batch_id: Mapped[UUID | None] = mapped_column(nullable=True, index=True)
     created_by: Mapped[str] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -104,7 +105,7 @@ class PayrollLineRecord(Base):
     kind: Mapped[str] = mapped_column(String(20))
     taxable: Mapped[bool] = mapped_column(Boolean, default=False)
     pensionable: Mapped[bool] = mapped_column(Boolean, default=False)
-    insurable: Mapped[bool] = mapped_column(Boolean, default=False)
+    insurable: bool = mapped_column(Boolean, default=False)
     rule_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -151,6 +152,26 @@ class PersonnelOrderRecord(Base):
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[date] = mapped_column(Date, default=date.today)
+
+
+class PersonnelSnapshotRecord(Base):
+    __tablename__ = "personnel_snapshots"
+    __table_args__ = (UniqueConstraint("employee_no", "effective_period", name="uq_personnel_snapshot_employee_period"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    employee_no: Mapped[str] = mapped_column(String(50), index=True)
+    effective_period: Mapped[str] = mapped_column(String(7), index=True)
+    effective_date: Mapped[date] = mapped_column(Date)
+    organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
+    position_id: Mapped[str] = mapped_column(String(50))
+    employment_type: Mapped[str] = mapped_column(String(30))
+    employment_status: Mapped[str] = mapped_column(String(30))
+    source_import_batch_id: Mapped[UUID | None] = mapped_column(nullable=True, index=True)
+    source_hash: Mapped[str] = mapped_column(String(64))
+    snapshot_hash: Mapped[str] = mapped_column(String(64), index=True)
+    order_numbers: Mapped[list] = mapped_column(JSON, default=list)
+    components: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class RetroCaseRecord(Base):
