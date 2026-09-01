@@ -45,13 +45,7 @@ def upgrade() -> None:
         )
     inspector = _inspector()
     existing_import_indexes = {index["name"] for index in inspector.get_indexes("import_records")}
-    for name, column in (
-        ("ix_import_records_import_batch_id", "import_batch_id"),
-        ("ix_import_records_source_name", "source_name"),
-        ("ix_import_records_period", "period"),
-        ("ix_import_records_source_employee_key", "source_employee_key"),
-        ("ix_import_records_record_hash", "record_hash"),
-    ):
+    for name, column in (("ix_import_records_import_batch_id", "import_batch_id"), ("ix_import_records_source_name", "source_name"), ("ix_import_records_period", "period"), ("ix_import_records_source_employee_key", "source_employee_key"), ("ix_import_records_record_hash", "record_hash")):
         if name not in existing_import_indexes:
             op.create_index(name, "import_records", [column], unique=False)
 
@@ -61,7 +55,7 @@ def upgrade() -> None:
             sa.Column("id", sa.Uuid(), primary_key=True, nullable=False),
             sa.Column("employee_no", sa.String(length=50), nullable=False),
             sa.Column("effective_period", sa.String(length=7), nullable=False),
-            sa.Column("effective_date", sa.Date(), nullable=False),
+            sa.Column("effective_date", sa.Date(), nullable=True),
             sa.Column("organization_unit_id", sa.String(length=50), nullable=False),
             sa.Column("position_id", sa.String(length=50), nullable=False),
             sa.Column("employment_type", sa.String(length=30), nullable=False),
@@ -76,13 +70,7 @@ def upgrade() -> None:
         )
     inspector = _inspector()
     existing_snapshot_indexes = {index["name"] for index in inspector.get_indexes("personnel_snapshots")}
-    for name, column in (
-        ("ix_personnel_snapshots_employee_no", "employee_no"),
-        ("ix_personnel_snapshots_effective_period", "effective_period"),
-        ("ix_personnel_snapshots_organization_unit_id", "organization_unit_id"),
-        ("ix_personnel_snapshots_source_import_batch_id", "source_import_batch_id"),
-        ("ix_personnel_snapshots_snapshot_hash", "snapshot_hash"),
-    ):
+    for name, column in (("ix_personnel_snapshots_employee_no", "employee_no"), ("ix_personnel_snapshots_effective_period", "effective_period"), ("ix_personnel_snapshots_organization_unit_id", "organization_unit_id"), ("ix_personnel_snapshots_source_import_batch_id", "source_import_batch_id"), ("ix_personnel_snapshots_snapshot_hash", "snapshot_hash")):
         if name not in existing_snapshot_indexes:
             op.create_index(name, "personnel_snapshots", [column], unique=False)
 
@@ -96,8 +84,10 @@ def downgrade() -> None:
     if "payroll_runs" in set(inspector.get_table_names()):
         if "ix_payroll_runs_source_import_batch_id" in {index["name"] for index in inspector.get_indexes("payroll_runs")}:
             op.drop_index("ix_payroll_runs_source_import_batch_id", table_name="payroll_runs")
-        if "source_import_batch_id" in {column["name"] for column in inspector.get_columns("payroll_runs")}: op.drop_column("payroll_runs", "source_import_batch_id")
+        if "source_import_batch_id" in {column["name"] for column in inspector.get_columns("payroll_runs")}:
+            op.drop_column("payroll_runs", "source_import_batch_id")
     if "employees" in set(inspector.get_table_names()):
         if "ix_employees_source_employee_key" in {index["name"] for index in inspector.get_indexes("employees")}:
             op.drop_index("ix_employees_source_employee_key", table_name="employees")
-        if "source_employee_key" in {column["name"] for column in inspector.get_columns("employees")}: op.drop_column("employees", "source_employee_key")
+        if "source_employee_key" in {column["name"] for column in inspector.get_columns("employees")}:
+            op.drop_column("employees", "source_employee_key")
