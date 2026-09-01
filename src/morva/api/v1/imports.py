@@ -9,6 +9,7 @@ from sqlalchemy import select
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
 from morva.persistence.models import EmployeeRecord, ImportBatchRecord, ImportIssueRecord, ImportRecordRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord
+from morva.payroll.lifecycle import PayrollStatus, transition
 from morva.payroll.source_projection import project_components
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import authorize
@@ -32,7 +33,7 @@ def project_import(import_batch_id: UUID, payload: ProjectRequest, principal: Pr
         authorize(principal, "payroll.run.create", principal.scope, resource_scope_id=run.organization_unit_id)
         if batch.status != "ready":
             raise HTTPException(status_code=423, detail="import batch is quarantined or not ready")
-        if run.status != "draft":
+        if run.status != PayrollStatus.DRAFT.value:
             raise HTTPException(status_code=409, detail="payroll run must be draft before source projection")
         if run.period != batch.period:
             raise HTTPException(status_code=409, detail="import period does not match payroll run period")
@@ -62,7 +63,10 @@ def project_import(import_batch_id: UUID, payload: ProjectRequest, principal: Pr
                     continue
                 session.add(PayrollLineRecord(id=uuid4(), payroll_run_id=run.id, source_record_id=record.id, employee_no=employee.employee_no, code=str(item["component_code"]), title=str(item["component_code"]), amount=item["amount"], currency_code=run.currency_code, kind=str(item["kind"]), taxable=False, pensionable=False, insurable=False, rule_code=str(item["component_code"]), mapping_status="review_required", explanation=f"source_column={item['source_column']}; source_record={record.id}"))
                 created += 1
+        if quarantined or created == 0:
+            raise HTTPException(status_code=423, detail="source projection is not calculation-ready; unresolved quarantine/mapping findings remain")
         run.source_import_batch_id = batch.id
-        append_audit_event(event_type="import.batch.projected", entity_type="import_batch", entity_id=batch.id, actor_id=principal.user_id, payload={"payroll_run_id": str(run.id), "created_lines": created, "quarantined_components": quarantined}, reason="project source import into payroll run", session=session)
+        run.status = transition(PayrollStatus(run.status), PayrollStatus.DATA_RECEIVED).value
+        append_audit_event(event_type="import.batch.projected", entity_type="import_batch", entity_id=batch.id, actor_id=principal.user_id, payload={"payroll_run_id": str(run.id), "created_lines": created, "quarantined_components": quarantined, "next_status": run.status}, reason="project validated source import into payroll run", session=session)
         session.commit()
-        return {"import_batch_id": str(batch.id), "payroll_run_id": str(run.id), "created_lines": created, "quarantined_components": quarantined, "mapping_status": "review_required"}
+        return {"import_batch_id": str(batch.id), "payroll_run_id": str(run.id), "created_lines": created, "quarantined_components": quarantined, "mapping_status": "review_required", "payroll_run_status": run.status}
