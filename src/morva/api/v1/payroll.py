@@ -49,15 +49,15 @@ def create_run(payload: PayrollRunCreate, principal: Principal = Depends(get_cur
             status=PayrollStatus.DRAFT.value, created_by=principal.user_id,
         )
         session.add(record)
+        session.flush()
+        append_audit_event(
+            event_type="payroll.run.created", entity_type="payroll_run", entity_id=record.id,
+            actor_id=principal.user_id,
+            payload={"period": payload.period, "organization_unit_id": payload.organization_unit_id, "ruleset_version": payload.ruleset_version},
+            reason="create payroll run", session=session,
+        )
         session.commit()
-        run_id = str(record.id)
-    append_audit_event(
-        event_type="payroll.run.created", entity_type="payroll_run", entity_id=run_id,
-        actor_id=principal.user_id,
-        payload={"period": payload.period, "organization_unit_id": payload.organization_unit_id, "ruleset_version": payload.ruleset_version},
-        reason="create payroll run",
-    )
-    return {"id": run_id, "status": PayrollStatus.DRAFT.value, "created_by": principal.user_id}
+        return {"id": str(record.id), "status": PayrollStatus.DRAFT.value, "created_by": principal.user_id}
 
 
 @router.post("/calculate", status_code=status.HTTP_410_GONE)
@@ -92,11 +92,11 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
         run.payment_confirmed_by, run.payment_confirmed_at = principal.user_id, now
     elif target is PayrollStatus.RECONCILED:
         run.reconciled_by, run.reconciled_at = principal.user_id, now
-    session.commit()
     append_audit_event(
         event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id),
-        actor_id=principal.user_id, payload={"status": target.value}, reason=reason,
+        actor_id=principal.user_id, payload={"status": target.value}, reason=reason, session=session,
     )
+    session.commit()
 
 
 @router.post("/runs/{run_id}/calculate")
@@ -119,19 +119,14 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         results: dict[str, object] = {}
         for employee_no in sorted(employee_numbers):
             employee_lines = [PayrollLine(code=line.code, title=line.title, amount=line.amount, kind=line.kind, taxable=line.taxable, pensionable=line.pensionable, insurable=line.insurable, rule_code=line.rule_code, explanation=line.explanation) for line in lines if line.employee_no == employee_no]
-            result = calculator.calculate(
-                employee_no=employee_no,
-                period=datetime.strptime(run.period + "-01", "%Y-%m-%d").date(),
-                ruleset_version=run.ruleset_version,
-                lines=employee_lines,
-            )
+            result = calculator.calculate(employee_no=employee_no, period=datetime.strptime(run.period + "-01", "%Y-%m-%d").date(), ruleset_version=run.ruleset_version, lines=employee_lines)
             results[employee_no] = {"gross": str(result.result.gross), "deductions": str(result.result.deductions), "net": str(result.result.net), "fingerprint": result.fingerprint}
         run.input_hash = _hash_lines(lines)
         run.output_hash = _hash_results(results)
         run.status = transition(PayrollStatus.DRAFT, PayrollStatus.CALCULATING).value
+        append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results)}, reason="calculate persisted payroll run", session=session)
         session.commit()
-    append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run_id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results)}, reason="calculate persisted payroll run")
-    return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "input_hash": run.input_hash, "output_hash": run.output_hash}
+        return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "input_hash": run.input_hash, "output_hash": run.output_hash}
 
 
 @router.post("/runs/{run_id}/validate")
@@ -171,7 +166,9 @@ def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
 @router.post("/runs/{run_id}/export")
 def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> None:
     with SessionLocal() as session:
-        _load_run(session, run_id, principal, "payroll.run.approve")
+        run = _load_run(session, run_id, principal, "payroll.run.approve")
+        if run.status != PayrollStatus.FROZEN.value:
+            raise HTTPException(status_code=409, detail="payroll run must be frozen before export")
     if not settings.integrations_enabled:
         raise HTTPException(status_code=503, detail="external integrations are not enabled; export is fail-closed")
     raise HTTPException(status_code=503, detail="no approved production export adapter is configured")
