@@ -5,7 +5,7 @@ from morva.payroll.calculator import PayrollCalculator
 from morva.payroll.models import PayrollLine
 from morva.payroll.policies import TaxBracket, TaxPolicy, ContributionPolicy
 from morva.payroll.retro import calculate_retroactive
-from morva.rank.models import Rank
+from morva.rank.models import TeacherRank
 
 
 def test_golden_payroll_is_deterministic():
@@ -31,4 +31,4 @@ def test_retro_difference_preserves_zero_and_negative_changes():
 
 
 def test_rank_values_are_explicit():
-    assert [r.value for r in Rank] == ["education_assistant", "instructor", "assistant_professor", "associate_professor", "professor"]
+    assert [r.value for r in TeacherRank] == ["education_assistant", "instructor", "assistant_professor", "associate_professor", "professor"]
