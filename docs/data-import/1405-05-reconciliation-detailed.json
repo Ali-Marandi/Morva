@@ -1,0 +1,32 @@
+{
+  "period": "1405-05",
+  "controls": {
+    "population": 3329,
+    "order_rows": 22696,
+    "loan_rows": 20671,
+    "supplementary_rows": 2193,
+    "health_rows": 2197,
+    "social_rows": 1116,
+    "gross_component_match_rows": 3329,
+    "net_match_rows": 3329,
+    "residual_exception_rows": 9,
+    "residual_exception_total": "55625337"
+  },
+  "interpretation": {
+    "gross_control": "The sum of 27 source payroll earning components equals reported gross benefits for every payroll row.",
+    "net_control": "Reported gross minus reported deductions equals reported net for every payroll row.",
+    "deduction_residual": "Nine employees have a non-zero residual after listed payroll deductions plus loan installments. Residuals are preserved as reconciliation exceptions and are not auto-adjusted.",
+    "legal_status": "This is source-data reconciliation only. It does not activate or assert legal calculation rules."
+  },
+  "residuals": [
+    {"employee_key":"EMP-52d79e257c327ff4","delta":"2000000"},
+    {"employee_key":"EMP-107eb7d51283b1fc","delta":"-21135278"},
+    {"employee_key":"EMP-eb83f241b03df35b","delta":"6000000"},
+    {"employee_key":"EMP-b11edaecca4906b2","delta":"37260615"},
+    {"employee_key":"EMP-44b8aa82c6c011c9","delta":"500000"},
+    {"employee_key":"EMP-a502d535d33375ea","delta":"1000000"},
+    {"employee_key":"EMP-e8a147408138d7b6","delta":"10000000"},
+    {"employee_key":"EMP-e186bf4e5c3d0177","delta":"10000000"},
+    {"employee_key":"EMP-c5dc69edf28846ba","delta":"10000000"}
+  ]
+}
