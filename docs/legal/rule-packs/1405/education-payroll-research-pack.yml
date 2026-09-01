@@ -1,0 +1,50 @@
+version: "1405-research-1"
+status: "review_required"
+jurisdiction: "Iran"
+domain: "education_payroll"
+
+sources:
+  - id: "HR_COEFFICIENT_1405"
+    title: "مصوبه تعیین ضرایب حقوق کارکنان و اعضای هیأت علمی در سال ۱۴۰۵"
+    source_type: "government_decision_reported"
+    reported_effective_year: 1405
+    legal_effect: "review_required"
+    note: "Reported coefficient for employees subject to Civil Service Management Law: 6,954 IRR per point. Must be confirmed against the authoritative promulgated text before activation."
+  - id: "TEACHER_RANKING_REG_1404"
+    title: "آیین‌نامه اجرایی قانون نظام رتبه‌بندی معلمان [مصوب ۱۴۰۴]"
+    source_type: "government_regulation"
+    effective_from: "1404/06/31"
+    legal_effect: "reviewed_source"
+    note: "Replaces the 1401 regulation from 1404/06/31; promotion workflow, five ranks, assessment evidence and committees are modeled separately."
+
+policies:
+  coefficient:
+    year: 1405
+    civil_service_employee_point_irr: 6954
+    readiness: "review_required"
+  teacher_ranking:
+    regulation_year: 1404
+    effective_from: "1404/06/31"
+    minimum_service_years_for_promotion: 5
+    promotion_workflow:
+      - request
+      - evidence_submission
+      - assessment
+      - committee_review
+      - decision
+      - electronic_report_card
+      - appeal
+    appeal_days: 20
+    readiness: "reviewed_source"
+  sina:
+    monthly_personnel_updates_required: true
+    monthly_order_updates_required: true
+    single_monthly_payroll_document: true
+    readiness: "integration_contract_only"
+
+activation_gate:
+  requires_authoritative_document: true
+  requires_finance_review: true
+  requires_regression_suite: true
+  requires_population_reconciliation: true
+  requires_effective_date_test: true
