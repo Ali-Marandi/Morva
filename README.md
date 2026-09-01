@@ -2,11 +2,11 @@
 
 سامانه جامع، قانون‌محور و قابل حسابرسی حقوق و دستمزد کارکنان آموزش‌وپرورش.
 
-## وضعیت
+## وضعیت نسخه
 
-نسخه توسعه فعلی: **0.4.0 Foundation/MVP Core**
+**Morva 1.0.0-rc1 — Production Release Candidate**
 
-مروا از یک Modular Monolith شروع می‌کند تا منطق حقوق، احکام، قوانین، کسورات، معوقات، حسابرسی و اتصال‌ها یک هسته تراکنشی منسجم داشته باشند.
+هسته سامانه، مدل دامنه، موتور قوانین، Payroll، احکام، رتبه‌بندی، معوقات، ledgerها، validation، audit، integration ports، self-service، analytics، security و عملیات PostgreSQL در repository پیاده شده‌اند.
 
 ## معماری
 
@@ -17,37 +17,49 @@ Personnel -> Orders -> Rule Set -> Payroll -> Tax/Pension/Insurance
                     Audit Trail      Retro/Validation
                          |
                          v
-                External Adapters (SINA/Accounting/Treasury)
+       SINA / Accounting / Treasury / Bank Adapters
+                         |
+                         v
+                 Employee / Finance / Management UI
 ```
 
-## اصول
+## اصول حیاتی
 
 - Rules are versioned and effective-dated data.
-- Personnel orders preserve issue/effective history.
+- Personnel orders preserve history.
 - Payroll calculations are deterministic, explainable and fingerprinted.
 - Retroactive recalculation is first-class.
-- Legal references are stored alongside rules and payroll evidence.
-- External systems are adapters, never the domain core.
-- Demo tax/contribution policies are development fixtures only.
+- Legal references travel with rules and payroll evidence.
+- AI is advisory only and cannot alter legal truth or release payment.
+- Real employee/payroll data never belongs in Git.
 
-## اجرای API
+## اجرا
 
 ```bash
 pip install -e '.[dev]'
 uvicorn morva.api.main:app --reload
 ```
 
-سپس: `GET /health`
-
-مستندات OpenAPI در `/docs` در دسترس است.
+`GET /health` برای liveness و `GET /ready` برای readiness استفاده می‌شود.
 
 ## تست
 
 ```bash
-pytest -q
+python -m compileall -q src tests
 ruff check .
+pytest -q
 ```
 
-## توجه تولیدی
+## Production gate
 
-تا زمانی که Rule Pack هر سال از منابع رسمی بررسی و تأیید نشده، مروا نباید برای محاسبه حقوق واقعی استفاده شود. داده‌های قانونی باید شامل منبع، تاریخ اثر، نسخه، وضعیت بررسی و تست‌های بازگشتی باشند.
+برای استفاده واقعی، همه Ruleهای فعال باید منبع اولیه، ماده/بند، تاریخ اثر، بازبین و تست رگرسیون داشته باشند؛ نمونه واقعی هر population باید line-by-line با خروجی مروا reconcile شود؛ endpoint و credential سامانه‌های بیرونی باید در محیط غیرتولیدی تست شوند؛ و backup/PITR، load، امنیت و SoD باید تأیید شده باشند.
+
+Rule Packهای 1405 که هنوز `review_required` هستند عمداً فعال نمی‌شوند.
+
+## مستندات
+
+- `docs/IMPLEMENTATION_MATRIX.md`
+- `docs/PRODUCTION_READINESS.md`
+- `docs/RELEASE_1_0.md`
+- `docs/ops/PRODUCTION_RUNBOOK.md`
+- `docs/legal/LAW_CATALOG.md`
