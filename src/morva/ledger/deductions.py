@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
 
 
@@ -10,7 +9,7 @@ class Installment:
     number: int
     due_period: str
     principal: Decimal
-    fee: Decimal = Decimal("0")
+    fee: Decimal = Decimal(0)
 
     @property
     def total(self) -> Decimal:
@@ -76,7 +75,12 @@ class DeductionLedger:
         self._entries.append(entry)
 
     def for_period(self, employee_no: str, period: str) -> tuple[DeductionEntry, ...]:
-        return tuple(sorted((x for x in self._entries if x.employee_no == employee_no and x.period == period), key=lambda x: (not x.mandatory, x.priority)))
+        return tuple(
+            sorted(
+                (x for x in self._entries if x.employee_no == employee_no and x.period == period),
+                key=lambda x: (not x.mandatory, x.priority),
+            )
+        )
 
     def total(self, employee_no: str, period: str) -> Decimal:
-        return sum((x.amount for x in self.for_period(employee_no, period)), Decimal("0"))
+        return sum((x.amount for x in self.for_period(employee_no, period)), Decimal(0))
