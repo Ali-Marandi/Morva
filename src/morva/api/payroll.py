@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from morva.payroll.models import PayrollLine
 from morva.payroll.service import PayrollService
 
 
