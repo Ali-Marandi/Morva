@@ -7,6 +7,7 @@ from typing import Mapping
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from morva.audit.chain import AuditEvent
 from morva.persistence.database import SessionLocal
@@ -32,7 +33,8 @@ def _digest(event: AuditEvent) -> str:
     return sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def append_audit_event(
+def _append_with_session(
+    session: Session,
     *,
     event_type: str,
     entity_type: str,
@@ -41,45 +43,76 @@ def append_audit_event(
     payload: Mapping[str, object],
     reason: str | None = None,
 ) -> AuditEventRecord:
-    """Persist one hash-linked event while serializing updates through a DB row lock."""
-    with SessionLocal() as session:
-        head = session.execute(
-            select(AuditChainHeadRecord).where(AuditChainHeadRecord.id == 1).with_for_update()
-        ).scalar_one_or_none()
-        if head is None:
-            head = AuditChainHeadRecord(id=1, sequence_no=0, digest=None)
-            session.add(head)
-            session.flush()
+    head = session.execute(
+        select(AuditChainHeadRecord).where(AuditChainHeadRecord.id == 1).with_for_update()
+    ).scalar_one_or_none()
+    if head is None:
+        head = AuditChainHeadRecord(id=1, sequence_no=0, digest=None)
+        session.add(head)
+        session.flush()
 
-        sequence_no = head.sequence_no + 1
-        previous_hash = head.digest
-        event = AuditEvent(
-            event_id=str(uuid4()),
+    event = AuditEvent(
+        event_id=str(uuid4()),
+        event_type=event_type,
+        entity_type=entity_type,
+        entity_id=str(entity_id),
+        actor_id=actor_id,
+        payload=dict(payload),
+        previous_hash=head.digest,
+    )
+    record = AuditEventRecord(
+        event_id=event.event_id,
+        sequence_no=head.sequence_no + 1,
+        event_type=event.event_type,
+        actor_id=event.actor_id,
+        entity_type=event.entity_type,
+        entity_id=event.entity_id,
+        payload=dict(event.payload),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        reason=reason,
+        previous_hash=event.previous_hash,
+        digest=_digest(event),
+    )
+    session.add(record)
+    head.sequence_no = record.sequence_no
+    head.digest = record.digest
+    session.flush()
+    return record
+
+
+def append_audit_event(
+    *,
+    event_type: str,
+    entity_type: str,
+    entity_id: str | UUID,
+    actor_id: str | None,
+    payload: Mapping[str, object],
+    reason: str | None = None,
+    session: Session | None = None,
+) -> AuditEventRecord:
+    """Append an audit event; pass the business transaction session for atomic audit."""
+    if session is not None:
+        return _append_with_session(
+            session,
             event_type=event_type,
             entity_type=entity_type,
-            entity_id=str(entity_id),
+            entity_id=entity_id,
             actor_id=actor_id,
-            payload=dict(payload),
-            previous_hash=previous_hash,
-        )
-        record = AuditEventRecord(
-            event_id=event.event_id,
-            sequence_no=sequence_no,
-            event_type=event.event_type,
-            actor_id=event.actor_id,
-            entity_type=event.entity_type,
-            entity_id=event.entity_id,
-            payload=dict(event.payload),
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            payload=payload,
             reason=reason,
-            previous_hash=previous_hash,
-            digest=_digest(event),
         )
-        session.add(record)
-        head.sequence_no = sequence_no
-        head.digest = record.digest
-        session.commit()
-        session.refresh(record)
+    with SessionLocal() as own_session:
+        record = _append_with_session(
+            own_session,
+            event_type=event_type,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            actor_id=actor_id,
+            payload=payload,
+            reason=reason,
+        )
+        own_session.commit()
+        own_session.refresh(record)
         return record
 
 
