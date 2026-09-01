@@ -4,6 +4,9 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
+
+from morva.data_import.contract import sha256_file, validate_columns, validate_period
 from morva.data_import.service_v2 import DEDUCTION_COLUMNS, GROSS_COLUMNS, MorvaImportService, money
 
 
@@ -35,3 +38,20 @@ def test_anonymized_fixture_matches_import_contract() -> None:
 def test_service_exposes_six_source_reader() -> None:
     service = MorvaImportService()
     assert callable(service.import_directory)
+
+
+def test_validate_period_rejects_invalid_month() -> None:
+    with pytest.raises(ValueError):
+        validate_period("1405-13")
+
+
+def test_validate_columns_quarantines_missing_schema() -> None:
+    result = validate_columns([{"employee": "surrogate"}], ["employee", "gross"], source_name="payroll")
+    assert not result.accepted
+    assert result.issues[0].issue_code == "REQUIRED_COLUMN_MISSING"
+
+
+def test_sha256_file_is_deterministic(tmp_path: Path) -> None:
+    path = tmp_path / "sample.dat"
+    path.write_bytes(b"morva-safe-fixture")
+    assert sha256_file(path) == sha256_file(path)
