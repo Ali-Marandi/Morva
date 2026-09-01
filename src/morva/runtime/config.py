@@ -10,6 +10,7 @@ class Settings:
     database_url: str = os.getenv("MORVA_DATABASE_URL", "sqlite:///./morva.db")
     require_mfa: bool = os.getenv("MORVA_REQUIRE_MFA", "true").lower() == "true"
     integrations_enabled: bool = os.getenv("MORVA_INTEGRATIONS_ENABLED", "false").lower() == "true"
+    auth_mode: str = os.getenv("MORVA_AUTH_MODE", "dev_headers").lower()
     log_level: str = os.getenv("MORVA_LOG_LEVEL", "INFO")
 
     @property
@@ -23,6 +24,8 @@ class Settings:
             raise RuntimeError("MFA must be enabled in production")
         if self.production and not self.integrations_enabled:
             raise RuntimeError("Production integrations must be explicitly enabled")
+        if self.production and self.auth_mode != "oidc":
+            raise RuntimeError("Production authentication must use MORVA_AUTH_MODE=oidc")
 
 
 settings = Settings()
