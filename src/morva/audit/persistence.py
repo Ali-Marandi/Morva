@@ -6,11 +6,11 @@ from hashlib import sha256
 from typing import Mapping
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from morva.audit.chain import AuditEvent
 from morva.persistence.database import SessionLocal
-from morva.persistence.models import AuditEventRecord
+from morva.persistence.models import AuditChainHeadRecord, AuditEventRecord
 
 
 def _digest(event: AuditEvent) -> str:
@@ -41,11 +41,18 @@ def append_audit_event(
     payload: Mapping[str, object],
     reason: str | None = None,
 ) -> AuditEventRecord:
-    """Persist one append-only audit event and link it to the previous digest."""
+    """Persist one hash-linked event while serializing updates through a DB row lock."""
     with SessionLocal() as session:
-        previous = session.scalar(select(AuditEventRecord).order_by(AuditEventRecord.sequence_no.desc()).limit(1))
-        sequence_no = (previous.sequence_no + 1) if previous else 1
-        previous_hash = previous.digest if previous else None
+        head = session.execute(
+            select(AuditChainHeadRecord).where(AuditChainHeadRecord.id == 1).with_for_update()
+        ).scalar_one_or_none()
+        if head is None:
+            head = AuditChainHeadRecord(id=1, sequence_no=0, digest=None)
+            session.add(head)
+            session.flush()
+
+        sequence_no = head.sequence_no + 1
+        previous_hash = head.digest
         event = AuditEvent(
             event_id=str(uuid4()),
             event_type=event_type,
@@ -68,6 +75,39 @@ def append_audit_event(
             digest=_digest(event),
         )
         session.add(record)
+        head.sequence_no = sequence_no
+        head.digest = record.digest
         session.commit()
         session.refresh(record)
         return record
+
+
+def verify_audit_chain() -> None:
+    """Raise if the persistent audit chain has a gap, mutation, or incorrect head."""
+    with SessionLocal() as session:
+        events = session.scalars(
+            select(AuditEventRecord).order_by(AuditEventRecord.sequence_no.asc())
+        ).all()
+        previous_hash: str | None = None
+        for expected_sequence, record in enumerate(events, start=1):
+            if record.sequence_no != expected_sequence:
+                raise RuntimeError("audit sequence gap detected")
+            event = AuditEvent(
+                event_id=str(record.id),
+                event_type=record.event_type,
+                entity_type=record.entity_type,
+                entity_id=record.entity_id,
+                actor_id=record.actor_id,
+                payload=record.payload,
+                previous_hash=record.previous_hash,
+            )
+            # Stored event_id is the immutable UUID used for verification. New records
+            # created by append_audit_event use the same UUID value as their AuditEvent.
+            if record.previous_hash != previous_hash or record.digest != _digest(event):
+                raise RuntimeError("audit chain integrity verification failed")
+            previous_hash = record.digest
+
+        head = session.get(AuditChainHeadRecord, 1)
+        expected_sequence = len(events)
+        if head is None or head.sequence_no != expected_sequence or head.digest != previous_hash:
+            raise RuntimeError("audit chain head does not match event ledger")
