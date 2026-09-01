@@ -1,88 +1,88 @@
-# Morva — P0 Hardening Implementation Status
+# Morva — P0/P1 Implementation Status
 
 **Date:** 2026-09-01  
-**Branch:** `p0-hardening`  
-**Latest implementation commit at publication:** tracked by the branch head in GitHub.
+**Branch:** `p1-import-personnel-chain`  
+**Status:** hardening implementation branch; not certified for real payroll/payment.
 
-## Completed in this stage
+## Completed implementation
 
 ### Trust boundary
 
 - Disabled `POST /api/v1/payroll/calculate` with HTTP 410.
 - Added persisted `PayrollRun` creation and server-owned calculation entry point.
-- Calculation now requires an approved/published Rule Pack and validates the Rule Pack hash when supplied.
-- Payroll source lines must match the run currency.
+- Calculation requires an approved/published Rule Pack, immutable source import, personnel snapshot, approved payroll-line mappings and matching currency.
 - External export remains fail-closed until an approved production adapter exists.
 
-### Lifecycle
+### Canonical payroll lifecycle
 
-The payroll state machine is unified around:
+There is now exactly one state-machine implementation in `src/morva/payroll/lifecycle.py`:
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
 
-Terminal cancellation is retained. Approval cannot bypass review.
+`cancelled` is terminal. `src/morva/payroll/workflow.py` is compatibility-only and re-exports the canonical implementation; it contains no independent state enum or transition table.
+
+The API now cannot jump directly from `draft` to `calculating`; validated source projection advances the run to `data_received`, and calculation can begin only from that state.
 
 ### Security
 
-- Added OIDC/JWT bearer-token verification with issuer, audience, signature and required-claim validation.
-- Protected all `/api/v1` routers with authenticated principal resolution.
-- Added permission-oriented RBAC primitives and organization scope checks.
-- Added MFA enforcement for privileged transitions.
-- Added a separation-of-duties primitive and applied it to review/approval/freeze transitions.
-- Unified the principal model used by authentication and policy layers.
+- OIDC/JWT bearer-token verification with issuer/audience/signature/required-claim validation.
+- Authenticated principal resolution at the API boundary.
+- Permission-oriented RBAC primitives with organization-scope checks.
+- MFA enforcement for privileged transitions.
+- Separation-of-duties checks for review/approval/freeze transitions.
 
 ### Audit
 
-- Added persistent audit event storage.
-- Added a persistent chain head to serialize sequence/hash updates.
-- Persisted immutable event identifiers.
-- Added chain verification.
-- Business mutations and their corresponding audit events are committed in the same database transaction for the protected payroll-run operations.
+- Persistent audit-event storage.
+- Persistent chain head and sequence/hash continuity.
+- Immutable event identifiers.
+- Verification support.
+- Payroll-run mutations and audit events are committed within the same transaction where implemented.
 
 ### Database / operations
 
-- Added PostgreSQL-oriented production validation.
-- Added migration-managed production startup gate.
-- Added Alembic baseline configuration and revision.
-- Added explicit production environment variables for OIDC, migration readiness and demo-policy control.
-- Production rejects SQLite, disabled MFA, missing OIDC configuration, demo policies and an unmanaged schema.
+- PostgreSQL production guard.
+- Migration-managed production startup gate.
+- Alembic revisions for baseline and P1 provenance structures.
+- Production rejects SQLite, disabled MFA, missing OIDC configuration, demo policies and unmanaged schema state.
 
-### Demo isolation / UI
+### Import / data lineage
 
-- Demo payroll policy execution is disabled unless explicitly enabled in non-production.
-- Demo policies cannot be enabled in production.
-- Removed fabricated operational metrics and fake current-period status from the web dashboard.
-- Added web build to CI.
+- `ImportBatch` manifest/provenance/checksum contract.
+- Durable `ImportRecord` source layer.
+- `EmployeeRecord.source_employee_key` mapping.
+- Immutable per-period `PersonnelSnapshot` foundation.
+- Source projection into payroll lines with explicit provenance.
+- Unmapped components and missing master data are quarantined.
+- Unreviewed mappings remain `review_required` and cannot be calculated.
+- Jalali period keys remain textual/canonical; no accidental Gregorian coercion.
 
-### Tests / CI
+## Tests and CI
 
-Added or updated coverage for:
+Coverage added or aligned for:
 
-- legacy calculation route removal;
-- persisted PayrollRun creation;
-- unified lifecycle invariants;
-- separation of duties and organization scope;
-- production fail-closed configuration;
-- persistent audit-chain round trip;
+- canonical lifecycle and invalid transitions;
+- import provenance and checksum behavior;
+- quarantine/fail-closed projection;
+- source-to-payroll lineage;
+- persistent PayrollRun controls;
+- security/SoD invariants;
 - Alembic migration execution;
-- frontend build;
-- dependency audit gate.
+- dependency audit and frontend build.
 
-## What is intentionally not claimed
+## Remaining mandatory production gates
 
-This stage does **not** certify Morva for real payroll or payment.
+These are not safely completable by code alone and therefore remain explicit gates:
 
-The following remain mandatory before any real production payroll decision:
+1. Primary-source legal evidence and formal finance/legal approval for every active Rule Pack.
+2. Complete authoritative Master Data hierarchy and source contracts for the employing organization.
+3. Full tax, pension, insurance, loan and judicial-deduction policy implementations with approved legal treatment.
+4. Durable employee-level payroll result/payslip artifacts and historical replay evidence.
+5. Complete SINA, accounting, treasury, bank, tax and insurance adapters using official schemas/credentials, staging acknowledgements and idempotency tests.
+6. Payment release and bank reconciliation controls.
+7. Encryption-at-rest, production key management, secret management and rotation.
+8. Backup/WAL/PITR restore evidence and disaster-recovery drills.
+9. Load, concurrency, mutation and security test evidence at target population scale.
+10. Complete enterprise operational UX/self-service/reporting.
 
-1. authoritative legal-source import and formal finance/legal approval for every active Rule Pack;
-2. master-data-driven payroll snapshots instead of direct source-line staging as the long-term authoritative calculation input;
-3. complete import/quarantine workflow and authoritative source contracts;
-4. complete SINA, accounting, treasury, bank, tax and insurance adapters with staging acknowledgements;
-5. payment release controls and bank reconciliation;
-6. encryption-at-rest/key management, operational secret management, backup/WAL/PITR and restore-drill evidence;
-7. load, concurrency, security and disaster-recovery test evidence;
-8. complete employee self-service, reports and operational UX.
-
-## Verification state
-
-GitHub Actions has been triggered for this branch. The web-build job has reached the build step successfully; the Python/PostgreSQL test jobs are still executing at the time this document was written. No green production-certification claim is made until the complete CI result is successful and the remaining production gates have formal evidence.
+**Safety rule:** none of the above gates is implied to be passed merely because an interface, fixture, runbook or adapter contract exists. Morva must remain fail-closed until evidence exists.
