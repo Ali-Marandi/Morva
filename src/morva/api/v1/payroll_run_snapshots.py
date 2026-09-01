@@ -46,7 +46,7 @@ def create_snapshot(
                 run_id=run_id,
                 employee_no=payload.employee_no,
                 source_manifest_hash=payload.source_manifest_hash.lower(),
-                payload={"employee_no": payload.employee_no, "lines": [line.model_dump() for line in payload.lines]},
+                payload={"employee_no": payload.employee_no, "lines": [line.model_dump(mode="json") for line in payload.lines]},
                 principal=principal,
             )
             session.commit()
