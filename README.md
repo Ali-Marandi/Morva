@@ -12,8 +12,6 @@ Public web target:
 
 The repository includes a GitHub Pages deployment workflow under `.github/workflows/web-pages.yml`.
 
-## Important
-
 This public web release is a UI/release-candidate deployment. It is not authorization to process real payroll until the production-readiness gates for legal rules, authoritative payroll samples, external integrations, security, reconciliation and disaster recovery are approved.
 
 ## Local web
