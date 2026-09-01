@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: morva
+      POSTGRES_USER: morva
+      POSTGRES_PASSWORD: ${MORVA_DB_PASSWORD:?set MORVA_DB_PASSWORD}
+    volumes:
+      - morva_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morva -d morva"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ..
+    environment:
+      MORVA_ENV: production
+      MORVA_DATABASE_URL: postgresql+psycopg://morva:${MORVA_DB_PASSWORD}@db:5432/morva
+      MORVA_REQUIRE_MFA: "true"
+      MORVA_INTEGRATIONS_ENABLED: "false"
+      MORVA_LOG_LEVEL: INFO
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  morva_pgdata:
