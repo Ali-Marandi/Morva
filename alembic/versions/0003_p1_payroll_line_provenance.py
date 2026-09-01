@@ -19,7 +19,7 @@ def upgrade() -> None:
         op.add_column("payroll_lines", sa.Column("source_record_id", sa.Uuid(), nullable=True))
     if "mapping_status" not in columns:
         op.add_column("payroll_lines", sa.Column("mapping_status", sa.String(length=30), nullable=False, server_default="review_required"))
-    indexes = {i["name"] for i in inspector.get_indexes("payroll_lines")}
+    indexes = {i["name"] for i in sa.inspect(op.get_bind()).get_indexes("payroll_lines")}
     if "ix_payroll_lines_source_record_id" not in indexes:
         op.create_index("ix_payroll_lines_source_record_id", "payroll_lines", ["source_record_id"], unique=False)
     if "ix_payroll_lines_mapping_status" not in indexes:
@@ -29,12 +29,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     inspector = sa.inspect(op.get_bind())
     indexes = {i["name"] for i in inspector.get_indexes("payroll_lines")}
-    if "ix_payroll_lines_mapping_status" in indexes:
-        op.drop_index("ix_payroll_lines_mapping_status", table_name="payroll_lines")
-    if "ix_payroll_lines_source_record_id" in indexes:
-        op.drop_index("ix_payroll_lines_source_record_id", table_name="payroll_lines")
+    if "ix_payroll_lines_mapping_status" in indexes: op.drop_index("ix_payroll_lines_mapping_status", table_name="payroll_lines")
+    if "ix_payroll_lines_source_record_id" in indexes: op.drop_index("ix_payroll_lines_source_record_id", table_name="payroll_lines")
     columns = {c["name"] for c in inspector.get_columns("payroll_lines")}
-    if "mapping_status" in columns:
-        op.drop_column("payroll_lines", "mapping_status")
-    if "source_record_id" in columns:
-        op.drop_column("payroll_lines", "source_record_id")
+    if "mapping_status" in columns: op.drop_column("payroll_lines", "mapping_status")
+    if "source_record_id" in columns: op.drop_column("payroll_lines", "source_record_id")
