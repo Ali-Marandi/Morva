@@ -4,7 +4,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
-from morva.data_import.service import PAYROLL_DEDUCTION_COLUMNS, PAYROLL_GROSS_COLUMNS, MorvaImportService, money
+from morva.data_import.service_v2 import DEDUCTION_COLUMNS, GROSS_COLUMNS, MorvaImportService, money
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "1405-05" / "morva_1405_05_anonymized_fixture.json"
@@ -15,10 +15,10 @@ def test_money_preserves_exact_decimal_values() -> None:
 
 
 def test_source_component_boundaries_are_explicit() -> None:
-    assert "بازگشت بیمه تکمیلی-160" in PAYROLL_GROSS_COLUMNS
-    assert "مالیات-965" in PAYROLL_DEDUCTION_COLUMNS
-    assert len(PAYROLL_GROSS_COLUMNS) == 27
-    assert len(PAYROLL_DEDUCTION_COLUMNS) == 10
+    assert "بازگشت بیمه تکمیلی-160" in GROSS_COLUMNS
+    assert "مالیات-965" in DEDUCTION_COLUMNS
+    assert len(GROSS_COLUMNS) == 27
+    assert len(DEDUCTION_COLUMNS) == 10
 
 
 def test_anonymized_fixture_matches_import_contract() -> None:
