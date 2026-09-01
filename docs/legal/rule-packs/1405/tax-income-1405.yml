@@ -1,0 +1,32 @@
+version: "1405-research-1"
+status: review_required
+calendar: gregorian
+basis: annual_income
+source_summary: "Published reporting of Budget 1405 payroll-tax provisions; primary legal artifact must be imported before activation."
+annual_exemption_irr: 4800000000
+brackets:
+  - from_irr: 0
+    to_irr: 4800000000
+    rate: 0
+  - from_irr: 4800000000
+    to_irr: 9600000000
+    rate: 0.10
+  - from_irr: 9600000000
+    to_irr: 12000000000
+    rate: 0.15
+  - from_irr: 12000000000
+    to_irr: 14400000000
+    rate: 0.20
+  - from_irr: 14400000000
+    to_irr: 16800000000
+    rate: 0.25
+  - from_irr: 16800000000
+    to_irr: null
+    rate: 0.30
+notes:
+  - "2025/1404 and 2026/1405 treatment must not be conflated."
+  - "Aggregate receipts treatment requires explicit source and implementation tests."
+  - "This file is a research fixture and is not an activated legal rule."
+references:
+  - "https://www.tasnimnews.ir/fa/news/1405/03/02/3598459/"
+  - "https://www.tasnimnews.ir/fa/news/1405/01/13/3555060/"
