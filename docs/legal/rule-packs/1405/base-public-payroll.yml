@@ -1,0 +1,45 @@
+version: "public-payroll-1405-researched"
+status: review_required
+effective_year: 1405
+currency: IRR
+sources:
+  - id: LMS-CSC-64-68
+    title: "Civil Service Management Law, Chapter Ten — Pay and Benefits"
+    authority: "Islamic Consultative Assembly / official legal publication"
+    articles: [64, 65, 66, 68]
+    url: "https://nezamat.ir/post-36606/"
+  - id: TEACHER-RANK-1400
+    title: "Teacher Ranking Law"
+    authority: "Islamic Consultative Assembly"
+    articles: [1, 2, 6, 7]
+    url: "https://www.irancodify.com/b/%D9%82%D8%A7%D9%86%D9%88%D9%86_%D9%86%D8%B8%D8%A7%D9%85_%D8%B1%D8%AA%D8%A8%D9%87_%E2%80%8C%D8%A8%D9%86%D8%AF%DB%8C_%D9%85%D8%B9%D9%84%D9%85%D8%A7%D9%86_%D9%85%D8%B5%D9%88%D8%A8_1400-12-15"
+  - id: TEACHER-RANK-REG-1404
+    title: "Executive Regulation of Teacher Ranking Law, approved 1404/10/03 and amended 1405/02/23"
+    authority: "Council of Ministers"
+    articles: [2, 3, 5, 6, 7, 10, 13, 17, 18, 23]
+    url: "https://www.irancodify.com/b/3cd12301-9dec-462f-8c32-e2266226b05a"
+rules:
+  - code: JOB_POINTS
+    source_id: LMS-CSC-64-68
+    status: review_required
+    notes: "Exact current grade/point tables must be imported from the authoritative current circulars." 
+  - code: EMPLOYEE_POINTS
+    source_id: LMS-CSC-64-68
+    status: review_required
+    notes: "Employee-specific score implementation requires current official tables/circulars."
+  - code: TEACHER_RANK_ALLOWANCE
+    source_id: TEACHER-RANK-REG-1404
+    status: researched_not_activated
+    notes: "Five rank percentages are implemented as metadata; annual payment effects require reviewed payroll samples and current executive instructions."
+  - code: REGION_WEATHER
+    source_id: LMS-CSC-64-68
+    status: review_required
+  - code: FAMILY_CHILD
+    source_id: LMS-CSC-64-68
+    status: review_required
+  - code: OVERTIME
+    source_id: LMS-CSC-64-68
+    status: review_required
+  - code: TEACHING_FEE
+    source_id: LMS-CSC-64-68
+    status: review_required
