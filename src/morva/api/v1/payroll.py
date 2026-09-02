@@ -3,13 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
-from morva.persistence.enterprise_models import PayrollArtifactRecord
+from morva.persistence.enterprise_models import LifecycleEventRecord, PayrollArtifactRecord
 from morva.persistence.models import ImportBatchRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord, RulePackRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 from morva.payroll.artifacts import materialize_run_artifacts
@@ -61,11 +61,17 @@ def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> P
     return run
 
 
-def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, principal: Principal, permission: str, reason: str, distinct_from: list[str | None] = ()) -> None:
+def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, principal: Principal, permission: str, reason: str, distinct_from: list[str | None] = (), correlation_id: str, idempotency_key: str) -> None:
     authorize(principal, permission, principal.scope, resource_scope_id=run.organization_unit_id, privileged=True)
     require_distinct_actors([*distinct_from, principal.user_id])
     previous = PayrollStatus(run.status)
-    run.status = transition(previous, target).value
+    existing = session.scalar(select(LifecycleEventRecord).where(LifecycleEventRecord.payroll_run_id == run.id, LifecycleEventRecord.idempotency_key == idempotency_key))
+    if existing is not None:
+        run.status = existing.new_status
+        return
+    new_status = transition(previous, target)
+    sequence = (session.scalar(select(func.max(LifecycleEventRecord.sequence_no)).where(LifecycleEventRecord.payroll_run_id == run.id)) or 0) + 1
+    run.status = new_status.value
     now = datetime.utcnow()
     if target is PayrollStatus.REVIEWED:
         run.reviewed_by, run.reviewed_at = principal.user_id, now
@@ -81,8 +87,14 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
         run.payment_confirmed_by, run.payment_confirmed_at = principal.user_id, now
     elif target is PayrollStatus.RECONCILED:
         run.reconciled_by, run.reconciled_at = principal.user_id, now
-    append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"previous_status": previous.value, "status": target.value}, reason=reason, session=session)
-    session.commit()
+    session.add(LifecycleEventRecord(
+        id=uuid4(), payroll_run_id=run.id, sequence_no=sequence,
+        previous_status=previous.value, new_status=new_status.value,
+        actor_id=principal.user_id, organization_unit_id=run.organization_unit_id,
+        reason=reason, correlation_id=correlation_id, idempotency_key=idempotency_key,
+        evidence_hash=run.output_hash,
+    ))
+    append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"previous_status": previous.value, "status": target.value, "correlation_id": correlation_id}, reason=reason, session=session)
 
 
 @router.post("/runs/{run_id}/calculate")
@@ -125,13 +137,14 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         artifact_count = materialize_run_artifacts(session, run.id)
         if artifact_count != len(employee_numbers):
             raise HTTPException(status_code=500, detail="authoritative payroll artifact count does not match calculation population")
+        session.add(LifecycleEventRecord(id=uuid4(), payroll_run_id=run.id, sequence_no=1, previous_status=PayrollStatus.DATA_RECEIVED.value, new_status=run.status, actor_id=principal.user_id, organization_unit_id=run.organization_unit_id, reason="calculate and persist authoritative payroll artifacts", correlation_id=f"calc-{run.id}", idempotency_key=f"calc-{run.id}", evidence_hash=run.output_hash))
         append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results), "artifact_count": artifact_count, "source_import_batch_id": str(batch.id)}, reason="calculate and persist authoritative payroll artifacts", session=session)
         session.commit()
         return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "artifact_count": artifact_count, "input_hash": run.input_hash, "output_hash": run.output_hash}
 
 
 @router.post("/runs/{run_id}/validate")
-def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
+def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.calculate")
         if not run.input_hash or not run.output_hash:
@@ -139,31 +152,35 @@ def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depe
         artifacts = session.scalar(select(func.count()).select_from(PayrollArtifactRecord).where(PayrollArtifactRecord.payroll_run_id == run.id)) or 0
         if artifacts == 0:
             raise HTTPException(status_code=423, detail="validation is blocked: no persisted payroll artifacts")
-        _transition_run(session=session, run=run, target=PayrollStatus.VALIDATING, principal=principal, permission="payroll.run.calculate", reason=note.reason)
+        _transition_run(session=session, run=run, target=PayrollStatus.VALIDATING, principal=principal, permission="payroll.run.calculate", reason=note.reason, correlation_id=correlation_id, idempotency_key=idempotency_key)
+        session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
 
 @router.post("/runs/{run_id}/review")
-def review_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
+def review_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.review")
-        _transition_run(session=session, run=run, target=PayrollStatus.REVIEWED, principal=principal, permission="payroll.run.review", reason=note.reason, distinct_from=[run.created_by])
+        _transition_run(session=session, run=run, target=PayrollStatus.REVIEWED, principal=principal, permission="payroll.run.review", reason=note.reason, distinct_from=[run.created_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
+        session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
 
 @router.post("/runs/{run_id}/approve")
-def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
+def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
-        _transition_run(session=session, run=run, target=PayrollStatus.APPROVED, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by])
+        _transition_run(session=session, run=run, target=PayrollStatus.APPROVED, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
+        session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
 
 @router.post("/runs/{run_id}/freeze")
-def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> dict[str, str]:
+def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
-        _transition_run(session=session, run=run, target=PayrollStatus.FROZEN, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by, run.approved_by])
+        _transition_run(session=session, run=run, target=PayrollStatus.FROZEN, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by, run.approved_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
+        session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
 
