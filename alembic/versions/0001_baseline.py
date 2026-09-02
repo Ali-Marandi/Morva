@@ -13,10 +13,23 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
+_BASELINE_TABLES = (
+    "employees",
+    "salary_rules",
+    "rule_packs",
+    "payroll_runs",
+    "payroll_lines",
+    "import_batches",
+    "retro_cases",
+    "audit_chain_head",
+    "audit_events",
+)
+
 
 def upgrade() -> None:
     bind = op.get_bind()
-    Base.metadata.create_all(bind=bind)
+    baseline_tables = [Base.metadata.tables[name] for name in _BASELINE_TABLES]
+    Base.metadata.create_all(bind=bind, tables=baseline_tables)
     if bind.dialect.name != "sqlite":
         bind.execute(
             sa.text(
@@ -35,4 +48,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    Base.metadata.drop_all(bind=op.get_bind())
+    bind = op.get_bind()
+    for table_name in reversed(_BASELINE_TABLES):
+        table = Base.metadata.tables.get(table_name)
+        if table is not None:
+            table.drop(bind=bind, checkfirst=True)
