@@ -16,7 +16,6 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def _register_models() -> None:
-    from morva.persistence.models import Base
     from morva.persistence import enterprise_models, security_guards  # noqa: F401
 
 
