@@ -13,9 +13,17 @@ from morva.rank.models import RankAssessment, RankCase, RankCaseStatus, TeacherR
 
 
 def test_payroll_workflow_blocks_invalid_transition() -> None:
-    assert transition(PayrollStatus.DRAFT, PayrollStatus.CALCULATING) == PayrollStatus.CALCULATING
+    assert transition(PayrollStatus.DRAFT, PayrollStatus.DATA_RECEIVED) == PayrollStatus.DATA_RECEIVED
+    assert transition(PayrollStatus.DATA_RECEIVED, PayrollStatus.CALCULATING) == PayrollStatus.CALCULATING
     with pytest.raises(ValueError):
         transition(PayrollStatus.DRAFT, PayrollStatus.PAID)
+
+
+def test_payroll_workflow_requires_review_before_approval() -> None:
+    assert transition(PayrollStatus.VALIDATING, PayrollStatus.REVIEWED) == PayrollStatus.REVIEWED
+    assert transition(PayrollStatus.REVIEWED, PayrollStatus.APPROVED) == PayrollStatus.APPROVED
+    with pytest.raises(ValueError):
+        transition(PayrollStatus.VALIDATING, PayrollStatus.APPROVED)
 
 
 def test_audit_chain_links_events() -> None:

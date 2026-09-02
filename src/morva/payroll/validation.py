@@ -20,13 +20,7 @@ class PayrollValidator:
         seen: set[str] = set()
         for line in result.lines:
             if line.code in seen:
-                findings.append(
-                    ValidationFinding(
-                        "DUPLICATE_COMPONENT",
-                        "warning",
-                        f"duplicate component: {line.code}",
-                    )
-                )
+                findings.append(ValidationFinding("DUPLICATE_COMPONENT", "error", f"duplicate component: {line.code}"))
             seen.add(line.code)
             if line.amount < 0:
                 findings.append(ValidationFinding("NEGATIVE_AMOUNT", "error", f"negative amount: {line.code}"))

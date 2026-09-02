@@ -1,68 +1,76 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
+from functools import lru_cache
+from typing import Any
 
-from fastapi import Header, HTTPException, status
+import jwt
+from fastapi import HTTPException, Request, status
+from jwt import PyJWKClient
 
 from morva.runtime.config import settings
+from morva.security.policy import Principal, Scope
 
 
-class Permission(StrEnum):
-    CALCULATE_PAYROLL = "payroll:calculate"
-    REVIEW_PAYROLL = "payroll:review"
-    APPROVE_PAYROLL = "payroll:approve"
-    FREEZE_PAYROLL = "payroll:freeze"
-    EXPORT_PAYROLL = "payroll:export"
-    READ_PAYSLIP = "payslip:read"
-    READ_AUDIT = "audit:read"
+@lru_cache(maxsize=4)
+def _jwks_client(url: str) -> PyJWKClient:
+    return PyJWKClient(url)
 
 
-@dataclass(frozen=True, slots=True)
-class Principal:
-    subject: str
-    role: str
-    organization_unit_id: str
-    mfa_verified: bool
-    permissions: frozenset[str]
-
-    def require(self, permission: Permission) -> None:
-        if permission.value not in self.permissions:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="permission denied")
-        if self.role in {"ministry_finance", "province_finance", "district_finance", "hr_admin"} and not self.mfa_verified:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="MFA verification required")
+def _claim_str(payload: dict[str, Any], *names: str) -> str | None:
+    for name in names:
+        value = payload.get(name)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
 
 
-def principal_from_headers(
-    x_morva_subject: str | None = Header(default=None),
-    x_morva_role: str | None = Header(default=None),
-    x_morva_org_unit: str | None = Header(default=None),
-    x_morva_mfa: str | None = Header(default=None),
-    x_morva_permissions: str | None = Header(default=None),
-) -> Principal:
-    """Resolve a principal for non-production tests/dev only.
-
-    Production deliberately refuses header-based identity. A verified OIDC/SSO
-    middleware must provide the trusted principal before privileged routes are enabled.
-    """
-    if settings.production:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="production authentication requires verified OIDC/SSO middleware",
-        )
-    if not all((x_morva_subject, x_morva_role, x_morva_org_unit)):
-        return Principal(
-            subject="dev-user",
-            role="ministry_finance",
-            organization_unit_id="dev",
-            mfa_verified=True,
-            permissions=frozenset(permission.value for permission in Permission),
-        )
-    permissions = frozenset(p.strip() for p in (x_morva_permissions or "").split(",") if p.strip())
+def _required_principal(payload: dict[str, Any]) -> Principal:
+    user_id = _claim_str(payload, "sub", "user_id")
+    role = _claim_str(payload, "role", "morva_role")
+    scope_raw = _claim_str(payload, "scope", "morva_scope")
+    scope_id = _claim_str(payload, "scope_id", "org_unit_id", "morva_scope_id")
+    if not all((user_id, role, scope_raw, scope_id)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="authenticated principal is incomplete")
+    try:
+        scope = Scope(scope_raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="invalid organization scope") from exc
     return Principal(
-        subject=x_morva_subject or "",
-        role=x_morva_role or "",
-        organization_unit_id=x_morva_org_unit or "",
-        mfa_verified=(x_morva_mfa or "false").lower() == "true",
-        permissions=permissions,
+        user_id=user_id,
+        role=role,
+        scope=scope,
+        scope_id=scope_id,
+        mfa_verified=bool(payload.get("mfa_verified", False)),
     )
+
+
+def _decode_bearer(token: str) -> dict[str, Any]:
+    if not settings.oidc_jwks_url or not settings.oidc_issuer or not settings.oidc_audience:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="authentication provider is not configured")
+    try:
+        signing_key = _jwks_client(settings.oidc_jwks_url).get_signing_key_from_jwt(token).key
+        payload = jwt.decode(
+            token,
+            signing_key,
+            algorithms=["RS256", "RS384", "RS512"],
+            issuer=settings.oidc_issuer,
+            audience=settings.oidc_audience,
+            options={"require": ["exp", "iat", "sub"]},
+        )
+        if not isinstance(payload, dict):
+            raise ValueError("JWT payload must be an object")
+        return payload
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid bearer token") from exc
+
+
+def get_current_principal(request: Request) -> Principal:
+    """Resolve trusted identity; local bypass exists only for explicit development."""
+    authorization = request.headers.get("Authorization", "")
+    if not authorization.startswith("Bearer "):
+        if settings.environment.lower() == "development":
+            return Principal("local-dev", "admin", Scope.MINISTRY, "local", True)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bearer authentication required")
+    return _required_principal(_decode_bearer(authorization[7:].strip()))

@@ -25,7 +25,7 @@ class PayrollCalculator:
         self,
         *,
         employee_no: str,
-        period: date,
+        period: date | str,
         ruleset_version: str,
         lines: Iterable[PayrollLine],
         tax_policy: TaxPolicy | None = None,
@@ -70,9 +70,10 @@ class PayrollCalculator:
                     explanation=f"rate={policy.rate}; ceiling={policy.ceiling}",
                 ),
             )
+        period_key = period if isinstance(period, str) else f"{period.year:04d}-{period.month:02d}"
         result = PayrollResult(
             employee_no=employee_no,
-            period=f"{period.year:04d}-{period.month:02d}",
+            period=period_key,
             lines=materialized,
             ruleset_version=ruleset_version,
         )
