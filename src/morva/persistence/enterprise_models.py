@@ -158,6 +158,21 @@ class PaymentBatchRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class PaymentItemRecord(Base):
+    __tablename__ = "payment_items"
+    __table_args__ = (UniqueConstraint("payment_batch_id", "employee_no", name="uq_payment_item_batch_employee"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    payment_batch_id: Mapped[UUID] = mapped_column(index=True)
+    employee_no: Mapped[str] = mapped_column(String(50), index=True)
+    artifact_id: Mapped[UUID] = mapped_column(index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(24, 4))
+    currency_code: Mapped[str] = mapped_column(String(3))
+    bank_account_ciphertext: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    external_payment_id: Mapped[str | None] = mapped_column(String(150), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class BankReconciliationRecord(Base):
     __tablename__ = "bank_reconciliations"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
