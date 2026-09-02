@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from morva.integrations.outbox import enqueue, record_inbox
-from morva.persistence.enterprise_models import Base, InboxMessageRecord, OutboxMessageRecord, PayrollArtifactRecord, PayslipLineRecord
+from morva.persistence.enterprise_models import Base, InboxMessageRecord, OutboxMessageRecord, PayrollArtifactRecord
 from morva.security.field_crypto import decrypt, encrypt, lookup_hmac
 
 
