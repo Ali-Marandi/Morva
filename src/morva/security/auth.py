@@ -67,10 +67,10 @@ def _decode_bearer(token: str) -> dict[str, Any]:
 
 
 def get_current_principal(request: Request) -> Principal:
-    """Resolve a trusted identity; production never accepts caller-supplied identity headers."""
+    """Resolve trusted identity; local bypass exists only for explicit development."""
     authorization = request.headers.get("Authorization", "")
     if not authorization.startswith("Bearer "):
-        if settings.production:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bearer authentication required")
-        return Principal("local-dev", "admin", Scope.MINISTRY, "local", True)
+        if settings.environment.lower() == "development":
+            return Principal("local-dev", "admin", Scope.MINISTRY, "local", True)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bearer authentication required")
     return _required_principal(_decode_bearer(authorization[7:].strip()))
