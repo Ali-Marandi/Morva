@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Callable, Mapping
 
+from morva.runtime.config import settings
 from .expression import evaluate_expression
 
 
@@ -54,6 +55,8 @@ class RuleEngine:
     def register(self, definition: RuleDefinition) -> None:
         if definition.effective_to and definition.effective_to < definition.effective_from:
             raise ValueError("rule effective_to cannot precede effective_from")
+        if settings.production and definition.formula is not None:
+            raise ValueError("callable rule formulas are forbidden in production; use the safe expression DSL")
         self._definitions.setdefault(definition.code, []).append(definition)
         self._definitions[definition.code].sort(key=lambda item: item.effective_from, reverse=True)
 
