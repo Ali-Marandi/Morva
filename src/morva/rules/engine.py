@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Callable, Mapping
 
+from morva.runtime.config import settings
 from .expression import evaluate_expression
 
 
@@ -54,6 +55,8 @@ class RuleEngine:
     def register(self, definition: RuleDefinition) -> None:
         if definition.effective_to and definition.effective_to < definition.effective_from:
             raise ValueError("rule effective_to cannot precede effective_from")
+        if settings.production and definition.formula is not None:
+            raise ValueError("callable rule formulas are forbidden in production; use the safe expression DSL")
         self._definitions.setdefault(definition.code, []).append(definition)
         self._definitions[definition.code].sort(key=lambda item: item.effective_from, reverse=True)
 
@@ -63,19 +66,7 @@ class RuleEngine:
                 return definition
         raise RuleNotFoundError(f"No active rule found for {code} on {on.isoformat()}")
 
-    def calculate(
-        self,
-        code: str,
-        context: RuleContext,
-        legacy_formula: Callable[[Mapping[str, Decimal]], Decimal] | None = None,
-    ) -> RuleResult:
-        """Calculate an effective-dated rule; legacy callback support is test/demo-only."""
-        if legacy_formula is not None:
-            amount = legacy_formula(context.values)
-            if amount < 0:
-                raise ValueError(f"Rule {code} produced a negative amount")
-            return RuleResult(code, amount, f"{code} calculated for {context.effective_date.isoformat()}")
-
+    def calculate(self, code: str, context: RuleContext) -> RuleResult:
         definition = self.resolve(code, context.effective_date)
         if definition.formula is not None and definition.expression is not None:
             raise ValueError(f"Rule {code} cannot define both formula and expression")

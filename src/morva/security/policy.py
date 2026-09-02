@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Iterable
+
+from fastapi import HTTPException, status
 
 
 class Scope(StrEnum):
@@ -20,13 +23,54 @@ class Principal:
     mfa_verified: bool = False
 
 
-PRIVILEGED_ROLES = {"admin", "finance_approver", "payroll_approver", "auditor"}
+ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
+    "employee": frozenset({"self.read", "self.objection.create"}),
+    "school_finance": frozenset({"payroll.run.create", "payroll.run.calculate", "payroll.read"}),
+    "district_finance": frozenset({"payroll.run.create", "payroll.run.calculate", "payroll.read", "payroll.run.review"}),
+    "province_finance": frozenset({"payroll.read", "payroll.run.review", "payroll.run.approve"}),
+    "ministry_finance": frozenset({"payroll.read", "payroll.run.review", "payroll.run.approve"}),
+    "payment_releaser": frozenset({"payroll.read", "payroll.payment.release"}),
+    "payment_reconciler": frozenset({"payroll.read", "payroll.payment.reconcile"}),
+    "hr_admin": frozenset({"personnel.read", "personnel.write", "payroll.read"}),
+    "auditor": frozenset({"audit.read", "payroll.read"}),
+    "admin": frozenset({"*"}),
+}
+
+PRIVILEGED_ROLES = frozenset(
+    {
+        "admin", "finance_approver", "payroll_approver", "auditor",
+        "district_finance", "province_finance", "ministry_finance", "payment_releaser",
+        "payment_reconciler",
+    }
+)
 
 
-def authorize(principal: Principal, required_role: str, required_scope: Scope) -> None:
-    if principal.role != required_role:
-        raise PermissionError("required role not granted")
-    if principal.scope.value not in {required_scope.value, Scope.MINISTRY.value}:
-        raise PermissionError("organization scope violation")
-    if principal.role in PRIVILEGED_ROLES and not principal.mfa_verified:
-        raise PermissionError("MFA is required for privileged actions")
+def has_permission(principal: Principal, permission: str) -> bool:
+    permissions = ROLE_PERMISSIONS.get(principal.role, frozenset())
+    return "*" in permissions or permission in permissions
+
+
+def authorize(
+    principal: Principal,
+    permission: str,
+    required_scope: Scope,
+    *,
+    resource_scope_id: str | None = None,
+    privileged: bool = False,
+) -> None:
+    if not has_permission(principal, permission):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="required permission not granted")
+    if privileged or principal.role in PRIVILEGED_ROLES:
+        if not principal.mfa_verified:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="MFA is required for privileged actions")
+    if principal.scope is not Scope.MINISTRY:
+        if principal.scope is not required_scope:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="organization scope level violation")
+        if resource_scope_id is not None and principal.scope_id != resource_scope_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="organization scope violation")
+
+
+def require_distinct_actors(actors: Iterable[str | None]) -> None:
+    values = [actor for actor in actors if actor]
+    if len(values) != len(set(values)):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="separation of duties violation: actors must be distinct")
