@@ -13,6 +13,7 @@ from morva.persistence.enterprise_models import PaymentBatchRecord, PayrollArtif
 from morva.persistence.models import PayrollRunRecord, RulePackRecord
 from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.lifecycle import PayrollStatus
+from morva.payroll.replay import ReplayMismatch, replay_artifact
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import authorize, require_distinct_actors
 
@@ -32,6 +33,27 @@ def materialize_artifacts(run_id: UUID, principal: Principal = Depends(get_curre
         append_audit_event(event_type="payroll.artifacts.materialized", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"created": count}, reason="persist deterministic employee payroll artifacts", session=session)
         session.commit()
         return {"run_id": str(run.id), "created_artifacts": count}
+
+
+@router.get("/payroll/artifacts/{artifact_id}/replay")
+def verify_historical_artifact(artifact_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
+    with SessionLocal() as session:
+        artifact = session.get(PayrollArtifactRecord, artifact_id)
+        if artifact is None:
+            raise HTTPException(status_code=404, detail="payroll artifact not found")
+        run = session.get(PayrollRunRecord, artifact.payroll_run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="source payroll run not found")
+        authorize(principal, "payroll.read", principal.scope, resource_scope_id=run.organization_unit_id)
+        try:
+            result = replay_artifact(session, artifact.id)
+        except ReplayMismatch as exc:
+            append_audit_event(event_type="payroll.artifact.replay_failed", entity_type="payroll_artifact", entity_id=str(artifact.id), actor_id=principal.user_id, payload={"reason_code": "REPLAY_MISMATCH"}, reason="historical payroll replay mismatch", session=session)
+            session.commit()
+            raise HTTPException(status_code=409, detail="historical payroll replay mismatch") from exc
+        append_audit_event(event_type="payroll.artifact.replayed", entity_type="payroll_artifact", entity_id=str(artifact.id), actor_id=principal.user_id, payload={"output_hash": result["output_hash"]}, reason="verify historical payroll artifact reproducibility", session=session)
+        session.commit()
+        return result
 
 
 @router.post("/payroll/runs/{run_id}/payment-batch", status_code=status.HTTP_201_CREATED)
