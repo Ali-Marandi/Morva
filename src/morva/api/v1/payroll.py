@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import datetime
 from uuid import UUID, uuid4
 
@@ -161,6 +163,7 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         session.commit()
         return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "artifact_count": artifact_count, "input_hash": run.input_hash, "output_hash": run.output_hash}
 
+
 @router.post("/runs/{run_id}/validate")
 def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
@@ -174,6 +177,7 @@ def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depe
         session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
+
 @router.post("/runs/{run_id}/review")
 def review_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
@@ -181,6 +185,7 @@ def review_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
         _transition_run(session=session, run=run, target=PayrollStatus.REVIEWED, principal=principal, permission="payroll.run.review", reason=note.reason, distinct_from=[run.created_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
         session.commit()
         return {"run_id": str(run.id), "status": run.status}
+
 
 @router.post("/runs/{run_id}/approve")
 def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
@@ -190,6 +195,7 @@ def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depen
         session.commit()
         return {"run_id": str(run.id), "status": run.status}
 
+
 @router.post("/runs/{run_id}/freeze")
 def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
@@ -198,6 +204,7 @@ def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depend
         _transition_run(session=session, run=run, target=PayrollStatus.FROZEN, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by, run.approved_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
         session.commit()
         return {"run_id": str(run.id), "status": run.status}
+
 
 @router.post("/runs/{run_id}/export")
 def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depends(get_current_principal)) -> None:
@@ -211,11 +218,10 @@ def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depen
 
 
 def _hash_lines(lines: list[PayrollLineRecord]) -> str:
-    import hashlib
     canonical = "|".join(f"{line.employee_no}:{line.code}:{line.kind}:{line.amount}:{line.rule_code or ''}" for line in sorted(lines, key=lambda item: (item.employee_no, item.code, item.kind, str(item.amount))))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
+
 def _hash_results(results: dict[str, object]) -> str:
-    import hashlib, json
     canonical = json.dumps(results, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
