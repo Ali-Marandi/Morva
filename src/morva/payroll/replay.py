@@ -20,11 +20,25 @@ def replay_artifact(session: Session, artifact_id: UUID) -> dict[str, object]:
     artifact = session.get(PayrollArtifactRecord, artifact_id)
     if artifact is None:
         raise ReplayMismatch("payroll artifact not found")
-    rows = session.scalars(select(PayslipLineRecord).where(PayslipLineRecord.artifact_id == artifact.id).order_by(PayslipLineRecord.id)).all()
+    rows = session.scalars(
+        select(PayslipLineRecord)
+        .where(PayslipLineRecord.artifact_id == artifact.id)
+        .order_by(PayslipLineRecord.line_sequence.asc())
+    ).all()
+    if not rows:
+        raise ReplayMismatch("payroll artifact has no persisted payslip lines")
     lines = [
-        PayrollLine(code=row.code, title=row.title, amount=Decimal(row.amount), kind=row.kind,
-                    taxable=row.taxable, pensionable=row.pensionable, insurable=row.insurable,
-                    rule_code=row.rule_code, explanation=row.explanation)
+        PayrollLine(
+            code=row.code,
+            title=row.title,
+            amount=Decimal(row.amount),
+            kind=row.kind,
+            taxable=row.taxable,
+            pensionable=row.pensionable,
+            insurable=row.insurable,
+            rule_code=row.rule_code,
+            explanation=row.explanation,
+        )
         for row in rows
     ]
     calculation = PayrollCalculator().calculate(
@@ -39,7 +53,9 @@ def replay_artifact(session: Session, artifact_id: UUID) -> dict[str, object]:
         "net": str(calculation.result.net),
         "fingerprint": calculation.fingerprint,
     }
-    replay_hash = hashlib.sha256(json.dumps(replay_output, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    replay_hash = hashlib.sha256(
+        json.dumps(replay_output, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     if replay_hash != artifact.output_hash:
         raise ReplayMismatch("historical payroll replay does not match persisted output hash")
     return {
