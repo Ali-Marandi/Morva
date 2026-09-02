@@ -54,6 +54,7 @@ def materialize_run_artifacts(session: Session, run_id: UUID) -> int:
         raise PayrollArtifactError(f"approved legal evidence missing for components: {missing_evidence}")
     if any(not row.source_hash or not row.article or not row.issuer or not row.population_scope or not row.regression_suite_hash for row in evidence.values()):
         raise PayrollArtifactError("one or more approved legal evidence records are incomplete")
+    created = 0
     for employee_no in employees:
         snapshot = session.scalar(select(PersonnelSnapshotRecord).where(PersonnelSnapshotRecord.employee_no == employee_no, PersonnelSnapshotRecord.effective_period == run.period))
         if snapshot is None:
