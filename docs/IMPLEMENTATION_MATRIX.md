@@ -1,39 +1,42 @@
-# Morva Payroll Platform — 23-Item Implementation Matrix
+# Morva Payroll Platform — Enterprise Implementation Matrix
 
-This matrix is the execution contract for the requested production scope. `Implemented` means an actual code path exists; it does not mean production certification.
+`Implemented` means an actual code path exists. `Validated` means the required automated and environment evidence exists. `Production Certified` requires legal/finance/security/operations/integration sign-off. No item is marked production-certified by source code alone.
 
-| # | Capability | Implementation target | State |
-|---|---|---|---|
-| 1 | Organization & Position Master Data | hierarchical orgs, positions, assignments, effective dates | foundation; full hierarchy pending |
-| 2 | Personnel Order Workflow | draft/review/approve/effective/cancel/revise | foundation; full durable workflow pending |
-| 3 | Legal Knowledge Base | source registry, citations, versions, supersession | implemented; formal source verification pending |
-| 4 | Calculation Matrix | component metadata and treatment matrix | foundation; complete legal matrix pending |
-| 5 | 1405 Rule Pack | rule-pack manifests, legal-review gate, versioning | `review_required` for final activation |
-| 6 | Tax / Pension / Insurance | policy abstractions + ledger interfaces + tax engine | foundation; population-specific approved rules pending |
-| 7 | High-volume Payroll | batch runner, idempotency, chunking contract | contract/foundation; target-scale execution evidence pending |
-| 8 | Retro + Jalali | Jalali period model and monthly recomputation contract | foundation; full snapshot-driven retro pending |
-| 9 | Loans / Debts / Deductions | ledgers and installment schedules | foundation; authoritative ledgers pending |
-| 10 | Approval / SoD | role + scope + approval policy | foundation implemented; durable lifecycle enforcement pending |
-| 11 | SINA Adapter | typed port, fail-closed adapter boundary | fail-closed; official endpoint/schema/credential required |
-| 12 | Accounting / Treasury / Bank | typed ports, reconciliation boundaries | fail-closed; official endpoint/schema/credential required |
-| 13 | Employee Self-Service | profile, payslips, history, objections API contracts | contracts/foundation; complete production UX pending |
-| 14 | Payslip Explanation | line-level explanations and source chain | foundation; persisted payslip artifact pending |
-| 15 | Rule Sandbox UI | scenario API and approval gate | foundation; production hardening pending |
-| 16 | Management Dashboard | KPI/variance/validation DTOs | foundation; authoritative live data wiring pending |
-| 17 | Anomaly Detection | deterministic rules + anomaly scoring interface | foundation |
-| 18 | Forecast / Budget AI | scenario/forecast interfaces; AI advisory-only | foundation |
-| 19 | Production Security | RBAC, SoD, audit chain, security config | hardening foundation; operational security evidence pending |
-| 20 | DR / PITR | backup/restore runbook, PostgreSQL operational hooks | runbook/foundation; restore-drill evidence pending |
-| 21 | Load / Performance | benchmark scenarios and acceptance thresholds | fixtures/scenarios; target-environment execution pending |
-| 22 | Golden Regression | fixture-driven golden payroll suite | foundation; expanded legal corpus pending |
-| 23 | Real Payroll Reconciliation | authoritative sample import/reconciliation contract | ready for authoritative samples; not certified |
+| # | Capability | State |
+|---|---|---|
+| 1 | Organization & Position Master Data | foundation; hierarchical-scope primitive added; full authoritative master pending |
+| 2 | Personnel Order Workflow | foundation; durable effective-dated workflow pending |
+| 3 | Legal Knowledge Base | implemented foundation; authoritative source verification and approval pending |
+| 4 | Calculation Matrix | foundation; complete legal treatment matrix pending |
+| 5 | 1405 Rule Pack | `review_required` until formal legal/finance approval |
+| 6 | Tax / Pension / Insurance | engine/policy foundations; approved population-specific rule sets pending |
+| 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
+| 8 | Retro + Jalali | deterministic period/replay foundations; complete snapshot-driven retro pending |
+| 9 | Loans / Debts / Deductions | model foundations; authoritative ledgers pending |
+| 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented; durable IAM workflow pending |
+| 11 | SINA Adapter | fail-closed contract; official schema/endpoint/credential and staging evidence required |
+| 12 | Accounting / Treasury / Bank | fail-closed contracts + transactional outbox/inbox foundations; official adapters required |
+| 13 | Employee Self-Service | API/UI foundations; complete production UX pending |
+| 14 | Payslip Explanation | persisted payroll artifact + persisted line explanation implemented; legal source linking pending |
+| 15 | Rule Sandbox UI | foundation; production hardening pending |
+| 16 | Management Dashboard | UI foundation; authoritative live data wiring pending |
+| 17 | Anomaly Detection | deterministic/scoring foundation |
+| 18 | Forecast / Budget AI | advisory-only foundations |
+| 19 | Production Security | OIDC/JWT, MFA gate, permissions, sensitive-field crypto primitives implemented; operational hardening pending |
+| 20 | DR / PITR | runbook/foundation; target-environment restore evidence pending |
+| 21 | Load / Performance | fixtures/scenarios; target-environment execution pending |
+| 22 | Golden Regression | foundation; expanded authoritative legal corpus pending |
+| 23 | Real Payroll Reconciliation | reconciliation foundations; authoritative production sample certification pending |
+| 24 | Persistent Payroll Artifacts | implemented; employee-level deterministic result and payslip-line persistence |
+| 25 | Transactional Integration Messaging | implemented foundation; official provider delivery and acknowledgement pending |
+| 26 | Historical Payroll Replay | implemented foundation; production legal-rule replay certification pending |
 
-## Canonical lifecycle
+## Canonical payroll lifecycle
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
 
-`src/morva/payroll/lifecycle.py` is the sole state-machine implementation. `workflow.py` is compatibility-only and contains no independent state definition.
+`src/morva/payroll/lifecycle.py` is the sole state-machine implementation. `workflow.py` is compatibility-only.
 
 ## Release position
 
-Morva remains a **release candidate / controlled validation platform**. No real-payroll, bank-payment, legal-certification or SINA-certification claim is made. The platform stays fail-closed until legal approval, authoritative data, official integration evidence, security/DR/load evidence and all production gates are satisfied.
+Morva is an **enterprise validation candidate**, not yet a production-certified payment system. The application deliberately remains fail-closed until legal approval, authoritative data reconciliation, official integrations, security/DR/load evidence and final finance/legal sign-off are complete.
