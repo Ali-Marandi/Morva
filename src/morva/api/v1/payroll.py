@@ -5,12 +5,14 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
+from morva.persistence.enterprise_models import PayrollArtifactRecord
 from morva.persistence.models import ImportBatchRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord, RulePackRecord
 from morva.payroll import PayrollCalculator, PayrollLine
+from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.lifecycle import PayrollStatus, transition
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import authorize, require_distinct_actors
@@ -62,7 +64,8 @@ def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> P
 def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, principal: Principal, permission: str, reason: str, distinct_from: list[str | None] = ()) -> None:
     authorize(principal, permission, principal.scope, resource_scope_id=run.organization_unit_id, privileged=True)
     require_distinct_actors([*distinct_from, principal.user_id])
-    run.status = transition(PayrollStatus(run.status), target).value
+    previous = PayrollStatus(run.status)
+    run.status = transition(previous, target).value
     now = datetime.utcnow()
     if target is PayrollStatus.REVIEWED:
         run.reviewed_by, run.reviewed_at = principal.user_id, now
@@ -78,7 +81,7 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
         run.payment_confirmed_by, run.payment_confirmed_at = principal.user_id, now
     elif target is PayrollStatus.RECONCILED:
         run.reconciled_by, run.reconciled_at = principal.user_id, now
-    append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"status": target.value}, reason=reason, session=session)
+    append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"previous_status": previous.value, "status": target.value}, reason=reason, session=session)
     session.commit()
 
 
@@ -96,8 +99,8 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == run.ruleset_version))
         if pack is None or pack.status not in {"approved", "published"}:
             raise HTTPException(status_code=423, detail="payroll calculation is blocked: Rule Pack is not approved/published")
-        if run.ruleset_hash and pack.rules_hash and run.ruleset_hash != pack.rules_hash:
-            raise HTTPException(status_code=409, detail="payroll Rule Pack hash does not match persisted run")
+        if not run.ruleset_hash or not pack.rules_hash or run.ruleset_hash != pack.rules_hash:
+            raise HTTPException(status_code=423, detail="payroll calculation is blocked: immutable Rule Pack hash evidence is required")
         lines = session.scalars(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id)).all()
         if not lines:
             raise HTTPException(status_code=409, detail="payroll run contains no projected payroll lines")
@@ -119,9 +122,12 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         run.input_hash = _hash_lines(lines)
         run.output_hash = _hash_results(results)
         run.status = transition(PayrollStatus.DATA_RECEIVED, PayrollStatus.CALCULATING).value
-        append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results), "source_import_batch_id": str(batch.id)}, reason="calculate persisted payroll run", session=session)
+        artifact_count = materialize_run_artifacts(session, run.id)
+        if artifact_count != len(employee_numbers):
+            raise HTTPException(status_code=500, detail="authoritative payroll artifact count does not match calculation population")
+        append_audit_event(event_type="payroll.run.calculated", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"input_hash": run.input_hash, "output_hash": run.output_hash, "employee_count": len(results), "artifact_count": artifact_count, "source_import_batch_id": str(batch.id)}, reason="calculate and persist authoritative payroll artifacts", session=session)
         session.commit()
-        return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "input_hash": run.input_hash, "output_hash": run.output_hash}
+        return {"run_id": str(run.id), "status": run.status, "employee_count": len(results), "artifact_count": artifact_count, "input_hash": run.input_hash, "output_hash": run.output_hash}
 
 
 @router.post("/runs/{run_id}/validate")
@@ -130,6 +136,9 @@ def validate_run(run_id: UUID, note: TransitionNote, principal: Principal = Depe
         run = _load_run(session, run_id, principal, "payroll.run.calculate")
         if not run.input_hash or not run.output_hash:
             raise HTTPException(status_code=409, detail="calculation evidence is missing")
+        artifacts = session.scalar(select(func.count()).select_from(PayrollArtifactRecord).where(PayrollArtifactRecord.payroll_run_id == run.id)) or 0
+        if artifacts == 0:
+            raise HTTPException(status_code=423, detail="validation is blocked: no persisted payroll artifacts")
         _transition_run(session=session, run=run, target=PayrollStatus.VALIDATING, principal=principal, permission="payroll.run.calculate", reason=note.reason)
         return {"run_id": str(run.id), "status": run.status}
 
