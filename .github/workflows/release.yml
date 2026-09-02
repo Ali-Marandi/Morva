@@ -1,0 +1,128 @@
+name: Morva Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to validate and publish"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: morva
+          POSTGRES_USER: morva
+          POSTGRES_PASSWORD: morva
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U morva -d morva"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Resolve ref
+        id: ref
+        run: echo "ref=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install build pip-audit
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          expected="v$(python -c 'from morva import __version__; print(__version__)')"
+          actual="${{ steps.ref.outputs.ref }}"
+          test "$expected" = "$actual" || {
+            echo "Version mismatch: repository=$expected tag=$actual"
+            exit 1
+          }
+
+      - name: Compile
+        run: python -m compileall -q src tests
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Migrate test database
+        env:
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva
+          MORVA_ENV: test
+        run: alembic upgrade head
+
+      - name: Test
+        env:
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva
+          MORVA_ENV: test
+        run: pytest -q
+
+      - name: Dependency audit
+        run: pip-audit
+
+      - name: Build Python distribution
+        run: python -m build
+
+      - name: Build web distribution
+        working-directory: web
+        run: |
+          npm install
+          npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: morva-${{ steps.ref.outputs.ref }}
+          path: |
+            dist/*
+            web/dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: morva-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          path: release-assets
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
+            gh release create "$RELEASE_TAG" --title "Morva ${RELEASE_TAG#v}" --generate-notes
+          gh release upload "$RELEASE_TAG" release-assets/dist/* --clobber
