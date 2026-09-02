@@ -22,5 +22,6 @@ def init_db() -> None:
             raise RuntimeError("Production database schema must be migrated before application startup")
         return
     from morva.persistence.models import Base
+    from morva.persistence import enterprise_models  # noqa: F401 - register tables on Base metadata
 
     Base.metadata.create_all(bind=engine)
