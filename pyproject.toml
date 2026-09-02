@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "morva-payroll"
-version = "1.0.0rc1"
+version = "1.0.0"
 description = "Morva Payroll Platform"
 requires-python = ">=3.12"
 dependencies = [
