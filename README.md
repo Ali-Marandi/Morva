@@ -2,17 +2,23 @@
 
 سامانه جامع، قانون‌محور و قابل حسابرسی حقوق و دستمزد کارکنان آموزش‌وپرورش.
 
-## Web Release Candidate
+## Current distribution
 
-**Morva 1.0.0-rc1**
+**Morva 1.0.0**
+
+Canonical shared branch: `main`
 
 Public web target:
 
 `https://ali-marandi.github.io/Morva/`
 
-The repository includes a GitHub Pages deployment workflow under `.github/workflows/web-pages.yml`.
+The repository uses GitHub Pages for the public web distribution and a gated tag-based release workflow for versioned Python distributions.
 
-The web release is a UI/release-candidate deployment. It is not authorization to process real payroll or release payments.
+Every product step follows the distribution chain documented in `docs/RELEASE_DISTRIBUTION_POLICY.md`:
+
+`commit -> CI -> exact-head verification -> version/tag -> GitHub Release -> versioned artifacts -> web deployment`
+
+A GitHub Release is created only after a matching `vX.Y.Z` tag passes release validation. The current repository version is `1.0.0`; the release object is created by the tag-driven workflow rather than assumed from the package version alone.
 
 ## P0 safety boundary
 
