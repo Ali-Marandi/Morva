@@ -77,6 +77,7 @@ class PayslipLineRecord(Base):
     __tablename__ = "payslip_lines"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     artifact_id: Mapped[UUID] = mapped_column(index=True)
+    line_sequence: Mapped[int] = mapped_column()
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
     code: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(200))
