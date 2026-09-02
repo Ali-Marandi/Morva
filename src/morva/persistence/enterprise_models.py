@@ -33,6 +33,25 @@ class LegalSourceRecord(Base):
     status: Mapped[str] = mapped_column(String(30), default="review_required", index=True)
 
 
+class RuleEvidenceRecord(Base):
+    __tablename__ = "rule_evidence"
+    __table_args__ = (UniqueConstraint("rule_pack_version", "component_code", name="uq_rule_evidence_pack_component"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    rule_pack_version: Mapped[str] = mapped_column(String(80), index=True)
+    component_code: Mapped[str] = mapped_column(String(80), index=True)
+    legal_source_id: Mapped[UUID] = mapped_column(index=True)
+    issuer: Mapped[str] = mapped_column(String(200))
+    article: Mapped[str] = mapped_column(String(100))
+    clause: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    population_scope: Mapped[str] = mapped_column(String(200))
+    source_hash: Mapped[str] = mapped_column(String(64))
+    regression_suite_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(30), default="review_required", index=True)
+    reviewed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class PayrollArtifactRecord(Base):
     __tablename__ = "payroll_artifacts"
     __table_args__ = (UniqueConstraint("payroll_run_id", "employee_no", name="uq_payroll_artifact_run_employee"),)
