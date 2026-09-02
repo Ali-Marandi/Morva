@@ -1,8 +1,39 @@
 {
   "name": "morva-web",
   "private": true,
-  "version": "1.0.0-rc1",
+  "version": "1.0.0",
   "type": "module",
-  "scripts": {"dev":"vite","build":"vite build","preview":"vite preview"},
-  "dependencies":{"@vitejs/plugin-react":"latest","vite":"latest","typescript":"latest","react":"latest","react-dom":"latest","lucide-react":"latest"}
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "^6.26.0",
+    "zustand": "^4.5.2",
+    "@tanstack/react-query": "^5.43.0",
+    "axios": "^1.7.2",
+    "recharts": "^2.12.7",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "lucide-react": "latest",
+    "react-hook-form": "^7.51.4",
+    "zod": "^3.22.4",
+    "@hookform/resolvers": "^3.3.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "tailwindcss": "^4.3.3",
+    "postcss": "^8.5.26",
+    "autoprefixer": "^10.5.4",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.13"
+  }
 }
