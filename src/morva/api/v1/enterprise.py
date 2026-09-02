@@ -9,8 +9,8 @@ from sqlalchemy import func, select
 from morva.audit.persistence import append_audit_event
 from morva.integrations.outbox import enqueue
 from morva.persistence.database import SessionLocal
-from morva.persistence.enterprise_models import PaymentBatchRecord, PayrollArtifactRecord
-from morva.persistence.models import PayrollRunRecord, RulePackRecord
+from morva.persistence.enterprise_models import PaymentBatchRecord, PaymentItemRecord, PayrollArtifactRecord, SensitiveIdentityRecord
+from morva.persistence.models import EmployeeRecord, PayrollRunRecord, RulePackRecord
 from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.lifecycle import PayrollStatus
 from morva.payroll.replay import ReplayMismatch, replay_artifact
@@ -71,20 +71,36 @@ def create_payment_batch(
         if run.status != PayrollStatus.FROZEN.value:
             raise HTTPException(status_code=409, detail="payment batch requires a frozen payroll run")
         require_distinct_actors([run.created_by, run.reviewed_by, run.approved_by, principal.user_id])
-        artifact_count = session.scalar(select(func.count()).select_from(PayrollArtifactRecord).where(PayrollArtifactRecord.payroll_run_id == run.id)) or 0
-        if artifact_count == 0:
+        artifacts = session.scalars(select(PayrollArtifactRecord).where(PayrollArtifactRecord.payroll_run_id == run.id)).all()
+        if not artifacts:
             raise HTTPException(status_code=423, detail="payment batch blocked: no persisted payroll artifacts")
-        artifact_sum = session.scalar(select(func.sum(PayrollArtifactRecord.net)).where(PayrollArtifactRecord.payroll_run_id == run.id)) or Decimal("0")
-        existing = session.scalar(select(PaymentBatchRecord).where(PaymentBatchRecord.payroll_run_id == run.id))
-        if existing is not None:
-            return {"id": str(existing.id), "status": existing.status, "batch_reference": existing.batch_reference, "amount": str(existing.amount), "beneficiary_count": existing.beneficiary_count}
+        if any(artifact.net <= 0 for artifact in artifacts):
+            raise HTTPException(status_code=423, detail="payment batch blocked: non-positive beneficiary net amount detected")
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == run.ruleset_version))
         if pack is None or pack.status not in {"approved", "published"} or not pack.rules_hash or not pack.legal_source_hash:
             raise HTTPException(status_code=423, detail="payment batch blocked: Rule Pack evidence is incomplete")
-        batch = PaymentBatchRecord(id=uuid4(), payroll_run_id=run.id, batch_reference=f"MORVA-{run.period}-{uuid4().hex[:12].upper()}", currency_code=run.currency_code, amount=Decimal(artifact_sum), beneficiary_count=int(artifact_count), status="approved_pending_submission", created_by=principal.user_id)
+        existing = session.scalar(select(PaymentBatchRecord).where(PaymentBatchRecord.payroll_run_id == run.id))
+        if existing is not None:
+            return {"id": str(existing.id), "status": existing.status, "batch_reference": existing.batch_reference, "amount": str(existing.amount), "beneficiary_count": existing.beneficiary_count}
+        employee_ids = {artifact.employee_no: artifact for artifact in artifacts}
+        employees = session.scalars(select(EmployeeRecord).where(EmployeeRecord.employee_no.in_(employee_ids))).all()
+        employee_by_no = {employee.employee_no: employee for employee in employees}
+        identities = session.scalars(select(SensitiveIdentityRecord).where(SensitiveIdentityRecord.employee_id.in_([employee.id for employee in employees]))).all()
+        identity_by_employee_id = {identity.employee_id: identity for identity in identities}
+        if len(employee_by_no) != len(employee_ids):
+            raise HTTPException(status_code=423, detail="payment batch blocked: beneficiary master data is incomplete")
+        missing_accounts = [employee_no for employee_no, employee in employee_by_no.items() if employee.id not in identity_by_employee_id or not identity_by_employee_id[employee.id].bank_account_ciphertext]
+        if missing_accounts:
+            raise HTTPException(status_code=423, detail="payment batch blocked: secure bank-account record missing for one or more beneficiaries")
+        total = sum((Decimal(artifact.net) for artifact in artifacts), Decimal("0"))
+        batch = PaymentBatchRecord(id=uuid4(), payroll_run_id=run.id, batch_reference=f"MORVA-{run.period}-{uuid4().hex[:12].upper()}", currency_code=run.currency_code, amount=total, beneficiary_count=len(artifacts), status="approved_pending_submission", created_by=principal.user_id)
         session.add(batch)
         session.flush()
+        for artifact in artifacts:
+            employee = employee_by_no[artifact.employee_no]
+            identity = identity_by_employee_id[employee.id]
+            session.add(PaymentItemRecord(id=uuid4(), payment_batch_id=batch.id, employee_no=artifact.employee_no, artifact_id=artifact.id, amount=Decimal(artifact.net), currency_code=run.currency_code, bank_account_ciphertext=identity.bank_account_ciphertext, status="pending"))
         enqueue(session, operation="submit_payment_batch", provider="bank", correlation_id=correlation_id, idempotency_key=idempotency_key, payload={"payment_batch_id": str(batch.id), "batch_reference": batch.batch_reference, "amount": str(batch.amount), "beneficiary_count": batch.beneficiary_count, "currency_code": batch.currency_code})
-        append_audit_event(event_type="payment.batch.created", entity_type="payment_batch", entity_id=str(batch.id), actor_id=principal.user_id, payload={"payroll_run_id": str(run.id), "batch_reference": batch.batch_reference, "amount": str(batch.amount), "beneficiary_count": batch.beneficiary_count}, reason="create payment batch after frozen payroll approval", session=session)
+        append_audit_event(event_type="payment.batch.created", entity_type="payment_batch", entity_id=str(batch.id), actor_id=principal.user_id, payload={"payroll_run_id": str(run.id), "batch_reference": batch.batch_reference, "amount": str(batch.amount), "beneficiary_count": batch.beneficiary_count}, reason="create secure beneficiary payment batch after frozen payroll approval", session=session)
         session.commit()
         return {"id": str(batch.id), "status": batch.status, "batch_reference": batch.batch_reference, "amount": str(batch.amount), "beneficiary_count": batch.beneficiary_count}
