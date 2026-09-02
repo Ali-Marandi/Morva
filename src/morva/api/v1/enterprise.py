@@ -11,7 +11,7 @@ from morva.integrations.outbox import enqueue, record_inbox
 from morva.persistence.database import SessionLocal
 from morva.persistence.enterprise_models import BankReconciliationRecord, PaymentBatchRecord, PaymentItemRecord, PayrollArtifactRecord, SensitiveIdentityRecord
 from morva.persistence.models import EmployeeRecord, PayrollRunRecord, RulePackRecord
-from morva.payroll.lifecycle import PayrollStatus, transition
+from morva.payroll.lifecycle import PayrollStatus
 from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.replay import ReplayMismatch, replay_artifact
 from morva.security.auth import Principal, get_current_principal
