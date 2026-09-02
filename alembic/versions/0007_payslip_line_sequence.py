@@ -14,11 +14,20 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column("payslip_lines", sa.Column("line_sequence", sa.Integer(), nullable=True))
-    # Existing rows are historical test/fixture rows; deterministic ordering is only
-    # authoritative after the new artifact path populates line_sequence.
-    op.execute(
-        "UPDATE payslip_lines SET line_sequence = 1 WHERE line_sequence IS NULL"
-    )
+    bind = op.get_bind()
+    if bind.dialect.name == "postgresql":
+        bind.execute(sa.text(
+            "UPDATE payslip_lines p SET line_sequence = ranked.rn "
+            "FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY artifact_id ORDER BY id) AS rn "
+            "FROM payslip_lines) ranked WHERE p.id = ranked.id"
+        ))
+    else:
+        bind.execute(sa.text(
+            "UPDATE payslip_lines AS p SET line_sequence = "
+            "1 + (SELECT COUNT(*) FROM payslip_lines AS q "
+            "WHERE q.artifact_id = p.artifact_id AND q.id < p.id) "
+            "WHERE p.line_sequence IS NULL"
+        ))
     op.alter_column("payslip_lines", "line_sequence", nullable=False)
     op.create_index("ix_payslip_lines_artifact_sequence", "payslip_lines", ["artifact_id", "line_sequence"], unique=True)
 
