@@ -1,0 +1,28 @@
+# GitHub Pages deployment for Morva Web
+
+user          = Ali-Marandi
+repo          = Morva
+dest          = web/dist
+publish_dir   = dist
+base_path     = /Morva/
+cache_control = "public, max-age=3600"
+
+# Build settings
+build_command = npm run build
+build_source  = web/
+
+# Environment
+branch           = main
+publish_concurrency = 3
+keep_files       = false
+allow_empty      = false
+
+# Custom domain (optional)
+# custom_domain  = morva.ali-marandi.io
+
+# Deployment configuration
+jekyll_build_ignore = [node_modules, .git]
+
+# Versioning
+version = 1.0.0
+buildtime_enabled = true
