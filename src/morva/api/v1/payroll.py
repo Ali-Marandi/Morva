@@ -22,14 +22,17 @@ from morva.security.policy import authorize, require_distinct_actors
 router = APIRouter(prefix="/payroll", tags=["payroll"])
 calculator = PayrollCalculator()
 
+
 class PayrollRunCreate(BaseModel):
     period: str = Field(pattern=r"^\d{4}-\d{2}$")
     ruleset_version: str = Field(min_length=1, max_length=50)
     organization_unit_id: str = Field(min_length=1, max_length=50)
     ruleset_hash: str | None = Field(default=None, min_length=64, max_length=64)
 
+
 class TransitionNote(BaseModel):
     reason: str = Field(min_length=3, max_length=1000)
+
 
 @router.post("/runs", status_code=status.HTTP_201_CREATED)
 def create_run(payload: PayrollRunCreate, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
@@ -45,9 +48,11 @@ def create_run(payload: PayrollRunCreate, principal: Principal = Depends(get_cur
         session.commit()
         return {"id": str(record.id), "status": PayrollStatus.DRAFT.value, "created_by": principal.user_id}
 
+
 @router.post("/calculate", status_code=status.HTTP_410_GONE)
 def legacy_calculate_blocked(_principal: Principal = Depends(get_current_principal)) -> None:
     raise HTTPException(status_code=status.HTTP_410_GONE, detail="direct payroll calculation from caller-supplied lines is disabled; create a PayrollRun and import approved source data")
+
 
 def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> PayrollRunRecord:
     run = session.execute(select(PayrollRunRecord).where(PayrollRunRecord.id == run_id).with_for_update()).scalar_one_or_none()
@@ -55,6 +60,7 @@ def _load_run(session, run_id: UUID, principal: Principal, permission: str) -> P
         raise HTTPException(status_code=404, detail="payroll run not found")
     authorize_hierarchical(session, principal, permission, run.organization_unit_id)
     return run
+
 
 def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, principal: Principal, permission: str, reason: str, distinct_from: list[str | None] = (), correlation_id: str, idempotency_key: str) -> None:
     authorize_hierarchical(session, principal, permission, run.organization_unit_id)
@@ -87,6 +93,28 @@ def _transition_run(*, session, run: PayrollRunRecord, target: PayrollStatus, pr
         run_locked.reconciled_by, run_locked.reconciled_at = principal.user_id, now
     session.add(LifecycleEventRecord(id=uuid4(), payroll_run_id=run.id, sequence_no=sequence, previous_status=previous.value, new_status=new_status.value, actor_id=principal.user_id, organization_unit_id=run.organization_unit_id, reason=reason, correlation_id=correlation_id, idempotency_key=idempotency_key, evidence_hash=run_locked.output_hash))
     append_audit_event(event_type=f"payroll.run.{target.value}", entity_type="payroll_run", entity_id=str(run.id), actor_id=principal.user_id, payload={"previous_status": previous.value, "status": target.value, "correlation_id": correlation_id}, reason=reason, session=session)
+
+
+def _assert_freeze_integrity(session, run: PayrollRunRecord) -> None:
+    artifacts = session.scalars(select(PayrollArtifactRecord).where(PayrollArtifactRecord.payroll_run_id == run.id)).all()
+    lines = session.scalars(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id)).all()
+    employee_numbers = {line.employee_no for line in lines}
+    artifact_employees = {artifact.employee_no for artifact in artifacts}
+    if not artifacts or artifact_employees != employee_numbers:
+        raise HTTPException(status_code=423, detail="freeze blocked: payroll artifact population does not match payroll-line population")
+    if any(artifact.currency_code != run.currency_code for artifact in artifacts):
+        raise HTTPException(status_code=409, detail="freeze blocked: artifact currency mismatch")
+    for artifact in artifacts:
+        if artifact.gross - artifact.deductions != artifact.net or artifact.net < 0:
+            raise HTTPException(status_code=423, detail=f"freeze blocked: financial invariant failed for {artifact.employee_no}")
+    total_gross = sum((artifact.gross for artifact in artifacts), 0)
+    total_deductions = sum((artifact.deductions for artifact in artifacts), 0)
+    total_net = sum((artifact.net for artifact in artifacts), 0)
+    if total_gross - total_deductions != total_net:
+        raise HTTPException(status_code=423, detail="freeze blocked: population aggregate invariant failed")
+    if run.output_hash is None:
+        raise HTTPException(status_code=423, detail="freeze blocked: calculation output evidence missing")
+
 
 @router.post("/runs/{run_id}/calculate")
 def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
@@ -166,6 +194,7 @@ def approve_run(run_id: UUID, note: TransitionNote, principal: Principal = Depen
 def freeze_run(run_id: UUID, note: TransitionNote, principal: Principal = Depends(get_current_principal), correlation_id: str = Header(min_length=8, max_length=100, alias="X-Correlation-Id"), idempotency_key: str = Header(min_length=12, max_length=150, alias="Idempotency-Key")) -> dict[str, str]:
     with SessionLocal() as session:
         run = _load_run(session, run_id, principal, "payroll.run.approve")
+        _assert_freeze_integrity(session, run)
         _transition_run(session=session, run=run, target=PayrollStatus.FROZEN, principal=principal, permission="payroll.run.approve", reason=note.reason, distinct_from=[run.created_by, run.reviewed_by, run.approved_by], correlation_id=correlation_id, idempotency_key=idempotency_key)
         session.commit()
         return {"run_id": str(run.id), "status": run.status}
@@ -179,6 +208,7 @@ def export_run(run_id: UUID, _note: TransitionNote, principal: Principal = Depen
     if not settings.integrations_enabled:
         raise HTTPException(status_code=503, detail="external integrations are not enabled; export is fail-closed")
     raise HTTPException(status_code=503, detail="no approved production export adapter is configured")
+
 
 def _hash_lines(lines: list[PayrollLineRecord]) -> str:
     import hashlib
