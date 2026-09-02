@@ -16,6 +16,9 @@ class Settings:
     oidc_jwks_url: str = os.getenv("MORVA_OIDC_JWKS_URL", "").strip()
     allow_demo_policies: bool = os.getenv("MORVA_ALLOW_DEMO_POLICIES", "false").lower() == "true"
     require_migrated_schema: bool = os.getenv("MORVA_REQUIRE_MIGRATED_SCHEMA", "true").lower() == "true"
+    field_encryption_key: str = os.getenv("MORVA_FIELD_ENCRYPTION_KEY", "").strip()
+    field_lookup_hmac_key: str = os.getenv("MORVA_FIELD_LOOKUP_HMAC_KEY", "").strip()
+    key_version: str = os.getenv("MORVA_KEY_VERSION", "v1").strip()
 
     @property
     def production(self) -> bool:
@@ -34,6 +37,8 @@ class Settings:
             raise RuntimeError("Demo policies are forbidden in production")
         if self.production and self.require_migrated_schema and not self.migrations_ready:
             raise RuntimeError("Production requires a migrated database schema")
+        if self.production and not (self.field_encryption_key and self.field_lookup_hmac_key and self.key_version):
+            raise RuntimeError("Production field encryption and lookup keys must be managed")
 
     @property
     def migrations_ready(self) -> bool:
