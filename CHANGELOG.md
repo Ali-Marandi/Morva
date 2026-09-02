@@ -2,6 +2,13 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — 2026-09-02 hardening
+
+- Corrected migration, API, integration, artifact and test lint defects blocking the CI quality gate.
+- Synchronized enterprise status documentation with `main` and removed stale branch metadata.
+- Added `docs/PROMPT_COMPLIANCE_MATRIX.md` to trace the two supplied prompts to implementation/evidence state.
+- Preserved fail-closed production behavior for legal rules and external payment/export until authoritative evidence exists.
+
 ## 1.0.0 — Enterprise validation lineage
 
 - Enterprise payroll hardening consolidated the canonical payroll lifecycle and fail-closed production boundaries.
