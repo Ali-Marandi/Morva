@@ -77,13 +77,14 @@ def materialize_run_artifacts(session: Session, run_id: UUID) -> int:
             net=calculation.result.net, status="calculated")
         session.add(artifact)
         session.flush()
-        for line in calculation.result.lines:
+        for line_sequence, line in enumerate(calculation.result.lines, start=1):
             source = next((item for item in lines if item.employee_no == employee_no and item.code == line.code), None)
             legal = evidence.get(line.code)
-            session.add(PayslipLineRecord(id=uuid4(), artifact_id=artifact.id, employee_no=employee_no, code=line.code,
-                title=line.title, amount=line.amount, currency_code=run.currency_code, kind=line.kind,
-                taxable=line.taxable, pensionable=line.pensionable, insurable=line.insurable,
-                rule_code=line.rule_code, legal_source_id=legal.legal_source_id if legal else None,
+            session.add(PayslipLineRecord(id=uuid4(), artifact_id=artifact.id, line_sequence=line_sequence,
+                employee_no=employee_no, code=line.code, title=line.title, amount=line.amount,
+                currency_code=run.currency_code, kind=line.kind, taxable=line.taxable,
+                pensionable=line.pensionable, insurable=line.insurable, rule_code=line.rule_code,
+                legal_source_id=legal.legal_source_id if legal else None,
                 source_record_id=source.source_record_id if source else None,
                 explanation=line.explanation))
         created += 1
