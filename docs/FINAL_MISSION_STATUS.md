@@ -1,7 +1,7 @@
 # Morva — Enterprise Transformation Status
 
 **Date:** 2026-09-02  
-**Branch:** `p2-enterprise-payroll-work7`  
+**Branch:** `main`  
 **Position:** Enterprise validation candidate; not yet production-certified for real payroll or payment.
 
 ## Canonical payroll lifecycle
@@ -18,15 +18,15 @@
 - Employee-level payroll artifacts and payslip lines are persisted with snapshot/rule-pack/output hashes.
 - Payslip line order is persisted so historical replay is deterministic.
 - Historical replay verification is available and produces an audited mismatch when hashes differ.
-- Per-run lifecycle events persist actor, role context, organization, reason, correlation and idempotency information.
+- Per-run lifecycle events persist actor, organization, reason, correlation and idempotency information.
 - Critical lifecycle resource operations use row locking to reduce concurrent transition races.
 - Rule evidence is stored per Rule Pack and component and must include legal source and regression evidence before artifact creation.
 - Production rule execution rejects arbitrary callable formulas and requires the safe expression DSL.
 - Sensitive identity encryption/HMAC primitives exist; production configuration requires managed keys and plaintext national-ID writes are guarded.
 - Hierarchical organization-scope authorization exists for payroll resources.
 - Transactional Outbox/Inbox and integration receipts are persisted with idempotency keys.
-- Payment batches contain per-beneficiary payment items with encrypted bank-account material; duplicate batch creation is constrained by database uniqueness.
-- Bank receipt ingestion and exact amount reconciliation foundations exist; external banking remains fail-closed without an approved adapter.
+- Payment batches contain per-beneficiary payment items with encrypted bank-account material; external submission remains fail-closed without an approved adapter.
+- Bank receipt ingestion and exact amount reconciliation foundations exist; official banking integration remains fail-closed.
 - PostgreSQL and migration gates, web build, dependency audit, tests and CI remain enforced.
 
 ## Legal-rule safety
@@ -39,7 +39,7 @@ No payroll rate, coefficient, tax threshold, insurance rate, pension treatment o
 
 ## Production certification blockers
 
-The following cannot be truthfully satisfied from source code alone and therefore remain hard gates:
+The following remain hard gates because source code alone cannot truthfully satisfy them:
 
 1. Formal finance/legal approval for each active rule and each component's tax/insurance/pension/accounting treatment.
 2. Authoritative real payroll samples and population-level reconciliation evidence.
@@ -51,5 +51,13 @@ The following cannot be truthfully satisfied from source code alone and therefor
 8. Complete employee self-service, reports and production operational UX.
 9. Green CI for the exact branch head and successful review of all resulting checks.
 10. Final finance/legal/operations sign-off.
+
+## Current CI truth
+
+The exact `main` head must be validated by GitHub Actions before a distributable software release is tagged. Web build currently succeeds independently; backend release certification requires the full CI chain to complete successfully.
+
+## Release truth
+
+Software release and production authorization are separate. A package version does not itself establish a production authorization, legal approval or payment readiness.
 
 Morva must remain **fail-closed** for real payment until every applicable gate is evidenced.
