@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from morva.persistence.enterprise_models import PayrollArtifactRecord, PayslipLineRecord
+from morva.persistence.enterprise_models import PayrollArtifactRecord, PayslipLineRecord, RuleEvidenceRecord
 from morva.persistence.models import PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 
@@ -46,7 +46,14 @@ def materialize_run_artifacts(session: Session, run_id: UUID) -> int:
     if not lines:
         raise PayrollArtifactError("payroll run has no payroll lines")
     employees = sorted({line.employee_no for line in lines})
-    created = 0
+    component_codes = {line.code for line in lines}
+    evidence_rows = session.scalars(select(RuleEvidenceRecord).where(RuleEvidenceRecord.rule_pack_version == run.ruleset_version, RuleEvidenceRecord.component_code.in_(component_codes))).all()
+    evidence = {row.component_code: row for row in evidence_rows if row.status in {"approved", "published"}}
+    missing_evidence = sorted(component_codes - set(evidence))
+    if missing_evidence:
+        raise PayrollArtifactError(f"approved legal evidence missing for components: {missing_evidence}")
+    if any(not row.source_hash or not row.article or not row.issuer or not row.population_scope or not row.regression_suite_hash for row in evidence.values()):
+        raise PayrollArtifactError("one or more approved legal evidence records are incomplete")
     for employee_no in employees:
         snapshot = session.scalar(select(PersonnelSnapshotRecord).where(PersonnelSnapshotRecord.employee_no == employee_no, PersonnelSnapshotRecord.effective_period == run.period))
         if snapshot is None:
@@ -72,10 +79,12 @@ def materialize_run_artifacts(session: Session, run_id: UUID) -> int:
         session.flush()
         for line in calculation.result.lines:
             source = next((item for item in lines if item.employee_no == employee_no and item.code == line.code), None)
+            legal = evidence.get(line.code)
             session.add(PayslipLineRecord(id=uuid4(), artifact_id=artifact.id, employee_no=employee_no, code=line.code,
                 title=line.title, amount=line.amount, currency_code=run.currency_code, kind=line.kind,
                 taxable=line.taxable, pensionable=line.pensionable, insurable=line.insurable,
-                rule_code=line.rule_code, source_record_id=source.source_record_id if source else None,
+                rule_code=line.rule_code, legal_source_id=legal.legal_source_id if legal else None,
+                source_record_id=source.source_record_id if source else None,
                 explanation=line.explanation))
         created += 1
     return created
