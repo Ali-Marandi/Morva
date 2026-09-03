@@ -8,7 +8,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   base: "/Morva/",
   plugins: [react()],
-  build: { sourcemap: false },
+  build: {
+    sourcemap: false,
+    minify: "terser",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          recharts: ["recharts"],
+          hooks: ["zustand", "@tanstack/react-query"],
+          forms: ["react-hook-form", "zod"],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

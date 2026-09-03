@@ -6,7 +6,7 @@ const navItems = [
   { name: "داشبورد", path: "/", icon: BarChart3 },
   { name: "پرونده کارکنان", path: "/employees", icon: Users },
   { name: "حقوق و دستمزد", path: "/payroll", icon: Database },
-  { name: "فیش‌های حقوقی", path: "/payslips", icon: FileText },
+  { name: "فیش‌های حقوقی", path: "/payroll", icon: FileText },
   { name: "تأیید و مجوز", path: "/approvals", icon: CheckSquare },
   { name: "گزارش‌ها", path: "/reports", icon: TrendingUp },
   { name: "تنظیمات", path: "/settings", icon: Settings },
