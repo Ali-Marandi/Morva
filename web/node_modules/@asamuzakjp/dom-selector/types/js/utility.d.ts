@@ -1,0 +1,25 @@
+export declare const getType: (o: object) => string;
+export declare const verifyArray: (arr: any[], type: string) => any[];
+export declare const generateException: (msg: string, name: string, globalObject?: object) => DOMException;
+export declare const resolveContent: (node: object) => Array<object | boolean>;
+export declare const traverseNode: (node: object, walker: object, force?: boolean) => object | null;
+export declare const isCustomElement: (node: object, { formAssociated }?: {
+    formAssociated?: boolean;
+}) => boolean;
+export declare const getSlottedTextContent: (node: object) => string | null;
+export declare const getDirectionality: (node: object, dirCache?: WeakMap<any, any>) => string | null;
+export declare const getLanguageAttribute: (node: object, langCache?: WeakMap<any, any>) => string | null;
+export declare const isContentEditable: (node: object) => boolean;
+export declare const isVisible: (node: object) => boolean;
+export declare const isFocusVisible: (node: object) => boolean;
+export declare const isFocusableArea: (node: object) => boolean;
+export declare const isFocusable: (node: object) => boolean;
+export declare const getNamespaceURI: (ns: string, node: object) => string | null;
+export declare const isNamespaceDeclared: (ns?: string, node?: object) => boolean;
+export declare const isPreceding: (nodeA: object, nodeB: object) => boolean;
+export declare const compareNodes: (a: object, b: object) => number;
+export declare const sortNodes: (nodes?: Array<object> | Set<object>) => Array<object>;
+export declare const findBestSeed: (nodes: any[], state?: object) => object;
+export declare const populateHasAllowlist: (current: object, list: WeakSet<any>, visitedAncestors: Set<any>) => void;
+export declare const collectAllDescendants: (node: Document | DocumentFragment | Element, document: Document) => Array<Element>;
+export declare const getTraversalStrategy: (branch: Array<object>, targetType: string, hasScope: boolean, scoped: boolean) => object;
