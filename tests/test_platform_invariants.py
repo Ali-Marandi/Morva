@@ -16,7 +16,7 @@ def test_payroll_workflow_blocks_invalid_transition() -> None:
     assert transition(PayrollStatus.DRAFT, PayrollStatus.DATA_RECEIVED) == PayrollStatus.DATA_RECEIVED
     assert transition(PayrollStatus.DATA_RECEIVED, PayrollStatus.CALCULATING) == PayrollStatus.CALCULATING
     with pytest.raises(ValueError):
-        transition(PayrollStatus.DRAFT, PayrollStatus.PAID)
+        transition(PayrollStatus.DRAFT, PayrollStatus.APPROVED)
 
 
 def test_payroll_workflow_requires_review_before_approval() -> None:

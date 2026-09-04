@@ -26,17 +26,37 @@ SOURCE_TO_COMPONENT = {
 
 
 def project_components(source_row: dict[str, object]) -> list[dict[str, object]]:
-    """Project source columns only; unresolved or zero-valued components are not payable lines."""
+    """Project source columns; unresolved numeric components are quarantined, never payable."""
     projected: list[dict[str, object]] = []
-    source_columns = set(GROSS_COLUMNS) | set(DEDUCTION_COLUMNS)
+    source_columns = set(GROSS_COLUMNS) | set(DEDUCTION_COLUMNS) | set(source_row)
     for column in sorted(source_columns):
-        amount = money(source_row.get(column))
+        raw_value = source_row.get(column)
+        try:
+            amount = money(raw_value)
+        except ValueError:
+            # Non-monetary source metadata is not a payroll component.
+            continue
         if amount == Decimal(0):
             continue
         component_code = SOURCE_TO_COMPONENT.get(column)
         if component_code is None:
-            projected.append({"source_column": column, "amount": str(amount), "status": "quarantined", "reason": "no reviewed component mapping"})
+            projected.append(
+                {
+                    "source_column": column,
+                    "amount": str(amount),
+                    "status": "quarantined",
+                    "reason": "no reviewed component mapping",
+                }
+            )
             continue
         kind = "earning" if column in GROSS_COLUMNS else "deduction"
-        projected.append({"source_column": column, "component_code": component_code, "amount": str(amount), "kind": kind, "status": "review_required"})
+        projected.append(
+            {
+                "source_column": column,
+                "component_code": component_code,
+                "amount": str(amount),
+                "kind": kind,
+                "status": "review_required",
+            }
+        )
     return projected

@@ -66,7 +66,21 @@ class RuleEngine:
                 return definition
         raise RuleNotFoundError(f"No active rule found for {code} on {on.isoformat()}")
 
-    def calculate(self, code: str, context: RuleContext) -> RuleResult:
+    def calculate(
+        self,
+        code: str,
+        context: RuleContext,
+        legacy_formula: Callable[[Mapping[str, Decimal]], Decimal] | None = None,
+    ) -> RuleResult:
+        if legacy_formula is not None:
+            if settings.production:
+                raise ValueError("callable rule formulas are forbidden in production; use the safe expression DSL")
+            amount = legacy_formula(context.values)
+            if amount < 0:
+                raise ValueError(f"Rule {code} produced a negative amount")
+            explanation = f"{code} legacy callback applied for {context.effective_date.isoformat()}"
+            return RuleResult(code, amount, explanation)
+
         definition = self.resolve(code, context.effective_date)
         if definition.formula is not None and definition.expression is not None:
             raise ValueError(f"Rule {code} cannot define both formula and expression")
