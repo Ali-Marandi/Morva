@@ -20,11 +20,13 @@ def _production_settings(**overrides) -> Settings:
     return Settings(**values)
 
 
-def test_valid_production_configuration_passes() -> None:
+def test_valid_production_configuration_passes(monkeypatch) -> None:
+    monkeypatch.setenv("MORVA_MIGRATIONS_READY", "true")
     _production_settings().validate()
 
 
-def test_production_rejects_sqlite() -> None:
+def test_production_rejects_sqlite(monkeypatch) -> None:
+    monkeypatch.setenv("MORVA_MIGRATIONS_READY", "true")
     settings = _production_settings(database_url="sqlite:///./unsafe.db")
     try:
         settings.validate()
@@ -34,7 +36,8 @@ def test_production_rejects_sqlite() -> None:
         raise AssertionError("production must reject SQLite")
 
 
-def test_production_rejects_disabled_mfa_integrations_demo_and_missing_oidc() -> None:
+def test_production_rejects_disabled_mfa_integrations_demo_and_missing_oidc(monkeypatch) -> None:
+    monkeypatch.setenv("MORVA_MIGRATIONS_READY", "true")
     cases = [
         (dict(require_mfa=False), "MFA"),
         (dict(integrations_enabled=False), "integrations"),

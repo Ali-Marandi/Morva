@@ -1,10 +1,21 @@
+from dataclasses import replace
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
+from morva.runtime.config import settings
+from morva.security.auth import get_current_principal
+from morva.security.policy import Principal, Scope
 
 
+app.dependency_overrides[get_current_principal] = lambda: Principal(
+    user_id="test-user",
+    role="admin",
+    scope=Scope.MINISTRY,
+    scope_id="test",
+    mfa_verified=True,
+)
 client = TestClient(app)
 
 
