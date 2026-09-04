@@ -1,10 +1,8 @@
-from dataclasses import replace
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
-from morva.runtime.config import settings
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 
@@ -54,7 +52,7 @@ def test_payroll_run_is_persisted_before_calculation():
 
     calc = client.post(f"/api/v1/payroll/runs/{body['id']}/calculate")
     assert calc.status_code == 409
-    assert "server-approved source lines" in calc.json()["detail"]
+    assert "data_received state" in calc.json()["detail"]
 
 
 def test_rule_evaluation_route():
