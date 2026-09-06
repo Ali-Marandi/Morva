@@ -7,7 +7,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from morva.persistence.models import Base
-from morva.persistence import core_hr_records, domain_extensions, enterprise_models  # noqa: F401 - register domain tables
+from morva.persistence import core_hr_employment, core_hr_records, domain_extensions, enterprise_models  # noqa: F401 - register domain tables
 
 config = context.config
 if config.config_file_name is not None:
