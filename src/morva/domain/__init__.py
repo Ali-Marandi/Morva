@@ -1,3 +1,10 @@
-from .models import Employee, EmploymentType, Money, Person
+from .models import Employee, EmployeeStatus, Employment, EmploymentType, Money, Person
 
-__all__ = ["Employee", "EmploymentType", "Money", "Person"]
+__all__ = [
+    "Employee",
+    "EmployeeStatus",
+    "Employment",
+    "EmploymentType",
+    "Money",
+    "Person",
+]
