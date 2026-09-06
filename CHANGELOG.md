@@ -2,6 +2,30 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## 1.0.1 — 2026-09-06 Security & CI Patch Release
+
+### Security
+- Upgrade `cryptography` from the vulnerable 46.x constraint to the audited 50.x line.
+- Dependency audit is now clean in the release-candidate CI path.
+
+### CI/CD
+- Python 3.12 and 3.13 test suites pass.
+- Alembic migration validation passes.
+- Ruff lint passes.
+- Web production build passes.
+- `pip-audit` passes.
+
+### Compatibility
+- Align the API lifecycle regression test with the canonical `draft -> data_received` state boundary.
+- Preserve production authentication and fail-closed payroll controls.
+
+### Distribution status
+- **Package version:** `1.0.1`
+- **Canonical branch:** `main`
+- **Release tag:** `v1.0.1`
+
+> Software versioning and distribution do not constitute authorization for real payroll or payment release. See `docs/RELEASE_1_0.md` and the production certification gates for required evidence.
+
 ## 1.0.0 — 2026-09-04 Enterprise Web Platform Release
 
 ### Web Platform (New)
