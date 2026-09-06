@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models import Base
@@ -18,6 +18,20 @@ class OrganizationUnitRecord(Base):
     kind: Mapped[str] = mapped_column(String(30), index=True)
     parent_id: Mapped[UUID | None] = mapped_column(index=True, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class EmploymentRecord(Base):
+    __tablename__ = "employments"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    employee_no: Mapped[str] = mapped_column(String(50), index=True)
+    employment_type: Mapped[str] = mapped_column(String(30))
+    organization_unit_id: Mapped[str] = mapped_column(String(50), index=True)
+    position_id: Mapped[str] = mapped_column(String(50), index=True)
+    starts_on: Mapped[date] = mapped_column(Date, index=True)
+    ends_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    status: Mapped[str] = mapped_column(String(30), default="active", index=True)
+    source_record_id: Mapped[UUID | None] = mapped_column(nullable=True, index=True)
+    source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class LegalSourceRecord(Base):
