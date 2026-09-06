@@ -1,6 +1,8 @@
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
+import morva.payroll.policies as policies_module
 from morva.payroll import PayrollCalculator, PayrollLine, calculate_retroactive, demo_iranian_policy_pack
 
 
@@ -16,7 +18,8 @@ def test_calculator_is_deterministic():
     assert first.result.gross == Decimal("120000000")
 
 
-def test_demo_policy_adds_traceable_tax_and_contribution_lines():
+def test_demo_policy_adds_traceable_tax_and_contribution_lines(monkeypatch):
+    monkeypatch.setattr(policies_module, "settings", replace(policies_module.settings, allow_demo_policies=True))
     tax, contributions = demo_iranian_policy_pack()
     calculation = PayrollCalculator().calculate(
         employee_no="E2",

@@ -32,4 +32,4 @@ def test_validation_detects_duplicate_components():
     )
     findings = PayrollValidator().validate(result)
     assert any(item.code == "DUPLICATE_COMPONENT" for item in findings)
-    assert has_blocking_errors(findings) is False
+    assert has_blocking_errors(findings) is True
