@@ -19,11 +19,15 @@ permissions:
 env:
   PYTHON_VERSION: "3.12"
 
+auto-release:
+
 jobs:
   prepare-tag:
     name: Prepare version tag
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +55,13 @@ jobs:
 
   validate:
     name: Validate release
-    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+    needs: prepare-tag
+    if: >-
+      always() &&
+      (github.event_name != 'push' || github.ref != 'refs/heads/main') &&
+      (github.event_name != 'push' || github.ref != 'refs/heads/main' || needs.prepare-tag.result == 'success')
+      ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.prepare-tag.result == 'success')
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -70,7 +80,17 @@ jobs:
     steps:
       - name: Resolve ref
         id: ref
-        run: echo "ref=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            tag="${{ needs.prepare-tag.outputs.tag }}"
+            ref="${{ github.sha }}"
+          else
+            tag="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+            ref="$tag"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
         with:
@@ -89,11 +109,12 @@ jobs:
 
       - name: Verify tag matches package version
         shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.ref.outputs.tag }}
         run: |
           expected="v$(python -c 'from morva import __version__; print(__version__)')"
-          actual="${{ steps.ref.outputs.ref }}"
-          test "$expected" = "$actual" || {
-            echo "Version mismatch: repository=$expected tag=$actual"
+          test "$expected" = "$RELEASE_TAG" || {
+            echo "Version mismatch: repository=$expected release=$RELEASE_TAG"
             exit 1
           }
 
@@ -130,7 +151,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: morva-${{ steps.ref.outputs.ref }}
+          name: morva-${{ steps.ref.outputs.tag }}
           path: |
             dist/*
             web/dist/*
@@ -139,23 +160,35 @@ jobs:
   publish:
     name: Publish GitHub release
     needs: validate
-    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+    if: needs.validate.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.sha || github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           fetch-depth: 0
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            version=$(python -c 'import re; from pathlib import Path; text=Path("pyproject.toml").read_text(); print(re.search(r"^version\s*=\s*\"([^\"]+)\"", text, re.M).group(1))')
+            echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/download-artifact@v4
         with:
-          name: morva-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          name: morva-${{ steps.tag.outputs.tag }}
           path: release-assets
 
       - name: Create or update GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
         run: |
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
-            gh release create "$RELEASE_TAG" --title "Morva ${RELEASE_TAG#v}" --generate-notes
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Morva ${RELEASE_TAG#v}" --generate-notes
           gh release upload "$RELEASE_TAG" release-assets/dist/* --clobber
