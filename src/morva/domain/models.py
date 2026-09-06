@@ -45,6 +45,28 @@ class Employee(Person):
     hire_date: date | None = None
 
 
+class Employment(BaseModel):
+    employee_no: str = Field(min_length=1, max_length=50)
+    employment_type: EmploymentType
+    organization_unit_id: str = Field(min_length=1, max_length=50)
+    position_id: str = Field(min_length=1, max_length=50)
+    starts_on: date
+    ends_on: date | None = None
+    status: EmployeeStatus = EmployeeStatus.ACTIVE
+
+    def active_on(self, day: date) -> bool:
+        return self.starts_on <= day and (self.ends_on is None or day <= self.ends_on)
+
+    @classmethod
+    def ensure_non_overlapping(cls, records: tuple["Employment", ...]) -> None:
+        ordered = sorted(records, key=lambda item: item.starts_on)
+        for previous, current in zip(ordered, ordered[1:]):
+            if previous.employee_no != current.employee_no:
+                continue
+            if previous.ends_on is None or current.starts_on <= previous.ends_on:
+                raise ValueError("employment intervals overlap for employee")
+
+
 class Money(BaseModel):
     amount: Decimal = Field(ge=0)
     currency: str = Field(default="IRR", min_length=3, max_length=3)
