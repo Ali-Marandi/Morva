@@ -30,12 +30,19 @@
 | 24 | Persistent Payroll Artifacts | implemented; employee-level deterministic result and payslip-line persistence |
 | 25 | Transactional Integration Messaging | implemented foundation; official provider delivery and acknowledgement pending |
 | 26 | Historical Payroll Replay | implemented foundation; production legal-rule replay certification pending |
+| 27 | Core HR Employee Profile API | implemented read APIs for employee, employment, assignment, education, experience and dependents; automated API coverage added; production master-data validation pending |
 
 ## Canonical payroll lifecycle
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
 
 `src/morva/payroll/lifecycle.py` is the sole state-machine implementation. `workflow.py` is compatibility-only.
+
+## Core HR phase-1 chain
+
+`Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
+
+The current implementation provides the historical persistence models and authenticated read APIs for this chain. Authoritative ministry master data, durable personnel-order mutation workflow, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 
