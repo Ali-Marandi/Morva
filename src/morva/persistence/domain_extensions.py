@@ -167,3 +167,19 @@ class EmployeeCaseRecord(Base):
     response: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AssignmentRecord(Base):
+    __tablename__ = "employee_assignments"
+    __table_args__ = (
+        UniqueConstraint("employee_no", "starts_on", "position_code", name="uq_assignment_start_position"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    employee_no: Mapped[str] = mapped_column(String(50), index=True)
+    organization_code: Mapped[str] = mapped_column(String(50), index=True)
+    position_code: Mapped[str] = mapped_column(String(50), index=True)
+    starts_on: Mapped[datetime] = mapped_column(DateTime)
+    ends_on: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    acting: Mapped[bool] = mapped_column(default=False)
+    source_reference: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
