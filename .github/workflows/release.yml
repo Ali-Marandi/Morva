@@ -2,6 +2,8 @@ name: Morva Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -18,8 +20,38 @@ env:
   PYTHON_VERSION: "3.12"
 
 jobs:
+  prepare-tag:
+    name: Prepare version tag
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve package version
+        id: version
+        run: |
+          version=$(python -c 'import re; from pathlib import Path; text=Path("pyproject.toml").read_text(); print(re.search(r"^version\s*=\s*\"([^\"]+)\"", text, re.M).group(1))')
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create missing version tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Tag $RELEASE_TAG already exists; nothing to do."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" "$GITHUB_SHA" -m "Morva $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+
   validate:
     name: Validate release
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -107,6 +139,7 @@ jobs:
   publish:
     name: Publish GitHub release
     needs: validate
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
