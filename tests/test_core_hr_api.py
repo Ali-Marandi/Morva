@@ -26,12 +26,13 @@ client = TestClient(app)
 def _seed_employee() -> str:
     init_db()
     employee_no = "HR-" + uuid4().hex[:10]
+    national_id = str(uuid4().int)[-10:]
     with SessionLocal() as session:
         session.add(
             EmployeeRecord(
                 employee_no=employee_no,
                 source_employee_key="SRC-" + employee_no,
-                national_id="1234567890",
+                national_id=national_id,
                 first_name="Test",
                 last_name="Employee",
                 employment_type="permanent",
