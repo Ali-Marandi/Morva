@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models import Base
@@ -178,8 +178,8 @@ class AssignmentRecord(Base):
     employee_no: Mapped[str] = mapped_column(String(50), index=True)
     organization_code: Mapped[str] = mapped_column(String(50), index=True)
     position_code: Mapped[str] = mapped_column(String(50), index=True)
-    starts_on: Mapped[datetime] = mapped_column(DateTime)
-    ends_on: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    acting: Mapped[bool] = mapped_column(default=False)
+    starts_on: Mapped[date] = mapped_column(Date)
+    ends_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    acting: Mapped[bool] = mapped_column(Boolean, default=False)
     source_reference: Mapped[str | None] = mapped_column(String(150), nullable=True)
     source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
