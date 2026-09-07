@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from morva.audit.persistence import append_audit_event
@@ -216,8 +216,6 @@ def review_attendance_fact(session: Session, attendance_id: UUID | str, reviewer
     record = _attendance(session, attendance_id)
     if record.status != "received":
         raise ValueError("attendance fact must be received before review")
-    if not record.source_hash or len(record.source_hash) != 64:
-        raise ValueError("attendance fact source hash is invalid")
     record.status = "reviewed"
     append_audit_event(
         event_type="personnel.attendance.reviewed",
