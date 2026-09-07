@@ -5,7 +5,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from morva.audit.persistence import append_audit_event
@@ -13,6 +13,7 @@ from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFact
 from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import EmployeeRecord
+from morva.security.policy import require_distinct_actors
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,16 +82,20 @@ def register_assignment(
         )
     )
     if existing is not None:
-        if existing.organization_code != organization_code or existing.ends_on != ends_on or existing.source_hash != source_hash:
+        if (
+            existing.organization_code != organization_code
+            or existing.ends_on != ends_on
+            or existing.acting != acting
+            or existing.source_hash != source_hash
+        ):
             raise ValueError("assignment idempotency key already exists with different content")
         return AssignmentResult(status="existing", assignment_id=existing.id)
 
-    candidate_end = ends_on
     overlap = session.scalar(
         select(AssignmentRecord).where(
             AssignmentRecord.employee_no == employee_no,
-            AssignmentRecord.starts_on <= (candidate_end or starts_on),
-            (AssignmentRecord.ends_on.is_(None) | (AssignmentRecord.ends_on >= starts_on)),
+            AssignmentRecord.starts_on <= (ends_on or date.max),
+            or_(AssignmentRecord.ends_on.is_(None), AssignmentRecord.ends_on >= starts_on),
         )
     )
     if overlap is not None:
@@ -146,8 +151,10 @@ def register_attendance_fact(
         raise ValueError("source_record_key is required")
     if any(value < 0 for value in (worked_units, leave_units, absence_units)):
         raise ValueError("attendance units cannot be negative")
-    if len(source_hash) != 64:
+    if len(source_hash) != 64 or any(char not in "0123456789abcdefABCDEF" for char in source_hash):
         raise ValueError("source_hash must be a 64-character SHA-256")
+    if len(period) != 7 or period[4] != "-" or not period[:4].isdigit() or not period[5:].isdigit():
+        raise ValueError("period must use YYYY-MM")
 
     existing = session.scalar(
         select(AttendanceFactRecord).where(
@@ -162,6 +169,7 @@ def register_attendance_fact(
             and existing.leave_units == leave_units
             and existing.absence_units == absence_units
             and existing.source_hash == source_hash
+            and (existing.evidence or {}) == (evidence or {})
         )
         if not same:
             raise ValueError("attendance idempotency key already exists with different content")
@@ -195,3 +203,47 @@ def register_attendance_fact(
         session=session,
     )
     return AttendanceResult(status=record.status, attendance_id=record.id)
+
+
+def _attendance(session: Session, attendance_id: UUID | str) -> AttendanceFactRecord:
+    record = session.get(AttendanceFactRecord, UUID(str(attendance_id)))
+    if record is None:
+        raise ValueError("attendance fact not found")
+    return record
+
+
+def review_attendance_fact(session: Session, attendance_id: UUID | str, reviewer_id: str) -> AttendanceFactRecord:
+    record = _attendance(session, attendance_id)
+    if record.status != "received":
+        raise ValueError("attendance fact must be received before review")
+    if not record.source_hash or len(record.source_hash) != 64:
+        raise ValueError("attendance fact source hash is invalid")
+    record.status = "reviewed"
+    append_audit_event(
+        event_type="personnel.attendance.reviewed",
+        entity_type="attendance_fact",
+        entity_id=str(record.id),
+        actor_id=reviewer_id,
+        payload={"employee_no": record.employee_no, "period": record.period, "source_record_key": record.source_record_key},
+        reason="review authoritative attendance fact",
+        session=session,
+    )
+    return record
+
+
+def approve_attendance_fact(session: Session, attendance_id: UUID | str, approver_id: str, reviewer_id: str) -> AttendanceFactRecord:
+    record = _attendance(session, attendance_id)
+    if record.status != "reviewed":
+        raise ValueError("attendance fact must be reviewed before approval")
+    require_distinct_actors([reviewer_id, approver_id])
+    record.status = "approved"
+    append_audit_event(
+        event_type="personnel.attendance.approved",
+        entity_type="attendance_fact",
+        entity_id=str(record.id),
+        actor_id=approver_id,
+        payload={"employee_no": record.employee_no, "period": record.period, "source_record_key": record.source_record_key},
+        reason="approve authoritative attendance fact",
+        session=session,
+    )
+    return record
