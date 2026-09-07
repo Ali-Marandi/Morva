@@ -4,7 +4,7 @@
 
 | # | Capability | State |
 |---|---|---|
-| 1 | Organization & Position Master Data | authenticated organization/position registry APIs and persisted position master data implemented; authoritative ministry dataset and validation pending |
+| 1 | Organization & Position Master Data | authenticated organization/position registry APIs + persisted position master data + deterministic integrity validation gate implemented; authoritative ministry dataset and authoritative-data acceptance evidence pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
 | 4 | Calculation Matrix | deterministic rule engine + persisted legal evidence foundations; complete population-specific legal treatment matrix pending |
@@ -43,7 +43,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, and authenticated organization/position master-data registry APIs for this chain. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, and authenticated organization/position master-data registry APIs plus a deterministic integrity validation gate for organization/personnel/assignment/snapshot references. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 
