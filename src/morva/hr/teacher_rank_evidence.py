@@ -60,6 +60,8 @@ def check_teacher_rank_evidence(
         else:
             if source.status != "approved":
                 candidate_blockers.append("legal source is not approved")
+            if not _HEX64.fullmatch(source.document_hash):
+                candidate_blockers.append("legal source document hash is invalid")
             if evidence.source_hash != source.document_hash:
                 candidate_blockers.append("evidence source hash does not match legal source")
             try:
