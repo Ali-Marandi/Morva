@@ -44,16 +44,16 @@ jobs:
           version=$(python -c 'import re; from pathlib import Path; text=Path("pyproject.toml").read_text(); print(re.search(r"^version\s*=\s*\"([^\"]+)\"", text, re.M).group(1))')
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
-      - name: Verify source version
-        run: |
-          expected="v$(python -c 'from morva import __version__; print(__version__)')"
-          test "$expected" = "${{ steps.version.outputs.tag }}"
-
       - name: Install backend
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
           python -m pip install build pip-audit
+
+      - name: Verify source version
+        run: |
+          expected="v$(python -c 'from morva import __version__; print(__version__)')"
+          test "$expected" = "${{ steps.version.outputs.tag }}"
 
       - name: Compile
         run: python -m compileall -q src tests
