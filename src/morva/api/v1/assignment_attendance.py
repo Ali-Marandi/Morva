@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -16,9 +16,9 @@ from morva.personnel.assignment_attendance import (
     register_attendance_fact,
     review_attendance_fact,
 )
+from morva.persistence.models import EmployeeRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.hierarchy import authorize_hierarchical
-from morva.persistence.models import EmployeeRecord
 
 router = APIRouter(prefix="/hr", tags=["assignment-attendance"])
 
@@ -173,7 +173,7 @@ def review_attendance(attendance_id: UUID, principal: Principal = Depends(get_cu
 @router.post("/attendance/{attendance_id}/approve")
 def approve_attendance(
     attendance_id: UUID,
-    reviewer_id: str = Field(min_length=1),
+    reviewer_id: str = Query(min_length=1),
     principal: Principal = Depends(get_current_principal),
 ) -> dict[str, object]:
     with SessionLocal() as session:
