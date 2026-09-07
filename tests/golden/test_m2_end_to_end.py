@@ -16,10 +16,42 @@ FIXTURE = Path(__file__).parents[2] / "fixtures" / "golden" / "m2" / "synthetic_
 def _engine() -> RuleEngine:
     return RuleEngine(
         [
-            RuleDefinition("JOB_RIGHT", "Job right", date(2026, 3, 21), expression={"op": "value", "name": "job_right"}),
-            RuleDefinition("JOB_ALLOWANCE", "Job allowance", date(2026, 3, 21), expression={"op": "value", "name": "job_allowance"}),
-            RuleDefinition("TAX", "Synthetic tax", date(2026, 3, 21), expression={"op": "mul", "args": [{"op": "value", "name": "taxable_base"}, {"op": "const", "value": "0.10"}]}),
-            RuleDefinition("PENSION", "Synthetic pension", date(2026, 3, 21), expression={"op": "mul", "args": [{"op": "value", "name": "pension_base"}, {"op": "const", "value": "0.09"}]}),
+            RuleDefinition(
+                "JOB_RIGHT",
+                "Job right",
+                date(2026, 3, 21),
+                expression={"op": "value", "name": "job_right"},
+            ),
+            RuleDefinition(
+                "JOB_ALLOWANCE",
+                "Job allowance",
+                date(2026, 3, 21),
+                expression={"op": "value", "name": "job_allowance"},
+            ),
+            RuleDefinition(
+                "TAX",
+                "Synthetic tax",
+                date(2026, 3, 21),
+                expression={
+                    "op": "mul",
+                    "args": [
+                        {"op": "value", "name": "taxable_base"},
+                        {"op": "const", "value": "0.10"},
+                    ],
+                },
+            ),
+            RuleDefinition(
+                "PENSION",
+                "Synthetic pension",
+                date(2026, 3, 21),
+                expression={
+                    "op": "mul",
+                    "args": [
+                        {"op": "value", "name": "pension_base"},
+                        {"op": "const", "value": "0.09"},
+                    ],
+                },
+            ),
         ]
     )
 
@@ -42,8 +74,7 @@ def test_production_gate_rejects_synthetic_pack() -> None:
 
 def test_end_to_end_rule_driven_payroll() -> None:
     manifest = RulePackManifest.load(FIXTURE)
-    engine = _engine()
-    payroll = RuleDrivenPayroll(engine, manifest)
+    payroll = RuleDrivenPayroll(_engine(), manifest)
     result = payroll.calculate(
         employee_no="E2E-0001",
         period="1405-01",
@@ -55,8 +86,12 @@ def test_end_to_end_rule_driven_payroll() -> None:
             "pension_base": Decimal("120000000"),
         },
         components=(
-            RuleDrivenComponent("JOB_RIGHT", "Job right", "earning", taxable=True, pensionable=True, insurable=True),
-            RuleDrivenComponent("JOB_ALLOWANCE", "Job allowance", "earning", taxable=True, pensionable=True, insurable=True),
+            RuleDrivenComponent(
+                "JOB_RIGHT", "Job right", "earning", taxable=True, pensionable=True, insurable=True
+            ),
+            RuleDrivenComponent(
+                "JOB_ALLOWANCE", "Job allowance", "earning", taxable=True, pensionable=True, insurable=True
+            ),
             RuleDrivenComponent("TAX", "Synthetic tax", "deduction"),
             RuleDrivenComponent("PENSION", "Synthetic pension", "deduction"),
         ),
