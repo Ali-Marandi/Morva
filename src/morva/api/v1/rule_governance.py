@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
-from morva.persistence.models import RulePackRecord
+from morva.persistence.models import AuditEventRecord, RulePackRecord
 from morva.rules.governance import (
     approve_evidence,
     approve_legal_source,
@@ -68,7 +68,7 @@ def _read(principal: Principal) -> None:
 
 
 @router.post("/legal-sources", status_code=201)
-def create_legal_source(payload: LegalSourceInput, principal: Principal = Depends(get_current_principal)):
+def create_legal_source(payload: LegalSourceInput, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     try:
         validate_legal_source_payload(
@@ -92,7 +92,7 @@ def create_legal_source(payload: LegalSourceInput, principal: Principal = Depend
 
 
 @router.post("/legal-sources/{source_id}/review")
-def review_source(source_id: UUID, principal: Principal = Depends(get_current_principal)):
+def review_source(source_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         source = session.get(LegalSourceRecord, source_id)
@@ -108,13 +108,20 @@ def review_source(source_id: UUID, principal: Principal = Depends(get_current_pr
 
 
 @router.post("/legal-sources/{source_id}/approve")
-def approve_source(source_id: UUID, principal: Principal = Depends(get_current_principal)):
+def approve_source(source_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         source = session.get(LegalSourceRecord, source_id)
         if source is None:
             raise HTTPException(status_code=404, detail="legal source not found")
-        review = session.scalar(select(__import__("morva.persistence.models", fromlist=["AuditEventRecord"]).AuditEventRecord).where(__import__("morva.persistence.models", fromlist=["AuditEventRecord"]).AuditEventRecord.event_type == "legal.source.reviewed", __import__("morva.persistence.models", fromlist=["AuditEventRecord"]).AuditEventRecord.entity_id == str(source.id)).order_by(__import__("morva.persistence.models", fromlist=["AuditEventRecord"]).AuditEventRecord.sequence_no.desc()))
+        review = session.scalar(
+            select(AuditEventRecord)
+            .where(
+                AuditEventRecord.event_type == "legal.source.reviewed",
+                AuditEventRecord.entity_id == str(source.id),
+            )
+            .order_by(AuditEventRecord.sequence_no.desc())
+        )
         try:
             approve_legal_source(source, principal.user_id, review.actor_id if review else None)
         except ValueError as exc:
@@ -125,7 +132,7 @@ def approve_source(source_id: UUID, principal: Principal = Depends(get_current_p
 
 
 @router.post("/packs", status_code=201)
-def create_rule_pack(payload: RulePackInput, principal: Principal = Depends(get_current_principal)):
+def create_rule_pack(payload: RulePackInput, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     if payload.effective_from and payload.effective_to and payload.effective_to < payload.effective_from:
         raise HTTPException(status_code=422, detail="effective_to cannot precede effective_from")
@@ -141,7 +148,7 @@ def create_rule_pack(payload: RulePackInput, principal: Principal = Depends(get_
 
 
 @router.post("/packs/{version}/review")
-def review_pack(version: str, principal: Principal = Depends(get_current_principal)):
+def review_pack(version: str, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == version))
@@ -158,7 +165,7 @@ def review_pack(version: str, principal: Principal = Depends(get_current_princip
 
 
 @router.post("/packs/{version}/approve")
-def approve_pack(version: str, principal: Principal = Depends(get_current_principal)):
+def approve_pack(version: str, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == version))
@@ -173,7 +180,7 @@ def approve_pack(version: str, principal: Principal = Depends(get_current_princi
 
 
 @router.post("/evidence", status_code=201)
-def create_evidence(payload: EvidenceInput, principal: Principal = Depends(get_current_principal)):
+def create_evidence(payload: EvidenceInput, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     try:
         validate_evidence_payload(article=payload.article, population_scope=payload.population_scope, source_hash=payload.source_hash, regression_suite_hash=payload.regression_suite_hash)
@@ -204,7 +211,7 @@ def create_evidence(payload: EvidenceInput, principal: Principal = Depends(get_c
 
 
 @router.post("/evidence/{evidence_id}/review")
-def review_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_current_principal)):
+def review_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         evidence = session.get(RuleEvidenceRecord, evidence_id)
@@ -220,7 +227,7 @@ def review_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_c
 
 
 @router.post("/evidence/{evidence_id}/approve")
-def approve_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_current_principal)):
+def approve_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
     with SessionLocal() as session:
         evidence = session.get(RuleEvidenceRecord, evidence_id)
@@ -239,7 +246,7 @@ def approve_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_
 
 
 @router.get("/packs/{version}/readiness")
-def get_pack_readiness(version: str, principal: Principal = Depends(get_current_principal)):
+def get_pack_readiness(version: str, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _read(principal)
     with SessionLocal() as session:
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == version))
