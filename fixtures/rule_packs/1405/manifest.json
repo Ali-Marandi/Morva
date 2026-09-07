@@ -1,0 +1,22 @@
+{
+  "version": "1405.0",
+  "status": "pending_authoritative_sources",
+  "authority": "PENDING_OFFICIAL_AUTHORITY_REGISTRATION",
+  "synthetic": false,
+  "source_documents": {},
+  "components": [
+    "JOB_RIGHT",
+    "INCUMBENT_RIGHT",
+    "JOB_ALLOWANCE",
+    "RANK_ALLOWANCE",
+    "FAMILY_ALLOWANCE",
+    "CHILD_ALLOWANCE",
+    "OVERTIME",
+    "TEACHING_FEE",
+    "TAX",
+    "PENSION",
+    "INSURANCE",
+    "LOAN",
+    "COURT_ORDER"
+  ]
+}
