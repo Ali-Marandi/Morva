@@ -21,7 +21,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Morva Payroll Platform", version="1.0.0-rc1", description="Production-oriented payroll platform for Iranian public-sector education.", lifespan=lifespan)
+app = FastAPI(title="Morva Payroll Platform", version="1.0.1", description="Production-oriented payroll platform for Iranian public-sector education.", lifespan=lifespan)
 protected_dependencies = [Depends(get_current_principal)]
 app.include_router(payroll_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(imports_router, prefix="/api/v1", dependencies=protected_dependencies)
@@ -34,7 +34,7 @@ app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_depe
 
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "morva-payroll", "version": "1.0.0-rc1"}
+    return {"status": "ok", "service": "morva-payroll", "version": "1.0.1"}
 
 
 @app.get("/ready", tags=["system"])
