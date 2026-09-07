@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
