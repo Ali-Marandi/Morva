@@ -6,7 +6,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
