@@ -9,6 +9,7 @@ from morva.api.v1.masterdata import router as masterdata_router
 from morva.api.v1.order_approvals import router as order_approvals_router
 from morva.api.v1.payroll import router as payroll_router
 from morva.api.v1.reconciliation import router as reconciliation_router
+from morva.api.v1.rule_governance import router as rule_governance_router
 from morva.api.v1.rules import router as rules_router
 from morva.api.v1.validation import router as validation_router
 from morva.persistence.database import init_db
@@ -34,6 +35,7 @@ app.include_router(enterprise_router, prefix="/api/v1", dependencies=protected_d
 app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(order_approvals_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(rule_governance_router, prefix="/api/v1", dependencies=protected_dependencies)
 
 
 @app.get("/health", tags=["system"])
