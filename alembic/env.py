@@ -7,16 +7,14 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from morva.persistence.models import Base
-from morva.persistence import (
-    acceptance_records,
-    approval_records,
-    calculation_matrix_records,
-    core_hr_employment,
-    core_hr_records,
-    domain_extensions,
-    enterprise_models,
-    masterdata_records,
-)  # noqa: F401 - register domain tables
+from morva.persistence import acceptance_records  # noqa: F401
+from morva.persistence import approval_records  # noqa: F401
+from morva.persistence import calculation_matrix_records  # noqa: F401
+from morva.persistence import core_hr_employment  # noqa: F401
+from morva.persistence import core_hr_records  # noqa: F401
+from morva.persistence import domain_extensions  # noqa: F401
+from morva.persistence import enterprise_models  # noqa: F401
+from morva.persistence import masterdata_records  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
