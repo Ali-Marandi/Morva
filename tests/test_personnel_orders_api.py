@@ -11,13 +11,12 @@ from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 
-app.dependency_overrides[get_current_principal] = lambda: Principal(
-    user_id="order-admin",
-    role="admin",
-    scope=Scope.MINISTRY,
-    scope_id="ministry",
-    mfa_verified=True,
-)
+
+def _principal(user_id: str, role: str = "admin", mfa_verified: bool = True) -> Principal:
+    return Principal(user_id=user_id, role=role, scope=Scope.MINISTRY, scope_id="ministry", mfa_verified=mfa_verified)
+
+
+app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
 client = TestClient(app)
 
 
@@ -48,8 +47,16 @@ def test_personnel_order_registers_idempotently_and_filters_effective_date():
     assert second.json()["id"] == first.json()["id"]
 
     before = client.get(f"/api/v1/hr/employees/{employee_no}/orders", params={"effective_on": "2026-01-31"})
-    after = client.get(f"/api/v1/hr/employees/{employee_no}/orders", params={"effective_on": "2026-02-01"})
+    pending = client.get(f"/api/v1/hr/employees/{employee_no}/orders", params={"effective_on": "2026-02-01"})
     assert before.status_code == 200 and before.json()["items"] == []
+    assert pending.status_code == 200 and pending.json()["items"] == []
+
+    app.dependency_overrides[get_current_principal] = lambda: _principal("order-approver", role="personnel_approver")
+    approved = client.post(f"/api/v1/hr/employees/{employee_no}/orders/ORD-1405-0001/approval", json={"decision": "approved"})
+    assert approved.status_code == 200
+    app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
+
+    after = client.get(f"/api/v1/hr/employees/{employee_no}/orders", params={"effective_on": "2026-02-01"})
     assert after.status_code == 200 and [item["order_no"] for item in after.json()["items"]] == ["ORD-1405-0001"]
 
 
