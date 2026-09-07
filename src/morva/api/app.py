@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
+from morva.api.v1.assignment_attendance import router as assignment_attendance_router
 from morva.api.v1.calculation_matrix import router as calculation_matrix_router
 from morva.api.v1.core_hr import router as core_hr_router
 from morva.api.v1.enterprise import router as enterprise_router
@@ -42,6 +43,7 @@ app.include_router(masterdata_validation_router, prefix="/api/v1", dependencies=
 app.include_router(masterdata_acceptance_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(order_approvals_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(rule_governance_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(assignment_attendance_router, prefix="/api/v1", dependencies=protected_dependencies)
 
 
 @app.get("/health", tags=["system"])
