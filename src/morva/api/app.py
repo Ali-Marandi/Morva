@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
+from morva.api.v1.calculation_matrix import router as calculation_matrix_router
 from morva.api.v1.core_hr import router as core_hr_router
 from morva.api.v1.enterprise import router as enterprise_router
 from morva.api.v1.imports import router as imports_router
@@ -32,6 +33,7 @@ app.include_router(payroll_router, prefix="/api/v1", dependencies=protected_depe
 app.include_router(imports_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(reconciliation_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(rules_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(calculation_matrix_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(validation_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(enterprise_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_dependencies)
