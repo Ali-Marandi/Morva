@@ -31,6 +31,7 @@
 | 25 | Transactional Integration Messaging | implemented foundation; official provider delivery and acknowledgement pending |
 | 26 | Historical Payroll Replay | implemented foundation; production legal-rule replay certification pending |
 | 27 | Core HR Employee Profile API | implemented read APIs for employee, employment, assignment, education, experience and dependents; automated API coverage added; production master-data validation pending |
+| 28 | Core HR Effective Snapshots | implemented immutable period snapshot creation/read API with deterministic content hash; payroll/order population integration and production master-data evidence pending |
 
 ## Canonical payroll lifecycle
 
@@ -42,7 +43,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models and authenticated read APIs for this chain. Authoritative ministry master data, durable personnel-order mutation workflow, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, and immutable effective snapshots for this chain. Authoritative ministry master data, durable personnel-order mutation workflow, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 
