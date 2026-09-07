@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -54,19 +52,21 @@ def _evidence(source_id, *, status: str = "approved", source_hash: str = _HASH, 
     )
 
 
-def test_missing_evidence_fails_closed() -> None:
+def _session() -> Session:
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
-    with Session(engine) as session:
+    return Session(engine)
+
+
+def test_missing_evidence_fails_closed() -> None:
+    with _session() as session:
         result = check_teacher_rank_evidence(session, _case())
         assert result.ready is False
         assert "no approved evidence" in result.blockers[0]
 
 
 def test_approved_matching_source_and_evidence_is_ready() -> None:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
+    with _session() as session:
         source = _source()
         session.add(source)
         session.flush()
@@ -81,9 +81,7 @@ def test_approved_matching_source_and_evidence_is_ready() -> None:
 
 
 def test_unapproved_source_and_evidence_block_decision() -> None:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
+    with _session() as session:
         source = _source(status="reviewed")
         session.add(source)
         session.flush()
@@ -96,9 +94,7 @@ def test_unapproved_source_and_evidence_block_decision() -> None:
 
 
 def test_hash_mismatch_blocks_even_when_records_are_approved() -> None:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
+    with _session() as session:
         source = _source(source_hash="c" * 64)
         session.add(source)
         session.flush()
@@ -110,9 +106,7 @@ def test_hash_mismatch_blocks_even_when_records_are_approved() -> None:
 
 
 def test_effect_period_outside_source_window_blocks() -> None:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
+    with _session() as session:
         source = _source(effective_from="1405-07-01", effective_to="1405-12-29")
         session.add(source)
         session.flush()
@@ -123,15 +117,14 @@ def test_effect_period_outside_source_window_blocks() -> None:
         assert any("effect period predates legal source" in blocker for blocker in result.blockers)
 
 
-def test_invalid_hash_is_rejected() -> None:
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
+def test_invalid_source_hash_is_rejected() -> None:
+    with _session() as session:
         source = _source(source_hash="not-a-sha256")
         session.add(source)
         session.flush()
-        session.add(_evidence(source.id))
+        session.add(_evidence(source.id, source_hash="not-a-sha256"))
         session.flush()
         result = check_teacher_rank_evidence(session, _case())
         assert result.ready is False
-        assert any("evidence source hash is invalid" in blocker for blocker in result.blockers)
+        assert any("legal source document hash is invalid" in blocker for blocker in result.blockers)
+        assert any("teacher rank evidence source hash is invalid" in blocker for blocker in result.blockers)
