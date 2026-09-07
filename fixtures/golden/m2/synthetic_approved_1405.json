@@ -1,0 +1,36 @@
+{
+  "version": "1405.0-test",
+  "status": "approved",
+  "authority": "SYNTHETIC_TEST_ONLY",
+  "synthetic": true,
+  "source_documents": {
+    "JOB_RIGHT": "synthetic:job-right",
+    "INCUMBENT_RIGHT": "synthetic:incumbent-right",
+    "JOB_ALLOWANCE": "synthetic:job-allowance",
+    "RANK_ALLOWANCE": "synthetic:rank-allowance",
+    "FAMILY_ALLOWANCE": "synthetic:family-allowance",
+    "CHILD_ALLOWANCE": "synthetic:child-allowance",
+    "OVERTIME": "synthetic:overtime",
+    "TEACHING_FEE": "synthetic:teaching-fee",
+    "TAX": "synthetic:tax",
+    "PENSION": "synthetic:pension",
+    "INSURANCE": "synthetic:insurance",
+    "LOAN": "synthetic:loan",
+    "COURT_ORDER": "synthetic:court-order"
+  },
+  "components": [
+    "JOB_RIGHT",
+    "INCUMBENT_RIGHT",
+    "JOB_ALLOWANCE",
+    "RANK_ALLOWANCE",
+    "FAMILY_ALLOWANCE",
+    "CHILD_ALLOWANCE",
+    "OVERTIME",
+    "TEACHING_FEE",
+    "TAX",
+    "PENSION",
+    "INSURANCE",
+    "LOAN",
+    "COURT_ORDER"
+  ]
+}
