@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from morva.audit.persistence import append_audit_event
+from morva.hr.teacher_rank_evidence import check_teacher_rank_evidence
 from morva.persistence.domain_extensions import TeacherRankCaseRecord
 from morva.persistence.models import EmployeeRecord
 from morva.security.policy import require_distinct_actors
@@ -72,6 +73,9 @@ def decide_case(session: Session, case_id: UUID, actor_id: str, decision_referen
     if not decision_reference.strip():
         raise ValueError("decision_reference is required")
     record = _case(session, case_id)
+    evidence_gate = check_teacher_rank_evidence(session, record)
+    if not evidence_gate.ready:
+        raise ValueError("teacher rank decision blocked by authoritative evidence gate: " + "; ".join(evidence_gate.blockers))
     record.decision_reference = decision_reference
     return _transition(session, record, target="decided", actor_id=actor_id, reason="record authoritative rank decision")
 
