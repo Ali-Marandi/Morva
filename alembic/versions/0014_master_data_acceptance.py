@@ -34,20 +34,44 @@ def upgrade() -> None:
         sa.Column("submitted_by", sa.String(100), nullable=False),
         sa.Column("accepted_by", sa.String(100), nullable=True),
         sa.Column("accepted_at", sa.DateTime(), nullable=True),
+        sa.Column("authority_confirmation_reference", sa.String(300), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.UniqueConstraint("dataset_name", "dataset_sha256", name="uq_master_data_acceptance_dataset_hash"),
+        sa.UniqueConstraint(
+            "dataset_name",
+            "dataset_sha256",
+            name="uq_master_data_acceptance_dataset_hash",
+        ),
     )
-    op.create_index("ix_master_data_acceptance_dataset_name", "master_data_acceptance", ["dataset_name"])
-    op.create_index("ix_master_data_acceptance_dataset_period", "master_data_acceptance", ["dataset_period"])
-    op.create_index("ix_master_data_acceptance_dataset_sha256", "master_data_acceptance", ["dataset_sha256"])
+    op.create_index(
+        "ix_master_data_acceptance_dataset_name",
+        "master_data_acceptance",
+        ["dataset_name"],
+    )
+    op.create_index(
+        "ix_master_data_acceptance_dataset_period",
+        "master_data_acceptance",
+        ["dataset_period"],
+    )
+    op.create_index(
+        "ix_master_data_acceptance_dataset_sha256",
+        "master_data_acceptance",
+        ["dataset_sha256"],
+    )
     op.create_index("ix_master_data_acceptance_status", "master_data_acceptance", ["status"])
-    op.create_index("ix_master_data_acceptance_submitted_by", "master_data_acceptance", ["submitted_by"])
+    op.create_index(
+        "ix_master_data_acceptance_submitted_by",
+        "master_data_acceptance",
+        ["submitted_by"],
+    )
 
 
 def downgrade() -> None:
     op.drop_index("ix_master_data_acceptance_submitted_by", table_name="master_data_acceptance")
     op.drop_index("ix_master_data_acceptance_status", table_name="master_data_acceptance")
-    op.drop_index("ix_master_data_acceptance_dataset_sha256", table_name="master_data_acceptance")
+    op.drop_index(
+        "ix_master_data_acceptance_dataset_sha256",
+        table_name="master_data_acceptance",
+    )
     op.drop_index("ix_master_data_acceptance_dataset_period", table_name="master_data_acceptance")
     op.drop_index("ix_master_data_acceptance_dataset_name", table_name="master_data_acceptance")
     op.drop_table("master_data_acceptance")

@@ -53,7 +53,9 @@ def _validate_contract(payload: MasterDataAcceptanceRequest) -> list[str]:
         "source_uri": payload.source_uri,
         "authoritative_source_reference": payload.authoritative_source_reference,
     }
-    blockers.extend(f"{name} is required" for name, value in required_text.items() if not value.strip())
+    blockers.extend(
+        f"{name} is required" for name, value in required_text.items() if not value.strip()
+    )
     if not payload.source_uri.startswith(("https://", "sftp://")):
         blockers.append("source_uri must use https:// or sftp://")
     if not SHA256_RE.fullmatch(payload.dataset_sha256):
@@ -76,24 +78,33 @@ def assess_master_data_acceptance(
     payload: MasterDataAcceptanceRequest,
     actor_id: str,
 ) -> MasterDataAcceptanceResult:
+    normalized_hash = payload.dataset_sha256.lower()
     blockers = _validate_contract(payload)
     warnings: list[str] = []
     integrity = validate_master_data(session)
     if integrity.blocking:
         blockers.append("current master-data integrity gate is blocking")
-        blockers.extend(f"integrity:{item.code}:{item.entity_id}" for item in integrity.findings if item.severity == "error")
-    warnings.extend(f"integrity:{item.code}:{item.entity_id}" for item in integrity.findings if item.severity == "warning")
+        blockers.extend(
+            f"integrity:{item.code}:{item.entity_id}"
+            for item in integrity.findings
+            if item.severity == "error"
+        )
+    warnings.extend(
+        f"integrity:{item.code}:{item.entity_id}"
+        for item in integrity.findings
+        if item.severity == "warning"
+    )
 
     existing = session.scalar(
         select(MasterDataAcceptanceRecord).where(
             MasterDataAcceptanceRecord.dataset_name == payload.dataset_name,
-            MasterDataAcceptanceRecord.dataset_sha256 == payload.dataset_sha256,
+            MasterDataAcceptanceRecord.dataset_sha256 == normalized_hash,
         )
     )
     if existing is not None:
         return MasterDataAcceptanceResult(
             status=existing.status,
-            eligible=existing.status == "eligible",
+            eligible=existing.status in {"eligible", "accepted"},
             blockers=tuple(existing.blockers or []),
             warnings=tuple(existing.warnings or []),
             integrity_blocking=existing.integrity_blocking,
@@ -108,7 +119,7 @@ def assess_master_data_acceptance(
         source_uri=payload.source_uri,
         authoritative_source_reference=payload.authoritative_source_reference,
         dataset_period=payload.dataset_period,
-        dataset_sha256=payload.dataset_sha256.lower(),
+        dataset_sha256=normalized_hash,
         row_count=payload.row_count,
         duplicate_key_count=payload.duplicate_key_count,
         rejected_row_count=payload.rejected_row_count,
@@ -163,8 +174,8 @@ def confirm_master_data_acceptance(
     record.status = "accepted"
     record.accepted_by = actor_id
     record.accepted_at = datetime.utcnow()
+    record.authority_confirmation_reference = authority_confirmation_reference.strip()
     record.blockers = []
-    record.warnings = list(record.warnings or [])
     append_audit_event(
         event_type="masterdata.acceptance.confirmed",
         entity_type="master_data_acceptance",
@@ -173,7 +184,7 @@ def confirm_master_data_acceptance(
         payload={
             "dataset_name": record.dataset_name,
             "dataset_sha256": record.dataset_sha256,
-            "authority_confirmation_reference": authority_confirmation_reference,
+            "authority_confirmation_reference": record.authority_confirmation_reference,
         },
         reason="confirm authoritative master-data acceptance",
         session=session,

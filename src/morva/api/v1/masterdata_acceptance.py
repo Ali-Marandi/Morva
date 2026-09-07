@@ -79,6 +79,7 @@ def confirm_acceptance(
             "dataset_sha256": record.dataset_sha256,
             "accepted_by": record.accepted_by,
             "accepted_at": record.accepted_at.isoformat() if record.accepted_at else None,
+            "authority_confirmation_reference": record.authority_confirmation_reference,
         }
 
 
@@ -112,5 +113,6 @@ def get_acceptance_assessment(
             "submitted_by": record.submitted_by,
             "accepted_by": record.accepted_by,
             "accepted_at": record.accepted_at.isoformat() if record.accepted_at else None,
+            "authority_confirmation_reference": record.authority_confirmation_reference,
             "created_at": record.created_at.isoformat() if record.created_at else None,
         }

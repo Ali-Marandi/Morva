@@ -32,4 +32,7 @@ class MasterDataAcceptanceRecord(Base):
     submitted_by: Mapped[str] = mapped_column(String(100), index=True)
     accepted_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    authority_confirmation_reference: Mapped[str | None] = mapped_column(
+        String(300), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
