@@ -47,6 +47,19 @@ jobs:
       - run: python -m pip install pip-audit
       - run: pip-audit
 
+  m2-gate:
+    name: M2 payroll calculation gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/payroll src/morva/integrations tests/golden tests/test_three_way_reconciliation.py tests/test_payroll_contract.py
+      - run: pytest -q tests/golden/test_m2_end_to_end.py tests/test_three_way_reconciliation.py tests/test_payroll_contract.py
+
   web-build:
     runs-on: ubuntu-latest
     defaults:
