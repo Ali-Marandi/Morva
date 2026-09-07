@@ -7,7 +7,7 @@
 | 1 | Organization & Position Master Data | authenticated registry APIs + persisted master data + deterministic integrity validation + manifest acceptance contract implemented; authoritative ministry dataset and acceptance confirmation evidence pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
-| 4 | Calculation Matrix | deterministic rule engine + persisted legal evidence foundations; complete population-specific legal treatment matrix pending |
+| 4 | Calculation Matrix | persisted rule-pack/component/population matrix with treatment, safe expression, effective dates, legal source/article, regression-suite hash, review/approval workflow and readiness gate implemented; authoritative population-specific legal matrix pending |
 | 5 | 1405 Rule Pack | governed lifecycle foundation; remains `review_required` until authoritative legal/finance approval |
 | 6 | Tax / Pension / Insurance | persisted tax, pension and insurance ledger foundations added; approved population-specific rule sets pending |
 | 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
@@ -44,6 +44,10 @@
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
 The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, and a persisted manifest-level acceptance contract. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
+
+## Calculation Matrix Governance
+
+Each executable component mapping is required to bind a Rule Pack and population scope to a safe expression, effective dates, legal source/article, tax/pension/insurance treatment and a regression-suite fingerprint. Legal source and rule evidence must already be approved, and matrix entries require distinct review and approval actors before the matrix readiness gate can pass.
 
 ## Release position
 
