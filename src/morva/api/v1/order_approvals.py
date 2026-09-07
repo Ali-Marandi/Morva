@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +10,7 @@ from morva.audit.persistence import append_audit_event
 from morva.persistence.approval_records import PersonnelOrderDecisionRecord
 from morva.persistence.database import SessionLocal
 from morva.persistence.models import AuditEventRecord, EmployeeRecord, PersonnelOrderRecord
-from morva.personnel.order_approval import decide_order, get_approval, status_name
+from morva.personnel.order_approval import decide_order, ensure_submission, get_approval, status_name
 from morva.security.auth import Principal, get_current_principal
 from morva.security.hierarchy import authorize_hierarchical
 
@@ -52,8 +51,6 @@ def _ensure_submission_from_audit(session, order: PersonnelOrderRecord):
     )
     if audit is None or not audit.actor_id:
         raise HTTPException(status_code=409, detail="personnel order has no immutable submission provenance")
-    from morva.personnel.order_approval import ensure_submission
-
     submission = ensure_submission(session, order, audit.actor_id)
     return submission, decision
 
@@ -70,7 +67,10 @@ def get_order_approval(
         submission, decision = get_approval(session, order)
         audit = session.scalar(
             select(AuditEventRecord)
-            .where(AuditEventRecord.event_type == "personnel.order.registered", AuditEventRecord.entity_id == str(order.id))
+            .where(
+                AuditEventRecord.event_type == "personnel.order.registered",
+                AuditEventRecord.entity_id == str(order.id),
+            )
             .order_by(AuditEventRecord.sequence_no.asc())
         )
         submitted_by = submission.submitted_by if submission else (audit.actor_id if audit else None)
