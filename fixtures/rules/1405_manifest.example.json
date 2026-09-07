@@ -1,0 +1,21 @@
+{
+  "rule_pack_version": "1405.example",
+  "authoritative": false,
+  "note": "Synthetic fixture for governance tests only; contains no legal rates or authoritative values.",
+  "required_components": [
+    "JOB_RIGHT",
+    "INCUMBENT_RIGHT",
+    "JOB_ALLOWANCE",
+    "RANK_ALLOWANCE",
+    "FAMILY_ALLOWANCE",
+    "CHILD_ALLOWANCE",
+    "OVERTIME",
+    "TEACHING_FEE",
+    "TAX",
+    "PENSION",
+    "INSURANCE",
+    "LOAN",
+    "COURT_ORDER"
+  ],
+  "activation_status": "blocked_until_authoritative_evidence"
+}
