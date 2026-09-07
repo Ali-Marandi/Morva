@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -15,8 +17,14 @@ from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
 
 
 def _canonical_value(value):
-    if isinstance(value, (date, UUID)):
+    if isinstance(value, (date, datetime, UUID, Decimal)):
         return str(value)
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {str(key): _canonical_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_canonical_value(item) for item in value]
     return value
 
 
@@ -85,7 +93,7 @@ def build_core_hr_snapshot(session: Session, employee_no: str, effective_on: dat
             "national_id": employee.national_id,
             "first_name": employee.first_name,
             "last_name": employee.last_name,
-            "status": employee.status,
+            "status": _canonical_value(employee.status),
             "hire_date": _canonical_value(employee.hire_date),
         },
         "effective_on": effective_on.isoformat(),
@@ -95,19 +103,19 @@ def build_core_hr_snapshot(session: Session, employee_no: str, effective_on: dat
         "experience": [_record_payload(item) for item in experience],
         "dependents": [_record_payload(item) for item in dependents],
         "resolved": {
-            "organization_unit_id": effective_org,
-            "position_id": effective_position,
-            "employment_type": effective_type,
+            "organization_unit_id": _canonical_value(effective_org),
+            "position_id": _canonical_value(effective_position),
+            "employment_type": _canonical_value(effective_type),
         },
     }
 
 
 def persist_core_hr_snapshot(session: Session, employee_no: str, effective_period: str, effective_on: date) -> PersonnelSnapshotRecord:
     payload = build_core_hr_snapshot(session, employee_no, effective_on)
-    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     snapshot_hash = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     source_hash = hashlib.sha256(
-        json.dumps(payload["employee"], ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        json.dumps(payload["employee"], ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
 
     existing = session.scalar(
