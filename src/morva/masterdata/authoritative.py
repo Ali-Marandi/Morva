@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
 from collections import defaultdict
+from dataclasses import asdict, dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from morva.masterdata.validation import MasterDataFinding, validate_master_data
 from morva.persistence.domain_extensions import AssignmentRecord
-from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import EmployeeRecord
-from morva.masterdata.validation import MasterDataFinding, validate_master_data
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,13 +20,14 @@ class AuthoritativeMasterDataResult:
     def as_dict(self) -> dict[str, object]:
         return {
             "blocking": self.blocking,
-            "findings": [finding.__dict__ for finding in self.findings],
+            "findings": [asdict(finding) for finding in self.findings],
         }
 
 
 def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterDataResult:
     base = validate_master_data(session)
     findings = list(base.findings)
+    additional_blocking = False
 
     positions = session.scalars(select(PositionRecord).order_by(PositionRecord.code)).all()
     for row in positions:
@@ -42,9 +41,14 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
                     message="position effective_to precedes effective_from",
                 )
             )
+            additional_blocking = True
 
     assignments = session.scalars(
-        select(AssignmentRecord).order_by(AssignmentRecord.employee_no, AssignmentRecord.starts_on, AssignmentRecord.id)
+        select(AssignmentRecord).order_by(
+            AssignmentRecord.employee_no,
+            AssignmentRecord.starts_on,
+            AssignmentRecord.id,
+        )
     ).all()
     by_employee: dict[str, list[AssignmentRecord]] = defaultdict(list)
     for row in assignments:
@@ -53,20 +57,17 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
     for employee_no, rows in by_employee.items():
         previous: AssignmentRecord | None = None
         for current in rows:
-            if previous is not None:
-                previous_end = previous.ends_on
-                if previous_end is None or current.starts_on <= previous_end:
-                    findings.append(
-                        MasterDataFinding(
-                            code="ASSIGNMENT_OVERLAP",
-                            severity="error",
-                            entity_type="assignment",
-                            entity_id=str(current.id),
-                            message=(
-                                f"assignment interval overlaps previous assignment for employee {employee_no}"
-                            ),
-                        )
+            if previous is not None and (previous.ends_on is None or current.starts_on <= previous.ends_on):
+                findings.append(
+                    MasterDataFinding(
+                        code="ASSIGNMENT_OVERLAP",
+                        severity="error",
+                        entity_type="assignment",
+                        entity_id=str(current.id),
+                        message=f"assignment interval overlaps previous assignment for employee {employee_no}",
                     )
+                )
+                additional_blocking = True
             previous = current
 
     active_employees = session.scalars(
@@ -84,8 +85,9 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
                     message="active employee has no personnel assignment",
                 )
             )
+            additional_blocking = True
 
     return AuthoritativeMasterDataResult(
-        blocking=base.blocking or any(item.severity == "error" for item in findings if item not in base.findings),
+        blocking=base.blocking or additional_blocking,
         findings=tuple(findings),
     )
