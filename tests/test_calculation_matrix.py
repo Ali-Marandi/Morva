@@ -21,7 +21,7 @@ def _session():
 
 
 def _setup(session, *, source_status="approved", evidence_status="approved"):
-    pack = RulePackRecord(version="1405.0-test", status="reviewed", reviewed_by="legal-reviewer")
+    pack = RulePackRecord(version="TEST-MATRIX-1.0", status="reviewed", reviewed_by="legal-reviewer")
     source = LegalSourceRecord(
         citation="Synthetic authority source",
         issuer="Synthetic issuer",
@@ -74,7 +74,7 @@ def test_matrix_requires_approved_source_and_evidence():
             create_matrix_entry(
                 session,
                 {
-                    "rule_pack_version": "1405.0-test",
+                    "rule_pack_version": "TEST-MATRIX-1.0",
                     "component_code": "TEST_EARNING",
                     "population_scope": "all",
                     "treatment": "earning",
