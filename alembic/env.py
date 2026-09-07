@@ -10,6 +10,7 @@ from morva.persistence.models import Base
 from morva.persistence import (
     acceptance_records,
     approval_records,
+    calculation_matrix_records,
     core_hr_employment,
     core_hr_records,
     domain_extensions,
