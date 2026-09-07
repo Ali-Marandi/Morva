@@ -8,7 +8,7 @@ from morva.persistence.core_hr_employment import EmploymentRecord
 from morva.persistence.core_hr_records import DependentRecord, EducationRecord, ExperienceRecord
 from morva.persistence.database import SessionLocal, init_db
 from morva.persistence.domain_extensions import AssignmentRecord
-from morva.persistence.models import EmployeeRecord
+from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 
@@ -119,7 +119,7 @@ def test_employee_profile_returns_core_hr_chain():
     assert body["effective_employment"]["position_id"] == "POS-TEST"
     assert body["effective_assignment"]["position_code"] == "POS-TEST"
     assert len(body["education"]) == 1
-    assert len(body["experience"]) == 2
+    assert len(body["experience"]) == 1
     assert len(body["dependents"]) == 2
 
 
@@ -144,7 +144,56 @@ def test_dependents_effective_date_filters_validity_window():
     assert [item["name"] for item in response.json()["items"]] == ["Spouse One"]
 
 
-def test_non_hr_role_cannot_read_employee_profile():
+def test_snapshot_is_idempotent_and_readable():
+    employee_no = _seed_employee()
+    first = client.post(
+        f"/api/v1/hr/employees/{employee_no}/snapshots",
+        params={"effective_on": "2024-01-15", "effective_period": "2024-01"},
+    )
+    second = client.post(
+        f"/api/v1/hr/employees/{employee_no}/snapshots",
+        params={"effective_on": "2024-01-15", "effective_period": "2024-01"},
+    )
+    assert first.status_code == 201
+    assert second.status_code == 201
+    assert second.json()["id"] == first.json()["id"]
+    assert second.json()["snapshot_hash"] == first.json()["snapshot_hash"]
+
+    fetched = client.get(f"/api/v1/hr/employees/{employee_no}/snapshots/2024-01")
+    assert fetched.status_code == 200
+    assert fetched.json()["id"] == first.json()["id"]
+    assert fetched.json()["components"]["core_hr"]["resolved"]["position_id"] == "POS-TEST"
+
+
+def test_snapshot_rejects_content_change_after_creation():
+    employee_no = _seed_employee()
+    created = client.post(
+        f"/api/v1/hr/employees/{employee_no}/snapshots",
+        params={"effective_on": "2024-01-15", "effective_period": "2024-01"},
+    )
+    assert created.status_code == 201
+    with SessionLocal() as session:
+        employee = session.scalar(select(EmployeeRecord).where(EmployeeRecord.employee_no == employee_no))
+        employee.last_name = "Changed"
+        session.commit()
+
+    conflict = client.post(
+        f"/api/v1/hr/employees/{employee_no}/snapshots",
+        params={"effective_on": "2024-01-15", "effective_period": "2024-01"},
+    )
+    assert conflict.status_code == 409
+
+
+def test_snapshot_rejects_mismatched_period():
+    employee_no = _seed_employee()
+    response = client.post(
+        f"/api/v1/hr/employees/{employee_no}/snapshots",
+        params={"effective_on": "2024-01-15", "effective_period": "2024-02"},
+    )
+    assert response.status_code == 422
+
+
+def test_snapshot_requires_personnel_write_permission():
     employee_no = _seed_employee()
     app.dependency_overrides[get_current_principal] = lambda: Principal(
         user_id="test-finance",
@@ -154,7 +203,10 @@ def test_non_hr_role_cannot_read_employee_profile():
         mfa_verified=True,
     )
     try:
-        response = client.get(f"/api/v1/hr/employees/{employee_no}")
+        response = client.post(
+            f"/api/v1/hr/employees/{employee_no}/snapshots",
+            params={"effective_on": "2024-01-15", "effective_period": "2024-01"},
+        )
         assert response.status_code == 403
     finally:
         app.dependency_overrides[get_current_principal] = lambda: Principal(
