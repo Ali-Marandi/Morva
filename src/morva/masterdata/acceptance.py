@@ -160,11 +160,12 @@ def assess_master_data_acceptance(
 
 def confirm_master_data_acceptance(
     session: Session,
-    acceptance_id: UUID,
+    acceptance_id: UUID | str,
     actor_id: str,
     authority_confirmation_reference: str,
 ) -> MasterDataAcceptanceRecord:
-    record = session.get(MasterDataAcceptanceRecord, acceptance_id)
+    acceptance_uuid = acceptance_id if isinstance(acceptance_id, UUID) else UUID(str(acceptance_id))
+    record = session.get(MasterDataAcceptanceRecord, acceptance_uuid)
     if record is None:
         raise ValueError("master-data acceptance assessment not found")
     if record.status != "eligible":
