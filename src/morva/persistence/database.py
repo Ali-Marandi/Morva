@@ -16,15 +16,13 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def _register_models() -> None:
-    from morva.persistence import (
-        calculation_matrix_records,
-        core_hr_employment,
-        core_hr_records,
-        domain_extensions,
-        enterprise_models,
-        masterdata_records,
-        security_guards,
-    )  # noqa: F401
+    from morva.persistence import calculation_matrix_records  # noqa: F401
+    from morva.persistence import core_hr_employment  # noqa: F401
+    from morva.persistence import core_hr_records  # noqa: F401
+    from morva.persistence import domain_extensions  # noqa: F401
+    from morva.persistence import enterprise_models  # noqa: F401
+    from morva.persistence import masterdata_records  # noqa: F401
+    from morva.persistence import security_guards  # noqa: F401
 
 
 def init_db() -> None:
