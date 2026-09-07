@@ -18,16 +18,16 @@ def employment(start: date, end: date | None = None, employee_no: str = "E-1") -
 
 
 def test_employment_is_active_on_boundary_dates() -> None:
-    record = employment(date(1405, 1, 1), date(1405, 6, 31))
+    record = employment(date(1405, 1, 1), date(1405, 6, 30))
     assert record.active_on(date(1405, 1, 1))
-    assert record.active_on(date(1405, 6, 31))
+    assert record.active_on(date(1405, 6, 30))
     assert not record.active_on(date(1405, 7, 1))
 
 
 def test_employment_rejects_overlapping_intervals() -> None:
     records = (
-        employment(date(1405, 1, 1), date(1405, 6, 31)),
-        employment(date(1405, 6, 31), None),
+        employment(date(1405, 1, 1), date(1405, 6, 30)),
+        employment(date(1405, 6, 30), None),
     )
     with pytest.raises(ValueError, match="employment intervals overlap"):
         Employment.ensure_non_overlapping(records)
