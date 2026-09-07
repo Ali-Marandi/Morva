@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFactRecord
+from morva.persistence.domain_extensions import AttendanceFactRecord
 from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import Base, EmployeeRecord
