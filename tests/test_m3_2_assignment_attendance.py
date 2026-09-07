@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
+from fastapi import HTTPException
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
@@ -138,7 +139,8 @@ def test_attendance_cannot_be_approved_by_same_reviewer():
         review_attendance_fact(session, result.attendance_id, "same-user")
         try:
             approve_attendance_fact(session, result.attendance_id, "same-user", "same-user")
-        except ValueError as exc:
-            assert "distinct" in str(exc)
+        except HTTPException as exc:
+            assert exc.status_code == 409
+            assert "distinct" in str(exc.detail)
         else:
             raise AssertionError("same reviewer and approver must be rejected")
