@@ -1,6 +1,7 @@
 from datetime import date
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
@@ -15,7 +16,11 @@ def _principal(user_id: str, role: str = "admin", mfa_verified: bool = True) -> 
     return Principal(user_id=user_id, role=role, scope=Scope.MINISTRY, scope_id="ministry", mfa_verified=mfa_verified)
 
 
-app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
+@pytest.fixture(autouse=True)
+def _principal_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(app.dependency_overrides, get_current_principal, lambda: _principal("order-admin"))
+
+
 client = TestClient(app)
 
 
@@ -53,7 +58,6 @@ def test_personnel_order_is_pending_until_distinct_approved():
     assert [item["order_no"] for item in effective_after.json()["items"]] == ["ORD-1405-1001"]
     duplicate = client.post(f"/api/v1/hr/employees/{employee_no}/orders/ORD-1405-1001/approval", json={"decision": "rejected"})
     assert duplicate.status_code == 409
-    app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
 
 
 def test_personnel_order_approval_requires_mfa():
@@ -62,7 +66,6 @@ def test_personnel_order_approval_requires_mfa():
     app.dependency_overrides[get_current_principal] = lambda: _principal("order-approver-no-mfa", role="personnel_approver", mfa_verified=False)
     response = client.post(f"/api/v1/hr/employees/{employee_no}/orders/ORD-1405-1002/approval", json={"decision": "approved"})
     assert response.status_code == 403
-    app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
 
 
 def test_rejected_personnel_order_never_becomes_effective():
@@ -74,4 +77,3 @@ def test_rejected_personnel_order_never_becomes_effective():
     effective = client.get(f"/api/v1/hr/employees/{employee_no}/orders", params={"effective_on": "2026-02-01"})
     assert effective.status_code == 200
     assert all(item["order_no"] != "ORD-1405-1003" for item in effective.json()["items"])
-    app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
