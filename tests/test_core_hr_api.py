@@ -2,13 +2,14 @@ from datetime import date
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from morva.api.app import app
 from morva.persistence.core_hr_employment import EmploymentRecord
 from morva.persistence.core_hr_records import DependentRecord, EducationRecord, ExperienceRecord
 from morva.persistence.database import SessionLocal, init_db
 from morva.persistence.domain_extensions import AssignmentRecord
-from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
+from morva.persistence.models import EmployeeRecord
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 
