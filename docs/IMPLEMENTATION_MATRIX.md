@@ -4,7 +4,7 @@
 
 | # | Capability | State |
 |---|---|---|
-| 1 | Organization & Position Master Data | foundation; hierarchical-scope primitive added; full authoritative master pending |
+| 1 | Organization & Position Master Data | authenticated organization/position registry APIs and persisted position master data implemented; authoritative ministry dataset and validation pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API implemented; authoritative order schema/approval workflow pending |
 | 3 | Legal Knowledge Base | implemented foundation; authoritative source verification and approval pending |
 | 4 | Calculation Matrix | foundation; complete legal treatment matrix pending |
@@ -43,7 +43,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, and a durable personnel-order registry for this chain. Authoritative ministry master data, formal personnel-order approval/mutation workflow, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, and authenticated organization/position master-data registry APIs for this chain. Authoritative ministry master data, formal personnel-order approval/mutation workflow, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 
