@@ -6,11 +6,12 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from morva.persistence.approval_records import PersonnelOrderDecisionRecord, PersonnelOrderSubmissionRecord
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
 from morva.personnel.orders import OrderLine, OrderType, PersonnelOrder
 
 
-def persist_personnel_order(session: Session, order: PersonnelOrder) -> PersonnelOrderRecord:
+def persist_personnel_order(session: Session, order: PersonnelOrder, *, created_by: str | None = None) -> PersonnelOrderRecord:
     order.validate()
     employee = session.scalar(select(EmployeeRecord).where(EmployeeRecord.employee_no == order.employee_no))
     if employee is None:
@@ -36,6 +37,8 @@ def persist_personnel_order(session: Session, order: PersonnelOrder) -> Personne
         ):
             raise ValueError("personnel order already exists with different content")
         return existing
+    if not created_by:
+        raise ValueError("personnel order creator is required for new submissions")
     record = PersonnelOrderRecord(
         order_no=order.number,
         employee_no=order.employee_no,
@@ -47,6 +50,13 @@ def persist_personnel_order(session: Session, order: PersonnelOrder) -> Personne
         payload=payload,
     )
     session.add(record)
+    session.flush()
+    submission = PersonnelOrderSubmissionRecord(
+        order_id=record.id,
+        order_no=record.order_no,
+        submitted_by=created_by,
+    )
+    session.add(submission)
     session.flush()
     return record
 
@@ -72,7 +82,15 @@ def record_to_personnel_order(record: PersonnelOrderRecord) -> PersonnelOrder:
 def effective_personnel_orders(session: Session, employee_no: str, effective_on: date) -> list[PersonnelOrderRecord]:
     records = session.scalars(
         select(PersonnelOrderRecord)
-        .where(PersonnelOrderRecord.employee_no == employee_no, PersonnelOrderRecord.effective_date <= effective_on)
+        .join(
+            PersonnelOrderDecisionRecord,
+            PersonnelOrderDecisionRecord.order_id == PersonnelOrderRecord.id,
+        )
+        .where(
+            PersonnelOrderRecord.employee_no == employee_no,
+            PersonnelOrderRecord.effective_date <= effective_on,
+            PersonnelOrderDecisionRecord.decision == "approved",
+        )
         .order_by(PersonnelOrderRecord.effective_date.desc(), PersonnelOrderRecord.order_no.desc())
     ).all()
     return [record for record in records if record_to_personnel_order(record).is_effective_on(effective_on)]
