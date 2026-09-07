@@ -4,7 +4,7 @@
 
 | # | Capability | State |
 |---|---|---|
-| 1 | Organization & Position Master Data | authenticated organization/position registry APIs + persisted position master data + deterministic integrity validation gate implemented; authoritative ministry dataset and authoritative-data acceptance evidence pending |
+| 1 | Organization & Position Master Data | authenticated registry APIs + persisted master data + deterministic integrity validation + manifest acceptance contract implemented; authoritative ministry dataset and acceptance confirmation evidence pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
 | 4 | Calculation Matrix | deterministic rule engine + persisted legal evidence foundations; complete population-specific legal treatment matrix pending |
@@ -22,7 +22,7 @@
 | 16 | Management Dashboard | UI foundation; authoritative live data wiring pending |
 | 17 | Anomaly Detection | deterministic/scoring foundation |
 | 18 | Forecast / Budget AI | advisory-only foundations |
-| 19 | Production Security | OIDC/JWT, MFA gate, permissions, sensitive-field crypto primitives implemented; operational hardening and independent review pending |
+| 19 | Production Security | OIDC/JWT, MFA, permissions, sensitive-field crypto primitives implemented; operational hardening and independent review pending |
 | 20 | DR / PITR | executable PostgreSQL drill script + runbook added; target-environment restore evidence pending |
 | 21 | Load / Performance | fixtures/scenarios; target-environment execution pending |
 | 22 | Golden Regression | unit/integration/property-based foundation; expanded authoritative legal corpus pending |
@@ -43,7 +43,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, and authenticated organization/position master-data registry APIs plus a deterministic integrity validation gate for organization/personnel/assignment/snapshot references. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, and a persisted manifest-level acceptance contract. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 

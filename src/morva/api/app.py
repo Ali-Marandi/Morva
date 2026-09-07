@@ -6,6 +6,7 @@ from morva.api.v1.core_hr import router as core_hr_router
 from morva.api.v1.enterprise import router as enterprise_router
 from morva.api.v1.imports import router as imports_router
 from morva.api.v1.masterdata import router as masterdata_router
+from morva.api.v1.masterdata_acceptance import router as masterdata_acceptance_router
 from morva.api.v1.masterdata_validation import router as masterdata_validation_router
 from morva.api.v1.order_approvals import router as order_approvals_router
 from morva.api.v1.payroll import router as payroll_router
@@ -36,6 +37,7 @@ app.include_router(enterprise_router, prefix="/api/v1", dependencies=protected_d
 app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_validation_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(masterdata_acceptance_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(order_approvals_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(rule_governance_router, prefix="/api/v1", dependencies=protected_dependencies)
 
