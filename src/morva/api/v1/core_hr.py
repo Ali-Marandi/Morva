@@ -199,7 +199,7 @@ def get_employee_profile(
 def create_employee_snapshot(
     employee_no: str,
     effective_on: date,
-    effective_period: str = Query(min_length=7, max_length=7, pattern=r"^\\d{4}-\\d{2}$"),
+    effective_period: str = Query(min_length=7, max_length=7, pattern=r"^\d{4}-\d{2}$"),
     principal: Principal = Depends(get_current_principal),
 ) -> dict[str, object]:
     if effective_period != effective_on.strftime("%Y-%m"):
