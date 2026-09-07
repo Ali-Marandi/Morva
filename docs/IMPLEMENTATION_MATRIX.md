@@ -5,7 +5,7 @@
 | # | Capability | State |
 |---|---|---|
 | 1 | Organization & Position Master Data | authenticated organization/position registry APIs and persisted position master data implemented; authoritative ministry dataset and validation pending |
-| 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API implemented; authoritative order schema/approval workflow pending |
+| 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
 | 3 | Legal Knowledge Base | implemented foundation; authoritative source verification and approval pending |
 | 4 | Calculation Matrix | foundation; complete legal treatment matrix pending |
 | 5 | 1405 Rule Pack | `review_required` until formal legal/finance approval |
@@ -13,7 +13,7 @@
 | 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
 | 8 | Retro + Jalali | deterministic period/replay foundations; complete snapshot-driven retro pending |
 | 9 | Loans / Debts / Deductions | persisted loan and deduction ledger foundations added; authoritative ledgers/policies pending |
-| 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented; durable enterprise IAM workflow pending |
+| 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented for personnel-order decisions; durable enterprise IAM workflow pending |
 | 11 | SINA Adapter | fail-closed typed contract; official schema/endpoint/credential and staging evidence required |
 | 12 | Accounting / Treasury / Bank | typed six-provider boundary + transactional outbox/inbox foundations; official adapters required |
 | 13 | Employee Self-Service | role-aware RTL web shell and API foundations; complete authenticated production UX pending |
@@ -43,7 +43,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, and authenticated organization/position master-data registry APIs for this chain. Authoritative ministry master data, formal personnel-order approval/mutation workflow, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, and authenticated organization/position master-data registry APIs for this chain. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
 
 ## Release position
 

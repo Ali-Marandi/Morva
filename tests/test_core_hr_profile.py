@@ -70,7 +70,7 @@ def test_dependent_effective_boundaries_and_range_validation() -> None:
         relationship=DependentRelationship.SPOUSE,
         name="Dependent B",
         valid_from=date(1404, 7, 1),
-        valid_to=date(1404, 6, 31),
+        valid_to=date(1404, 6, 30),
     )
     with pytest.raises(ValueError, match="valid_to cannot precede valid_from"):
         invalid.validate()

@@ -6,6 +6,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from morva.persistence.approval_records import PersonnelOrderDecisionRecord
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
 from morva.personnel.orders import OrderLine, OrderType, PersonnelOrder
 
@@ -72,7 +73,12 @@ def record_to_personnel_order(record: PersonnelOrderRecord) -> PersonnelOrder:
 def effective_personnel_orders(session: Session, employee_no: str, effective_on: date) -> list[PersonnelOrderRecord]:
     records = session.scalars(
         select(PersonnelOrderRecord)
-        .where(PersonnelOrderRecord.employee_no == employee_no, PersonnelOrderRecord.effective_date <= effective_on)
+        .join(PersonnelOrderDecisionRecord, PersonnelOrderDecisionRecord.order_id == PersonnelOrderRecord.id)
+        .where(
+            PersonnelOrderRecord.employee_no == employee_no,
+            PersonnelOrderRecord.effective_date <= effective_on,
+            PersonnelOrderDecisionRecord.decision == "approved",
+        )
         .order_by(PersonnelOrderRecord.effective_date.desc(), PersonnelOrderRecord.order_no.desc())
     ).all()
     return [record for record in records if record_to_personnel_order(record).is_effective_on(effective_on)]
