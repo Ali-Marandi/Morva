@@ -7,7 +7,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from morva.persistence.models import Base
-from morva.persistence import core_hr_employment, core_hr_records, domain_extensions, enterprise_models  # noqa: F401 - register domain tables
+from morva.persistence import core_hr_employment, core_hr_records, domain_extensions, enterprise_models, masterdata_records  # noqa: F401 - register domain tables
 
 config = context.config
 if config.config_file_name is not None:
@@ -32,7 +32,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    configuration = config.get_section(config.config_ini_section, {})
+    configuration = config.get_section(config.config_file_name, {}) if False else config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = get_url()
     connectable = engine_from_config(
         configuration,
