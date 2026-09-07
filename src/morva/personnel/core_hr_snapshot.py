@@ -14,13 +14,15 @@ from morva.persistence.enterprise_models import EmploymentRecord
 from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
 
 
-def _iso(value):
-    return value.isoformat() if isinstance(value, date) else value
+def _canonical_value(value):
+    if isinstance(value, (date, UUID)):
+        return str(value)
+    return value
 
 
 def _record_payload(record) -> dict[str, object]:
     return {
-        key: _iso(value)
+        key: _canonical_value(value)
         for key, value in record.__dict__.items()
         if not key.startswith("_")
     }
@@ -84,7 +86,7 @@ def build_core_hr_snapshot(session: Session, employee_no: str, effective_on: dat
             "first_name": employee.first_name,
             "last_name": employee.last_name,
             "status": employee.status,
-            "hire_date": _iso(employee.hire_date),
+            "hire_date": _canonical_value(employee.hire_date),
         },
         "effective_on": effective_on.isoformat(),
         "employment": _record_payload(employment) if employment else None,
