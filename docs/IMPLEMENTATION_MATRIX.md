@@ -6,9 +6,9 @@
 |---|---|---|
 | 1 | Organization & Position Master Data | authenticated organization/position registry APIs and persisted position master data implemented; authoritative ministry dataset and validation pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
-| 3 | Legal Knowledge Base | implemented foundation; authoritative source verification and approval pending |
-| 4 | Calculation Matrix | foundation; complete legal treatment matrix pending |
-| 5 | 1405 Rule Pack | `review_required` until formal legal/finance approval |
+| 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
+| 4 | Calculation Matrix | deterministic rule engine + persisted legal evidence foundations; complete population-specific legal treatment matrix pending |
+| 5 | 1405 Rule Pack | governed lifecycle foundation; remains `review_required` until authoritative legal/finance approval |
 | 6 | Tax / Pension / Insurance | persisted tax, pension and insurance ledger foundations added; approved population-specific rule sets pending |
 | 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
 | 8 | Retro + Jalali | deterministic period/replay foundations; complete snapshot-driven retro pending |
