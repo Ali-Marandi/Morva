@@ -1,0 +1,110 @@
+version: "1405-component-matrix-1.0"
+status: review_required
+effective_year: 1405
+currency: IRR
+activation_policy: "fail_closed_until_primary_source_and_formal_approval"
+required_components:
+  - code: JOB_RIGHT
+    title: "حق شغل"
+    treatment: earning
+    source_id: LMS-CSC-64-68
+    legal_article: "64"
+    legal_source_status: review_required
+  - code: INCUMBENT_RIGHT
+    title: "حق شاغل"
+    treatment: earning
+    source_id: LMS-CSC-64-68
+    legal_article: "65"
+    legal_source_status: review_required
+  - code: JOB_ALLOWANCE
+    title: "فوق‌العاده شغل / مزایای شغلی"
+    treatment: earning
+    source_id: LMS-CSC-64-68
+    legal_article: "68"
+    legal_source_status: review_required
+  - code: RANK_ALLOWANCE
+    title: "فوق‌العاده رتبه‌بندی"
+    treatment: earning
+    source_id: TEACHER-RANK-REG-1404
+    legal_article: "2, 3, 5, 6, 7, 10, 13, 17, 18, 23"
+    legal_source_status: review_required
+  - code: FAMILY_ALLOWANCE
+    title: "عائله‌مندی"
+    treatment: earning
+    source_id: LMS-CSC-64-68
+    legal_article: "68"
+    legal_source_status: review_required
+  - code: CHILD_ALLOWANCE
+    title: "اولاد"
+    treatment: earning
+    source_id: LMS-CSC-64-68
+    legal_article: "68"
+    legal_source_status: review_required
+  - code: OVERTIME
+    title: "اضافه‌کار"
+    treatment: earning
+    source_id: PAY-1405
+    legal_article: "executive-instruction-required"
+    legal_source_status: review_required
+  - code: TEACHING_FEE
+    title: "حق‌التدریس"
+    treatment: earning
+    source_id: PAY-1405
+    legal_article: "executive-instruction-required"
+    legal_source_status: review_required
+  - code: REGION_WEATHER
+    title: "محرومیت / مناطق کمتر توسعه‌یافته و شرایط اقلیمی"
+    treatment: earning
+    source_id: PAY-1405
+    legal_article: "executive-instruction-required"
+    legal_source_status: review_required
+  - code: TAX
+    title: "مالیات بر درآمد حقوق"
+    treatment: deduction
+    source_id: TAX-1405
+    legal_article: "budget-and-tax-provisions"
+    legal_source_status: review_required
+  - code: PENSION
+    title: "کسور بازنشستگی"
+    treatment: deduction
+    source_id: PAY-1405
+    legal_article: "fund-specific-instruction-required"
+    legal_source_status: review_required
+  - code: INSURANCE
+    title: "بیمه"
+    treatment: deduction
+    source_id: PAY-1405
+    legal_article: "insurance-specific-instruction-required"
+    legal_source_status: review_required
+  - code: LOAN
+    title: "اقساط وام"
+    treatment: deduction
+    source_id: PAY-1405
+    legal_article: "contract-and-payroll-source-required"
+    legal_source_status: review_required
+  - code: COURT_ORDER
+    title: "کسورات قضایی"
+    treatment: deduction
+    source_id: PAY-1405
+    legal_article: "judicial-order-required"
+    legal_source_status: review_required
+
+rules:
+  - code: LEGAL_ACTIVATION
+    requirement: "every component requires an approved primary legal source, effective dates, reviewed evidence, distinct approval, and regression evidence"
+  - code: YEAR_BOUNDARY
+    requirement: "1404 and 1405 rules must be versioned separately and never inferred from each other"
+  - code: NO_IMPLICIT_TREATMENT
+    requirement: "taxable, pensionable, and insurable flags remain explicit until the source treatment is approved"
+  - code: NO_ACTIVE_RESEARCH_FIXTURE
+    requirement: "review_required and researched_not_activated entries cannot drive production payroll"
+
+source_dependencies:
+  LMS-CSC-64-68: "Civil Service Management Law, Chapter Ten"
+  TEACHER-RANK-REG-1404: "Executive Regulation of Teacher Ranking Law and amendments"
+  TAX-1405: "Budget 1405 and related tax rules"
+  PAY-1405: "Executive 1405 payroll/payment instructions"
+
+notes:
+  - "This manifest completes structural component coverage; it does not legally approve any component."
+  - "Primary-source documents and expert approvals must be attached to the governed evidence records before activation."
