@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 from collections.abc import Mapping
 
 from morva.hr.teacher_rank_decision_provenance import (
@@ -52,4 +53,5 @@ def verify_persisted_teacher_rank_decision_provenance(
     if dict(stored_payload) != expected_payload:
         return False
 
-    return teacher_rank_decision_fingerprint(expected_payload) == fingerprint
+    expected_fingerprint = teacher_rank_decision_fingerprint(expected_payload)
+    return hmac.compare_digest(expected_fingerprint, fingerprint)
