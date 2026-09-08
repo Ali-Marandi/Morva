@@ -151,6 +151,19 @@ jobs:
       - run: ruff check src/morva/masterdata/authoritative.py tests/test_authoritative_master_data_integrity.py
       - run: pytest -q tests/test_authoritative_master_data_integrity.py
 
+  m3-10-gate:
+    name: M3.10 personnel order lifecycle gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/personnel/order_approval.py src/morva/personnel/order_registry.py tests/test_personnel_order_lifecycle_m3_10.py
+      - run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py
+
   web-build:
     runs-on: ubuntu-latest
     defaults:
