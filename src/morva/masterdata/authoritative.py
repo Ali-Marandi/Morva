@@ -104,7 +104,7 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
         if not any(row.ends_on is None for row in current_assignments):
             _add_finding(
                 findings,
-                code="ACTIVE_EMPLOYEE_NO_CURRENT_ASSIGNMENT",
+                code="ACTIVE_EMPLOYEE_NO_ASSIGNMENT",
                 entity_type="employee",
                 entity_id=employee.employee_no,
                 message="active employee has no open-ended personnel assignment",
