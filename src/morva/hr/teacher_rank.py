@@ -171,6 +171,7 @@ def decide_case(session: Session, case_id: UUID, actor_id: str, decision_referen
         raise ValueError("teacher rank decision blocked by authoritative evidence gate: " + "; ".join(evidence_gate.blockers))
     check_decision_separation_of_duties(record, actor_id)
     governance = record.committee_payload["_governance"]
+    evidence_fingerprint = f"{evidence_gate.evidence_id}:{evidence_gate.legal_source_id}"
     provenance_payload = canonical_teacher_rank_decision_payload(
         case_id=str(record.id),
         employee_no=record.employee_no,
@@ -178,7 +179,7 @@ def decide_case(session: Session, case_id: UUID, actor_id: str, decision_referen
         effect_period=record.effect_period,
         decision_reference=decision_reference,
         committee_governance=governance,
-        evidence_fingerprint=getattr(evidence_gate, "fingerprint", ""),
+        evidence_fingerprint=evidence_fingerprint,
     )
     fingerprint = teacher_rank_decision_fingerprint(provenance_payload)
     record.committee_payload = {
