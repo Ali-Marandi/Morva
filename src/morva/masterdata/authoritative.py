@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from morva.hr.teacher_rank_decision_integrity import verify_persisted_teacher_rank_decision_provenance
 from morva.masterdata.validation import MasterDataFinding, validate_master_data
 from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFactRecord, TeacherRankCaseRecord
-from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import EmployeeRecord
 
