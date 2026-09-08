@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from morva.hr.teacher_rank import approve_committee, create_rank_case, decide_case, open_appeal, resolve_appeal, submit_assessment
+from morva.hr.teacher_rank_decision_integrity import verify_persisted_teacher_rank_decision_provenance
 from morva.persistence.database import SessionLocal
 from morva.persistence.domain_extensions import TeacherRankCaseRecord
 from morva.persistence.models import EmployeeRecord
@@ -52,7 +53,22 @@ def _employee(session, employee_no: str) -> EmployeeRecord:
     return employee
 
 
+def _assert_decision_provenance(record: TeacherRankCaseRecord) -> None:
+    if record.status not in {"decided", "appeal_opened", "appeal_resolved"}:
+        return
+    if not record.decision_reference or not verify_persisted_teacher_rank_decision_provenance(
+        case_id=str(record.id),
+        employee_no=record.employee_no,
+        proposed_rank=record.proposed_rank,
+        effect_period=record.effect_period,
+        decision_reference=record.decision_reference,
+        committee_payload=record.committee_payload,
+    ):
+        raise HTTPException(status_code=409, detail="teacher rank decision provenance integrity check failed")
+
+
 def _case_payload(record: TeacherRankCaseRecord) -> dict[str, object]:
+    _assert_decision_provenance(record)
     return {
         "id": str(record.id),
         "employee_no": record.employee_no,
