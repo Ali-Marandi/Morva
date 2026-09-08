@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -76,7 +77,12 @@ def decide_order(
         raise ValueError("personnel order has no submission provenance")
     if existing is not None:
         raise ValueError("personnel order already has an immutable final decision")
-    require_distinct_actors([submission.submitted_by, decided_by])
+    try:
+        require_distinct_actors([submission.submitted_by, decided_by])
+    except HTTPException as exc:
+        if exc.status_code == 409:
+            raise ValueError("separation of duties violation: actors must be distinct") from exc
+        raise
     result = PersonnelOrderDecisionRecord(
         order_id=order.id,
         order_no=order.order_no,
