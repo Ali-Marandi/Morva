@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__
 
 from dataclasses import dataclass
 from uuid import UUID
@@ -31,8 +31,8 @@ def check_decision_separation_of_duties(record: TeacherRankCaseRecord, actor_id:
         raise ValueError("teacher rank decision blocked: committee approver provenance is missing")
     if not isinstance(reviewer_id, str) or not reviewer_id.strip():
         raise ValueError("teacher rank decision blocked: committee reviewer provenance is missing")
-    require_distinct_actors(approver_id, reviewer_id)
-    require_distinct_actors(approver_id, actor_id)
+    require_distinct_actors([approver_id, reviewer_id])
+    require_distinct_actors([approver_id, actor_id])
 
 
 def _case(session: Session, case_id: UUID) -> TeacherRankCaseRecord:
@@ -53,7 +53,7 @@ def _transition(session: Session, record: TeacherRankCaseRecord, *, target: str,
     if target not in _ALLOWED_TRANSITIONS.get(record.status, set()):
         raise ValueError(f"invalid teacher rank transition: {record.status} -> {target}")
     if reviewer_id is not None:
-        require_distinct_actors(actor_id, reviewer_id)
+        require_distinct_actors([actor_id, reviewer_id])
     record.status = target
     append_audit_event(event_type=f"hr.teacher_rank.{target}", entity_type="teacher_rank_case", entity_id=str(record.id), actor_id=actor_id, payload={"employee_no": record.employee_no, "proposed_rank": record.proposed_rank}, reason=reason, session=session)
     return RankCaseResult(case_id=record.id, status=record.status)
@@ -87,7 +87,7 @@ def approve_committee(session: Session, case_id: UUID, actor_id: str, committee:
     if not committee:
         raise ValueError("committee evidence is required")
     record = _case(session, case_id)
-    require_distinct_actors(actor_id, reviewer_id)
+    require_distinct_actors([actor_id, reviewer_id])
     record.committee_payload = {**committee, "_governance": {"actor_id": actor_id, "reviewer_id": reviewer_id}}
     return _transition(session, record, target="committee_approved", actor_id=actor_id, reviewer_id=reviewer_id, reason="approve rank committee evidence")
 
