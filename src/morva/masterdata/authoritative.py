@@ -58,10 +58,6 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
     findings = list(base.findings)
     additional_blocking = False
 
-    organizations = session.scalars(
-        select(OrganizationUnitRecord).order_by(OrganizationUnitRecord.code)
-    ).all()
-    organizations_by_code = {row.code: row for row in organizations}
     employees = session.scalars(select(EmployeeRecord).order_by(EmployeeRecord.employee_no)).all()
     employees_by_no = {row.employee_no: row for row in employees}
 
