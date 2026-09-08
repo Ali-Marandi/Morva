@@ -164,6 +164,19 @@ jobs:
       - run: ruff check src/morva/personnel/order_approval.py src/morva/personnel/order_registry.py tests/test_personnel_order_lifecycle_m3_10.py
       - run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py
 
+  m3-11-gate:
+    name: M3.11 legal component matrix gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/rules/rule_pack_1405.py tests/test_legal_component_matrix_1405.py
+      - run: pytest -q tests/test_legal_component_matrix_1405.py
+
   web-build:
     runs-on: ubuntu-latest
     defaults:
