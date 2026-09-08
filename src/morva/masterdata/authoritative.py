@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from morva.hr.teacher_rank_decision_integrity import verify_persisted_teacher_rank_decision_provenance
 from morva.masterdata.validation import MasterDataFinding, validate_master_data
 from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFactRecord, TeacherRankCaseRecord
+from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import EmployeeRecord
 
@@ -58,9 +59,7 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
     additional_blocking = False
 
     organizations = session.scalars(
-        select(__import__("morva.persistence.enterprise_models", fromlist=["OrganizationUnitRecord"]).OrganizationUnitRecord).order_by(
-            __import__("morva.persistence.enterprise_models", fromlist=["OrganizationUnitRecord"]).OrganizationUnitRecord.code
-        )
+        select(OrganizationUnitRecord).order_by(OrganizationUnitRecord.code)
     ).all()
     organizations_by_code = {row.code: row for row in organizations}
     employees = session.scalars(select(EmployeeRecord).order_by(EmployeeRecord.employee_no)).all()
