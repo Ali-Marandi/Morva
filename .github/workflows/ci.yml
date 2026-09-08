@@ -1,8 +1,7 @@
-name: CI
+name: Morva CI
 
 on:
   push:
-    branches: [main, "m3.9-authoritative-master-data-gate"]
   pull_request:
 
 permissions:
@@ -11,17 +10,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
     services:
       postgres:
-        image: postgres:16
+        image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-          POSTGRES_DB: morva_test
+          POSTGRES_DB: morva
+          POSTGRES_USER: morva
+          POSTGRES_PASSWORD: morva
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d morva_test"
+          --health-cmd "pg_isready -U morva -d morva"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -29,14 +31,76 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m compileall -q src tests
+      - run: ruff check .
+      - run: alembic upgrade head
+        env:
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva
+          MORVA_ENV: test
+      - run: pytest -q
+        env:
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva
+          MORVA_ENV: test
+      - run: python -m pip install pip-audit
+      - run: pip-audit
+
+  m2-gate:
+    name: M2 payroll calculation gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e '.[dev]'
-      - run: ruff check src tests
-      - run: pytest -q
+      - run: ruff check src/morva/payroll src/morva/integrations tests/golden tests/test_three_way_reconciliation.py tests/test_payroll_contract.py
+      - run: pytest -q tests/golden/test_m2_end_to_end.py tests/test_three_way_reconciliation.py tests/test_payroll_contract.py
+
+  m3-gate:
+    name: M3 authoritative master-data gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/masterdata src/morva/personnel src/morva/api/v1/assignment_attendance.py tests/test_m3_2_assignment_attendance.py
+      - run: pytest -q tests/test_masterdata_validation.py tests/test_masterdata_acceptance.py tests/test_m3_2_assignment_attendance.py
+
+  m3-4-gate:
+    name: M3.4 teacher rank evidence gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/hr/teacher_rank.py src/morva/hr/teacher_rank_evidence.py tests/test_teacher_rank_evidence.py
+      - run: pytest -q tests/test_teacher_rank_evidence.py
+
+  m3-5-gate:
+    name: M3.5 teacher rank decision SoD gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/hr/teacher_rank.py tests/test_teacher_rank_decision_sod.py
+      - run: pytest -q tests/test_teacher_rank_decision_sod.py
 
   m3-6-gate:
-    name: M3.6 teacher rank provenance gate
+    name: M3.6 teacher rank decision provenance gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
