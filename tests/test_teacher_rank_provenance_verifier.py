@@ -18,3 +18,11 @@ def test_verifier_rejects_modified_payload() -> None:
         payload=modified,
         fingerprint=fingerprint,
     )
+
+
+def test_verifier_rejects_malformed_fingerprint() -> None:
+    payload = {"case_id": "case-1", "decision_reference": "DEC-1"}
+    assert not verify_teacher_rank_decision_provenance(
+        payload=payload,
+        fingerprint="not-a-sha256",
+    )
