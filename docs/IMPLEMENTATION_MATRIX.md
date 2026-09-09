@@ -5,7 +5,7 @@
 | # | Capability | State |
 |---|---|---|
 | 1 | Organization & Position Master Data | authenticated registry APIs + persisted master data + deterministic integrity validation + manifest acceptance contract implemented; M3.17 adds assignment target activity, invalid-range, overlap and active-employee assignment cardinality checks; authoritative ministry dataset and acceptance confirmation evidence pending |
-| 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
+| 2 | Personnel Order Workflow | **M3.17 adds persisted order fingerprinting, immutable submission/decision binding, rejection-reason enforcement, SoD and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending** |
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
 | 4 | Calculation Matrix | persisted rule-pack/component/population matrix with treatment, safe expression, effective dates, legal source/article, regression-suite hash, review/approval workflow and readiness gate implemented; authoritative population-specific legal matrix pending |
 | 5 | 1405 Rule Pack | governed lifecycle foundation; remains `review_required` until authoritative legal/finance approval |
@@ -45,7 +45,11 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, persisted manifest-level acceptance, M3.17 assignment integrity checks, attendance integrity checks and persisted teacher-rank decision provenance verification. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, persisted manifest-level acceptance, M3.17 assignment integrity checks, attendance integrity checks, persisted teacher-rank decision provenance verification and personnel-order fingerprint binding. Authoritative ministry master data and formal enterprise governance for personnel-order schemas remain pending acceptance evidence.
+
+## Personnel Order Lifecycle Governance / M3.17
+
+Each registered personnel order receives a deterministic SHA-256 content fingerprint covering order identity, employee, dates, type, reference, reason and line payload. Submission and final decision records persist the same fingerprint. Final approval/rejection remains one-time and requires distinct actors; rejection requires a reason. Effective-state queries fail closed when the order record or its approval fingerprint is missing or inconsistent, or when current order content no longer matches the registered fingerprint. This establishes software integrity/provenance controls without asserting legal authority for the order schema.
 
 ## Calculation Matrix Governance
 
