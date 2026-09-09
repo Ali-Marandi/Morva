@@ -20,6 +20,7 @@ class PersonnelOrderSubmissionRecord(Base):
     order_no: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     submitted_by: Mapped[str] = mapped_column(String(100), index=True)
     submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    order_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
 
 
 class PersonnelOrderDecisionRecord(Base):
@@ -35,3 +36,4 @@ class PersonnelOrderDecisionRecord(Base):
     decided_by: Mapped[str] = mapped_column(String(100), index=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     decided_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    order_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
