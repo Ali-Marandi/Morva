@@ -38,6 +38,9 @@ class RuleResult:
     amount: Decimal
     explanation: str
     legal_reference: str | None = None
+    taxable: bool = False
+    pensionable: bool = False
+    insurable: bool = False
 
 
 class RuleNotFoundError(LookupError):
@@ -93,4 +96,12 @@ class RuleEngine:
         if amount < 0:
             raise ValueError(f"Rule {code} produced a negative amount")
         explanation = f"{definition.title} [{definition.code}] applied for {context.effective_date.isoformat()}"
-        return RuleResult(code, amount, explanation, definition.legal_reference)
+        return RuleResult(
+            code,
+            amount,
+            explanation,
+            definition.legal_reference,
+            definition.taxable,
+            definition.pensionable,
+            definition.insurable,
+        )
