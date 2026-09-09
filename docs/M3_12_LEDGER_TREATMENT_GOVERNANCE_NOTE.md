@@ -1,0 +1,1 @@
+M3.12 final note: legal/financial treatment activation remains fail-closed pending authoritative source evidence and independent approval.
