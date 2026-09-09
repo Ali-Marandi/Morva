@@ -52,7 +52,7 @@ export function useLogin(options?: UseMutationOptions<any, Error, types.LoginReq
   });
 }
 
-export function useLogout(options?: UseMutationOptions<void, Error, void>) {
+export function useLogout(options?: UseMutationOptions<types.ApiResponse<unknown>, Error, void>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: authService.logout,
