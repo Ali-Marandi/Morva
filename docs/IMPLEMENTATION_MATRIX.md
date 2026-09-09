@@ -9,10 +9,10 @@
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
 | 4 | Calculation Matrix | persisted rule-pack/component/population matrix with treatment, safe expression, effective dates, legal source/article, regression-suite hash, review/approval workflow and readiness gate implemented; authoritative population-specific legal matrix pending |
 | 5 | 1405 Rule Pack | governed lifecycle foundation; remains `review_required` until authoritative legal/finance approval |
-| 6 | Tax / Pension / Insurance | persisted tax, pension and insurance ledger foundations added; approved population-specific rule sets pending |
+| 6 | Tax / Pension / Insurance | persisted ledger foundations plus explicit fail-closed treatment governance for `taxable/pensionable/insurable`; approved population-specific rule sets and primary-source evidence pending |
 | 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
 | 8 | Retro + Jalali | deterministic period/replay foundations; complete snapshot-driven retro pending |
-| 9 | Loans / Debts / Deductions | persisted loan and deduction ledger foundations added; authoritative ledgers/policies pending |
+| 9 | Loans / Debts / Deductions | persisted loan and deduction ledger foundations plus explicit fail-closed treatment governance; authoritative ledgers/policies pending |
 | 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented for personnel-order decisions; durable enterprise IAM workflow pending |
 | 11 | SINA Adapter | fail-closed typed contract; official schema/endpoint/credential and staging evidence required |
 | 12 | Accounting / Treasury / Bank | typed six-provider boundary + transactional outbox/inbox foundations; official adapters required |
@@ -48,6 +48,10 @@ The current implementation provides the historical persistence models, authentic
 ## Calculation Matrix Governance
 
 Each executable component mapping is required to bind a Rule Pack and population scope to a safe expression, effective dates, legal source/article, tax/pension/insurance treatment and a regression-suite fingerprint. Legal source and rule evidence must already be approved, and matrix entries require distinct review and approval actors before the matrix readiness gate can pass.
+
+## Ledger Treatment Governance
+
+`TAX`, `PENSION`, `INSURANCE`, `LOAN` and `COURT_ORDER` now have an explicit treatment-governance boundary. Classification flags are explicit rather than inferred, and approval requires primary-source metadata, effective dates, independent review/approval and regression evidence. Missing approval leaves execution fail-closed. This does not constitute legal approval or populate rates/thresholds.
 
 ## Release position
 
