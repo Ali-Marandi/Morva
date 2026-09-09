@@ -1,62 +1,7 @@
 [
-  {
-    "case_id": "1405-TAX-BASELINE-001",
-    "rule_pack_version": "1405.1",
-    "component_code": "TAX",
-    "population_scope": "all",
-    "effective_date": "1405-01-01",
-    "status": "review_required",
-    "input_values": {},
-    "expected_output": null,
-    "input_fingerprint": null,
-    "expected_output_fingerprint": null
-  },
-  {
-    "case_id": "1405-PENSION-BASELINE-001",
-    "rule_pack_version": "1405.1",
-    "component_code": "PENSION",
-    "population_scope": "all",
-    "effective_date": "1405-01-01",
-    "status": "review_required",
-    "input_values": {},
-    "expected_output": null,
-    "input_fingerprint": null,
-    "expected_output_fingerprint": null
-  },
-  {
-    "case_id": "1405-INSURANCE-BASELINE-001",
-    "rule_pack_version": "1405.1",
-    "component_code": "INSURANCE",
-    "population_scope": "all",
-    "effective_date": "1405-01-01",
-    "status": "review_required",
-    "input_values": {},
-    "expected_output": null,
-    "input_fingerprint": null,
-    "expected_output_fingerprint": null
-  },
-  {
-    "case_id": "1405-LOAN-BASELINE-001",
-    "rule_pack_version": "1405.1",
-    "component_code": "LOAN",
-    "population_scope": "all",
-    "effective_date": "1405-01-01",
-    "status": "review_required",
-    "input_values": {},
-    "expected_output": null,
-    "input_fingerprint": null,
-    "expected_output_fingerprint": null
-  },
-  {
-    "case_id": "1405-COURT_ORDER-BASELINE-001",
-    "rule_pack_version": "1405.1",
-    "component_code": "COURT_ORDER",
-    "population_scope": "all",
-    "effective_date": "1405-01-01",
-    "status": "review_required",
-    "input_values": {},
-    "expected_output": null,
-    "input_fingerprint": null,
-    "expected_output_fingerprint": null
-  }
+  {"case_id":"1405-TAX-BASELINE-001","rule_pack_version":"1405.1","component_code":"TAX","population_scope":"all","effective_date":"1405-01-01","status":"review_required","input_values":{},"expected_output":null,"input_fingerprint":null,"expected_output_fingerprint":null,"legal_source_hash":"0000000000000000000000000000000000000000000000000000000000000000","legal_article":null,"legal_clause":null},
+  {"case_id":"1405-PENSION-BASELINE-001","rule_pack_version":"1405.1","component_code":"PENSION","population_scope":"all","effective_date":"1405-01-01","status":"review_required","input_values":{},"expected_output":null,"input_fingerprint":null,"expected_output_fingerprint":null,"legal_source_hash":"0000000000000000000000000000000000000000000000000000000000000000","legal_article":null,"legal_clause":null},
+  {"case_id":"1405-INSURANCE-BASELINE-001","rule_pack_version":"1405.1","component_code":"INSURANCE","population_scope":"all","effective_date":"1405-01-01","status":"review_required","input_values":{},"expected_output":null,"input_fingerprint":null,"expected_output_fingerprint":null,"legal_source_hash":"0000000000000000000000000000000000000000000000000000000000000000","legal_article":null,"legal_clause":null},
+  {"case_id":"1405-LOAN-BASELINE-001","rule_pack_version":"1405.1","component_code":"LOAN","population_scope":"all","effective_date":"1405-01-01","status":"review_required","input_values":{},"expected_output":null,"input_fingerprint":null,"expected_output_fingerprint":null,"legal_source_hash":"0000000000000000000000000000000000000000000000000000000000000000","legal_article":null,"legal_clause":null},
+  {"case_id":"1405-COURT_ORDER-BASELINE-001","rule_pack_version":"1405.1","component_code":"COURT_ORDER","population_scope":"all","effective_date":"1405-01-01","status":"review_required","input_values":{},"expected_output":null,"input_fingerprint":null,"expected_output_fingerprint":null,"legal_source_hash":"0000000000000000000000000000000000000000000000000000000000000000","legal_article":null,"legal_clause":null}
 ]
