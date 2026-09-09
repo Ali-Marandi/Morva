@@ -134,7 +134,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install -e '.[dev]'
       - run: ruff check src/morva/hr/teacher_rank_decision_integrity.py tests/test_teacher_rank_decision_integrity.py
       - run: pytest -q tests/test_teacher_rank_decision_integrity.py
 
@@ -215,6 +214,19 @@ jobs:
       - run: python -m pip install -e '.[dev]'
       - run: ruff check src/morva/rules/calculation_matrix.py tests/test_calculation_matrix.py
       - run: pytest -q tests/test_calculation_matrix.py
+
+  legal-component-regression-contract-gate:
+    name: Legal component regression contract gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check tests/test_legal_component_regression_contract.py
+      - run: pytest -q tests/test_legal_component_regression_contract.py
 
   web-build:
     runs-on: ubuntu-latest
