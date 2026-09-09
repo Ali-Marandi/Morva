@@ -159,6 +159,7 @@ class PersonnelOrderRecord(Base):
     legal_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    content_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
     created_at: Mapped[date] = mapped_column(Date, default=date.today)
 
 
