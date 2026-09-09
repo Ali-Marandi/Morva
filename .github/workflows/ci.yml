@@ -216,6 +216,19 @@ jobs:
       - run: ruff check src/morva/rules/calculation_matrix.py tests/test_calculation_matrix.py
       - run: pytest -q tests/test_calculation_matrix.py
 
+  golden-output-fingerprint-gate:
+    name: Golden output fingerprint gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/rules/engine.py src/morva/rules/regression.py tests/test_rule_result_fingerprint.py
+      - run: pytest -q tests/test_rule_result_fingerprint.py
+
   web-build:
     runs-on: ubuntu-latest
     defaults:
