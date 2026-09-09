@@ -23,6 +23,7 @@
 - CI for Python 3.12/3.13, PostgreSQL, migrations, Ruff, pytest, dependency audit and web build
 - Living implementation, production-readiness and prompt-compliance documentation
 - M3.12 ledger treatment governance boundary with explicit fail-closed classification and approval evidence requirements
+- M3.13 snapshot-driven retro/replay provenance boundary with immutable historical snapshot binding and dedicated CI gate
 
 ## Current execution queue
 
@@ -32,7 +33,7 @@
 4. Complete personnel-order lifecycle and approval evidence.
 5. Complete legal component matrix and annual Rule Packs from primary sources.
 6. Complete tax, pension, insurance, loans and judicial-deduction ledgers with approved treatments. **M3.12 governance boundary is implemented; authoritative treatment evidence and approved population-specific rules remain pending.**
-7. Complete snapshot-driven retroactive recalculation and certified historical replay corpus.
+7. Complete snapshot-driven retroactive recalculation and certified historical replay corpus. **M3.13 software provenance/reconciliation controls are implemented; authoritative historical replay corpus and certification evidence remain pending.**
 8. Remove remaining demonstration-only frontend behavior and wire operational views to authenticated APIs.
 9. Complete employee self-service, objection/case management and production PDF/reporting.
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.

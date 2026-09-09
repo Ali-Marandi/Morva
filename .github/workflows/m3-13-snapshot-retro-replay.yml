@@ -1,0 +1,22 @@
+name: M3.13 Snapshot Retro Replay Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  m3-13-snapshot-retro-replay-gate:
+    name: M3.13 snapshot-driven retro/replay gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/payroll/retro.py src/morva/payroll/replay.py tests/test_m3_13_snapshot_retro_replay.py
+      - run: pytest -q tests/test_m3_13_snapshot_retro_replay.py

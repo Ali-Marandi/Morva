@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import PayrollArtifactRecord, PayslipLineRecord
+from morva.persistence.models import PersonnelSnapshotRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 
 
@@ -16,10 +17,23 @@ class ReplayMismatch(RuntimeError):
     pass
 
 
+def _validate_snapshot(session: Session, artifact: PayrollArtifactRecord) -> PersonnelSnapshotRecord:
+    snapshot = session.get(PersonnelSnapshotRecord, artifact.personnel_snapshot_id)
+    if snapshot is None:
+        raise ReplayMismatch("historical personnel snapshot not found")
+    if snapshot.employee_no != artifact.employee_no or snapshot.effective_period != artifact.period:
+        raise ReplayMismatch("historical personnel snapshot identity does not match payroll artifact")
+    if snapshot.snapshot_hash != artifact.personnel_snapshot_hash:
+        raise ReplayMismatch("historical personnel snapshot hash does not match payroll artifact")
+    return snapshot
+
+
 def replay_artifact(session: Session, artifact_id: UUID) -> dict[str, object]:
     artifact = session.get(PayrollArtifactRecord, artifact_id)
     if artifact is None:
         raise ReplayMismatch("payroll artifact not found")
+    _validate_snapshot(session, artifact)
+
     rows = session.scalars(
         select(PayslipLineRecord)
         .where(PayslipLineRecord.artifact_id == artifact.id)
@@ -62,6 +76,9 @@ def replay_artifact(session: Session, artifact_id: UUID) -> dict[str, object]:
         "artifact_id": str(artifact.id),
         "employee_no": artifact.employee_no,
         "period": artifact.period,
+        "personnel_snapshot_id": str(artifact.personnel_snapshot_id),
+        "personnel_snapshot_hash": artifact.personnel_snapshot_hash,
+        "rule_pack_version": artifact.rule_pack_version,
         "matches": True,
         "output_hash": replay_hash,
         "gross": replay_output["gross"],
