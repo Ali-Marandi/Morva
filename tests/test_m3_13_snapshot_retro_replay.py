@@ -1,7 +1,7 @@
-from uuid import uuid4
 from decimal import Decimal
 from hashlib import sha256
 import json
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -76,7 +76,6 @@ def test_replay_requires_historical_snapshot_and_hash() -> None:
     with Session(engine) as session:
         snapshot = _snapshot(session, "E-1", "1405-05", "frozen")
         artifact = _artifact(session, snapshot, run_marker="run", net="1000")
-        artifact.output_hash = _output_hash("E-1", "1405-05", "1000")
         session.add(
             PayslipLineRecord(
                 artifact_id=artifact.id,
@@ -88,6 +87,8 @@ def test_replay_requires_historical_snapshot_and_hash() -> None:
                 kind="earning",
             )
         )
+        session.flush()
+        artifact.output_hash = _output_hash("E-1", "1405-05", "1000.0000")
         session.commit()
         result = replay_artifact(session, artifact.id)
         assert result["matches"] is True
