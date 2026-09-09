@@ -40,7 +40,7 @@ function Dashboard() {
   const employeeData = employeeStats.data?.success ? employeeStats.data.data : undefined;
   const payrollData = payrollStats.data?.success ? payrollStats.data.data : undefined;
   const approvalsData = approvalsStats.data?.success ? approvalsStats.data.data : undefined;
-  const payrollItems = payrolls.data?.success ? payrolls.data.data?.items ?? [] : [];
+  const payrollItems = payrolls.data?.success ? (payrolls.data.data?.items ?? []) : [];
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
@@ -50,46 +50,18 @@ function Dashboard() {
       </div>
 
       {isLoading && (
-        <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700">
-          در حال دریافت اطلاعات عملیاتی…
-        </div>
+        <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700">در حال دریافت اطلاعات عملیاتی…</div>
       )}
 
       {firstError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
-          {getErrorMessage(firstError)}
-        </div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">{getErrorMessage(firstError)}</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="کل کارکنان"
-          value={employeeData ? formatNumber(employeeData.totalEmployees) : "—"}
-          icon={Users}
-          trend={employeeData ? `${formatNumber(employeeData.activeEmployees)} فعال` : "داده موجود نیست"}
-          color="blue"
-        />
-        <StatCard
-          title="کل حقوق و دستمزد"
-          value={payrollData ? formatNumber(payrollData.totalAmount) : "—"}
-          icon={TrendingUp}
-          trend={payrollData ? `${formatNumber(payrollData.totalPayrolls)} دوره` : "داده موجود نیست"}
-          color="green"
-        />
-        <StatCard
-          title="تأییدهای معلق"
-          value={approvalsData ? formatNumber(approvalsData.pendingCount) : "—"}
-          icon={AlertCircle}
-          trend={approvalsData ? `${formatNumber(approvalsData.approvedCount)} تأییدشده` : "داده موجود نیست"}
-          color="orange"
-        />
-        <StatCard
-          title="پرداخت‌شده"
-          value={payrollData ? formatNumber(payrollData.paidAmount) : "—"}
-          icon={CheckCircle2}
-          trend={payrollData ? `${formatNumber(payrollData.averagePerPayroll)} میانگین دوره` : "داده موجود نیست"}
-          color="emerald"
-        />
+        <StatCard title="کل کارکنان" value={employeeData ? formatNumber(employeeData.totalEmployees) : "—"} icon={Users} trend={employeeData ? `${formatNumber(employeeData.activeEmployees)} فعال` : "داده موجود نیست"} color="blue" />
+        <StatCard title="کل حقوق و دستمزد" value={payrollData ? formatNumber(payrollData.totalAmount) : "—"} icon={TrendingUp} trend={payrollData ? `${formatNumber(payrollData.totalPayrolls)} دوره` : "داده موجود نیست"} color="green" />
+        <StatCard title="تأییدهای معلق" value={approvalsData ? formatNumber(approvalsData.pendingCount) : "—"} icon={AlertCircle} trend={approvalsData ? `${formatNumber(approvalsData.approvedCount)} تأییدشده` : "داده موجود نیست"} color="orange" />
+        <StatCard title="پرداخت‌شده" value={payrollData ? formatNumber(payrollData.paidAmount) : "—"} icon={CheckCircle2} trend={payrollData ? `${formatNumber(payrollData.averagePerPayroll)} میانگین دوره` : "داده موجود نیست"} color="emerald" />
       </div>
 
       <div className="bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
@@ -101,9 +73,7 @@ function Dashboard() {
         </div>
 
         {!isLoading && payrollItems.length === 0 && !firstError && (
-          <div className="rounded-lg bg-morva-50 p-4 text-sm text-morva-700">
-            هیچ دوره حقوقی برای نمایش وجود ندارد.
-          </div>
+          <div className="rounded-lg bg-morva-50 p-4 text-sm text-morva-700">هیچ دوره حقوقی برای نمایش وجود ندارد.</div>
         )}
 
         {payrollItems.length > 0 && (
@@ -119,7 +89,7 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-morva-100">
-                {payrollItems.map((item) => (
+                {payrollItems.map((item: Payroll) => (
                   <tr key={item.id}>
                     <td className="px-3 py-3 font-medium text-morva-900">{item.period}</td>
                     <td className="px-3 py-3 text-morva-700">{formatNumber(item.employeeCount)}</td>
