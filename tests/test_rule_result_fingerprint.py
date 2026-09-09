@@ -29,6 +29,12 @@ def test_rule_result_fingerprint_is_stable() -> None:
     )
 
 
+def test_zero_decimal_representations_share_a_fingerprint() -> None:
+    assert fingerprint_values({"amount": Decimal("0.00")}) == fingerprint_values(
+        {"amount": Decimal("0")}
+    )
+
+
 def test_classification_changes_fingerprint() -> None:
     definition = RuleDefinition(
         code="INSURANCE",

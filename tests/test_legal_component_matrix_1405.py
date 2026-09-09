@@ -11,13 +11,19 @@ def _matrix_text() -> str:
     return MATRIX_PATH.read_text(encoding="utf-8")
 
 
+def _component_section(text: str) -> str:
+    """Return only the required-components YAML section, excluding governance rules."""
+    return text.split("\nrules:\n", 1)[0]
+
+
 def _component_blocks(text: str) -> list[str]:
-    blocks = re.split(r"(?=^  - code: )", text, flags=re.MULTILINE)
+    section = _component_section(text)
+    blocks = re.split(r"(?=^  - code: )", section, flags=re.MULTILINE)
     return [block for block in blocks if block.startswith("  - code: ")]
 
 
 def test_1405_matrix_covers_every_required_component_once():
-    text = _matrix_text()
+    text = _component_section(_matrix_text())
     codes = re.findall(r"^  - code: ([A-Z0-9_]+)$", text, flags=re.MULTILINE)
     assert codes == list(REQUIRED_1405_COMPONENTS)
     assert len(codes) == len(set(codes))

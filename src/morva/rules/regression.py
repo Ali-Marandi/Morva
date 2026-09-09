@@ -8,10 +8,17 @@ from typing import Mapping
 from .engine import RuleResult
 
 
+def _canonical_decimal(value: Decimal) -> str:
+    decimal = Decimal(value)
+    if decimal == 0:
+        decimal = Decimal(0)
+    return format(decimal.normalize(), "f")
+
+
 def canonical_result_payload(result: RuleResult) -> dict[str, object]:
     return {
         "code": result.code,
-        "amount": format(Decimal(result.amount), "f"),
+        "amount": _canonical_decimal(result.amount),
         "legal_reference": result.legal_reference,
         "taxable": result.taxable,
         "pensionable": result.pensionable,
@@ -30,6 +37,6 @@ def fingerprint_rule_result(result: RuleResult) -> str:
 
 
 def fingerprint_values(values: Mapping[str, Decimal]) -> str:
-    canonical = {key: format(Decimal(value), "f") for key, value in sorted(values.items())}
+    canonical = {key: _canonical_decimal(value) for key, value in sorted(values.items())}
     payload = json.dumps(canonical, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
