@@ -24,6 +24,8 @@
 - Living implementation, production-readiness and prompt-compliance documentation
 - M3.12 ledger treatment governance boundary with explicit fail-closed classification and approval evidence requirements
 - M3.13 snapshot-driven retro/replay provenance boundary with immutable historical snapshot binding and dedicated CI gate
+- M3.14 authenticated operational dashboard/employee views with explicit API loading/error/empty states
+- M3.15 authenticated employee self-service, objection/case persistence and artifact-bound payslip PDF endpoint with dedicated CI gate
 
 ## Current execution queue
 
@@ -34,8 +36,8 @@
 5. Complete legal component matrix and annual Rule Packs from primary sources.
 6. Complete tax, pension, insurance, loans and judicial-deduction ledgers with approved treatments. **M3.12 governance boundary is implemented; authoritative treatment evidence and approved population-specific rules remain pending.**
 7. Complete snapshot-driven retroactive recalculation and certified historical replay corpus. **M3.13 software provenance/reconciliation controls are implemented; authoritative historical replay corpus and certification evidence remain pending.**
-8. Remove remaining demonstration-only frontend behavior and wire operational views to authenticated APIs.
-9. Complete employee self-service, objection/case management and production PDF/reporting.
+8. Remove remaining demonstration-only frontend behavior and wire operational views to authenticated APIs. **M3.14 completed for the primary dashboard/employee views.**
+9. Complete employee self-service, objection/case management and production PDF/reporting. **M3.15 foundation implemented: authenticated self-service profile/payslips/orders, artifact-bound PDF download, persistent employee cases and employee case lifecycle API. Production UX hardening, broader reporting and certification evidence remain pending.**
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
 12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement.

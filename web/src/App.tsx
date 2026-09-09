@@ -9,39 +9,22 @@ import Payroll from "./pages/Payroll";
 import Approvals from "./pages/Approvals";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import SelfService from "./pages/SelfService";
+import Objections from "./pages/Objections";
 import NotFound from "./pages/NotFound";
 import { authService } from "./services";
 
-// Create QueryClient with optimal settings
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
-    },
+    queries: { staleTime: 1000 * 60 * 5, gcTime: 1000 * 60 * 10, retry: 1, refetchOnWindowFocus: false },
+    mutations: { retry: 1 },
   },
 });
 
-/**
- * Protected Route Wrapper
- * Checks authentication before rendering
- */
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
+interface ProtectedRouteProps { children: ReactNode; }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const isAuthenticated = authService.isAuthenticated();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-  
+  if (!authService.isAuthenticated()) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 };
 
@@ -51,15 +34,11 @@ function App() {
       <Router basename="/Morva">
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/employees" element={<Employees />} />
+            <Route path="/self-service" element={<SelfService />} />
+            <Route path="/objections" element={<Objections />} />
             <Route path="/payroll" element={<Payroll />} />
             <Route path="/approvals" element={<Approvals />} />
             <Route path="/reports" element={<Reports />} />
