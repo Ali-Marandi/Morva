@@ -12,7 +12,7 @@ from morva.audit.persistence import append_audit_event
 from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.security.policy import require_distinct_actors
-from morva.rules.regression_cases import validate_repository
+from morva.rules.regression_cases import validate_repository_against_evidence
 from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS, is_1405_rule_pack
 
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -106,7 +106,13 @@ def matrix_readiness(session: Session, rule_pack_version: str) -> MatrixReadines
     if is_1405_rule_pack(rule_pack_version):
         missing = [code for code in REQUIRED_1405_COMPONENTS if code not in component_codes]
         blockers.extend(f"missing required 1405 matrix component {code}" for code in missing)
-        blockers.extend(validate_repository(rule_pack_version, required_components=_REGRESSION_COMPONENTS_1405))
+        blockers.extend(
+            validate_repository_against_evidence(
+                session,
+                rule_pack_version,
+                required_components=_REGRESSION_COMPONENTS_1405,
+            )
+        )
     for entry in entries:
         source = session.get(LegalSourceRecord, entry.legal_source_id)
         evidence = session.scalar(
