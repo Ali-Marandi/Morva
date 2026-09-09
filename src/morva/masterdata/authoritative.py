@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from morva.hr.teacher_rank_decision_integrity import verify_persisted_teacher_rank_decision_provenance
 from morva.masterdata.validation import MasterDataFinding, validate_master_data
 from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFactRecord, TeacherRankCaseRecord
+from morva.persistence.enterprise_models import OrganizationUnitRecord
 from morva.persistence.masterdata_records import PositionRecord
 from morva.persistence.models import EmployeeRecord
 
@@ -59,8 +60,11 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
 
     employees = session.scalars(select(EmployeeRecord).order_by(EmployeeRecord.employee_no)).all()
     employees_by_no = {row.employee_no: row for row in employees}
-
+    organizations = session.scalars(select(OrganizationUnitRecord).order_by(OrganizationUnitRecord.code)).all()
+    organizations_by_code = {row.code: row for row in organizations}
     positions = session.scalars(select(PositionRecord).order_by(PositionRecord.code)).all()
+    positions_by_code = {row.code: row for row in positions}
+
     for row in positions:
         if row.effective_to is not None and row.effective_from is not None and row.effective_to < row.effective_from:
             _add_finding(
@@ -83,6 +87,38 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
     for row in assignments:
         by_employee[row.employee_no].append(row)
 
+        organization = organizations_by_code.get(row.organization_code)
+        if organization is not None and not organization.active:
+            _add_finding(
+                findings,
+                code="ASSIGNMENT_ORG_INACTIVE",
+                entity_type="assignment",
+                entity_id=str(row.id),
+                message="assignment points to an inactive organization unit",
+            )
+            additional_blocking = True
+
+        position = positions_by_code.get(row.position_code)
+        if position is not None and not position.active:
+            _add_finding(
+                findings,
+                code="ASSIGNMENT_POSITION_INACTIVE",
+                entity_type="assignment",
+                entity_id=str(row.id),
+                message="assignment points to an inactive position",
+            )
+            additional_blocking = True
+
+        if row.ends_on is not None and row.ends_on < row.starts_on:
+            _add_finding(
+                findings,
+                code="ASSIGNMENT_INVALID_RANGE",
+                entity_type="assignment",
+                entity_id=str(row.id),
+                message="assignment end date precedes start date",
+            )
+            additional_blocking = True
+
     for employee_no, rows in by_employee.items():
         previous: AssignmentRecord | None = None
         for current in rows:
@@ -101,13 +137,23 @@ def validate_authoritative_master_data(session: Session) -> AuthoritativeMasterD
         if employee.status != "active":
             continue
         current_assignments = by_employee.get(employee.employee_no, [])
-        if not any(row.ends_on is None for row in current_assignments):
+        open_assignments = [row for row in current_assignments if row.ends_on is None]
+        if not open_assignments:
             _add_finding(
                 findings,
                 code="ACTIVE_EMPLOYEE_NO_ASSIGNMENT",
                 entity_type="employee",
                 entity_id=employee.employee_no,
                 message="active employee has no open-ended personnel assignment",
+            )
+            additional_blocking = True
+        elif len(open_assignments) > 1:
+            _add_finding(
+                findings,
+                code="ACTIVE_EMPLOYEE_MULTIPLE_ASSIGNMENTS",
+                entity_type="employee",
+                entity_id=employee.employee_no,
+                message="active employee has more than one open-ended personnel assignment",
             )
             additional_blocking = True
 
