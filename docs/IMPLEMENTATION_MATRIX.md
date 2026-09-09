@@ -19,7 +19,7 @@
 | 13 | Employee Self-Service | role-aware RTL web shell and API foundations; complete authenticated production UX pending |
 | 14 | Payslip Explanation | persisted payroll artifact + ordered line explanation implemented; legal source linking pending |
 | 15 | Rule Sandbox UI | foundation; production hardening pending |
-| 16 | Management Dashboard | UI foundation; authoritative live data wiring pending |
+| 16 | Management Dashboard | authenticated employee/payroll/approval summary APIs wired to the operational dashboard; historical charts and broader operational KPIs pending |
 | 17 | Anomaly Detection | deterministic/scoring foundation |
 | 18 | Forecast / Budget AI | advisory-only foundations |
 | 19 | Production Security | OIDC/JWT, MFA, permissions, sensitive-field crypto primitives implemented; operational hardening and independent review pending |
@@ -56,6 +56,10 @@ Each executable component mapping is required to bind a Rule Pack and population
 ## Snapshot-Driven Retro / Historical Replay Governance
 
 M3.13 binds historical payroll evidence to the immutable `PersonnelSnapshotRecord` for the applicable employee and period. Replay fails closed when the snapshot is missing, has a different employee/period, or its hash differs from the payroll artifact. Retroactive reconciliation requires original and revised persisted artifacts for every period and requires both artifacts to reference the same immutable snapshot; current HR state is never substituted silently. Legal rates/formulas are not inferred or activated by this boundary.
+
+## Authenticated Operational Web Governance
+
+M3.14 removes hardcoded dashboard and employee-list business data from the primary operational views. The dashboard consumes authenticated employee, payroll and approval statistics plus the latest payroll records through the existing API client/query layer; the employee view consumes authenticated employee statistics and paginated employee records. API failures render explicit error states and missing data renders `—`/empty states rather than invented demo values. This tranche does not establish production certification or authoritative master-data acceptance.
 
 ## Release position
 

@@ -1,93 +1,137 @@
 import React from "react";
-import { TrendingUp, Users, AlertCircle, CheckCircle2 } from "lucide-react";
-import StatCard from "../components/ui/StatCard";
-import PayrollChart from "../components/charts/PayrollChart";
+import { AlertCircle, CheckCircle2, TrendingUp, Users } from "lucide-react";
+import StatCard from "@/components/ui/StatCard";
+import { useApprovalsStats, useEmployeeStats, usePayrolls, usePayrollStats } from "@/services";
+import { ApiError, Payroll } from "@/types/api";
+
+const formatNumber = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("fa-IR").format(date);
+};
+
+const statusLabels: Record<Payroll["status"], string> = {
+  draft: "پیش‌نویس",
+  pending: "در انتظار تأیید",
+  approved: "تأیید شده",
+  processed: "پردازش شده",
+  paid: "پرداخت شده",
+};
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const candidate = error as Partial<ApiError> & { message?: string };
+    return candidate.message || "دریافت داده از API ناموفق بود.";
+  }
+  return "دریافت داده از API ناموفق بود.";
+}
 
 function Dashboard() {
+  const employeeStats = useEmployeeStats();
+  const payrollStats = usePayrollStats();
+  const approvalsStats = useApprovalsStats();
+  const payrolls = usePayrolls({ page: 1, limit: 5, order: "desc", sort: "createdAt" });
+
+  const queries = [employeeStats, payrollStats, approvalsStats, payrolls];
+  const isLoading = queries.some((query) => query.isLoading);
+  const firstError = queries.find((query) => query.isError)?.error;
+
+  const employeeData = employeeStats.data?.success ? employeeStats.data.data : undefined;
+  const payrollData = payrollStats.data?.success ? payrollStats.data.data : undefined;
+  const approvalsData = approvalsStats.data?.success ? approvalsStats.data.data : undefined;
+  const payrollItems = payrolls.data?.success ? payrolls.data.data?.items ?? [] : [];
+
   return (
     <div className="p-6 space-y-6" dir="rtl">
-      {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-morva-900">خوش‌آمدید به داشبورد</h1>
-        <p className="text-morva-600 mt-2">وضعیت سامانه حقوق و دستمزد کارکنان آموزش‌وپرورش</p>
+        <h1 className="text-3xl font-bold text-morva-900">داشبورد عملیاتی</h1>
+        <p className="text-morva-600 mt-2">اطلاعات این صفحه فقط از APIهای احراز‌شده سامانه دریافت می‌شود.</p>
       </div>
 
-      {/* Stats Grid */}
+      {isLoading && (
+        <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700">
+          در حال دریافت اطلاعات عملیاتی…
+        </div>
+      )}
+
+      {firstError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+          {getErrorMessage(firstError)}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="پرونده‌های فعال"
-          value="1,245"
+          title="کل کارکنان"
+          value={employeeData ? formatNumber(employeeData.totalEmployees) : "—"}
           icon={Users}
-          trend="+12%"
+          trend={employeeData ? `${formatNumber(employeeData.activeEmployees)} فعال` : "داده موجود نیست"}
           color="blue"
         />
         <StatCard
-          title="کل پرداخت‌ها"
-          value="۵۲ میلیارد"
+          title="کل حقوق و دستمزد"
+          value={payrollData ? formatNumber(payrollData.totalAmount) : "—"}
           icon={TrendingUp}
-          trend="+8%"
+          trend={payrollData ? `${formatNumber(payrollData.totalPayrolls)} دوره` : "داده موجود نیست"}
           color="green"
         />
         <StatCard
-          title="مغایرت‌های معلق"
-          value="23"
+          title="تأییدهای معلق"
+          value={approvalsData ? formatNumber(approvalsData.pendingCount) : "—"}
           icon={AlertCircle}
-          trend="-5%"
+          trend={approvalsData ? `${formatNumber(approvalsData.approvedCount)} تأییدشده` : "داده موجود نیست"}
           color="orange"
         />
         <StatCard
-          title="تأیید‌شده‌ها"
-          value="98%"
+          title="پرداخت‌شده"
+          value={payrollData ? formatNumber(payrollData.paidAmount) : "—"}
           icon={CheckCircle2}
-          trend="✓"
+          trend={payrollData ? `${formatNumber(payrollData.averagePerPayroll)} میانگین دوره` : "داده موجود نیست"}
           color="emerald"
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-morva-900 mb-4">روند پرداخت‌های سه‌ماهه</h2>
-          <PayrollChart />
-        </div>
-
-        <div className="bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-morva-900 mb-4">وضعیت دوره‌ها</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-morva-50 rounded-lg">
-              <span className="text-sm font-medium text-morva-900">1405-06</span>
-              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">تسویه شد</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-morva-50 rounded-lg">
-              <span className="text-sm font-medium text-morva-900">1405-07</span>
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">محاسبه شد</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-morva-50 rounded-lg">
-              <span className="text-sm font-medium text-morva-900">1405-08</span>
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">ایجادشده</span>
-            </div>
+      <div className="bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-morva-900">آخرین دوره‌های حقوق</h2>
+            <p className="text-sm text-morva-600 mt-1">فقط رکوردهای بازگشتی از API نمایش داده می‌شوند.</p>
           </div>
         </div>
-      </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
-        <h3 className="text-lg font-bold text-morva-900 mb-4">فعالیت‌های اخیر</h3>
-        <div className="space-y-3">
-          {[
-            { action: "دوره ۱۴۰۵-۰۶ تسویه شد", time: "۲ ساعت پیش", status: "completed" },
-            { action: "ثبت ۴۵ احکام جدید", time: "۴ ساعت پیش", status: "completed" },
-            { action: "بازبینی گزارش مغایرت‌ها", time: "دیروز", status: "pending" },
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 border-b border-morva-100 last:border-0">
-              <div>
-                <p className="text-sm font-medium text-morva-900">{item.action}</p>
-                <p className="text-xs text-morva-600">{item.time}</p>
-              </div>
-              <div className={`w-2 h-2 rounded-full ${item.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'}`} />
-            </div>
-          ))}
-        </div>
+        {!isLoading && payrollItems.length === 0 && !firstError && (
+          <div className="rounded-lg bg-morva-50 p-4 text-sm text-morva-700">
+            هیچ دوره حقوقی برای نمایش وجود ندارد.
+          </div>
+        )}
+
+        {payrollItems.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-morva-200 text-right text-morva-700">
+                  <th className="px-3 py-3 font-semibold">دوره</th>
+                  <th className="px-3 py-3 font-semibold">تعداد کارکنان</th>
+                  <th className="px-3 py-3 font-semibold">مبلغ</th>
+                  <th className="px-3 py-3 font-semibold">وضعیت</th>
+                  <th className="px-3 py-3 font-semibold">تاریخ ایجاد</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-morva-100">
+                {payrollItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-3 py-3 font-medium text-morva-900">{item.period}</td>
+                    <td className="px-3 py-3 text-morva-700">{formatNumber(item.employeeCount)}</td>
+                    <td className="px-3 py-3 text-morva-700">{formatNumber(item.totalAmount)}</td>
+                    <td className="px-3 py-3 text-morva-700">{statusLabels[item.status]}</td>
+                    <td className="px-3 py-3 text-morva-600">{formatDate(item.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
