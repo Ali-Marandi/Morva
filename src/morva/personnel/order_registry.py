@@ -8,7 +8,24 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.approval_records import PersonnelOrderDecisionRecord
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
+from morva.personnel.order_integrity import canonical_personnel_order_payload, personnel_order_fingerprint
 from morva.personnel.orders import OrderLine, OrderType, PersonnelOrder
+
+
+def _fingerprint_for_order(record: PersonnelOrderRecord) -> str:
+    return personnel_order_fingerprint(
+        canonical_personnel_order_payload(
+            order_no=record.order_no,
+            employee_no=record.employee_no,
+            order_type=record.order_type,
+            issue_date=record.issue_date,
+            effective_from=record.effective_date,
+            effective_to=date.fromisoformat(record.payload["effective_to"]) if record.payload.get("effective_to") else None,
+            legal_reference=record.legal_reference,
+            reason=record.reason,
+            payload=record.payload or {},
+        )
+    )
 
 
 def persist_personnel_order(session: Session, order: PersonnelOrder) -> PersonnelOrderRecord:
@@ -26,6 +43,19 @@ def persist_personnel_order(session: Session, order: PersonnelOrder) -> Personne
             for line in order.lines
         ],
     }
+    expected_hash = personnel_order_fingerprint(
+        canonical_personnel_order_payload(
+            order_no=order.number,
+            employee_no=order.employee_no,
+            order_type=order.order_type.value,
+            issue_date=order.issue_date,
+            effective_from=order.effective_from,
+            effective_to=order.effective_to,
+            legal_reference=order.reference,
+            reason=None,
+            payload=payload,
+        )
+    )
     if existing is not None:
         if (
             existing.employee_no != order.employee_no
@@ -36,6 +66,8 @@ def persist_personnel_order(session: Session, order: PersonnelOrder) -> Personne
             or existing.payload != payload
         ):
             raise ValueError("personnel order already exists with different content")
+        if existing.content_hash != expected_hash:
+            raise ValueError("personnel order integrity fingerprint mismatch")
         return existing
     record = PersonnelOrderRecord(
         order_no=order.number,
@@ -46,6 +78,7 @@ def persist_personnel_order(session: Session, order: PersonnelOrder) -> Personne
         legal_reference=order.reference,
         reason=None,
         payload=payload,
+        content_hash=expected_hash,
     )
     session.add(record)
     session.flush()
@@ -81,4 +114,15 @@ def effective_personnel_orders(session: Session, employee_no: str, effective_on:
         )
         .order_by(PersonnelOrderRecord.effective_date.desc(), PersonnelOrderRecord.order_no.desc())
     ).all()
-    return [record for record in records if record_to_personnel_order(record).is_effective_on(effective_on)]
+    effective: list[PersonnelOrderRecord] = []
+    for record in records:
+        decision = session.scalar(
+            select(PersonnelOrderDecisionRecord).where(PersonnelOrderDecisionRecord.order_id == record.id)
+        )
+        if record.content_hash is None or decision is None or decision.order_fingerprint != record.content_hash:
+            continue
+        if _fingerprint_for_order(record) != record.content_hash:
+            continue
+        if record_to_personnel_order(record).is_effective_on(effective_on):
+            effective.append(record)
+    return effective
