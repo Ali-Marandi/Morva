@@ -9,7 +9,10 @@
     "input_values": {},
     "expected_output": null,
     "input_fingerprint": null,
-    "expected_output_fingerprint": null
+    "expected_output_fingerprint": null,
+    "legal_source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "legal_article": null,
+    "legal_clause": null
   },
   {
     "case_id": "1405-PENSION-BASELINE-001",
@@ -21,7 +24,10 @@
     "input_values": {},
     "expected_output": null,
     "input_fingerprint": null,
-    "expected_output_fingerprint": null
+    "expected_output_fingerprint": null,
+    "legal_source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "legal_article": null,
+    "legal_clause": null
   },
   {
     "case_id": "1405-INSURANCE-BASELINE-001",
@@ -33,7 +39,10 @@
     "input_values": {},
     "expected_output": null,
     "input_fingerprint": null,
-    "expected_output_fingerprint": null
+    "expected_output_fingerprint": null,
+    "legal_source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "legal_article": null,
+    "legal_clause": null
   },
   {
     "case_id": "1405-LOAN-BASELINE-001",
@@ -45,7 +54,10 @@
     "input_values": {},
     "expected_output": null,
     "input_fingerprint": null,
-    "expected_output_fingerprint": null
+    "expected_output_fingerprint": null,
+    "legal_source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "legal_article": null,
+    "legal_clause": null
   },
   {
     "case_id": "1405-COURT_ORDER-BASELINE-001",
@@ -57,6 +69,9 @@
     "input_values": {},
     "expected_output": null,
     "input_fingerprint": null,
-    "expected_output_fingerprint": null
+    "expected_output_fingerprint": null,
+    "legal_source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "legal_article": null,
+    "legal_clause": null
   }
 ]
