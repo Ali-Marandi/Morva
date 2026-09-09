@@ -15,7 +15,6 @@ from morva.persistence import core_hr_records  # noqa: F401
 from morva.persistence import domain_extensions  # noqa: F401
 from morva.persistence import enterprise_models  # noqa: F401
 from morva.persistence import masterdata_records  # noqa: F401
-from morva.persistence import self_service_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
