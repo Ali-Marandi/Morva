@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { SelfCase, SelfPayslip, SelfProfile, SelfOrder, CreateCaseDto } from '../types/api';
+import type { SelfCase, SelfPayslip, SelfProfile, SelfOrder, CreateCaseDto } from '../types/self-service';
 
 export const selfService = {
   async getProfile() {
