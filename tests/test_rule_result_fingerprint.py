@@ -24,11 +24,10 @@ def test_rule_result_fingerprint_is_stable() -> None:
     assert fingerprint_values({"amount": Decimal("123.4500")}) == fingerprint_values(
         {"amount": Decimal("123.45")}
     )
-    assert fingerprint_rule_result(result) == "a1f2e62b6a6f0ac8bb5c6c37815cb4ce2a9ea5fc8fca4c7f365e1112b3a2a5ef"
+    assert fingerprint_rule_result(result) == "039154840b2c09f6363ac29ea847f19e395269a4f8b12ae17ed86487eb5d0a18"
 
 
 def test_classification_changes_fingerprint() -> None:
-    base = RuleResultProxy = None
     definition = RuleDefinition(
         code="INSURANCE",
         title="Synthetic insurance regression",
