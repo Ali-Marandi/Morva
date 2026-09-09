@@ -43,7 +43,7 @@ const Approvals: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-8">
-          {["all", "pending", "approved", "rejected"] as const}.map((status) => (
+          {(["all", "pending", "approved", "rejected"] as const).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
