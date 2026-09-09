@@ -4,7 +4,7 @@
 
 | # | Capability | State |
 |---|---|---|
-| 1 | Organization & Position Master Data | authenticated registry APIs + persisted master data + deterministic integrity validation + manifest acceptance contract implemented; authoritative ministry dataset and acceptance confirmation evidence pending |
+| 1 | Organization & Position Master Data | authenticated registry APIs + persisted master data + deterministic integrity validation + manifest acceptance contract implemented; M3.17 adds assignment target activity, invalid-range, overlap and active-employee assignment cardinality checks; authoritative ministry dataset and acceptance confirmation evidence pending |
 | 2 | Personnel Order Workflow | durable immutable effective-dated registry + authenticated create/read API + approval-gated effective state with immutable final decision implemented; authoritative order schema/governance pending |
 | 3 | Legal Knowledge Base | persisted legal-source/rule-evidence governance workflow added with review, approval, SHA-256 linkage and fail-closed Rule Pack readiness; authoritative source corpus pending |
 | 4 | Calculation Matrix | persisted rule-pack/component/population matrix with treatment, safe expression, effective dates, legal source/article, regression-suite hash, review/approval workflow and readiness gate implemented; authoritative population-specific legal matrix pending |
@@ -45,7 +45,7 @@
 
 `Person -> Employee -> Employment -> Organization -> Position -> Assignment -> Education -> Experience -> Dependents`
 
-The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, and a persisted manifest-level acceptance contract. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
+The current implementation provides the historical persistence models, authenticated read APIs, immutable effective snapshots, durable personnel-order registry, approval-gated effective orders with immutable final decisions, authenticated organization/position master-data registry APIs, deterministic integrity validation, persisted manifest-level acceptance, M3.17 assignment integrity checks, attendance integrity checks and persisted teacher-rank decision provenance verification. Authoritative ministry master data, formal enterprise governance for personnel-order schemas, and production employee self-service are still pending acceptance evidence.
 
 ## Calculation Matrix Governance
 
@@ -66,6 +66,10 @@ M3.14 removes hardcoded dashboard and employee-list business data from the prima
 ## Employee Self-Service / Case Governance
 
 M3.15 adds an authenticated employee boundary at `/api/v1/self` and `/api/v1/cases/self`. Employee identity must resolve to an existing personnel record; otherwise the request fails closed. Employee payroll views expose only artifacts attached to approved-or-later payroll lifecycle states and verify the immutable `PersonnelSnapshotRecord` hash before detail or PDF access. Objections/cases persist employee ownership, lifecycle status, priority and resolution evidence; staff case handling is restricted through the existing hierarchical personnel authorization boundary and each creation/status change/download appends an audit event. M3.16 hardens the web presentation with server-backed period filtering, on-demand payslip detail, visible snapshot/provenance hashes, explicit loading/error states and resilient PDF download lifecycle. The PDF remains a document-generation foundation: template localization, typography, retention and formal document certification remain separate operational requirements.
+
+## Authoritative Master Data / M3.17 Governance
+
+M3.17 extends the master-data integrity gate with fail-closed assignment checks: organization and position targets must resolve and be active; assignment ranges must be valid; assignment intervals for the same employee may not overlap; and an active employee must have exactly one open-ended assignment. Attendance remains blocked on missing employee reference, invalid period/status, negative units, invalid SHA-256 source hash or missing approval evidence. Persisted teacher-rank decision and appeal states remain blocked when decision provenance is absent or tampered. These controls prove technical integrity and provenance only; authoritative organizational confirmation remains an explicit acceptance step.
 
 ## Release position
 
