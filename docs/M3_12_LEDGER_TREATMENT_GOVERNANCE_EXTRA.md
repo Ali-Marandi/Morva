@@ -1,0 +1,1 @@
+This note is part of the M3.12 governance tranche and confirms no legal rate or threshold is activated without source evidence and approval.
