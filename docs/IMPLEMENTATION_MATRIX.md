@@ -16,8 +16,8 @@
 | 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented for personnel-order decisions; durable enterprise IAM workflow pending |
 | 11 | SINA Adapter | fail-closed typed contract; official schema/endpoint/credential and staging evidence required |
 | 12 | Accounting / Treasury / Bank | typed six-provider boundary + transactional outbox/inbox foundations; official adapters required |
-| 13 | Employee Self-Service | role-aware RTL web shell and API foundations; complete authenticated production UX pending |
-| 14 | Payslip Explanation | persisted payroll artifact + ordered line explanation implemented; legal source linking pending |
+| 13 | Employee Self-Service | **M3.15 implemented authenticated self profile, approved/frozen payroll artifact listing/detail, immutable snapshot verification, personnel-order read view and artifact-bound PDF download; production UX hardening and identity-directory reconciliation pending** |
+| 14 | Payslip Explanation | persisted payroll artifact + ordered line explanation implemented; employee self-service exposes line explanations and provenance hashes; authoritative legal source linking remains pending |
 | 15 | Rule Sandbox UI | foundation; production hardening pending |
 | 16 | Management Dashboard | authenticated employee/payroll/approval summary APIs wired to the operational dashboard; historical charts and broader operational KPIs pending |
 | 17 | Anomaly Detection | deterministic/scoring foundation |
@@ -32,6 +32,8 @@
 | 26 | Historical Payroll Replay | snapshot-bound deterministic replay guard implemented; production legal-rule replay certification pending |
 | 27 | Core HR Employee Profile API | implemented read APIs for employee, employment, assignment, education, experience and dependents; automated API coverage added; production master-data validation pending |
 | 28 | Core HR Effective Snapshots | implemented immutable period snapshot creation/read API with deterministic content hash; payroll/order population integration and production master-data evidence pending |
+| 29 | Employee Objection / Case Management | **M3.15 implemented persistent case creation/list/detail/status lifecycle, employee-only self access, organization-hierarchy authorization for staff handling, resolution requirements and audit events; formal enterprise grievance policy/SLA evidence pending** |
+| 30 | Employee Payslip PDF | **M3.15 implemented deterministic artifact-bound PDF download behind authenticated self-service and snapshot/hash verification; typography/localization and production document-template certification pending** |
 
 ## Canonical payroll lifecycle
 
@@ -60,6 +62,10 @@ M3.13 binds historical payroll evidence to the immutable `PersonnelSnapshotRecor
 ## Authenticated Operational Web Governance
 
 M3.14 removes hardcoded dashboard and employee-list business data from the primary operational views. The dashboard consumes authenticated employee, payroll and approval statistics plus the latest payroll records through the existing API client/query layer; the employee view consumes authenticated employee statistics and paginated employee records. API failures render explicit error states and missing data renders `—`/empty states rather than invented demo values. This tranche does not establish production certification or authoritative master-data acceptance.
+
+## Employee Self-Service / Case Governance
+
+M3.15 adds an authenticated employee boundary at `/api/v1/self` and `/api/v1/cases/self`. Employee identity must resolve to an existing personnel record; otherwise the request fails closed. Employee payroll views expose only artifacts attached to approved-or-later payroll lifecycle states and verify the immutable `PersonnelSnapshotRecord` hash before detail or PDF access. Objections/cases persist employee ownership, lifecycle status, priority and resolution evidence; staff case handling is restricted through the existing hierarchical personnel authorization boundary and each creation/status change/download appends an audit event. The PDF implementation is deterministic and artifact-bound but remains a document-generation foundation: template localization, typography, retention and formal document certification remain separate operational requirements.
 
 ## Release position
 
