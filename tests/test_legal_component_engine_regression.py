@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from morva.rules.engine import RuleDefinition, RuleEngine, RuleContext
+from morva.rules.engine import RuleContext, RuleDefinition, RuleEngine
 from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS
 
 
@@ -54,7 +54,10 @@ def test_unknown_component_fails_closed() -> None:
     engine = RuleEngine(_definitions())
 
     try:
-        engine.calculate("UNKNOWN_COMPONENT", RuleContext(date(2026, 1, 1), {"amount": Decimal("1")}))
+        engine.calculate(
+            "UNKNOWN_COMPONENT",
+            RuleContext(date(2026, 1, 1), {"amount": Decimal("1")}),
+        )
     except LookupError as exc:
         assert "UNKNOWN_COMPONENT" in str(exc)
     else:
@@ -68,13 +71,22 @@ def test_negative_result_fails_closed() -> None:
                 code="LOAN",
                 title="Synthetic loan regression rule",
                 effective_from=date(2026, 1, 1),
-                expression={"op": "sub", "args":[{"op":"const","value":"0"},{"op":"value","name":"amount"}]},
+                expression={
+                    "op": "sub",
+                    "args": [
+                        {"op": "const", "value": "0"},
+                        {"op": "value", "name": "amount"},
+                    ],
+                },
             )
         ]
     )
 
     try:
-        engine.calculate("LOAN", RuleContext(date(2026, 1, 1), {"amount": Decimal("10")}))
+        engine.calculate(
+            "LOAN",
+            RuleContext(date(2026, 1, 1), {"amount": Decimal("10")}),
+        )
     except ValueError as exc:
         assert "negative amount" in str(exc)
     else:
