@@ -28,13 +28,14 @@
 - M3.15 authenticated employee self-service, objection/case persistence and artifact-bound payslip PDF endpoint with dedicated CI gate
 - M3.16 employee self-service UX hardening with payslip detail/provenance presentation, period filtering, resilient PDF download handling and dedicated web quality gate
 - M3.17 authoritative master-data integrity hardening across organization/personnel assignment, attendance and persisted teacher-rank provenance controls
+- M3.18 personnel-order integrity hardening with immutable order fingerprints, approval-evidence binding, SoD/rejection controls and fail-closed effective-state verification
 
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build.
-2. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`.**
+2. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 3. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; authoritative source confirmation and complete population evidence remain pending.**
-4. Complete personnel-order lifecycle and approval evidence.
+4. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
 5. Complete legal component matrix and annual Rule Packs from primary sources.
 6. Complete tax, pension, insurance, loans and judicial-deduction ledgers with approved treatments. **M3.12 governance boundary is implemented; authoritative treatment evidence and approved population-specific rules remain pending.**
 7. Complete snapshot-driven retroactive recalculation and certified historical replay corpus. **M3.13 software provenance/reconciliation controls are implemented; authoritative historical replay corpus and certification evidence remain pending.**
