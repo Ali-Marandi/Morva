@@ -81,28 +81,28 @@ const Approvals: React.FC = () => {
           <StatCard
             title="کل درخواست‌ها"
             value={stats.total.toString()}
-            icon={<Inbox className="w-8 h-8" />}
+            icon={Inbox}
             trend="↑ ۳"
             color="blue"
           />
           <StatCard
             title="در انتظار تأیید"
             value={stats.pending.toString()}
-            icon={<Clock className="w-8 h-8" />}
+            icon={Clock}
             trend={`${((stats.pending / stats.total) * 100).toFixed(0)}%`}
             color="orange"
           />
           <StatCard
             title="تأیید‌شده"
             value={stats.approved.toString()}
-            icon={<CheckCircle className="w-8 h-8" />}
+            icon={CheckCircle}
             trend={`${((stats.approved / stats.total) * 100).toFixed(0)}%`}
             color="green"
           />
           <StatCard
             title="رد‌شده"
             value={stats.rejected.toString()}
-            icon={<XCircle className="w-8 h-8" />}
+            icon={XCircle}
             trend={`${((stats.rejected / stats.total) * 100).toFixed(0)}%`}
             color="red"
           />
@@ -110,33 +110,7 @@ const Approvals: React.FC = () => {
 
         {/* Filter Buttons */}
         <div className="flex flex-wrap gap-2 mb-8">
-          {(["all", "pending", "approved", "rejected"] as const).map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === status
-                    ? status === "pending"
-                      ? "bg-orange-100 text-orange-700"
-                      : status === "approved"
-                        ? "bg-green-100 text-green-700"
-                        : status === "rejected"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-blue-100 text-blue-700"
-                    : "bg-white text-gray-700 border border-gray-200"
-                }`}
-              >
-                {status === "all"
-                  ? "همه"
-                  : status === "pending"
-                    ? "در انتظار"
-                    : status === "approved"
-                      ? "تأیید‌شده"
-                      : "رد‌شده"}
-              </button>
-            )
-          )}
+          {["all", "pending", "approved", "rejected"] as const}.map
         </div>
 
         {/* Requests Table */}
@@ -150,41 +124,21 @@ const Approvals: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    نوع درخواست
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    نام کارمند
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    مبلغ
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    تاریخ
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    وضعیت
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                    عملیات
-                  </th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نوع درخواست</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نام کارمند</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">مبلغ</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">تاریخ</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">وضعیت</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">عملیات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-right text-sm text-gray-900">
-                      {req.type}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">
-                      {req.employee}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">
-                      {req.amount || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">
-                      {req.date}
-                    </td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-900">{req.type}</td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.employee}</td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.amount || "—"}</td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.date}</td>
                     <td className="px-6 py-4 text-right text-sm">
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
@@ -195,25 +149,16 @@ const Approvals: React.FC = () => {
                               : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {req.status === "pending"
-                          ? "در انتظار"
-                          : req.status === "approved"
-                            ? "تأیید‌شده"
-                            : "رد‌شده"}
+                        {req.status === "pending" ? "در انتظار" : req.status === "approved" ? "تأیید‌شده" : "رد‌شده"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right text-sm">
-                      {req.status === "pending" && (
+                      {req.status === "pending" ? (
                         <div className="flex gap-2">
-                          <button className="text-green-600 hover:text-green-900 font-medium">
-                            تأیید
-                          </button>
-                          <button className="text-red-600 hover:text-red-900 font-medium">
-                            رد
-                          </button>
+                          <button className="text-green-600 hover:text-green-900 font-medium">تأیید</button>
+                          <button className="text-red-600 hover:text-red-900 font-medium">رد</button>
                         </div>
-                      )}
-                      {req.status !== "pending" && (
+                      ) : (
                         <span className="text-gray-500">—</span>
                       )}
                     </td>
