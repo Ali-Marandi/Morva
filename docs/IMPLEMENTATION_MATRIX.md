@@ -11,7 +11,7 @@
 | 5 | 1405 Rule Pack | governed lifecycle foundation; remains `review_required` until authoritative legal/finance approval |
 | 6 | Tax / Pension / Insurance | persisted ledger foundations plus explicit fail-closed treatment governance for `taxable/pensionable/insurable`; approved population-specific rule sets and primary-source evidence pending |
 | 7 | High-volume Payroll | batch/chunk foundations; target-scale execution evidence pending |
-| 8 | Retro + Jalali | deterministic period/replay foundations; complete snapshot-driven retro pending |
+| 8 | Retro + Jalali | immutable PersonnelSnapshot persistence + deterministic snapshot-driven retro reconciliation + snapshot-bound historical replay guard implemented; complete historical replay corpus and certification pending |
 | 9 | Loans / Debts / Deductions | persisted loan and deduction ledger foundations plus explicit fail-closed treatment governance; authoritative ledgers/policies pending |
 | 10 | Approval / SoD | permission + privileged + distinct-actor controls implemented for personnel-order decisions; durable enterprise IAM workflow pending |
 | 11 | SINA Adapter | fail-closed typed contract; official schema/endpoint/credential and staging evidence required |
@@ -29,7 +29,7 @@
 | 23 | Real Payroll Reconciliation | reconciliation foundations; authoritative three-way production certification pending |
 | 24 | Persistent Payroll Artifacts | implemented; employee-level deterministic result and payslip-line persistence |
 | 25 | Transactional Integration Messaging | implemented foundation; official provider delivery and acknowledgement pending |
-| 26 | Historical Payroll Replay | implemented foundation; production legal-rule replay certification pending |
+| 26 | Historical Payroll Replay | snapshot-bound deterministic replay guard implemented; production legal-rule replay certification pending |
 | 27 | Core HR Employee Profile API | implemented read APIs for employee, employment, assignment, education, experience and dependents; automated API coverage added; production master-data validation pending |
 | 28 | Core HR Effective Snapshots | implemented immutable period snapshot creation/read API with deterministic content hash; payroll/order population integration and production master-data evidence pending |
 
@@ -52,6 +52,10 @@ Each executable component mapping is required to bind a Rule Pack and population
 ## Ledger Treatment Governance
 
 `TAX`, `PENSION`, `INSURANCE`, `LOAN` and `COURT_ORDER` now have an explicit treatment-governance boundary. Classification flags are explicit rather than inferred, and approval requires primary-source metadata, effective dates, independent review/approval and regression evidence. Missing approval leaves execution fail-closed. This does not constitute legal approval or populate rates/thresholds.
+
+## Snapshot-Driven Retro / Historical Replay Governance
+
+M3.13 binds historical payroll evidence to the immutable `PersonnelSnapshotRecord` for the applicable employee and period. Replay fails closed when the snapshot is missing, has a different employee/period, or its hash differs from the payroll artifact. Retroactive reconciliation requires original and revised persisted artifacts for every period and requires both artifacts to reference the same immutable snapshot; current HR state is never substituted silently. Legal rates/formulas are not inferred or activated by this boundary.
 
 ## Release position
 
