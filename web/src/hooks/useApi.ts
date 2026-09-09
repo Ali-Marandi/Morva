@@ -29,7 +29,7 @@ import {
   useReport,
   useGenerateReport,
   useReportsStats,
-} from './services/queries';
+} from '../services/queries';
 
 // ============= Dashboard Hooks =============
 
@@ -38,11 +38,11 @@ export function useDashboardData() {
   const payrollStats = usePayrollStats();
   const approvalsStats = useApprovalsStats();
   const reportsStats = useReportsStats();
-  
+
   const pendingApprovals = usePendingApprovals(undefined, {
     enabled: approvalsStats.isSuccess,
   });
-  
+
   const isLoading =
     employeeStats.isLoading ||
     payrollStats.isLoading ||
