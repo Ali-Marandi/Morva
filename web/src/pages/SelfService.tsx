@@ -29,7 +29,9 @@ function SelfService() {
     setDownloadingId(artifactId);
     try {
       const response = await selfService.getPayslipPdf(artifactId);
-      const blob = response instanceof Blob ? response : new Blob([response as BlobPart], { type: 'application/pdf' });
+      const blob = response instanceof Blob
+        ? response
+        : new Blob([response as unknown as BlobPart], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -76,14 +78,7 @@ function SelfService() {
           <div className="flex items-center gap-3"><FileText size={22} /><h2 className="text-lg font-bold">فیش‌های حقوقی</h2></div>
           <label className="flex items-center gap-2 text-sm">
             <span className="text-morva-600">دوره</span>
-            <input
-              value={period}
-              onChange={(event) => setPeriod(event.target.value)}
-              placeholder="۱۴۰۵-۰۶"
-              inputMode="numeric"
-              aria-label="دوره فیش حقوقی"
-              className="w-32 rounded-lg border border-morva-300 px-3 py-2 text-right"
-            />
+            <input value={period} onChange={(event) => setPeriod(event.target.value)} placeholder="۱۴۰۵-۰۶" inputMode="numeric" aria-label="دوره فیش حقوقی" className="w-32 rounded-lg border border-morva-300 px-3 py-2 text-right" />
             {period && <button type="button" onClick={() => setPeriod('')} className="text-sm font-semibold text-morva-700">حذف فیلتر</button>}
           </label>
         </div>
@@ -107,12 +102,7 @@ function SelfService() {
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button type="button" onClick={() => setSelectedPayslipId(item.artifact_id)} className="rounded-lg border border-morva-300 px-3 py-2 font-semibold text-morva-800 hover:bg-morva-50">جزئیات</button>
-                        <button
-                          type="button"
-                          disabled={downloadingId === item.artifact_id}
-                          onClick={() => downloadPdf(item.artifact_id, item.period)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-morva-600 px-3 py-2 text-white hover:bg-morva-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
+                        <button type="button" disabled={downloadingId === item.artifact_id} onClick={() => downloadPdf(item.artifact_id, item.period)} className="inline-flex items-center gap-2 rounded-lg bg-morva-600 px-3 py-2 text-white hover:bg-morva-700 disabled:cursor-not-allowed disabled:opacity-60">
                           <Download size={16} />{downloadingId === item.artifact_id ? 'در حال دریافت…' : 'PDF'}
                         </button>
                       </div>
