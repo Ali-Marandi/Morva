@@ -50,21 +50,21 @@ const Employees: React.FC = () => {
           <StatCard
             title="کل کارکنان"
             value={stats ? new Intl.NumberFormat("fa-IR").format(stats.totalEmployees) : "—"}
-            icon={<Users className="w-8 h-8" />}
+            icon={Users}
             trend={stats ? `${new Intl.NumberFormat("fa-IR").format(stats.activeEmployees)} فعال` : "داده موجود نیست"}
             color="blue"
           />
           <StatCard
             title="کارکنان غیرفعال"
             value={stats ? new Intl.NumberFormat("fa-IR").format(stats.inactiveEmployees) : "—"}
-            icon={<AlertCircle className="w-8 h-8" />}
+            icon={AlertCircle}
             trend={stats ? `${new Intl.NumberFormat("fa-IR").format(stats.onLeaveEmployees)} در مرخصی` : "داده موجود نیست"}
             color="orange"
           />
           <StatCard
             title="جمع حقوق ماهانه"
             value={stats ? new Intl.NumberFormat("fa-IR").format(stats.totalPayroll) : "—"}
-            icon={<Users className="w-8 h-8" />}
+            icon={Users}
             trend={stats ? `میانگین ${new Intl.NumberFormat("fa-IR").format(stats.averageSalary)}` : "داده موجود نیست"}
             color="green"
           />
@@ -91,7 +91,7 @@ const Employees: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {employees.map((employee) => (
+                  {employees.map((employee: Employee) => (
                     <tr key={employee.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-right text-sm text-gray-900">{employee.name}</td>
                       <td className="px-6 py-4 text-right text-sm text-gray-600">{employee.department}</td>
