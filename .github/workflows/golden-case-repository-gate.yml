@@ -17,5 +17,5 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e '.[dev]'
-      - run: ruff check src/morva/rules/regression_cases.py tests/test_regression_cases.py
-      - run: pytest -q tests/test_regression_cases.py
+      - run: ruff check src/morva/rules/regression_cases.py src/morva/rules/calculation_matrix.py tests/test_regression_cases.py
+      - run: pytest -q tests/test_regression_cases.py tests/test_calculation_matrix.py
