@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from decimal import Decimal
 from io import BytesIO
 from uuid import UUID
@@ -45,7 +44,16 @@ def _pdf_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
-def build_payslip_pdf(*, employee_no: str, period: str, currency: str, gross: Decimal, deductions: Decimal, net: Decimal, lines: list[PayslipLineRecord]) -> bytes:
+def build_payslip_pdf(
+    *,
+    employee_no: str,
+    period: str,
+    currency: str,
+    gross: Decimal,
+    deductions: Decimal,
+    net: Decimal,
+    lines: list[PayslipLineRecord],
+) -> bytes:
     rows = [
         "Morva Payslip",
         f"Employee: {employee_no}",
@@ -114,7 +122,10 @@ def list_self_payslips(
         stmt = (
             select(PayrollArtifactRecord, PayrollRunRecord)
             .join(PayrollRunRecord, PayrollRunRecord.id == PayrollArtifactRecord.payroll_run_id)
-            .where(PayrollArtifactRecord.employee_no == employee.employee_no, PayrollRunRecord.status.in_(_VISIBLE_PAYROLL_STATUSES))
+            .where(
+                PayrollArtifactRecord.employee_no == employee.employee_no,
+                PayrollRunRecord.status.in_(_VISIBLE_PAYROLL_STATUSES),
+            )
             .order_by(PayrollArtifactRecord.period.desc())
         )
         if period:
@@ -211,7 +222,9 @@ def download_self_payslip_pdf(artifact_id: UUID, principal: Principal = Depends(
         if snapshot is None or snapshot.snapshot_hash != artifact.personnel_snapshot_hash:
             raise HTTPException(status_code=423, detail="payslip provenance verification failed")
         lines = session.scalars(
-            select(PayslipLineRecord).where(PayslipLineRecord.artifact_id == artifact.id).order_by(PayslipLineRecord.line_sequence.asc())
+            select(PayslipLineRecord)
+            .where(PayslipLineRecord.artifact_id == artifact.id)
+            .order_by(PayslipLineRecord.line_sequence.asc())
         ).all()
         append_audit_event(
             event_type="self.payslip.downloaded",
@@ -232,7 +245,11 @@ def download_self_payslip_pdf(artifact_id: UUID, principal: Principal = Depends(
             net=artifact.net,
             lines=lines,
         )
-        return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="payslip-{artifact.period}-{employee.employee_no}.pdf"'})
+        return Response(
+            content=pdf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="payslip-{artifact.period}-{employee.employee_no}.pdf"'},
+        )
 
 
 @router.get("/orders")
