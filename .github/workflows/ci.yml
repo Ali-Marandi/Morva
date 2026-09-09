@@ -203,6 +203,19 @@ jobs:
       - run: ruff check src/morva/rules/activation.py tests/test_rule_activation_integrity.py
       - run: pytest -q tests/test_rule_activation_integrity.py
 
+  calculation-matrix-activation-gate:
+    name: Calculation matrix activation gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/rules/calculation_matrix.py tests/test_calculation_matrix.py
+      - run: pytest -q tests/test_calculation_matrix.py
+
   web-build:
     runs-on: ubuntu-latest
     defaults:
