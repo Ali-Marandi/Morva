@@ -27,12 +27,13 @@
 - M3.14 authenticated operational dashboard/employee views with explicit API loading/error/empty states
 - M3.15 authenticated employee self-service, objection/case persistence and artifact-bound payslip PDF endpoint with dedicated CI gate
 - M3.16 employee self-service UX hardening with payslip detail/provenance presentation, period filtering, resilient PDF download handling and dedicated web quality gate
+- M3.17 authoritative master-data integrity hardening across organization/personnel assignment, attendance and persisted teacher-rank provenance controls
 
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build.
-2. Refresh the technical assessment after each material implementation tranche.
-3. Complete authoritative organization/personnel/rank/attendance master data.
+2. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`.**
+3. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; authoritative source confirmation and complete population evidence remain pending.**
 4. Complete personnel-order lifecycle and approval evidence.
 5. Complete legal component matrix and annual Rule Packs from primary sources.
 6. Complete tax, pension, insurance, loans and judicial-deduction ledgers with approved treatments. **M3.12 governance boundary is implemented; authoritative treatment evidence and approved population-specific rules remain pending.**
