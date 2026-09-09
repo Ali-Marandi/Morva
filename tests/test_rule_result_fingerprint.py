@@ -24,7 +24,9 @@ def test_rule_result_fingerprint_is_stable() -> None:
     assert fingerprint_values({"amount": Decimal("123.4500")}) == fingerprint_values(
         {"amount": Decimal("123.45")}
     )
-    assert fingerprint_rule_result(result) == "039154840b2c09f6363ac29ea847f19e395269a4f8b12ae17ed86487eb5d0a18"
+    assert fingerprint_rule_result(result) == (
+        "039154840b2c09f6363ac29ea847f19e395269a4f8b12ae17ed86487eb5d0a18"
+    )
 
 
 def test_classification_changes_fingerprint() -> None:
