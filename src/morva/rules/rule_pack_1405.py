@@ -11,6 +11,7 @@ REQUIRED_1405_COMPONENTS: tuple[str, ...] = (
     "CHILD_ALLOWANCE",
     "OVERTIME",
     "TEACHING_FEE",
+    "REGION_WEATHER",
     "TAX",
     "PENSION",
     "INSURANCE",
