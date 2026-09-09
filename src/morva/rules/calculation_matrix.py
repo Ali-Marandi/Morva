@@ -12,7 +12,7 @@ from morva.audit.persistence import append_audit_event
 from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.security.policy import require_distinct_actors
-from morva.rules.regression_cases import validate_repository
+from morva.rules.regression_cases import validate_repository_against_evidence
 from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS, is_1405_rule_pack
 
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -55,19 +55,7 @@ def _validate_expression(node: object) -> None:
         _validate_expression(child)
 
 
-def validate_matrix_payload(
-    *,
-    treatment: str,
-    effective_from: date,
-    effective_to: date | None,
-    regression_suite_hash: str,
-    expression: dict[str, object],
-    legal_article: str,
-    population_scope: str,
-    taxable: object | None = None,
-    pensionable: object | None = None,
-    insurable: object | None = None,
-) -> None:
+def validate_matrix_payload(*, treatment: str, effective_from: date, effective_to: date | None, regression_suite_hash: str, expression: dict[str, object], legal_article: str, population_scope: str, taxable: object | None = None, pensionable: object | None = None, insurable: object | None = None) -> None:
     if treatment not in _TREATMENTS:
         raise ValueError("treatment must be earning, deduction or informational")
     if effective_to is not None and effective_to < effective_from:
@@ -96,9 +84,7 @@ def approve_matrix_entry(entry: CalculationMatrixRecord, approver_id: str) -> No
 
 
 def matrix_readiness(session: Session, rule_pack_version: str) -> MatrixReadiness:
-    entries = session.scalars(
-        select(CalculationMatrixRecord).where(CalculationMatrixRecord.rule_pack_version == rule_pack_version)
-    ).all()
+    entries = session.scalars(select(CalculationMatrixRecord).where(CalculationMatrixRecord.rule_pack_version == rule_pack_version)).all()
     blockers: list[str] = []
     component_codes = {entry.component_code for entry in entries}
     if not entries:
@@ -106,15 +92,10 @@ def matrix_readiness(session: Session, rule_pack_version: str) -> MatrixReadines
     if is_1405_rule_pack(rule_pack_version):
         missing = [code for code in REQUIRED_1405_COMPONENTS if code not in component_codes]
         blockers.extend(f"missing required 1405 matrix component {code}" for code in missing)
-        blockers.extend(validate_repository(rule_pack_version, required_components=_REGRESSION_COMPONENTS_1405))
+        blockers.extend(validate_repository_against_evidence(session, rule_pack_version, required_components=_REGRESSION_COMPONENTS_1405))
     for entry in entries:
         source = session.get(LegalSourceRecord, entry.legal_source_id)
-        evidence = session.scalar(
-            select(RuleEvidenceRecord).where(
-                RuleEvidenceRecord.rule_pack_version == entry.rule_pack_version,
-                RuleEvidenceRecord.component_code == entry.component_code,
-            )
-        )
+        evidence = session.scalar(select(RuleEvidenceRecord).where(RuleEvidenceRecord.rule_pack_version == entry.rule_pack_version, RuleEvidenceRecord.component_code == entry.component_code))
         if source is None:
             blockers.append(f"missing legal source for component {entry.component_code}")
             continue
@@ -152,12 +133,7 @@ def create_matrix_entry(session: Session, payload: dict[str, object], actor_id: 
     source = session.get(LegalSourceRecord, legal_source_id)
     if source is None:
         raise ValueError("legal source not found")
-    evidence = session.scalar(
-        select(RuleEvidenceRecord).where(
-            RuleEvidenceRecord.rule_pack_version == version,
-            RuleEvidenceRecord.component_code == component,
-        )
-    )
+    evidence = session.scalar(select(RuleEvidenceRecord).where(RuleEvidenceRecord.rule_pack_version == version, RuleEvidenceRecord.component_code == component))
     if evidence is None:
         raise ValueError("rule evidence must be registered before calculation-matrix entry")
     if source.status not in {"approved", "published"} or evidence.status not in {"approved", "published"}:
@@ -175,28 +151,9 @@ def create_matrix_entry(session: Session, payload: dict[str, object], actor_id: 
     missing_flags = sorted(_REQUIRED_TREATMENT_FLAGS - payload.keys())
     if missing_flags:
         raise ValueError(f"explicit treatment flags are required: {missing_flags}")
-    validate_matrix_payload(
-        treatment=str(payload["treatment"]),
-        effective_from=payload["effective_from"],
-        effective_to=payload.get("effective_to"),
-        regression_suite_hash=str(payload["regression_suite_hash"]),
-        expression=payload["expression"],
-        legal_article=str(payload["legal_article"]),
-        population_scope=population,
-        taxable=payload["taxable"],
-        pensionable=payload["pensionable"],
-        insurable=payload["insurable"],
-    )
+    validate_matrix_payload(treatment=str(payload["treatment"]), effective_from=payload["effective_from"], effective_to=payload.get("effective_to"), regression_suite_hash=str(payload["regression_suite_hash"]), expression=payload["expression"], legal_article=str(payload["legal_article"]), population_scope=population, taxable=payload["taxable"], pensionable=payload["pensionable"], insurable=payload["insurable"])
     entry = CalculationMatrixRecord(**payload)
     session.add(entry)
     session.flush()
-    append_audit_event(
-        event_type="rule.matrix.created",
-        entity_type="calculation_matrix",
-        entity_id=str(entry.id),
-        actor_id=actor_id,
-        payload={"rule_pack_version": version, "component_code": component, "population_scope": population},
-        reason="register calculation matrix entry",
-        session=session,
-    )
+    append_audit_event(event_type="rule.matrix.created", entity_type="calculation_matrix", entity_id=str(entry.id), actor_id=actor_id, payload={"rule_pack_version": version, "component_code": component, "population_scope": population}, reason="register calculation matrix entry", session=session)
     return entry
