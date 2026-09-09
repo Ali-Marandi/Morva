@@ -52,12 +52,12 @@ def _employee_fixture(session):
         )
     )
     session.flush()
-    return employee_no
+    return employee_no, org, position
 
 
 def test_authoritative_gate_accepts_valid_attendance():
     with _session() as session:
-        employee_no = _employee_fixture(session)
+        employee_no, _, _ = _employee_fixture(session)
         session.add(
             AttendanceFactRecord(
                 employee_no=employee_no,
@@ -110,7 +110,7 @@ def test_authoritative_gate_blocks_invalid_attendance():
 
 def test_authoritative_gate_blocks_tampered_persisted_rank_decision():
     with _session() as session:
-        employee_no = _employee_fixture(session)
+        employee_no, _, _ = _employee_fixture(session)
         case = TeacherRankCaseRecord(
             employee_no=employee_no,
             proposed_rank="مربی معلم",
@@ -142,3 +142,34 @@ def test_authoritative_gate_blocks_tampered_persisted_rank_decision():
         result = validate_authoritative_master_data(session)
         assert result.blocking is True
         assert any(item.code == "RANK_DECISION_PROVENANCE_INVALID" for item in result.findings)
+
+
+def test_authoritative_gate_blocks_inactive_assignment_targets():
+    with _session() as session:
+        employee_no, org, position = _employee_fixture(session)
+        org.active = False
+        position.active = False
+        session.commit()
+
+        result = validate_authoritative_master_data(session)
+        codes = {item.code for item in result.findings}
+        assert result.blocking is True
+        assert {"ASSIGNMENT_ORG_INACTIVE", "ASSIGNMENT_POSITION_INACTIVE"}.issubset(codes)
+
+
+def test_authoritative_gate_blocks_multiple_open_assignments():
+    with _session() as session:
+        employee_no, org, position = _employee_fixture(session)
+        session.add(
+            AssignmentRecord(
+                employee_no=employee_no,
+                organization_code=org.code,
+                position_code=position.code,
+                starts_on=date(2026, 2, 1),
+            )
+        )
+        session.commit()
+
+        result = validate_authoritative_master_data(session)
+        assert result.blocking is True
+        assert any(item.code == "ACTIVE_EMPLOYEE_MULTIPLE_ASSIGNMENTS" for item in result.findings)
