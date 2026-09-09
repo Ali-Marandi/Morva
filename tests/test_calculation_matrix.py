@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -44,6 +44,7 @@ def _setup(session, *, source_status="approved", evidence_status="approved"):
         status=evidence_status,
         reviewed_by="evidence-reviewer" if evidence_status != "review_required" else None,
         approved_by="evidence-approver" if evidence_status == "approved" else None,
+        approved_at=datetime(2026, 1, 3) if evidence_status == "approved" else None,
     )
     session.add(evidence)
     session.commit()
@@ -60,11 +61,31 @@ def test_matrix_payload_rejects_unknown_expression_operation():
             expression={"op": "pow", "args": [{"op": "const", "value": "2"}]},
             legal_article="1",
             population_scope="all",
+            taxable=True,
+            pensionable=False,
+            insurable=False,
         )
     except ValueError as exc:
         assert "unsupported" in str(exc)
     else:
         raise AssertionError("unknown expression operation must be rejected")
+
+
+def test_matrix_payload_requires_explicit_treatment_flags():
+    try:
+        validate_matrix_payload(
+            treatment="earning",
+            effective_from=date(2026, 1, 1),
+            effective_to=None,
+            regression_suite_hash="b" * 64,
+            expression={"op": "value", "name": "base"},
+            legal_article="1",
+            population_scope="all",
+        )
+    except ValueError as exc:
+        assert "explicitly provided" in str(exc)
+    else:
+        raise AssertionError("treatment flags must not be implicit")
 
 
 def test_matrix_requires_approved_source_and_evidence():
@@ -125,6 +146,7 @@ def test_matrix_entry_review_approval_and_readiness():
         session.commit()
         entry = session.get(CalculationMatrixRecord, entry.id)
         entry.reviewed_by = "matrix-reviewer"
+        entry.reviewed_at = datetime(2026, 1, 4)
         entry.status = "reviewed"
         session.commit()
         approve_matrix_entry(entry, "matrix-approver")
@@ -132,6 +154,33 @@ def test_matrix_entry_review_approval_and_readiness():
         readiness = matrix_readiness(session, pack.version)
         assert readiness.ready is True
         assert readiness.entry_count == 1
+
+
+def test_matrix_readiness_blocks_missing_approval_provenance():
+    with _session() as session:
+        pack, source, evidence = _setup(session)
+        entry = CalculationMatrixRecord(
+            rule_pack_version=pack.version,
+            component_code=evidence.component_code,
+            population_scope="all",
+            treatment="earning",
+            expression={"op": "value", "name": "base"},
+            effective_from=date(2026, 1, 1),
+            legal_source_id=source.id,
+            legal_article="1",
+            taxable=True,
+            pensionable=False,
+            insurable=False,
+            regression_suite_hash=evidence.regression_suite_hash,
+            status="approved",
+            reviewed_by="matrix-reviewer",
+            reviewed_at=datetime(2026, 1, 4),
+        )
+        session.add(entry)
+        session.commit()
+        readiness = matrix_readiness(session, pack.version)
+        assert readiness.ready is False
+        assert any("approval provenance is incomplete" in item for item in readiness.blockers)
 
 
 def test_empty_matrix_is_blocking():
