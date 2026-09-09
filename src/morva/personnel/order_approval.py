@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from morva.audit.persistence import append_audit_event
 from morva.persistence.approval_records import PersonnelOrderDecisionRecord, PersonnelOrderSubmissionRecord
 from morva.persistence.models import PersonnelOrderRecord
+from morva.personnel.order_registry import _fingerprint_for_order
 from morva.security.policy import require_distinct_actors
 
 Decision = Literal["approved", "rejected"]
@@ -20,18 +21,24 @@ _FINAL_DECISIONS = {"approved", "rejected"}
 def ensure_submission(session: Session, order: PersonnelOrderRecord, submitted_by: str) -> PersonnelOrderSubmissionRecord:
     if not submitted_by.strip():
         raise ValueError("submitted_by is required")
+    order_fingerprint = order.content_hash or _fingerprint_for_order(order)
+    if order.content_hash is None:
+        raise ValueError("personnel order has no persisted integrity fingerprint")
     existing = session.scalar(
         select(PersonnelOrderSubmissionRecord).where(PersonnelOrderSubmissionRecord.order_id == order.id)
     )
     if existing is not None:
         if existing.order_no != order.order_no:
             raise ValueError("personnel order submission provenance is inconsistent")
+        if existing.order_fingerprint != order_fingerprint:
+            raise ValueError("personnel order submission fingerprint mismatch")
         return existing
     submission = PersonnelOrderSubmissionRecord(
         order_id=order.id,
         order_no=order.order_no,
         submitted_by=submitted_by,
         submitted_at=datetime.utcnow(),
+        order_fingerprint=order_fingerprint,
     )
     session.add(submission)
     session.flush()
@@ -40,7 +47,7 @@ def ensure_submission(session: Session, order: PersonnelOrderRecord, submitted_b
         entity_type="personnel_order",
         entity_id=str(order.id),
         actor_id=submitted_by,
-        payload={"order_no": order.order_no, "employee_no": order.employee_no},
+        payload={"order_no": order.order_no, "employee_no": order.employee_no, "order_fingerprint": order_fingerprint},
         reason="submit personnel order for approval",
         session=session,
     )
@@ -75,6 +82,10 @@ def decide_order(
     submission, existing = get_approval(session, order)
     if submission is None:
         raise ValueError("personnel order has no submission provenance")
+    if order.content_hash is None or _fingerprint_for_order(order) != order.content_hash:
+        raise ValueError("personnel order integrity fingerprint mismatch")
+    if submission.order_fingerprint != order.content_hash:
+        raise ValueError("personnel order submission fingerprint mismatch")
     if existing is not None:
         raise ValueError("personnel order already has an immutable final decision")
     try:
@@ -90,6 +101,7 @@ def decide_order(
         decided_by=decided_by,
         reason=reason.strip() if reason else None,
         decided_at=datetime.utcnow(),
+        order_fingerprint=order.content_hash,
     )
     session.add(result)
     try:
@@ -107,6 +119,7 @@ def decide_order(
             "employee_no": order.employee_no,
             "decision": decision,
             "reason": result.reason,
+            "order_fingerprint": order.content_hash,
         },
         reason="record final personnel order decision",
         session=session,
