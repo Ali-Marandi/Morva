@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from morva.persistence.enterprise_models import RuleEvidenceRecord
+from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.persistence.models import RulePackRecord
 
 
@@ -27,12 +27,31 @@ def require_authoritative_pack(
             RuleEvidenceRecord.component_code.in_(component_codes),
         )
     ).all()
-    by_component = {item.component_code: item for item in evidences if item.status in {"approved", "published"}}
+    by_component = {
+        item.component_code: item
+        for item in evidences
+        if item.status in {"approved", "published"}
+    }
     missing = sorted(component_codes - set(by_component))
     if missing:
         raise RuleActivationBlocked(f"Rule Pack evidence is incomplete for components: {missing}")
+
     for evidence in by_component.values():
         if not evidence.source_hash or not evidence.article or not evidence.issuer or not evidence.population_scope:
             raise RuleActivationBlocked(f"incomplete legal evidence for component {evidence.component_code}")
         if not evidence.regression_suite_hash:
             raise RuleActivationBlocked(f"regression evidence is missing for component {evidence.component_code}")
+        if not evidence.reviewed_by or not evidence.approved_by or evidence.reviewed_by == evidence.approved_by:
+            raise RuleActivationBlocked(
+                f"reviewer and approver must be distinct for component {evidence.component_code}"
+            )
+        if evidence.approved_at is None:
+            raise RuleActivationBlocked(f"approval timestamp is missing for component {evidence.component_code}")
+
+        source = session.get(LegalSourceRecord, evidence.legal_source_id)
+        if source is None:
+            raise RuleActivationBlocked(f"legal source is missing for component {evidence.component_code}")
+        if source.status not in {"approved", "published"}:
+            raise RuleActivationBlocked(f"legal source is not approved for component {evidence.component_code}")
+        if source.document_hash != evidence.source_hash:
+            raise RuleActivationBlocked(f"source hash mismatch for component {evidence.component_code}")
