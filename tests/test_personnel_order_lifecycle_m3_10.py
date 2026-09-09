@@ -61,6 +61,7 @@ def test_lifecycle_requires_submission_and_distinct_decider():
         employee = _employee(session)
         record = persist_personnel_order(session, _order(employee.employee_no))
         session.commit()
+        assert record.content_hash and len(record.content_hash) == 64
 
         with pytest.raises(ValueError, match="no submission provenance"):
             decide_order(session, record, decided_by="approver-1", decision="approved")
@@ -68,6 +69,7 @@ def test_lifecycle_requires_submission_and_distinct_decider():
         submission = ensure_submission(session, record, "submitter-1")
         session.commit()
         assert submission.submitted_by == "submitter-1"
+        assert submission.order_fingerprint == record.content_hash
 
         with pytest.raises(ValueError, match="distinct"):
             decide_order(session, record, decided_by="submitter-1", decision="approved")
@@ -75,6 +77,7 @@ def test_lifecycle_requires_submission_and_distinct_decider():
         decision = decide_order(session, record, decided_by="approver-1", decision="approved")
         session.commit()
         assert decision.decision == "approved"
+        assert decision.order_fingerprint == record.content_hash
         assert {"personnel.order.submitted", "personnel.order.approved"}.issubset(_event_types(session, record.id))
 
 
@@ -103,3 +106,30 @@ def test_rejection_requires_reason_and_final_decision_is_immutable():
 
         assert effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1)) == []
         assert "personnel.order.rejected" in _event_types(session, record.id)
+
+
+def test_approved_order_is_not_effective_after_payload_tampering():
+    with _session() as session:
+        employee = _employee(session, "EMP-M3-10-T")
+        record = persist_personnel_order(session, _order(employee.employee_no, "PO-M3-10-003"))
+        ensure_submission(session, record, "submitter-3")
+        decide_order(session, record, decided_by="approver-3", decision="approved")
+        session.commit()
+
+        record.payload["lines"][0]["amount"] = "999.00"
+        session.commit()
+        session.expire(record)
+
+        assert effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1)) == []
+
+
+def test_approved_order_is_not_effective_when_decision_fingerprint_is_tampered():
+    with _session() as session:
+        employee = _employee(session, "EMP-M3-10-D")
+        record = persist_personnel_order(session, _order(employee.employee_no, "PO-M3-10-004"))
+        ensure_submission(session, record, "submitter-4")
+        decision = decide_order(session, record, decided_by="approver-4", decision="approved")
+        decision.order_fingerprint = "0" * 64
+        session.commit()
+
+        assert effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1)) == []
