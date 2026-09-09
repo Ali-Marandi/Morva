@@ -11,6 +11,7 @@ export { employeeService } from './employees';
 export { payrollService } from './payroll';
 export { approvalService } from './approvals';
 export { reportService } from './reports';
+export { selfService } from './self-service';
 
 // React Query hooks
 export {
