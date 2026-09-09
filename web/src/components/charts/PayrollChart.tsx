@@ -1,16 +1,18 @@
 import React from "react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-const data = [
-  { month: "اردیبهشت", salary: 4500000, deductions: 800000, net: 3700000 },
-  { month: "خرداد", salary: 4500000, deductions: 800000, net: 3700000 },
-  { month: "تیر", salary: 4800000, deductions: 900000, net: 3900000 },
-  { month: "مرداد", salary: 4800000, deductions: 900000, net: 3900000 },
-  { month: "شهریور", salary: 5100000, deductions: 950000, net: 4150000 },
-  { month: "مهر", salary: 5100000, deductions: 950000, net: 4150000 },
-];
+export interface PayrollChartRecord {
+  month: string;
+  processed: number;
+  pending: number;
+  rejected: number;
+}
 
-function PayrollChart() {
+interface PayrollChartProps {
+  data: PayrollChartRecord[];
+}
+
+function PayrollChart({ data }: PayrollChartProps) {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
@@ -26,9 +28,9 @@ function PayrollChart() {
           cursor={{ fill: "rgba(122, 158, 198, 0.1)" }}
         />
         <Legend wrapperStyle={{ paddingTop: "20px" }} />
-        <Bar dataKey="salary" fill="#5a7fb0" name="حقوق‌ها" radius={[8, 8, 0, 0]} />
-        <Bar dataKey="deductions" fill="#e67e22" name="کسورات" radius={[8, 8, 0, 0]} />
-        <Bar dataKey="net" fill="#27ae60" name="خالص" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="processed" fill="#5a7fb0" name="تکمیل‌شده" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="pending" fill="#e67e22" name="در انتظار" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="rejected" fill="#27ae60" name="رد‌شده" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
