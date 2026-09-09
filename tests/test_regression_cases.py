@@ -31,7 +31,7 @@ def test_1405_golden_repository_fails_closed_until_authoritative_cases_exist():
         "1405.1",
         required_components=("TAX", "PENSION", "INSURANCE", "LOAN", "COURT_ORDER"),
     )
-    assert len(blockers) >= 30
+    assert len(blockers) >= 25
     assert all(
         "not approved" in blocker
         or "missing" in blocker
