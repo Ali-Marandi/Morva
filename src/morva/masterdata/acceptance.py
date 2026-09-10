@@ -172,6 +172,9 @@ def confirm_master_data_acceptance(
         raise ValueError("authority confirmation reference is required")
     if record.submitted_by == actor_id:
         raise ValueError("master-data acceptance confirmation requires a distinct authority from submitter")
+    integrity = validate_master_data(session)
+    if integrity.blocking:
+        raise ValueError("master-data integrity changed after assessment")
     record.status = "accepted"
     record.accepted_by = actor_id
     record.accepted_at = datetime.utcnow()
