@@ -27,6 +27,7 @@ class MasterDataAcceptanceRecord(Base):
     schema_valid: Mapped[bool] = mapped_column(default=False)
     status: Mapped[str] = mapped_column(String(30), default="blocked", index=True)
     integrity_blocking: Mapped[bool] = mapped_column(default=True)
+    integrity_snapshot_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     blockers: Mapped[list] = mapped_column(JSON, default=list)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
     submitted_by: Mapped[str] = mapped_column(String(100), index=True)

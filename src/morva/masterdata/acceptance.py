@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from morva.audit.persistence import append_audit_event
-from morva.masterdata.validation import validate_master_data
+from morva.masterdata.authoritative import validate_authoritative_master_data
 from morva.persistence.acceptance_records import MasterDataAcceptanceRecord
+from morva.persistence.domain_extensions import AssignmentRecord, AttendanceFactRecord, TeacherRankCaseRecord
+from morva.persistence.enterprise_models import OrganizationUnitRecord
+from morva.persistence.masterdata_records import PositionRecord
+from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
 
 SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 PERIOD_RE = re.compile(r"^\d{4}-\d{2}$")
@@ -71,6 +77,46 @@ def _validate_contract(payload: MasterDataAcceptanceRequest) -> list[str]:
     return blockers
 
 
+def _canonicalize(value: object) -> object:
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(key): _canonicalize(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+    if isinstance(value, (list, tuple)):
+        return [_canonicalize(item) for item in value]
+    return value
+
+
+def _master_data_integrity_snapshot_hash(session: Session) -> str:
+    models = (
+        OrganizationUnitRecord,
+        PositionRecord,
+        EmployeeRecord,
+        AssignmentRecord,
+        PersonnelSnapshotRecord,
+        AttendanceFactRecord,
+        TeacherRankCaseRecord,
+    )
+    snapshot: dict[str, list[dict[str, object]]] = {}
+    for model in models:
+        mapper = inspect(model)
+        rows = session.scalars(select(model)).all()
+        serialized_rows: list[dict[str, object]] = []
+        for row in rows:
+            serialized_rows.append(
+                {
+                    column.key: _canonicalize(getattr(row, column.key))
+                    for column in mapper.columns
+                }
+            )
+        serialized_rows.sort(key=lambda item: json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        snapshot[model.__tablename__] = serialized_rows
+    payload = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def assess_master_data_acceptance(
     session: Session,
     payload: MasterDataAcceptanceRequest,
@@ -79,9 +125,10 @@ def assess_master_data_acceptance(
     normalized_hash = payload.dataset_sha256.lower()
     blockers = _validate_contract(payload)
     warnings: list[str] = []
-    integrity = validate_master_data(session)
+    integrity = validate_authoritative_master_data(session)
+    integrity_snapshot_hash = _master_data_integrity_snapshot_hash(session)
     if integrity.blocking:
-        blockers.append("current master-data integrity gate is blocking")
+        blockers.append("current authoritative master-data integrity gate is blocking")
         blockers.extend(
             f"integrity:{item.code}:{item.entity_id}"
             for item in integrity.findings
@@ -124,6 +171,7 @@ def assess_master_data_acceptance(
         schema_valid=payload.schema_valid,
         status="eligible" if eligible else "blocked",
         integrity_blocking=integrity.blocking,
+        integrity_snapshot_hash=integrity_snapshot_hash,
         blockers=blockers,
         warnings=warnings,
         submitted_by=actor_id,
@@ -138,6 +186,7 @@ def assess_master_data_acceptance(
         payload={
             "dataset_name": record.dataset_name,
             "dataset_sha256": record.dataset_sha256,
+            "integrity_snapshot_hash": record.integrity_snapshot_hash,
             "status": record.status,
             "blocker_count": len(blockers),
             "warning_count": len(warnings),
@@ -172,9 +221,14 @@ def confirm_master_data_acceptance(
         raise ValueError("authority confirmation reference is required")
     if record.submitted_by == actor_id:
         raise ValueError("master-data acceptance confirmation requires a distinct authority from submitter")
-    integrity = validate_master_data(session)
+    if not record.integrity_snapshot_hash:
+        raise ValueError("master-data acceptance assessment is missing integrity snapshot")
+    integrity = validate_authoritative_master_data(session)
     if integrity.blocking:
         raise ValueError("master-data integrity changed after assessment")
+    current_snapshot_hash = _master_data_integrity_snapshot_hash(session)
+    if current_snapshot_hash != record.integrity_snapshot_hash:
+        raise ValueError("master-data integrity snapshot changed after assessment")
     record.status = "accepted"
     record.accepted_by = actor_id
     record.accepted_at = datetime.utcnow()
@@ -188,6 +242,7 @@ def confirm_master_data_acceptance(
         payload={
             "dataset_name": record.dataset_name,
             "dataset_sha256": record.dataset_sha256,
+            "integrity_snapshot_hash": record.integrity_snapshot_hash,
             "authority_confirmation_reference": record.authority_confirmation_reference,
         },
         reason="confirm authoritative master-data acceptance",

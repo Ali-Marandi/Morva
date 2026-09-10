@@ -126,7 +126,7 @@ def test_acceptance_requires_current_integrity_gate_to_be_clear():
         )
         assert result.status == "blocked"
         assert result.integrity_blocking is True
-        assert "current master-data integrity gate is blocking" in result.blockers
+        assert "current authoritative master-data integrity gate is blocking" in result.blockers
 
 
 def test_acceptance_eligible_then_confirmed():
@@ -145,6 +145,7 @@ def test_acceptance_eligible_then_confirmed():
         assert record.status == "accepted"
         assert record.accepted_by == "approver"
         assert record.authority_confirmation_reference == "FORMAL-AUTH-2026-001"
+        assert len(record.integrity_snapshot_hash) == 64
 
         repeated = assess_master_data_acceptance(
             session, _request(dataset_sha256="E" * 64), "submitter"
@@ -178,6 +179,22 @@ def test_acceptance_confirmation_rechecks_integrity():
         with pytest.raises(ValueError, match="integrity changed after assessment"):
             confirm_master_data_acceptance(
                 session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-002"
+            )
+        session.rollback()
+
+
+def test_acceptance_confirmation_blocks_snapshot_drift_even_when_integrity_stays_valid():
+    with _session() as session:
+        _add_valid_master_data(session)
+        result = assess_master_data_acceptance(
+            session, _request(dataset_sha256="3" * 64), "submitter"
+        )
+        employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
+        employee.first_name = "Changed"
+        session.commit()
+        with pytest.raises(ValueError, match="integrity snapshot changed after assessment"):
+            confirm_master_data_acceptance(
+                session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-003"
             )
         session.rollback()
 
