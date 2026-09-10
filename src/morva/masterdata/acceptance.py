@@ -53,9 +53,7 @@ def _validate_contract(payload: MasterDataAcceptanceRequest) -> list[str]:
         "source_uri": payload.source_uri,
         "authoritative_source_reference": payload.authoritative_source_reference,
     }
-    blockers.extend(
-        f"{name} is required" for name, value in required_text.items() if not value.strip()
-    )
+    blockers.extend(f"{name} is required" for name, value in required_text.items() if not value.strip())
     if not payload.source_uri.startswith(("https://", "sftp://")):
         blockers.append("source_uri must use https:// or sftp://")
     if not SHA256_RE.fullmatch(payload.dataset_sha256):
@@ -172,6 +170,8 @@ def confirm_master_data_acceptance(
         raise ValueError("master-data acceptance is blocked")
     if not authority_confirmation_reference.strip():
         raise ValueError("authority confirmation reference is required")
+    if record.submitted_by == actor_id:
+        raise ValueError("master-data acceptance confirmation requires a distinct authority from submitter")
     record.status = "accepted"
     record.accepted_by = actor_id
     record.accepted_at = datetime.utcnow()
