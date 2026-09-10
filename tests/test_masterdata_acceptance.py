@@ -1,6 +1,7 @@
 from datetime import date
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -151,6 +152,18 @@ def test_acceptance_eligible_then_confirmed():
         assert repeated.status == "accepted"
         assert repeated.eligible is True
         assert repeated.acceptance_id == result.acceptance_id
+
+
+def test_acceptance_confirmation_requires_distinct_authority():
+    with _session() as session:
+        _add_valid_master_data(session)
+        result = assess_master_data_acceptance(
+            session, _request(dataset_sha256="1" * 64), "submitter"
+        )
+        with pytest.raises(ValueError, match="distinct authority"):
+            confirm_master_data_acceptance(
+                session, result.acceptance_id, "submitter", "FORMAL-AUTH-2026-001"
+            )
 
 
 def test_acceptance_confirmation_cannot_bypass_blocker():
