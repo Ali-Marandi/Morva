@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from datetime import date
 from decimal import Decimal
 
@@ -116,7 +117,9 @@ def test_approved_order_is_not_effective_after_payload_tampering():
         decide_order(session, record, decided_by="approver-3", decision="approved")
         session.commit()
 
-        record.payload["lines"][0]["amount"] = "999.00"
+        payload = copy.deepcopy(record.payload)
+        payload["lines"][0]["amount"] = "999.00"
+        record.payload = payload
         session.commit()
         session.expire(record)
 
