@@ -166,6 +166,22 @@ def test_acceptance_confirmation_requires_distinct_authority():
             )
 
 
+def test_acceptance_confirmation_rechecks_integrity():
+    with _session() as session:
+        _add_valid_master_data(session)
+        result = assess_master_data_acceptance(
+            session, _request(dataset_sha256="2" * 64), "submitter"
+        )
+        employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
+        employee.organization_unit_id = "MISSING-ORG"
+        session.commit()
+        with pytest.raises(ValueError, match="integrity changed after assessment"):
+            confirm_master_data_acceptance(
+                session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-002"
+            )
+        session.rollback()
+
+
 def test_acceptance_confirmation_cannot_bypass_blocker():
     with _session() as session:
         result = assess_master_data_acceptance(
