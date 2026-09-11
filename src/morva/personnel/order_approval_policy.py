@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from hashlib import sha256
 from typing import Iterable
@@ -11,6 +12,7 @@ from sqlalchemy.orm import Session
 from morva.persistence.approval_records import PersonnelOrderApprovalPolicyRecord
 
 _APPROVED = "approved"
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def canonical_approval_policy_payload(
@@ -64,6 +66,8 @@ def register_approval_policy(
     )
     if not all(payload.values()) or not payload["order_types"]:
         raise ValueError("complete personnel order approval policy metadata is required")
+    if not _SHA256.fullmatch(str(payload["source_hash"])):
+        raise ValueError("source_hash must be a SHA-256 hex digest")
     if approved_by is not None and not approved_by.strip():
         raise ValueError("approved_by is required when policy is approved")
     if approved_by is None and approved_at is not None:
@@ -105,15 +109,17 @@ def require_approved_policy(
     order_type: str,
     submitted_role: str,
     decided_role: str | None = None,
+    expected_policy_hash: str | None = None,
 ) -> PersonnelOrderApprovalPolicyRecord:
-    policy = session.scalar(
-        select(PersonnelOrderApprovalPolicyRecord)
-        .where(
-            PersonnelOrderApprovalPolicyRecord.policy_code == policy_code,
-            PersonnelOrderApprovalPolicyRecord.status == _APPROVED,
-        )
-        .order_by(PersonnelOrderApprovalPolicyRecord.version.desc())
+    statement = select(PersonnelOrderApprovalPolicyRecord).where(
+        PersonnelOrderApprovalPolicyRecord.policy_code == policy_code,
+        PersonnelOrderApprovalPolicyRecord.status == _APPROVED,
     )
+    if expected_policy_hash is not None:
+        statement = statement.where(PersonnelOrderApprovalPolicyRecord.policy_hash == expected_policy_hash)
+    else:
+        statement = statement.order_by(PersonnelOrderApprovalPolicyRecord.version.desc())
+    policy = session.scalar(statement)
     if policy is None:
         raise ValueError("approved personnel order approval policy is required")
     payload = canonical_approval_policy_payload(
