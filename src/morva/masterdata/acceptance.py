@@ -5,6 +5,7 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import inspect, select
@@ -80,6 +81,8 @@ def _validate_contract(payload: MasterDataAcceptanceRequest) -> list[str]:
 def _canonicalize(value: object) -> object:
     if isinstance(value, UUID):
         return str(value)
+    if isinstance(value, Decimal):
+        return format(value, "f")
     if isinstance(value, (date, datetime)):
         return value.isoformat()
     if isinstance(value, dict):
