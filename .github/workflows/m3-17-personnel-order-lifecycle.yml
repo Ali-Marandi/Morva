@@ -1,4 +1,4 @@
-name: M3.17 Personnel Order Lifecycle Gate
+name: M3.18 Personnel Order Governance Gate
 
 on:
   push:
@@ -7,20 +7,28 @@ on:
       - "src/morva/personnel/order_integrity.py"
       - "src/morva/personnel/order_registry.py"
       - "src/morva/personnel/order_approval.py"
+      - "src/morva/personnel/order_approval_policy.py"
       - "src/morva/persistence/models.py"
       - "src/morva/persistence/approval_records.py"
       - "alembic/versions/0017_personnel_order_integrity.py"
+      - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
+      - "alembic/versions/0019_po_approval_policy.py"
       - "tests/test_personnel_order_lifecycle_m3_10.py"
+      - "tests/test_personnel_order_approval_policy.py"
       - "docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md"
   pull_request:
     paths:
       - "src/morva/personnel/order_integrity.py"
       - "src/morva/personnel/order_registry.py"
       - "src/morva/personnel/order_approval.py"
+      - "src/morva/personnel/order_approval_policy.py"
       - "src/morva/persistence/models.py"
       - "src/morva/persistence/approval_records.py"
       - "alembic/versions/0017_personnel_order_integrity.py"
+      - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
+      - "alembic/versions/0019_po_approval_policy.py"
       - "tests/test_personnel_order_lifecycle_m3_10.py"
+      - "tests/test_personnel_order_approval_policy.py"
       - "docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md"
 
 jobs:
@@ -33,9 +41,11 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Lint personnel order lifecycle
-        run: ruff check src/morva/personnel/order_integrity.py src/morva/personnel/order_registry.py src/morva/personnel/order_approval.py tests/test_personnel_order_lifecycle_m3_10.py
-      - name: Run personnel order lifecycle tests
-        run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py
+      - name: Lint personnel order governance
+        run: ruff check src/morva/personnel/order_integrity.py src/morva/personnel/order_registry.py src/morva/personnel/order_approval.py src/morva/personnel/order_approval_policy.py tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_approval_policy.py
+      - name: Run personnel order governance tests
+        run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_approval_policy.py
+      - name: Validate migrations
+        run: alembic upgrade head
       - name: Compile application
         run: python -m compileall -q src tests
