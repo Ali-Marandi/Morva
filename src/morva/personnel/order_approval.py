@@ -125,9 +125,8 @@ def decide_order(
         order_type=order.order_type,
         submitted_role=submission.submitted_role or "",
         decided_role=decided_role,
+        expected_policy_hash=submission.approval_policy_hash,
     )
-    if submission.approval_policy_hash != policy.policy_hash:
-        raise ValueError("personnel order submission approval policy fingerprint mismatch")
     if existing is not None:
         raise ValueError("personnel order already has an immutable final decision")
     try:
