@@ -8,15 +8,16 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from morva.persistence.approval_records import PersonnelOrderDecisionRecord
 from morva.persistence.models import Base, EmployeeRecord
 from morva.personnel.order_approval import decide_order, ensure_submission
 from morva.personnel.order_approval_policy import register_approval_policy
 from morva.personnel.order_registry import (
-    reconcile_personnel_order_effective_state,
+    effective_personnel_orders,
     persist_personnel_order,
+    reconcile_personnel_order_effective_state,
 )
 from morva.personnel.orders import OrderLine, OrderType, PersonnelOrder
-
 
 POLICY_CODE = "PO-RECON-TEST"
 SUBMISSION_ROLE = "personnel_operator"
@@ -121,8 +122,6 @@ def test_reconciliation_blocks_tampered_order_instead_of_silently_dropping_it():
         assert any(item.startswith("order-fingerprint-mismatch:PO-RECON-002") for item in result.blockers)
 
         with pytest.raises(ValueError, match="effective-state reconciliation is blocked"):
-            from morva.personnel.order_registry import effective_personnel_orders
-
             effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1))
 
 
@@ -130,7 +129,7 @@ def test_reconciliation_blocks_missing_submission_provenance():
     with _session() as session:
         employee = _seed(session, "EMP-RECON-003")
         record = persist_personnel_order(session, _order(employee.employee_no, "PO-RECON-003"))
-        decision = __import__("morva.persistence.approval_records", fromlist=["PersonnelOrderDecisionRecord"]).PersonnelOrderDecisionRecord(
+        decision = PersonnelOrderDecisionRecord(
             order_id=record.id,
             order_no=record.order_no,
             decision="approved",
@@ -147,4 +146,4 @@ def test_reconciliation_blocks_missing_submission_provenance():
         result = reconcile_personnel_order_effective_state(session, employee.employee_no, date(2026, 3, 1))
 
         assert result.status == "blocked"
-        assert any(item == "submission-missing:PO-RECON-003" for item in result.blockers)
+        assert result.blockers == ("submission-missing:PO-RECON-003",)
