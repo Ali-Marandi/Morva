@@ -28,10 +28,26 @@ def upgrade() -> None:
             "WHERE q.artifact_id = p.artifact_id AND q.id < p.id) "
             "WHERE p.line_sequence IS NULL"
         ))
-    op.alter_column("payslip_lines", "line_sequence", nullable=False)
-    op.create_index("ix_payslip_lines_artifact_sequence", "payslip_lines", ["artifact_id", "line_sequence"], unique=True)
+
+    if bind.dialect.name == "sqlite":
+        with op.batch_alter_table("payslip_lines") as batch_op:
+            batch_op.alter_column("line_sequence", nullable=False)
+    else:
+        op.alter_column("payslip_lines", "line_sequence", nullable=False)
+
+    op.create_index(
+        "ix_payslip_lines_artifact_sequence",
+        "payslip_lines",
+        ["artifact_id", "line_sequence"],
+        unique=True,
+    )
 
 
 def downgrade() -> None:
     op.drop_index("ix_payslip_lines_artifact_sequence", table_name="payslip_lines")
-    op.drop_column("payslip_lines", "line_sequence")
+    bind = op.get_bind()
+    if bind.dialect.name == "sqlite":
+        with op.batch_alter_table("payslip_lines") as batch_op:
+            batch_op.drop_column("line_sequence")
+    else:
+        op.drop_column("payslip_lines", "line_sequence")
