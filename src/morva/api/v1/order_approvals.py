@@ -20,6 +20,7 @@ router = APIRouter(prefix="/hr", tags=["personnel-order-approval"])
 class ApprovalInput(BaseModel):
     decision: Literal["approved", "rejected"]
     reason: str | None = Field(default=None, max_length=1000)
+    policy_code: str = Field(min_length=1, max_length=100)
 
 
 def _load_order(session, employee_no: str, order_no: str) -> tuple[EmployeeRecord, PersonnelOrderRecord]:
@@ -37,7 +38,7 @@ def _load_order(session, employee_no: str, order_no: str) -> tuple[EmployeeRecor
     return employee, order
 
 
-def _ensure_submission_from_audit(session, order: PersonnelOrderRecord):
+def _ensure_submission_from_audit(session, order: PersonnelOrderRecord, *, policy_code: str):
     submission, decision = get_approval(session, order)
     if submission is not None:
         return submission, decision
@@ -51,7 +52,19 @@ def _ensure_submission_from_audit(session, order: PersonnelOrderRecord):
     )
     if audit is None or not audit.actor_id:
         raise HTTPException(status_code=409, detail="personnel order has no immutable submission provenance")
-    submission = ensure_submission(session, order, audit.actor_id)
+    submitted_role = (audit.payload or {}).get("submitted_role")
+    if not isinstance(submitted_role, str) or not submitted_role.strip():
+        raise HTTPException(status_code=409, detail="personnel order has no persisted submission role provenance")
+    try:
+        submission = ensure_submission(
+            session,
+            order,
+            audit.actor_id,
+            policy_code=policy_code,
+            submitted_role=submitted_role,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return submission, decision
 
 
@@ -82,6 +95,8 @@ def get_order_approval(
             "decided_by": decision.decided_by if decision else None,
             "decided_at": decision.decided_at.isoformat() if decision else None,
             "reason": decision.reason if decision else None,
+            "approval_policy_code": submission.approval_policy_code if submission else None,
+            "approval_policy_hash": submission.approval_policy_hash if submission else None,
         }
 
 
@@ -95,12 +110,13 @@ def decide_order_approval(
     with SessionLocal() as session:
         employee, order = _load_order(session, employee_no, order_no)
         authorize_hierarchical(session, principal, "personnel.order.approve", employee.organization_unit_id)
-        _ensure_submission_from_audit(session, order)
+        _ensure_submission_from_audit(session, order, policy_code=payload.policy_code)
         try:
             decision: PersonnelOrderDecisionRecord = decide_order(
                 session,
                 order,
                 decided_by=principal.user_id,
+                decided_role=principal.role,
                 decision=payload.decision,
                 reason=payload.reason,
             )
@@ -122,4 +138,6 @@ def decide_order_approval(
             "decided_by": decision.decided_by,
             "decided_at": decision.decided_at.isoformat(),
             "reason": decision.reason,
+            "approval_policy_code": decision.approval_policy_code,
+            "approval_policy_hash": decision.approval_policy_hash,
         }
