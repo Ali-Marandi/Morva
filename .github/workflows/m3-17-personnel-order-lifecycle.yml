@@ -17,6 +17,7 @@ on:
       - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
       - "alembic/versions/0019_po_approval_policy.py"
       - "tests/test_personnel_order_lifecycle_m3_10.py"
+      - "tests/test_personnel_order_effective_reconciliation.py"
       - "tests/test_personnel_order_approval_policy.py"
       - "tests/test_personnel_order_approval_api.py"
       - "tests/test_personnel_orders_api.py"
@@ -36,6 +37,7 @@ on:
       - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
       - "alembic/versions/0019_po_approval_policy.py"
       - "tests/test_personnel_order_lifecycle_m3_10.py"
+      - "tests/test_personnel_order_effective_reconciliation.py"
       - "tests/test_personnel_order_approval_policy.py"
       - "tests/test_personnel_order_approval_api.py"
       - "tests/test_personnel_orders_api.py"
@@ -52,9 +54,9 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -e '.[dev]'
       - name: Lint personnel order governance
-        run: ruff check src/morva/personnel/order_integrity.py src/morva/personnel/order_registry.py src/morva/personnel/order_approval.py src/morva/personnel/order_approval_policy.py src/morva/api/v1/core_hr.py src/morva/api/v1/order_approvals.py tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
+        run: ruff check src/morva/personnel/order_integrity.py src/morva/personnel/order_registry.py src/morva/personnel/order_approval.py src/morva/personnel/order_approval_policy.py src/morva/api/v1/core_hr.py src/morva/api/v1/order_approvals.py tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_effective_reconciliation.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
       - name: Run personnel order governance tests
-        run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
+        run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_effective_reconciliation.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
       - name: Validate migrations
         run: alembic upgrade head
       - name: Compile application
