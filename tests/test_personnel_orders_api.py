@@ -1,27 +1,56 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
 from morva.persistence.core_hr_employment import EmploymentRecord
 from morva.persistence.database import SessionLocal, init_db
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
+from morva.personnel.order_approval_policy import register_approval_policy
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
+
+
+POLICY_CODE = "TEST-PERSONNEL-ORDER-APPROVAL"
 
 
 def _principal(user_id: str, role: str = "admin", mfa_verified: bool = True) -> Principal:
     return Principal(user_id=user_id, role=role, scope=Scope.MINISTRY, scope_id="ministry", mfa_verified=mfa_verified)
 
 
-app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
+@pytest.fixture(autouse=True)
+def _principal_override() -> None:
+    app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
+    yield
+    app.dependency_overrides.pop(get_current_principal, None)
+
+
 client = TestClient(app)
+
+
+def _seed_policy() -> None:
+    with SessionLocal() as session:
+        register_approval_policy(
+            session,
+            policy_code=POLICY_CODE,
+            version="1",
+            order_types=["promotion", "appointment"],
+            required_submission_role="admin",
+            required_decision_role="personnel_approver",
+            source_reference="fixture://personnel-order-policy",
+            source_hash="a" * 64,
+            approved_by="fixture-policy-authority",
+            approved_at=datetime(2026, 1, 1),
+        )
+        session.commit()
 
 
 def _seed_employee() -> str:
     init_db()
+    _seed_policy()
     employee_no = "ORD-" + uuid4().hex[:10]
     with SessionLocal() as session:
         session.add(EmployeeRecord(employee_no=employee_no, source_employee_key="SRC-" + employee_no, national_id=str(uuid4().int)[-10:], first_name="Order", last_name="Employee", employment_type="permanent", status="active", organization_unit_id="ORG-TEST", position_id="POS-TEST", hire_date=date(2020, 1, 1)))
@@ -52,7 +81,7 @@ def test_personnel_order_registers_idempotently_and_filters_effective_date():
     assert pending.status_code == 200 and pending.json()["items"] == []
 
     app.dependency_overrides[get_current_principal] = lambda: _principal("order-approver", role="personnel_approver")
-    approved = client.post(f"/api/v1/hr/employees/{employee_no}/orders/ORD-1405-0001/approval", json={"decision": "approved"})
+    approved = client.post(f"/api/v1/hr/employees/{employee_no}/orders/ORD-1405-0001/approval", json={"decision": "approved", "policy_code": POLICY_CODE})
     assert approved.status_code == 200
     app.dependency_overrides[get_current_principal] = lambda: _principal("order-admin")
 
