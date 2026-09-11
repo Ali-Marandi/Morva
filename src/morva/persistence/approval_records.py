@@ -39,8 +39,10 @@ class PersonnelOrderSubmissionRecord(Base):
     order_id: Mapped[UUID] = mapped_column(index=True)
     order_no: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     submitted_by: Mapped[str] = mapped_column(String(100), index=True)
+    submitted_role: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
     submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     order_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    approval_policy_code: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
     approval_policy_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
 
 
@@ -55,7 +57,9 @@ class PersonnelOrderDecisionRecord(Base):
     order_no: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     decision: Mapped[str] = mapped_column(String(20))
     decided_by: Mapped[str] = mapped_column(String(100), index=True)
+    decided_role: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     decided_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     order_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
+    approval_policy_code: Mapped[str | None] = mapped_column(String(100), index=True, nullable=True)
     approval_policy_hash: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
