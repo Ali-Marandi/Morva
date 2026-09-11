@@ -1,13 +1,13 @@
 """Bind master-data acceptance to a deterministic persisted integrity snapshot.
 
-Revision ID: 0018_master_data_acceptance_integrity_snapshot
+Revision ID: 0018_master_data_integrity_snap
 Revises: 0017_personnel_order_integrity
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
 
-revision = "0018_master_data_acceptance_integrity_snapshot"
+revision = "0018_master_data_integrity_snap"
 down_revision = "0017_personnel_order_integrity"
 branch_labels = None
 depends_on = None
