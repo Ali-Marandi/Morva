@@ -16,16 +16,16 @@ def _session() -> Session:
     return Session(engine, autoflush=False, future=True)
 
 
-def _approved_policy(session: Session):
+def _approved_policy(session: Session, version: str = "2026.1"):
     return register_approval_policy(
         session,
         policy_code="PO-APPROVAL-ORG",
-        version="2026.1",
+        version=version,
         order_types=["promotion", "position_change"],
         required_submission_role="personnel_operator",
         required_decision_role="personnel_approver",
-        source_reference="ORG-POLICY-2026-01",
-        source_hash="a" * 64,
+        source_reference=f"ORG-POLICY-{version}",
+        source_hash="a" * 64 if version == "2026.1" else "b" * 64,
         approved_by="authority-1",
         approved_at=datetime(2026, 1, 2),
     )
@@ -105,3 +105,28 @@ def test_policy_fingerprint_tampering_fails_closed():
                 order_type="promotion",
                 submitted_role="personnel_operator",
             )
+
+
+def test_existing_submission_can_remain_bound_to_older_approved_policy_version():
+    with _session() as session:
+        old_policy = _approved_policy(session, "2026.1")
+        new_policy = _approved_policy(session, "2026.2")
+        session.commit()
+
+        resolved_latest = require_approved_policy(
+            session,
+            policy_code=old_policy.policy_code,
+            order_type="promotion",
+            submitted_role="personnel_operator",
+        )
+        assert resolved_latest.policy_hash == new_policy.policy_hash
+
+        resolved_bound = require_approved_policy(
+            session,
+            policy_code=old_policy.policy_code,
+            order_type="promotion",
+            submitted_role="personnel_operator",
+            decided_role="personnel_approver",
+            expected_policy_hash=old_policy.policy_hash,
+        )
+        assert resolved_bound.policy_hash == old_policy.policy_hash
