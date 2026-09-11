@@ -1,15 +1,30 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from morva.persistence.approval_records import PersonnelOrderDecisionRecord
+from morva.persistence.approval_records import PersonnelOrderDecisionRecord, PersonnelOrderSubmissionRecord
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord
+from morva.personnel.order_approval_policy import require_approved_policy
 from morva.personnel.order_integrity import canonical_personnel_order_payload, personnel_order_fingerprint
 from morva.personnel.orders import OrderLine, OrderType, PersonnelOrder
+
+
+@dataclass(frozen=True, slots=True)
+class PersonnelOrderReconciliation:
+    employee_no: str
+    effective_on: date
+    status: str
+    orders: tuple[PersonnelOrderRecord, ...]
+    blockers: tuple[str, ...]
+
+    @property
+    def blocking(self) -> bool:
+        return self.status == "blocked"
 
 
 def _fingerprint_for_order(record: PersonnelOrderRecord) -> str:
@@ -103,10 +118,24 @@ def record_to_personnel_order(record: PersonnelOrderRecord) -> PersonnelOrder:
     )
 
 
-def effective_personnel_orders(session: Session, employee_no: str, effective_on: date) -> list[PersonnelOrderRecord]:
-    records = session.scalars(
-        select(PersonnelOrderRecord)
-        .join(PersonnelOrderDecisionRecord, PersonnelOrderDecisionRecord.order_id == PersonnelOrderRecord.id)
+def reconcile_personnel_order_effective_state(
+    session: Session,
+    employee_no: str,
+    effective_on: date,
+) -> PersonnelOrderReconciliation:
+    employee = session.scalar(select(EmployeeRecord).where(EmployeeRecord.employee_no == employee_no))
+    if employee is None:
+        return PersonnelOrderReconciliation(
+            employee_no=employee_no,
+            effective_on=effective_on,
+            status="blocked",
+            orders=(),
+            blockers=("employee not found",),
+        )
+
+    decisions = session.scalars(
+        select(PersonnelOrderDecisionRecord)
+        .join(PersonnelOrderRecord, PersonnelOrderRecord.id == PersonnelOrderDecisionRecord.order_id)
         .where(
             PersonnelOrderRecord.employee_no == employee_no,
             PersonnelOrderRecord.effective_date <= effective_on,
@@ -114,15 +143,76 @@ def effective_personnel_orders(session: Session, employee_no: str, effective_on:
         )
         .order_by(PersonnelOrderRecord.effective_date.desc(), PersonnelOrderRecord.order_no.desc())
     ).all()
-    effective: list[PersonnelOrderRecord] = []
-    for record in records:
-        decision = session.scalar(
-            select(PersonnelOrderDecisionRecord).where(PersonnelOrderDecisionRecord.order_id == record.id)
+
+    reconciled: list[PersonnelOrderRecord] = []
+    blockers: list[str] = []
+    for decision in decisions:
+        record = session.get(PersonnelOrderRecord, decision.order_id)
+        if record is None:
+            blockers.append(f"order-missing:{decision.order_no}")
+            continue
+        submission = session.scalar(
+            select(PersonnelOrderSubmissionRecord).where(PersonnelOrderSubmissionRecord.order_id == record.id)
         )
-        if record.content_hash is None or decision is None or decision.order_fingerprint != record.content_hash:
+        if submission is None:
+            blockers.append(f"submission-missing:{record.order_no}")
             continue
-        if _fingerprint_for_order(record) != record.content_hash:
+        if record.content_hash is None:
+            blockers.append(f"order-fingerprint-missing:{record.order_no}")
             continue
-        if record_to_personnel_order(record).is_effective_on(effective_on):
-            effective.append(record)
-    return effective
+        try:
+            recomputed_hash = _fingerprint_for_order(record)
+        except (KeyError, TypeError, ValueError) as exc:
+            blockers.append(f"order-payload-invalid:{record.order_no}:{type(exc).__name__}")
+            continue
+        if recomputed_hash != record.content_hash:
+            blockers.append(f"order-fingerprint-mismatch:{record.order_no}")
+            continue
+        if decision.order_fingerprint != record.content_hash:
+            blockers.append(f"decision-fingerprint-mismatch:{record.order_no}")
+            continue
+        if submission.order_fingerprint != record.content_hash:
+            blockers.append(f"submission-fingerprint-mismatch:{record.order_no}")
+            continue
+        if not submission.approval_policy_code or not submission.approval_policy_hash:
+            blockers.append(f"approval-policy-provenance-missing:{record.order_no}")
+            continue
+        try:
+            require_approved_policy(
+                session,
+                policy_code=submission.approval_policy_code,
+                order_type=record.order_type,
+                submitted_role=submission.submitted_role or "",
+                decided_role=decision.decided_role or "",
+                expected_policy_hash=submission.approval_policy_hash,
+            )
+        except ValueError as exc:
+            blockers.append(f"approval-policy-invalid:{record.order_no}:{str(exc)}")
+            continue
+        try:
+            order = record_to_personnel_order(record)
+        except (KeyError, TypeError, ValueError) as exc:
+            blockers.append(f"order-schema-invalid:{record.order_no}:{type(exc).__name__}")
+            continue
+        if order.employee_no != employee.employee_no:
+            blockers.append(f"employee-mismatch:{record.order_no}")
+            continue
+        if not order.is_effective_on(effective_on):
+            continue
+        reconciled.append(record)
+
+    status = "blocked" if blockers else "reconciled"
+    return PersonnelOrderReconciliation(
+        employee_no=employee_no,
+        effective_on=effective_on,
+        status=status,
+        orders=tuple(reconciled),
+        blockers=tuple(blockers),
+    )
+
+
+def effective_personnel_orders(session: Session, employee_no: str, effective_on: date) -> list[PersonnelOrderRecord]:
+    result = reconcile_personnel_order_effective_state(session, employee_no, effective_on)
+    if result.blocking:
+        raise ValueError("personnel order effective-state reconciliation is blocked: " + "; ".join(result.blockers))
+    return list(result.orders)
