@@ -165,7 +165,7 @@ def create_personnel_order(employee_no: str, payload: PersonnelOrderInput, princ
             record = persist_personnel_order(session, order)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        append_audit_event(event_type="personnel.order.registered", entity_type="personnel_order", entity_id=str(record.id), actor_id=principal.user_id, payload={"employee_no": employee_no, "order_no": record.order_no, "effective_from": record.effective_date.isoformat()}, reason="register immutable effective-dated personnel order", session=session)
+        append_audit_event(event_type="personnel.order.registered", entity_type="personnel_order", entity_id=str(record.id), actor_id=principal.user_id, payload={"employee_no": employee_no, "order_no": record.order_no, "effective_from": record.effective_date.isoformat(), "submitted_role": principal.role}, reason="register immutable effective-dated personnel order", session=session)
         session.commit()
         return _order_response(record)
 
