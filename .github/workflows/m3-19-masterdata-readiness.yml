@@ -1,0 +1,64 @@
+name: M3.19 Master Data Readiness Gate
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/m3-19-masterdata-readiness.yml"
+      - "src/morva/masterdata/**"
+      - "src/morva/persistence/acceptance_records.py"
+      - "src/morva/persistence/domain_extensions.py"
+      - "src/morva/persistence/enterprise_models.py"
+      - "src/morva/persistence/masterdata_records.py"
+      - "src/morva/persistence/models.py"
+      - "tests/test_masterdata_acceptance.py"
+      - "tests/test_masterdata_readiness.py"
+      - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
+      - "docs/M3_19_MASTER_DATA_READINESS.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-19-masterdata-readiness.yml"
+      - "src/morva/masterdata/**"
+      - "src/morva/persistence/acceptance_records.py"
+      - "src/morva/persistence/domain_extensions.py"
+      - "src/morva/persistence/enterprise_models.py"
+      - "src/morva/persistence/masterdata_records.py"
+      - "src/morva/persistence/models.py"
+      - "tests/test_masterdata_acceptance.py"
+      - "tests/test_masterdata_readiness.py"
+      - "alembic/versions/0018_master_data_acceptance_integrity_snapshot.py"
+      - "docs/M3_19_MASTER_DATA_READINESS.md"
+
+jobs:
+  master-data-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Lint master-data readiness
+        run: >-
+          ruff check
+          src/morva/masterdata/acceptance.py
+          src/morva/masterdata/authoritative.py
+          src/morva/masterdata/models.py
+          src/morva/masterdata/readiness.py
+          src/morva/masterdata/validation.py
+          tests/test_masterdata_acceptance.py
+          tests/test_masterdata_readiness.py
+      - name: Run master-data acceptance and readiness tests
+        run: >-
+          pytest -q
+          tests/test_masterdata_acceptance.py
+          tests/test_masterdata_readiness.py
+      - name: Validate migrations on a clean database
+        env:
+          MORVA_DATABASE_URL: sqlite:///./migration-gate.db
+        run: |
+          rm -f morva.db migration-gate.db
+          alembic upgrade head
+      - name: Compile application
+        run: python -m compileall -q src tests
