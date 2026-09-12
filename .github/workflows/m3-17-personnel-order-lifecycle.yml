@@ -4,10 +4,12 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/workflows/m3-17-personnel-order-lifecycle.yml"
       - "src/morva/personnel/order_integrity.py"
       - "src/morva/personnel/order_registry.py"
       - "src/morva/personnel/order_approval.py"
       - "src/morva/personnel/order_approval_policy.py"
+      - "src/morva/personnel/core_hr_snapshot.py"
       - "src/morva/api/v1/core_hr.py"
       - "src/morva/api/v1/order_approvals.py"
       - "src/morva/persistence/models.py"
@@ -21,13 +23,16 @@ on:
       - "tests/test_personnel_order_approval_policy.py"
       - "tests/test_personnel_order_approval_api.py"
       - "tests/test_personnel_orders_api.py"
+      - "tests/test_core_hr_snapshot_personnel_order_binding.py"
       - "docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md"
   pull_request:
     paths:
+      - ".github/workflows/m3-17-personnel-order-lifecycle.yml"
       - "src/morva/personnel/order_integrity.py"
       - "src/morva/personnel/order_registry.py"
       - "src/morva/personnel/order_approval.py"
       - "src/morva/personnel/order_approval_policy.py"
+      - "src/morva/personnel/core_hr_snapshot.py"
       - "src/morva/api/v1/core_hr.py"
       - "src/morva/api/v1/order_approvals.py"
       - "src/morva/persistence/models.py"
@@ -41,6 +46,7 @@ on:
       - "tests/test_personnel_order_approval_policy.py"
       - "tests/test_personnel_order_approval_api.py"
       - "tests/test_personnel_orders_api.py"
+      - "tests/test_core_hr_snapshot_personnel_order_binding.py"
       - "docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md"
 
 jobs:
@@ -53,10 +59,31 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Lint personnel order governance
-        run: ruff check src/morva/personnel/order_integrity.py src/morva/personnel/order_registry.py src/morva/personnel/order_approval.py src/morva/personnel/order_approval_policy.py src/morva/api/v1/core_hr.py src/morva/api/v1/order_approvals.py tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_effective_reconciliation.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
-      - name: Run personnel order governance tests
-        run: pytest -q tests/test_personnel_order_lifecycle_m3_10.py tests/test_personnel_order_effective_reconciliation.py tests/test_personnel_order_approval_policy.py tests/test_personnel_order_approval_api.py tests/test_personnel_orders_api.py
+      - name: Lint personnel order and snapshot governance
+        run: >-
+          ruff check
+          src/morva/personnel/order_integrity.py
+          src/morva/personnel/order_registry.py
+          src/morva/personnel/order_approval.py
+          src/morva/personnel/order_approval_policy.py
+          src/morva/personnel/core_hr_snapshot.py
+          src/morva/api/v1/core_hr.py
+          src/morva/api/v1/order_approvals.py
+          tests/test_personnel_order_lifecycle_m3_10.py
+          tests/test_personnel_order_effective_reconciliation.py
+          tests/test_personnel_order_approval_policy.py
+          tests/test_personnel_order_approval_api.py
+          tests/test_personnel_orders_api.py
+          tests/test_core_hr_snapshot_personnel_order_binding.py
+      - name: Run personnel order and snapshot governance tests
+        run: >-
+          pytest -q
+          tests/test_personnel_order_lifecycle_m3_10.py
+          tests/test_personnel_order_effective_reconciliation.py
+          tests/test_personnel_order_approval_policy.py
+          tests/test_personnel_order_approval_api.py
+          tests/test_personnel_orders_api.py
+          tests/test_core_hr_snapshot_personnel_order_binding.py
       - name: Validate migrations
         run: alembic upgrade head
       - name: Compile application
