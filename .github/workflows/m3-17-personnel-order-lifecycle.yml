@@ -84,7 +84,9 @@ jobs:
           tests/test_personnel_order_approval_api.py
           tests/test_personnel_orders_api.py
           tests/test_core_hr_snapshot_personnel_order_binding.py
-      - name: Validate migrations
-        run: alembic upgrade head
+      - name: Validate migrations on a clean database
+        run: >-
+          rm -f morva.db migration-gate.db
+          MORVA_DATABASE_URL=sqlite:///./migration-gate.db alembic upgrade head
       - name: Compile application
         run: python -m compileall -q src tests
