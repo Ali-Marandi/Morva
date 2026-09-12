@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
@@ -55,6 +55,7 @@ def _policy(session):
         source_reference="ORG-POLICY-SNAPSHOT-01",
         source_hash="a" * 64,
         approved_by="authority-1",
+        approved_at=datetime.now(timezone.utc),
     )
 
 
