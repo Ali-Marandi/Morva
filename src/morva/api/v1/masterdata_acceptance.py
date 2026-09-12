@@ -24,6 +24,10 @@ class AcceptanceInput(BaseModel):
     source_system: str = Field(min_length=1, max_length=120)
     source_uri: str = Field(min_length=1, max_length=500)
     authoritative_source_reference: str = Field(min_length=1, max_length=300)
+    evidence_reference: str = Field(min_length=1, max_length=300)
+    evidence_sha256: str = Field(min_length=64, max_length=64)
+    population_scope: str = Field(min_length=1, max_length=300)
+    coverage_evidence: dict[str, int]
     dataset_period: str = Field(min_length=7, max_length=7)
     dataset_sha256: str = Field(min_length=64, max_length=64)
     row_count: int = Field(gt=0)
@@ -77,6 +81,11 @@ def confirm_acceptance(
             "status": record.status,
             "dataset_name": record.dataset_name,
             "dataset_sha256": record.dataset_sha256,
+            "evidence_reference": record.evidence_reference,
+            "evidence_sha256": record.evidence_sha256,
+            "population_scope": record.population_scope,
+            "coverage_evidence": record.coverage_evidence or {},
+            "evidence_fingerprint": record.evidence_fingerprint,
             "accepted_by": record.accepted_by,
             "accepted_at": record.accepted_at.isoformat() if record.accepted_at else None,
             "authority_confirmation_reference": record.authority_confirmation_reference,
@@ -100,6 +109,11 @@ def get_acceptance_assessment(
             "source_system": record.source_system,
             "source_uri": record.source_uri,
             "authoritative_source_reference": record.authoritative_source_reference,
+            "evidence_reference": record.evidence_reference,
+            "evidence_sha256": record.evidence_sha256,
+            "population_scope": record.population_scope,
+            "coverage_evidence": record.coverage_evidence or {},
+            "evidence_fingerprint": record.evidence_fingerprint,
             "dataset_period": record.dataset_period,
             "dataset_sha256": record.dataset_sha256,
             "row_count": record.row_count,
@@ -108,6 +122,7 @@ def get_acceptance_assessment(
             "schema_valid": record.schema_valid,
             "status": record.status,
             "integrity_blocking": record.integrity_blocking,
+            "integrity_snapshot_hash": record.integrity_snapshot_hash,
             "blockers": record.blockers or [],
             "warnings": record.warnings or [],
             "submitted_by": record.submitted_by,
