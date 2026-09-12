@@ -231,7 +231,8 @@ def test_approved_order_is_not_effective_after_payload_tampering():
         session.commit()
         session.expire(record)
 
-        assert effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1)) == []
+        with pytest.raises(ValueError, match="effective-state reconciliation is blocked"):
+            effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1))
 
 
 def test_approved_order_is_not_effective_when_decision_fingerprint_is_tampered():
@@ -256,4 +257,5 @@ def test_approved_order_is_not_effective_when_decision_fingerprint_is_tampered()
         decision.order_fingerprint = "0" * 64
         session.commit()
 
-        assert effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1)) == []
+        with pytest.raises(ValueError, match="effective-state reconciliation is blocked"):
+            effective_personnel_orders(session, employee.employee_no, date(2026, 3, 1))
