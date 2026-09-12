@@ -10,6 +10,7 @@ from morva.masterdata.acceptance import (
     assess_master_data_acceptance,
     confirm_master_data_acceptance,
 )
+from morva.persistence.acceptance_records import MasterDataAcceptanceRecord
 from morva.persistence.database import init_db
 from morva.persistence.domain_extensions import AssignmentRecord
 from morva.persistence.enterprise_models import OrganizationUnitRecord
@@ -115,6 +116,16 @@ def _add_valid_master_data(session):
     session.commit()
 
 
+def _valid_coverage():
+    return _coverage(
+        organization_count=1,
+        position_count=1,
+        employee_count=1,
+        assignment_count=1,
+        personnel_snapshot_count=1,
+    )
+
+
 def test_acceptance_blocks_invalid_manifest_contract():
     with _session() as session:
         result = assess_master_data_acceptance(
@@ -169,13 +180,7 @@ def test_acceptance_requires_evidence_coverage_to_match_persisted_population():
 def test_acceptance_eligible_then_confirmed():
     with _session() as session:
         _add_valid_master_data(session)
-        coverage = _coverage(
-            organization_count=1,
-            position_count=1,
-            employee_count=1,
-            assignment_count=1,
-            personnel_snapshot_count=1,
-        )
+        coverage = _valid_coverage()
         result = assess_master_data_acceptance(
             session, _request(dataset_sha256="e" * 64, coverage_evidence=coverage), "submitter"
         )
@@ -208,15 +213,8 @@ def test_acceptance_eligible_then_confirmed():
 def test_acceptance_confirmation_requires_distinct_authority():
     with _session() as session:
         _add_valid_master_data(session)
-        coverage = _coverage(
-            organization_count=1,
-            position_count=1,
-            employee_count=1,
-            assignment_count=1,
-            personnel_snapshot_count=1,
-        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="1" * 64, coverage_evidence=coverage), "submitter"
+            session, _request(dataset_sha256="1" * 64, coverage_evidence=_valid_coverage()), "submitter"
         )
         with pytest.raises(ValueError, match="distinct authority"):
             confirm_master_data_acceptance(
@@ -227,15 +225,8 @@ def test_acceptance_confirmation_requires_distinct_authority():
 def test_acceptance_confirmation_rechecks_integrity():
     with _session() as session:
         _add_valid_master_data(session)
-        coverage = _coverage(
-            organization_count=1,
-            position_count=1,
-            employee_count=1,
-            assignment_count=1,
-            personnel_snapshot_count=1,
-        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="2" * 64, coverage_evidence=coverage), "submitter"
+            session, _request(dataset_sha256="2" * 64, coverage_evidence=_valid_coverage()), "submitter"
         )
         employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
         employee.organization_unit_id = "MISSING-ORG"
@@ -250,15 +241,8 @@ def test_acceptance_confirmation_rechecks_integrity():
 def test_acceptance_confirmation_blocks_snapshot_drift_even_when_integrity_stays_valid():
     with _session() as session:
         _add_valid_master_data(session)
-        coverage = _coverage(
-            organization_count=1,
-            position_count=1,
-            employee_count=1,
-            assignment_count=1,
-            personnel_snapshot_count=1,
-        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="3" * 64, coverage_evidence=coverage), "submitter"
+            session, _request(dataset_sha256="3" * 64, coverage_evidence=_valid_coverage()), "submitter"
         )
         employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
         employee.first_name = "Changed"
@@ -273,19 +257,9 @@ def test_acceptance_confirmation_blocks_snapshot_drift_even_when_integrity_stays
 def test_acceptance_confirmation_blocks_tampered_evidence_fingerprint():
     with _session() as session:
         _add_valid_master_data(session)
-        coverage = _coverage(
-            organization_count=1,
-            position_count=1,
-            employee_count=1,
-            assignment_count=1,
-            personnel_snapshot_count=1,
-        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="4" * 64, coverage_evidence=coverage), "submitter"
+            session, _request(dataset_sha256="4" * 64, coverage_evidence=_valid_coverage()), "submitter"
         )
-        record = session.get(type(session.get_bind()), result.acceptance_id) if False else None
-        from morva.persistence.acceptance_records import MasterDataAcceptanceRecord
-
         stored = session.get(MasterDataAcceptanceRecord, result.acceptance_id)
         stored.population_scope = "tampered-scope"
         session.commit()
