@@ -24,6 +24,27 @@ def _session():
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)()
 
 
+def _coverage(
+    *,
+    organization_count=0,
+    position_count=0,
+    employee_count=0,
+    assignment_count=0,
+    personnel_snapshot_count=0,
+    attendance_fact_count=0,
+    teacher_rank_case_count=0,
+):
+    return {
+        "organization_count": organization_count,
+        "position_count": position_count,
+        "employee_count": employee_count,
+        "assignment_count": assignment_count,
+        "personnel_snapshot_count": personnel_snapshot_count,
+        "attendance_fact_count": attendance_fact_count,
+        "teacher_rank_case_count": teacher_rank_case_count,
+    }
+
+
 def _request(**overrides):
     values = {
         "dataset_name": "education-masterdata",
@@ -31,6 +52,10 @@ def _request(**overrides):
         "source_system": "official-source",
         "source_uri": "https://example.invalid/masterdata.csv",
         "authoritative_source_reference": "AUTH-REF-2026-001",
+        "evidence_reference": "EVIDENCE-REF-2026-001",
+        "evidence_sha256": "b" * 64,
+        "population_scope": "test-population",
+        "coverage_evidence": _coverage(),
         "dataset_period": "1405-06",
         "dataset_sha256": "a" * 64,
         "row_count": 1,
@@ -129,15 +154,35 @@ def test_acceptance_requires_current_integrity_gate_to_be_clear():
         assert "current authoritative master-data integrity gate is blocking" in result.blockers
 
 
-def test_acceptance_eligible_then_confirmed():
+def test_acceptance_requires_evidence_coverage_to_match_persisted_population():
     with _session() as session:
         _add_valid_master_data(session)
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="e" * 64), "submitter"
+            session,
+            _request(dataset_sha256="c" * 64, coverage_evidence=_coverage()),
+            "submitter",
+        )
+        assert result.status == "blocked"
+        assert "coverage_evidence does not match persisted master-data population counts" in result.blockers
+
+
+def test_acceptance_eligible_then_confirmed():
+    with _session() as session:
+        _add_valid_master_data(session)
+        coverage = _coverage(
+            organization_count=1,
+            position_count=1,
+            employee_count=1,
+            assignment_count=1,
+            personnel_snapshot_count=1,
+        )
+        result = assess_master_data_acceptance(
+            session, _request(dataset_sha256="e" * 64, coverage_evidence=coverage), "submitter"
         )
         assert result.status == "eligible"
         assert result.eligible is True
         assert result.blockers == ()
+        assert len(result.evidence_fingerprint) == 64
 
         record = confirm_master_data_acceptance(
             session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-001"
@@ -146,20 +191,32 @@ def test_acceptance_eligible_then_confirmed():
         assert record.accepted_by == "approver"
         assert record.authority_confirmation_reference == "FORMAL-AUTH-2026-001"
         assert len(record.integrity_snapshot_hash) == 64
+        assert record.coverage_evidence == coverage
+        assert len(record.evidence_fingerprint) == 64
 
         repeated = assess_master_data_acceptance(
-            session, _request(dataset_sha256="E" * 64), "submitter"
+            session,
+            _request(dataset_sha256="E" * 64, coverage_evidence=coverage),
+            "submitter",
         )
         assert repeated.status == "accepted"
         assert repeated.eligible is True
         assert repeated.acceptance_id == result.acceptance_id
+        assert repeated.evidence_fingerprint == result.evidence_fingerprint
 
 
 def test_acceptance_confirmation_requires_distinct_authority():
     with _session() as session:
         _add_valid_master_data(session)
+        coverage = _coverage(
+            organization_count=1,
+            position_count=1,
+            employee_count=1,
+            assignment_count=1,
+            personnel_snapshot_count=1,
+        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="1" * 64), "submitter"
+            session, _request(dataset_sha256="1" * 64, coverage_evidence=coverage), "submitter"
         )
         with pytest.raises(ValueError, match="distinct authority"):
             confirm_master_data_acceptance(
@@ -170,8 +227,15 @@ def test_acceptance_confirmation_requires_distinct_authority():
 def test_acceptance_confirmation_rechecks_integrity():
     with _session() as session:
         _add_valid_master_data(session)
+        coverage = _coverage(
+            organization_count=1,
+            position_count=1,
+            employee_count=1,
+            assignment_count=1,
+            personnel_snapshot_count=1,
+        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="2" * 64), "submitter"
+            session, _request(dataset_sha256="2" * 64, coverage_evidence=coverage), "submitter"
         )
         employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
         employee.organization_unit_id = "MISSING-ORG"
@@ -186,8 +250,15 @@ def test_acceptance_confirmation_rechecks_integrity():
 def test_acceptance_confirmation_blocks_snapshot_drift_even_when_integrity_stays_valid():
     with _session() as session:
         _add_valid_master_data(session)
+        coverage = _coverage(
+            organization_count=1,
+            position_count=1,
+            employee_count=1,
+            assignment_count=1,
+            personnel_snapshot_count=1,
+        )
         result = assess_master_data_acceptance(
-            session, _request(dataset_sha256="3" * 64), "submitter"
+            session, _request(dataset_sha256="3" * 64, coverage_evidence=coverage), "submitter"
         )
         employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
         employee.first_name = "Changed"
@@ -195,6 +266,32 @@ def test_acceptance_confirmation_blocks_snapshot_drift_even_when_integrity_stays
         with pytest.raises(ValueError, match="integrity snapshot changed after assessment"):
             confirm_master_data_acceptance(
                 session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-003"
+            )
+        session.rollback()
+
+
+def test_acceptance_confirmation_blocks_tampered_evidence_fingerprint():
+    with _session() as session:
+        _add_valid_master_data(session)
+        coverage = _coverage(
+            organization_count=1,
+            position_count=1,
+            employee_count=1,
+            assignment_count=1,
+            personnel_snapshot_count=1,
+        )
+        result = assess_master_data_acceptance(
+            session, _request(dataset_sha256="4" * 64, coverage_evidence=coverage), "submitter"
+        )
+        record = session.get(type(session.get_bind()), result.acceptance_id) if False else None
+        from morva.persistence.acceptance_records import MasterDataAcceptanceRecord
+
+        stored = session.get(MasterDataAcceptanceRecord, result.acceptance_id)
+        stored.population_scope = "tampered-scope"
+        session.commit()
+        with pytest.raises(ValueError, match="evidence fingerprint changed"):
+            confirm_master_data_acceptance(
+                session, result.acceptance_id, "approver", "FORMAL-AUTH-2026-004"
             )
         session.rollback()
 
