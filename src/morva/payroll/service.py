@@ -4,7 +4,10 @@ from datetime import date
 from decimal import Decimal
 from typing import Iterable
 
+from sqlalchemy.orm import Session
+
 from morva.payroll.models import PayrollLine, PayrollResult
+from morva.payroll.readiness_guard import require_master_data_readiness
 
 
 class PayrollService:
@@ -24,6 +27,30 @@ class PayrollService:
             employee_no=employee_no,
             period=self.period_key(period),
             lines=materialized,
+            ruleset_version=ruleset_version,
+        )
+
+    def calculate_checked(
+        self,
+        *,
+        session: Session,
+        employee_no: str,
+        period: date,
+        lines: Iterable[PayrollLine],
+        ruleset_version: str = "draft",
+        dataset_name: str | None = None,
+        dataset_sha256: str | None = None,
+    ) -> PayrollResult:
+        """Calculate payroll only after accepted, untampered master-data readiness."""
+        require_master_data_readiness(
+            session,
+            dataset_name=dataset_name,
+            dataset_sha256=dataset_sha256,
+        )
+        return self.calculate(
+            employee_no=employee_no,
+            period=period,
+            lines=lines,
             ruleset_version=ruleset_version,
         )
 
