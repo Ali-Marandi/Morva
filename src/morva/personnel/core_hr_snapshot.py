@@ -14,6 +14,7 @@ from morva.persistence.core_hr_records import DependentRecord, EducationRecord, 
 from morva.persistence.domain_extensions import AssignmentRecord
 from morva.persistence.enterprise_models import EmploymentRecord
 from morva.persistence.models import EmployeeRecord, PersonnelSnapshotRecord
+from morva.personnel.order_registry import reconcile_personnel_order_effective_state
 
 
 def _canonical_value(value):
@@ -22,7 +23,7 @@ def _canonical_value(value):
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, dict):
-        return {str(key): _canonical_value(item) for key, item in value.items()}
+        return {str(key): _canonical_value(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
     if isinstance(value, (list, tuple, set)):
         return [_canonical_value(item) for item in value]
     return value
@@ -87,6 +88,22 @@ def build_core_hr_snapshot(session: Session, employee_no: str, effective_on: dat
     effective_org = employment.organization_unit_id if employment else employee.organization_unit_id
     effective_type = employment.employment_type if employment else employee.employment_type
 
+    order_reconciliation = reconcile_personnel_order_effective_state(session, employee_no, effective_on)
+    if order_reconciliation.blocking:
+        raise ValueError(
+            "personnel order effective-state reconciliation is blocked: "
+            + "; ".join(order_reconciliation.blockers)
+        )
+
+    order_numbers = sorted(order.order_no for order in order_reconciliation.orders)
+    order_fingerprints = sorted(
+        {
+            order.content_hash
+            for order in order_reconciliation.orders
+            if order.content_hash
+        }
+    )
+
     return {
         "employee": {
             "employee_no": employee.employee_no,
@@ -102,6 +119,11 @@ def build_core_hr_snapshot(session: Session, employee_no: str, effective_on: dat
         "education": [_record_payload(item) for item in education],
         "experience": [_record_payload(item) for item in experience],
         "dependents": [_record_payload(item) for item in dependents],
+        "personnel_orders": {
+            "status": order_reconciliation.status,
+            "order_numbers": order_numbers,
+            "order_fingerprints": order_fingerprints,
+        },
         "resolved": {
             "organization_unit_id": _canonical_value(effective_org),
             "position_id": _canonical_value(effective_position),
@@ -130,6 +152,7 @@ def persist_core_hr_snapshot(session: Session, employee_no: str, effective_perio
         return existing
 
     resolved = payload["resolved"]
+    personnel_orders = payload["personnel_orders"]
     snapshot = PersonnelSnapshotRecord(
         employee_no=employee_no,
         effective_period=effective_period,
@@ -141,7 +164,7 @@ def persist_core_hr_snapshot(session: Session, employee_no: str, effective_perio
         source_import_batch_id=None,
         source_hash=source_hash,
         snapshot_hash=snapshot_hash,
-        order_numbers=[],
+        order_numbers=personnel_orders["order_numbers"],
         components={"core_hr": payload},
     )
     session.add(snapshot)
