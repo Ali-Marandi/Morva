@@ -1,5 +1,5 @@
 from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -260,7 +260,7 @@ def test_acceptance_confirmation_blocks_tampered_evidence_fingerprint():
         result = assess_master_data_acceptance(
             session, _request(dataset_sha256="4" * 64, coverage_evidence=_valid_coverage()), "submitter"
         )
-        stored = session.get(MasterDataAcceptanceRecord, result.acceptance_id)
+        stored = session.get(MasterDataAcceptanceRecord, UUID(result.acceptance_id))
         stored.population_scope = "tampered-scope"
         session.commit()
         with pytest.raises(ValueError, match="evidence fingerprint changed"):
