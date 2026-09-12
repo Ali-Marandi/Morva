@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
+from morva.masterdata.authoritative import validate_authoritative_master_data
 from morva.masterdata.validation import validate_master_data
 from morva.persistence.database import SessionLocal
 from morva.security.auth import Principal, get_current_principal
@@ -25,3 +26,12 @@ def get_master_data_integrity(
     _authorize_read(principal)
     with SessionLocal() as session:
         return validate_master_data(session).as_dict()
+
+
+@router.get("/authoritative-integrity")
+def get_authoritative_master_data_integrity(
+    principal: Principal = Depends(get_current_principal),
+) -> dict[str, object]:
+    _authorize_read(principal)
+    with SessionLocal() as session:
+        return validate_authoritative_master_data(session).as_dict()
