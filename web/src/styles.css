@@ -23,7 +23,7 @@
 html {
   font-family: Vazirmatn, system-ui, sans-serif;
   color: #1e3a4f;
-  background: #f4f7fb;
+  background: linear-gradient(to bottom right, #e0e8f0, #f8fafd);
   scroll-behavior: smooth;
 }
 
