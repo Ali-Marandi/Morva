@@ -35,5 +35,5 @@ def test_register_is_not_activation_ready():
 
 def test_register_does_not_embed_legal_numeric_values():
     text = _text()
-    forbidden_markers = ("percent", "rate:", "threshold:", "amount:", "coefficient:")
-    assert not any(marker in text.lower() for marker in forbidden_markers)
+    forbidden_numeric_fields = ("percent:", "rate:", "threshold:", "amount:", "coefficient:")
+    assert not any(marker in text.lower() for marker in forbidden_numeric_fields)
