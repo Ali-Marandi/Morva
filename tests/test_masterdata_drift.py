@@ -1,5 +1,5 @@
 from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -125,7 +125,11 @@ def test_drift_is_clean_for_unchanged_accepted_dataset():
 def test_drift_detects_content_change_with_stable_population_counts():
     with _session() as session:
         acceptance_id = _accept(session)
-        employee = session.query(EmployeeRecord).filter(EmployeeRecord.employee_no.like("GOOD-%")).one()
+        employee = (
+            session.query(EmployeeRecord)
+            .filter(EmployeeRecord.employee_no.like("GOOD-%"))
+            .one()
+        )
         employee.first_name = "Changed"
         session.commit()
         result = detect_master_data_drift(session, acceptance_id)
@@ -160,7 +164,7 @@ def test_drift_detects_tampered_acceptance_metadata():
         acceptance_id = _accept(session)
         record = session.get(MasterDataAcceptanceRecord, uuid4())
         assert record is None
-        record = session.get(MasterDataAcceptanceRecord, acceptance_id)
+        record = session.get(MasterDataAcceptanceRecord, UUID(acceptance_id))
         record.population_scope = "tampered"
         session.commit()
         result = detect_master_data_drift(session, acceptance_id)
