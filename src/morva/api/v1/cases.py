@@ -14,6 +14,7 @@ from morva.persistence.domain_extensions import EmployeeCaseRecord
 from morva.persistence.models import EmployeeRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.hierarchy import authorize_hierarchical
+from morva.security.identity_directory import reconcile_employee_identity
 from morva.security.policy import authorize
 
 router = APIRouter(prefix="/cases", tags=["objection-case-management"])
@@ -33,15 +34,12 @@ class CaseStatusUpdate(BaseModel):
 
 def _self_employee(session, principal: Principal) -> EmployeeRecord:
     authorize(principal, "self.read", principal.scope)
-    employee = session.scalar(
-        select(EmployeeRecord).where(
-            (EmployeeRecord.employee_no == principal.user_id)
-            | (EmployeeRecord.source_employee_key == principal.user_id)
-        )
-    )
-    if employee is None:
+    resolution = reconcile_employee_identity(session, principal.user_id)
+    if resolution.ambiguous:
+        raise HTTPException(status_code=409, detail="authenticated identity maps to multiple employee records")
+    if not resolution.resolved:
         raise HTTPException(status_code=404, detail="employee identity is not mapped to a personnel record")
-    return employee
+    return resolution.employee
 
 
 def _submitted_at(case: EmployeeCaseRecord) -> datetime:

@@ -1,0 +1,76 @@
+version: "1405-primary-source-register-1.0"
+status: research_required
+rule_pack: "1405.x"
+activation_policy: "fail_closed_until_primary_source_artifact_and_formal_approval"
+
+sources:
+  - source_id: LMS-CSC-64-68
+    subject: "Civil Service Management Law, Chapter Ten"
+    required_components:
+      - JOB_RIGHT
+      - INCUMBENT_RIGHT
+      - JOB_ALLOWANCE
+      - FAMILY_ALLOWANCE
+      - CHILD_ALLOWANCE
+    primary_source_locator: required
+    issuer: "قوه مقننه / مرجع رسمی انتشار قوانین"
+    document_hash: required
+    adoption_date: required
+    effective_from: required
+    evidence_status: review_required
+
+  - source_id: TEACHER-RANK-REG-1404
+    subject: "Teacher ranking executive regulation and amendments"
+    required_components:
+      - RANK_ALLOWANCE
+    primary_source_locator: required
+    issuer: "مرجع رسمی صادرکننده آیین‌نامه"
+    document_hash: required
+    adoption_date: required
+    effective_from: required
+    effective_to: required_when_superseded
+    evidence_status: review_required
+
+  - source_id: PAY-1405
+    subject: "1405 public-sector payroll and payment instructions"
+    required_components:
+      - OVERTIME
+      - TEACHING_FEE
+      - REGION_WEATHER
+      - PENSION
+      - INSURANCE
+      - LOAN
+      - COURT_ORDER
+    primary_source_locator: required
+    issuer: "مرجع رسمی صادرکننده مقررات پرداخت"
+    document_hash: required
+    adoption_date: required
+    effective_from: required
+    evidence_status: review_required
+
+  - source_id: TAX-1405
+    subject: "Budget 1405 and related salary-tax provisions"
+    required_components:
+      - TAX
+    primary_source_locator: required
+    issuer: "مرجع رسمی قانون‌گذاری / سازمان امور مالیاتی"
+    document_hash: required
+    adoption_date: required
+    effective_from: required
+    evidence_status: review_required
+
+rules:
+  - code: PRIMARY_SOURCE_ONLY
+    requirement: "Production activation requires the actual primary-source artifact, not a secondary summary."
+  - code: IMMUTABLE_EVIDENCE
+    requirement: "Every source artifact is bound to a SHA-256 document hash."
+  - code: EFFECTIVE_DATES
+    requirement: "Adoption and effective dates must be recorded; superseded sources must carry an effective_to boundary."
+  - code: NO_INFERENCE
+    requirement: "Missing source evidence must remain unresolved; values must never be inferred from 1404, news, blogs, or prior Rule Packs."
+  - code: DISTINCT_APPROVAL
+    requirement: "Review and approval identities must be distinct and regression evidence must exist before activation."
+
+notes:
+  - "This register defines the evidence intake boundary. It intentionally does not embed legal rates, thresholds, tax brackets, insurance percentages, pension rates, or payroll coefficients."
+  - "Current public reporting may be used to discover candidate documents, but production evidence must be the primary artifact or a formally published copy whose provenance is recorded."

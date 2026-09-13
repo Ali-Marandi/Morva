@@ -13,6 +13,7 @@ from morva.persistence.database import SessionLocal
 from morva.persistence.enterprise_models import PayslipLineRecord, PayrollArtifactRecord
 from morva.persistence.models import EmployeeRecord, PersonnelOrderRecord, PersonnelSnapshotRecord, PayrollRunRecord
 from morva.security.auth import Principal, get_current_principal
+from morva.security.identity_directory import reconcile_employee_identity
 from morva.security.policy import authorize
 
 router = APIRouter(prefix="/self", tags=["employee-self-service"])
@@ -28,16 +29,16 @@ _VISIBLE_PAYROLL_STATUSES = {
 
 
 def _current_employee(session, principal: Principal) -> EmployeeRecord:
-    employee = session.scalar(
-        select(EmployeeRecord).where(
-            (EmployeeRecord.employee_no == principal.user_id)
-            | (EmployeeRecord.source_employee_key == principal.user_id)
-        )
-    )
-    if employee is None:
-        raise HTTPException(status_code=404, detail="employee identity is not mapped to a personnel record")
     authorize(principal, "self.read", principal.scope)
-    return employee
+    resolution = reconcile_employee_identity(session, principal.user_id)
+    if resolution.ambiguous:
+        raise HTTPException(
+            status_code=409,
+            detail="authenticated identity maps to multiple employee records",
+        )
+    if not resolution.resolved:
+        raise HTTPException(status_code=404, detail="employee identity is not mapped to a personnel record")
+    return resolution.employee
 
 
 def _pdf_escape(value: str) -> str:
