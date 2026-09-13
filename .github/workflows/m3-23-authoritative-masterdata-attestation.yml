@@ -1,0 +1,28 @@
+name: M3.23 Authoritative Master-Data Attestation Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  authoritative-masterdata-attestation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Ruff
+        run: ruff check src tests
+      - name: M3.23 attestation tests
+        run: pytest -q tests/test_masterdata_authoritative_attestation.py
