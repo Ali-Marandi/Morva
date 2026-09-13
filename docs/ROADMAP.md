@@ -31,6 +31,7 @@
 - M3.18 personnel-order integrity hardening with immutable order fingerprints, approval-evidence binding, SoD/rejection controls and fail-closed effective-state verification
 - M3.19 reusable fail-closed master-data readiness bound to payroll calculation
 - M3.20 explicit authoritative master-data acceptance evidence and drift-detection contract with deterministic coverage deltas and integrity fingerprint verification
+- M3.21 1405 primary-source evidence intake contract, source-family register, deterministic provenance validation and dedicated CI gate
 
 ## Current execution queue
 
@@ -38,7 +39,7 @@
 2. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 3. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence. Authoritative source confirmation and complete population evidence remain pending.**
 4. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
-5. Complete legal component matrix and annual Rule Packs from primary sources.
+5. Complete legal component matrix and annual Rule Packs from primary sources. **M3.21 now enforces the primary-source evidence contract and maintains the 1405 source register; exact primary artifacts and formal approvals remain pending.**
 6. Complete tax, pension, insurance, loans and judicial-deduction ledgers with approved treatments. **M3.12 governance boundary is implemented; authoritative treatment evidence and approved population-specific rules remain pending.**
 7. Complete snapshot-driven retroactive recalculation and certified historical replay corpus. **M3.13 software provenance/reconciliation controls are implemented; authoritative historical replay corpus and certification evidence remain pending.**
 8. Remove remaining demonstration-only frontend behavior and wire operational views to authenticated APIs. **M3.14 completed for the primary dashboard/employee views.**
