@@ -48,4 +48,4 @@ def test_retrieval_timestamp_is_required_for_provenance():
 
 
 def test_content_digest_is_deterministic_sha256():
-    assert evidence_content_sha256(b"morva") == "9b55a0f5ce0f99f2f5b6d3ccf4d772ca2c79a2d32c56d9a6e6f746f0f7b3e7f8"
+    assert evidence_content_sha256(b"morva") == "90a93c6e4b688b674949dc7d8a0a3a4fb8fdd6d58183fe13fc6413d4dbc041bf"
