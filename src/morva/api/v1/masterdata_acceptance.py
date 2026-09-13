@@ -10,6 +10,7 @@ from morva.masterdata.acceptance import (
     assess_master_data_acceptance,
     confirm_master_data_acceptance,
 )
+from morva.masterdata.drift import detect_master_data_drift
 from morva.persistence.acceptance_records import MasterDataAcceptanceRecord
 from morva.persistence.database import SessionLocal
 from morva.security.auth import Principal, get_current_principal
@@ -131,3 +132,16 @@ def get_acceptance_assessment(
             "authority_confirmation_reference": record.authority_confirmation_reference,
             "created_at": record.created_at.isoformat() if record.created_at else None,
         }
+
+
+@router.get("/acceptance-assessments/{acceptance_id}/drift")
+def get_acceptance_drift(
+    acceptance_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> dict[str, object]:
+    _authorize_write(principal)
+    with SessionLocal() as session:
+        try:
+            return detect_master_data_drift(session, acceptance_id).as_dict()
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
