@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "src/morva/masterdata/**"
+      - "src/morva/api/v1/masterdata_acceptance.py"
       - "tests/test_masterdata_acceptance.py"
       - "tests/test_masterdata_drift.py"
       - ".github/workflows/m3-20-masterdata-acceptance.yml"
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "src/morva/masterdata/**"
+      - "src/morva/api/v1/masterdata_acceptance.py"
       - "tests/test_masterdata_acceptance.py"
       - "tests/test_masterdata_drift.py"
       - ".github/workflows/m3-20-masterdata-acceptance.yml"
@@ -33,6 +35,7 @@ jobs:
         run: >-
           ruff check
           src/morva/masterdata
+          src/morva/api/v1/masterdata_acceptance.py
           tests/test_masterdata_acceptance.py
           tests/test_masterdata_drift.py
       - name: Acceptance and drift tests
