@@ -1,0 +1,48 @@
+name: M3.21 1405 Primary Source Evidence
+
+on:
+  pull_request:
+    paths:
+      - "src/morva/rules/primary_source_evidence.py"
+      - "src/morva/rules/rule_pack_1405.py"
+      - "docs/legal/rule-packs/1405/**"
+      - "tests/test_primary_source_evidence_1405.py"
+      - "tests/test_primary_source_register_1405.py"
+      - ".github/workflows/m3-21-1405-primary-source.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/morva/rules/primary_source_evidence.py"
+      - "src/morva/rules/rule_pack_1405.py"
+      - "docs/legal/rule-packs/1405/**"
+      - "tests/test_primary_source_evidence_1405.py"
+      - "tests/test_primary_source_register_1405.py"
+      - ".github/workflows/m3-21-1405-primary-source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  primary-source-evidence:
+    name: 1405 primary-source evidence gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >-
+          ruff check
+          src/morva/rules/primary_source_evidence.py
+          tests/test_primary_source_evidence_1405.py
+          tests/test_primary_source_register_1405.py
+      - name: Evidence contract and register tests
+        run: >-
+          pytest -q
+          tests/test_primary_source_evidence_1405.py
+          tests/test_primary_source_register_1405.py
+      - name: Compile application
+        run: python -m compileall -q src tests
