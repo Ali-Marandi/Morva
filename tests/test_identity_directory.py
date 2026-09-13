@@ -57,19 +57,15 @@ def test_reconcile_matches_immutable_source_employee_key() -> None:
 
 def test_reconcile_fails_closed_for_multiple_distinct_records() -> None:
     with _session() as session:
-        session.add_all([
-            _employee("EMP-001", "FED-001"),
-            _employee("EMP-002", "FED-001-ALT"),
-        ])
+        first = _employee("EMP-001", "FED-001")
+        second = _employee("EMP-002", "FED-002")
+        session.add_all([first, second])
         session.commit()
 
-        # Make the same external identity match two distinct records through
-        # both supported directory keys. SQLite permits this in test scope.
-        second = session.query(EmployeeRecord).filter_by(employee_no="EMP-002").one()
-        second.source_employee_key = "FED-001"
+        second.source_employee_key = "EMP-001"
         session.commit()
 
-        result = reconcile_employee_identity(session, "FED-001")
+        result = reconcile_employee_identity(session, "EMP-001")
 
         assert not result.resolved
         assert result.ambiguous
