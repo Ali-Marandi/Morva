@@ -1,0 +1,23 @@
+name: M3.22 Identity Directory Reconciliation Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-directory-reconciliation:
+    name: M3.22 identity-directory reconciliation gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: pytest -q tests/test_identity_directory.py
