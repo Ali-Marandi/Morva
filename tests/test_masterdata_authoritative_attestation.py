@@ -1,7 +1,6 @@
 from datetime import date, datetime, timezone
 from uuid import uuid4
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -54,7 +53,14 @@ def _add_valid_master_data(session):
             hire_date=date(2020, 1, 1),
         )
     )
-    session.add(AssignmentRecord(employee_no=employee_no, organization_code=org.code, position_code=position.code, starts_on=date(2026, 1, 1)))
+    session.add(
+        AssignmentRecord(
+            employee_no=employee_no,
+            organization_code=org.code,
+            position_code=position.code,
+            starts_on=date(2026, 1, 1),
+        )
+    )
     session.add(
         PersonnelSnapshotRecord(
             employee_no=employee_no,
@@ -151,15 +157,11 @@ def test_attestation_requires_all_dimensions_to_be_explicitly_attested():
 def test_attestation_enforces_separation_of_duties_and_accepted_state():
     with _session() as session:
         record = _accepted_assessment(session)
-        result = assess_authoritative_master_data_attestation(
-            session, _attestation(record, authority_actor_id="submitter")
-        )
+        result = assess_authoritative_master_data_attestation(session, _attestation(record, authority_actor_id="submitter"))
         assert result.eligible is False
         assert "authority attestor must differ from dataset submitter" in result.blockers
 
-        result = assess_authoritative_master_data_attestation(
-            session, _attestation(record, authority_actor_id="confirmer")
-        )
+        result = assess_authoritative_master_data_attestation(session, _attestation(record, authority_actor_id="confirmer"))
         assert result.eligible is False
         assert "authority attestor must differ from acceptance confirmer" in result.blockers
 
