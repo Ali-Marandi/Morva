@@ -1,0 +1,28 @@
+name: M3.24 1405 Rule-Pack Evidence Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  rule-pack-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Ruff
+        run: ruff check src/morva/rules/rule_pack_1405.py src/morva/rules/rule_pack_1405_evidence.py tests/test_rule_pack_1405_evidence.py
+      - name: M3.24 evidence tests
+        run: pytest -q tests/test_rule_pack_1405_evidence.py
