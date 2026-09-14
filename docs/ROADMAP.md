@@ -37,6 +37,7 @@
 - M3.24 1405 Rule-Pack evidence boundary with component-to-source binding, immutable source hashes, explicit treatment metadata, SoD and deterministic evidence fingerprints
 - M3.25 population-scoped ledger treatment activation boundary with immutable population/Rule Pack evidence binding and fail-closed execution readiness
 - M3.26 snapshot-driven replay certification boundary with immutable snapshot/Rule Pack/input/output hashes, deterministic certification fingerprinting and fail-closed status
+- M3.27 three-way reconciliation release boundary with exact payroll/accounting/payment batch, employee-count and amount matching plus hard-stop release behavior
 
 ## Current execution queue
 
@@ -51,7 +52,7 @@
 9. Complete employee self-service, objection/case management and production PDF/reporting. **M3.15 foundation and M3.16 UX hardening implemented: authenticated self-service profile/payslips/orders, artifact-bound PDF download, persistent employee cases, payslip detail/provenance view, period filter and resilient download UX. M3.22 identity-directory reconciliation is now implemented; broader reporting, document-template certification and enterprise grievance policy/SLA evidence remain pending.**
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
-12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement.
+12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; live adapter evidence and authorized staging/pilot settlement remain pending.**
 13. Implement payment reversal/return handling and settlement exception workflows.
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls.
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
