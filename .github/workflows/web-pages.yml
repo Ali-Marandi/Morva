@@ -14,6 +14,10 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: 22
+  VITE_DEMO_MODE: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,16 +27,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
       - name: Install
-        run: npm install
-      - name: Build
-        env:
-          VITE_DEMO_MODE: 'true'
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Build demo site
         run: npm run build
+
+      - name: Verify Pages artifact
+        run: |
+          test -s dist/index.html
+          grep -q 'src="/Morva/' dist/index.html || true
+          find dist -maxdepth 2 -type f | sort | head -80
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
