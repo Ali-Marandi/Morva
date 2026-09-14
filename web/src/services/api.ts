@@ -16,7 +16,7 @@ import {
 } from './demo';
 
 // API base URL configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.morva.local/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const TOKEN_STORAGE_KEY = 'morva_access_token';
 const REFRESH_TOKEN_STORAGE_KEY = 'morva_refresh_token';
 
@@ -235,6 +235,14 @@ class ApiClient {
     const demoResponse = demoMutation<T>();
     if (demoResponse) return demoResponse;
     const response = await this.client.post<ApiResponse<T>>(url, data, config);
+    return response.data;
+  }
+
+  /** Upload a file without serializing it as JSON. */
+  public async upload<T = unknown>(url: string, data: FormData) {
+    const response = await this.client.post<ApiResponse<T>>(url, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   }
 

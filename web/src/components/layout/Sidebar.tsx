@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BarChart3, Users, FileText, Settings, HelpCircle, Menu, X, Database, CheckSquare, TrendingUp, UserRound, MessageSquareText } from "lucide-react";
+import { BarChart3, Users, FileText, Settings, HelpCircle, Menu, X, Database, CheckSquare, TrendingUp, UserRound, MessageSquareText, Upload } from "lucide-react";
 
 const navItems = [
   { name: "داشبورد", path: "/", icon: BarChart3 },
@@ -11,6 +11,7 @@ const navItems = [
   { name: "فیش‌های حقوقی", path: "/self-service", icon: FileText },
   { name: "تأیید و مجوز", path: "/approvals", icon: CheckSquare },
   { name: "گزارش‌ها", path: "/reports", icon: TrendingUp },
+  { name: "واردسازی اکسل", path: "/imports", icon: Upload },
   { name: "تنظیمات", path: "/settings", icon: Settings },
 ];
 

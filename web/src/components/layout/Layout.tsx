@@ -1,9 +1,16 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Topbar from "./Topbar";
 import Sidebar from "./Sidebar";
 
 function Layout() {
+  const location = useLocation();
+  const isModulePage = location.pathname.startsWith('/modules/');
+
+  if (isModulePage) {
+    return <div className="h-screen overflow-hidden bg-slate-100" dir="rtl"><Topbar /><main className="h-[calc(100vh-48px)] overflow-auto"><Outlet /></main></div>;
+  }
+
   return (
     <div className="flex h-screen bg-morva-50 flex-col-reverse md:flex-row" dir="rtl">
       <Sidebar />

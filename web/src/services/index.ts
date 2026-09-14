@@ -12,6 +12,8 @@ export { payrollService } from './payroll';
 export { approvalService } from './approvals';
 export { reportService } from './reports';
 export { selfService } from './self-service';
+export { importService } from './imports';
+export type { ImportSource, ImportSummary, UploadResult } from './imports';
 
 // React Query hooks
 export {

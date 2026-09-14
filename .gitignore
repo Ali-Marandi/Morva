@@ -1,0 +1,4 @@
+node_modules/
+.vite/
+backend/data/
+backend/.npm-cache/
