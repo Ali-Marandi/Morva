@@ -44,9 +44,13 @@ jobs:
       - name: Build demo site
         run: npm run build
 
+      - name: Enable SPA route fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Verify Pages artifact
         run: |
           test -s dist/index.html
+          test -s dist/404.html
           grep -q 'src="/Morva/' dist/index.html || true
           find dist -maxdepth 2 -type f | sort | head -80
 
