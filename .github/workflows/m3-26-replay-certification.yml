@@ -1,0 +1,23 @@
+name: M3.26 Snapshot Replay Certification Gate
+
+on:
+  pull_request:
+    paths:
+      - "src/morva/payroll/replay.py"
+      - "src/morva/payroll/replay_attestation.py"
+      - "tests/test_replay_attestation.py"
+      - ".github/workflows/m3-26-replay-certification.yml"
+
+jobs:
+  replay-certification:
+    name: M3.26 snapshot replay certification gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/payroll/replay.py src/morva/payroll/replay_attestation.py tests/test_replay_attestation.py
+      - run: pytest -q tests/test_replay_attestation.py
