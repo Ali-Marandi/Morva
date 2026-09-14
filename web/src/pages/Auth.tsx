@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { authService, useLogin } from "../services";
+import { DEMO_LOGIN, DEMO_MODE, DEMO_PIN } from "../services/demo";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
@@ -71,6 +72,13 @@ function Auth() {
     }
   };
 
+  const useDemoAccount = () => {
+    setEmail(DEMO_LOGIN);
+    setPassword(DEMO_PIN);
+    setFormError("");
+    setShowForgotPassword(false);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-morva-50 via-white to-morva-100 px-4 py-8 sm:px-6" dir="rtl">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center">
@@ -98,6 +106,22 @@ function Auth() {
                 <h2 className="text-3xl font-black tracking-tight text-morva-950">ورود به سامانه</h2>
                 <p className="mt-2 text-sm leading-6 text-morva-600">برای ادامه، اطلاعات حساب سازمانی خود را وارد کنید.</p>
               </div>
+
+              {DEMO_MODE && (
+                <div className="mb-6 rounded-2xl border border-morva-200 bg-morva-50 p-4 text-sm text-morva-800">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold">حساب نمایشی</p>
+                      <p className="mt-1 text-xs leading-5 text-morva-600">برای مشاهده رابط کاربری و داده‌های نمونه استفاده می‌شود و به سامانه واقعی متصل نیست.</p>
+                    </div>
+                    <button type="button" onClick={useDemoAccount} className="shrink-0 rounded-lg bg-morva-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-morva-800">پر کردن خودکار</button>
+                  </div>
+                  <div className="mt-3 grid gap-1 rounded-xl bg-white/80 p-3 font-mono text-xs" dir="ltr">
+                    <span>{DEMO_LOGIN}</span>
+                    <span>{DEMO_PIN}</span>
+                  </div>
+                </div>
+              )}
 
               {showForgotPassword ? (
                 <div>

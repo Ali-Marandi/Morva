@@ -5,6 +5,15 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiResponse, ApiError, User } from '../types/api';
+import {
+  DEMO_MODE,
+  DEMO_SESSION,
+  DEMO_SESSION_TTL,
+  DEMO_USER_STORAGE_KEY,
+  demoGet,
+  demoMutation,
+  demoUser,
+} from './demo';
 
 // API base URL configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.morva.local/api/v1';
@@ -39,7 +48,6 @@ class ApiClient {
    * Setup axios interceptors for request/response handling
    */
   private setupInterceptors() {
-    // Request interceptor: Add auth token
     this.client.interceptors.request.use(
       (config: RequestConfig) => {
         const token = this.getAccessToken();
@@ -51,13 +59,11 @@ class ApiClient {
       (error) => Promise.reject(this.handleError(error))
     );
 
-    // Response interceptor: Handle errors and token refresh
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         const config = error.config as RequestConfig;
 
-        // Handle 401 Unauthorized - try to refresh token
         if (error.response?.status === 401 && !config?._retry) {
           config!._retry = true;
 
@@ -67,12 +73,8 @@ class ApiClient {
             try {
               const newToken = await this.refreshAccessToken();
               this.isRefreshing = false;
-
-              // Retry queued requests with new token
               this.refreshSubscribers.forEach((callback) => callback(newToken));
               this.refreshSubscribers = [];
-
-              // Retry original request
               return this.client(config);
             } catch (refreshError) {
               this.isRefreshing = false;
@@ -81,8 +83,7 @@ class ApiClient {
             }
           }
 
-          // Queue this request to retry after refresh
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             this.refreshSubscribers.push((token: string) => {
               config.headers.Authorization = `Bearer ${token}`;
               resolve(this.client(config));
@@ -99,9 +100,13 @@ class ApiClient {
    * Load stored authentication from localStorage
    */
   private loadStoredAuth() {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (token) {
-      // Token exists, but user info needs to be fetched
+    if (!DEMO_MODE) return;
+    const storedUser = localStorage.getItem(DEMO_USER_STORAGE_KEY);
+    if (!storedUser) return;
+    try {
+      this.currentUser = JSON.parse(storedUser) as User;
+    } catch {
+      localStorage.removeItem(DEMO_USER_STORAGE_KEY);
     }
   }
 
@@ -111,7 +116,6 @@ class ApiClient {
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
       const response = error.response?.data as any;
-
       return {
         code: response?.error?.code || 'INTERNAL_ERROR',
         message: response?.error?.message || error.message || 'Unknown error occurred',
@@ -135,28 +139,24 @@ class ApiClient {
     };
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
   private async refreshAccessToken(): Promise<string> {
-    const refreshToken = this.getRefreshToken();
+    if (DEMO_MODE) {
+      this.setAccessToken(DEMO_SESSION, DEMO_SESSION_TTL);
+      return DEMO_SESSION;
+    }
 
+    const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
     try {
-      const response = await this.client.post<ApiResponse>('/auth/refresh', {
-        refreshToken,
-      });
-
+      const response = await this.client.post<ApiResponse>('/auth/refresh', { refreshToken });
       if (!response.data.success || !response.data.data) {
         throw new Error('Token refresh failed');
       }
-
       const { accessToken, expiresIn } = response.data.data as any;
       this.setAccessToken(accessToken, expiresIn);
-
       return accessToken;
     } catch (error) {
       this.clearAuth();
@@ -164,136 +164,101 @@ class ApiClient {
     }
   }
 
-  /**
-   * Store access token with expiration
-   */
   private setAccessToken(token: string, expiresIn: number) {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
     const expirationTime = new Date().getTime() + expiresIn * 1000;
     localStorage.setItem(`${TOKEN_STORAGE_KEY}_expires`, String(expirationTime));
   }
 
-  /**
-   * Get stored access token if valid
-   */
   private getAccessToken(): string | null {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY);
     const expiresAt = localStorage.getItem(`${TOKEN_STORAGE_KEY}_expires`);
-
     if (!token || !expiresAt) return null;
 
-    if (new Date().getTime() > parseInt(expiresAt)) {
+    if (new Date().getTime() > parseInt(expiresAt, 10)) {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       localStorage.removeItem(`${TOKEN_STORAGE_KEY}_expires`);
       return null;
     }
-
     return token;
   }
 
-  /**
-   * Get stored refresh token
-   */
   private getRefreshToken(): string | null {
     return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
   }
 
-  /**
-   * Store refresh token
-   */
   private setRefreshToken(token: string) {
     localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
   }
 
-  /**
-   * Clear all authentication data
-   */
   private clearAuth() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(`${TOKEN_STORAGE_KEY}_expires`);
     localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    if (DEMO_MODE) localStorage.removeItem(DEMO_USER_STORAGE_KEY);
     this.currentUser = null;
   }
 
-  /**
-   * Set current user
-   */
   public setUser(user: User | null) {
     this.currentUser = user;
+    if (DEMO_MODE) {
+      if (user) localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(user));
+      else localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+    }
   }
 
-  /**
-   * Get current user
-   */
   public getUser(): User | null {
     return this.currentUser;
   }
 
-  /**
-   * Check if user is authenticated
-   */
   public isAuthenticated(): boolean {
     return this.getAccessToken() !== null && this.currentUser !== null;
   }
 
-  /**
-   * Store login credentials
-   */
   public setAuthTokens(accessToken: string, refreshToken: string, expiresIn: number) {
     this.setAccessToken(accessToken, expiresIn);
     this.setRefreshToken(refreshToken);
   }
 
-  /**
-   * Logout - clear all auth data
-   */
   public logout() {
     this.clearAuth();
   }
 
-  /**
-   * GET request
-   */
   public async get<T = unknown>(url: string, config?: any) {
+    const demoResponse = demoGet<T>(url);
+    if (demoResponse) return demoResponse;
     const response = await this.client.get<ApiResponse<T>>(url, config);
     return response.data;
   }
 
-  /**
-   * POST request
-   */
   public async post<T = unknown>(url: string, data?: any, config?: any) {
+    const demoResponse = demoMutation<T>();
+    if (demoResponse) return demoResponse;
     const response = await this.client.post<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  /**
-   * PUT request
-   */
   public async put<T = unknown>(url: string, data?: any, config?: any) {
+    const demoResponse = demoMutation<T>();
+    if (demoResponse) return demoResponse;
     const response = await this.client.put<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  /**
-   * PATCH request
-   */
   public async patch<T = unknown>(url: string, data?: any, config?: any) {
+    const demoResponse = demoMutation<T>();
+    if (demoResponse) return demoResponse;
     const response = await this.client.patch<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
-  /**
-   * DELETE request
-   */
   public async delete<T = unknown>(url: string, config?: any) {
+    const demoResponse = demoMutation<T>();
+    if (demoResponse) return demoResponse;
     const response = await this.client.delete<ApiResponse<T>>(url, config);
     return response.data;
   }
 }
 
-// Export singleton instance
 export const apiClient = new ApiClient();
-
-// Export type
 export type { ApiClient };
