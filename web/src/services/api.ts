@@ -14,12 +14,16 @@ const TOKEN_STORAGE_KEY = 'morva_access_token';
 const REFRESH_TOKEN_STORAGE_KEY = 'morva_refresh_token';
 
 interface RequestConfig extends InternalAxiosRequestConfig { _retry?: boolean }
+type RefreshSubscriber = {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+};
 
 class ApiClient {
   private client: AxiosInstance;
   private currentUser: User | null = null;
   private isRefreshing = false;
-  private refreshSubscribers: ((token: string) => void)[] = [];
+  private refreshSubscribers: RefreshSubscriber[] = [];
 
   constructor() {
     this.client = axios.create({
@@ -45,32 +49,44 @@ class ApiClient {
       (response) => response,
       async (error: AxiosError) => {
         const config = error.config as RequestConfig;
-        if (error.response?.status === 401 && !config?._retry) {
+        const hasRefreshToken = Boolean(this.getRefreshToken());
+        if (error.response?.status === 401 && !config?._retry && hasRefreshToken) {
           config!._retry = true;
           if (!this.isRefreshing) {
             this.isRefreshing = true;
             try {
               const newToken = await this.refreshAccessToken();
-              this.isRefreshing = false;
-              this.refreshSubscribers.forEach((callback) => callback(newToken));
-              this.refreshSubscribers = [];
+              this.resolveRefreshSubscribers(newToken);
               return this.client(config);
             } catch (refreshError) {
-              this.isRefreshing = false;
-              this.clearAuth();
+              this.rejectRefreshSubscribers(refreshError);
               return Promise.reject(this.handleError(refreshError));
+            } finally {
+              this.isRefreshing = false;
             }
           }
-          return new Promise((resolve) => {
-            this.refreshSubscribers.push((token: string) => {
-              config.headers.Authorization = `Bearer ${token}`;
-              resolve(this.client(config));
-            });
+          return new Promise((resolve, reject) => {
+            this.refreshSubscribers.push({ resolve, reject });
+          }).then((token) => {
+            config.headers.Authorization = `Bearer ${token}`;
+            return this.client(config);
           }).catch((err) => Promise.reject(this.handleError(err)));
         }
         return Promise.reject(this.handleError(error));
       }
     );
+  }
+
+  private resolveRefreshSubscribers(token: string) {
+    const subscribers = this.refreshSubscribers;
+    this.refreshSubscribers = [];
+    subscribers.forEach(({ resolve }) => resolve(token));
+  }
+
+  private rejectRefreshSubscribers(error: unknown) {
+    const subscribers = this.refreshSubscribers;
+    this.refreshSubscribers = [];
+    subscribers.forEach(({ reject }) => reject(error));
   }
 
   private loadStoredAuth() {
