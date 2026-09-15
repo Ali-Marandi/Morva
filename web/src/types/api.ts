@@ -14,7 +14,6 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-// Error structure
 export interface ApiError {
   code: string;
   message: string;
@@ -22,7 +21,6 @@ export interface ApiError {
   details?: Record<string, unknown>;
 }
 
-// Pagination
 export interface PaginationParams {
   page?: number;
   limit?: number;
@@ -48,7 +46,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string | null;
   expiresIn: number;
   user: User;
 }
@@ -139,7 +137,7 @@ export interface EmployeeStats {
 
 export interface Payroll {
   id: string;
-  period: string; // YYYY-MM format
+  period: string;
   payDate: string;
   status: 'draft' | 'pending' | 'approved' | 'processed' | 'paid';
   totalAmount: number;
@@ -228,7 +226,7 @@ export interface ApprovalStats {
   pendingCount: number;
   approvedCount: number;
   rejectedCount: number;
-  averageApprovalTime: number; // in hours
+  averageApprovalTime: number;
 }
 
 // ============= Report Types =============
@@ -258,7 +256,7 @@ export interface GenerateReportDto {
 export interface ReportStats {
   totalReports: number;
   reportsThisMonth: number;
-  averageGenerationTime: number; // in seconds
+  averageGenerationTime: number;
 }
 
 // ============= Dashboard Types =============
@@ -277,7 +275,7 @@ export interface DashboardData {
   systemHealth: {
     status: 'healthy' | 'warning' | 'critical';
     lastCheck: string;
-    uptime: number; // percentage
+    uptime: number;
   };
 }
 
