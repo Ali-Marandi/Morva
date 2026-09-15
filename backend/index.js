@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const express = require('express')
 const cors = require('cors')
 const multer = require('multer')
@@ -6,7 +7,16 @@ const fs = require('fs')
 const path = require('path')
 const app = express()
 
-app.use(cors())
+const LOCAL_ADMIN_EMAIL = process.env.MORVA_LOCAL_ADMIN_EMAIL
+const LOCAL_ADMIN_PASSWORD = process.env.MORVA_LOCAL_ADMIN_PASSWORD
+const LOCAL_CORS_ORIGIN = process.env.MORVA_LOCAL_CORS_ORIGIN || 'http://localhost:5173'
+const LOCAL_ACCESS_TOKEN = crypto.randomBytes(32).toString('hex')
+
+if (!LOCAL_ADMIN_EMAIL || !LOCAL_ADMIN_PASSWORD) {
+  throw new Error('MORVA_LOCAL_ADMIN_EMAIL and MORVA_LOCAL_ADMIN_PASSWORD must be configured.')
+}
+
+app.use(cors({ origin: LOCAL_CORS_ORIGIN }))
 app.use(express.json())
 
 const upload = multer({
@@ -73,20 +83,22 @@ function importSummary(store) {
   return { categories, totals, sources }
 }
 
-// Local development-only administrator account.
-const ADMIN_ACCOUNT = {
-  id: 'admin-local',
-  email: 'admin@morva.local',
-  password: 'Admin12345!',
-  name: 'مدیر سامانه',
-  role: 'admin',
-  permissions: ['*']
+function requireAuth(req, res, next) {
+  const authorization = req.get('authorization')
+  if (authorization !== `Bearer ${LOCAL_ACCESS_TOKEN}`) {
+    return res.status(401).json({ success: false, error: { message: 'احراز هویت لازم است.' } })
+  }
+  next()
 }
+
+app.get('/health', (_req, res) => {
+  res.json({ success: true, data: { status: 'ok', mode: 'local' } })
+})
 
 app.post('/auth/login', (req, res) => {
   const { email, password } = req.body
 
-  if (email !== ADMIN_ACCOUNT.email || password !== ADMIN_ACCOUNT.password) {
+  if (email !== LOCAL_ADMIN_EMAIL || password !== LOCAL_ADMIN_PASSWORD) {
     return res.status(401).json({
       success: false,
       error: { message: 'ایمیل یا رمز عبور نادرست است.' }
@@ -96,25 +108,25 @@ app.post('/auth/login', (req, res) => {
   res.json({
     success: true,
     data: {
-      accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token',
+      accessToken: LOCAL_ACCESS_TOKEN,
+      refreshToken: null,
       expiresIn: 3600,
       user: {
-        id: ADMIN_ACCOUNT.id,
-        email: ADMIN_ACCOUNT.email,
-        name: ADMIN_ACCOUNT.name,
-        role: ADMIN_ACCOUNT.role,
-        permissions: ADMIN_ACCOUNT.permissions
+        id: 'admin-local',
+        email: LOCAL_ADMIN_EMAIL,
+        name: 'مدیر سامانه',
+        role: 'admin',
+        permissions: ['*']
       }
     }
   })
 })
 
-app.get('/imports/summary', (_req, res) => {
+app.get('/imports/summary', requireAuth, (_req, res) => {
   res.json({ success: true, data: importSummary(readStore()) })
 })
 
-app.post('/imports/upload', upload.single('file'), (req, res, next) => {
+app.post('/imports/upload', requireAuth, upload.single('file'), (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: { message: 'یک فایل Excel انتخاب کنید.' } })
