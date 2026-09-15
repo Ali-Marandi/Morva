@@ -1,8 +1,3 @@
-/**
- * Base API Client Configuration
- * Axios instance with interceptors, error handling, and token management
- */
-
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiResponse, ApiError, User } from '../types/api';
 import {
@@ -12,17 +7,13 @@ import {
   DEMO_USER_STORAGE_KEY,
   demoGet,
   demoMutation,
-  demoUser,
 } from './demo';
 
-// API base URL configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const TOKEN_STORAGE_KEY = 'morva_access_token';
 const REFRESH_TOKEN_STORAGE_KEY = 'morva_refresh_token';
 
-interface RequestConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
-}
+interface RequestConfig extends InternalAxiosRequestConfig { _retry?: boolean }
 
 class ApiClient {
   private client: AxiosInstance;
@@ -34,26 +25,17 @@ class ApiClient {
     this.client = axios.create({
       baseURL: API_BASE_URL,
       timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Client-Version': '1.0.0',
-      },
+      headers: { 'Content-Type': 'application/json', 'X-Client-Version': '1.0.0' },
     });
-
     this.setupInterceptors();
     this.loadStoredAuth();
   }
 
-  /**
-   * Setup axios interceptors for request/response handling
-   */
   private setupInterceptors() {
     this.client.interceptors.request.use(
       (config: RequestConfig) => {
         const token = this.getAccessToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        if (token) config.headers.Authorization = `Bearer ${token}`;
         return config;
       },
       (error) => Promise.reject(this.handleError(error))
@@ -63,13 +45,10 @@ class ApiClient {
       (response) => response,
       async (error: AxiosError) => {
         const config = error.config as RequestConfig;
-
         if (error.response?.status === 401 && !config?._retry) {
           config!._retry = true;
-
           if (!this.isRefreshing) {
             this.isRefreshing = true;
-
             try {
               const newToken = await this.refreshAccessToken();
               this.isRefreshing = false;
@@ -82,7 +61,6 @@ class ApiClient {
               return Promise.reject(this.handleError(refreshError));
             }
           }
-
           return new Promise((resolve) => {
             this.refreshSubscribers.push((token: string) => {
               config.headers.Authorization = `Bearer ${token}`;
@@ -90,29 +68,19 @@ class ApiClient {
             });
           }).catch((err) => Promise.reject(this.handleError(err)));
         }
-
         return Promise.reject(this.handleError(error));
       }
     );
   }
 
-  /**
-   * Load stored authentication from localStorage
-   */
   private loadStoredAuth() {
     if (!DEMO_MODE) return;
     const storedUser = localStorage.getItem(DEMO_USER_STORAGE_KEY);
     if (!storedUser) return;
-    try {
-      this.currentUser = JSON.parse(storedUser) as User;
-    } catch {
-      localStorage.removeItem(DEMO_USER_STORAGE_KEY);
-    }
+    try { this.currentUser = JSON.parse(storedUser) as User; }
+    catch { localStorage.removeItem(DEMO_USER_STORAGE_KEY); }
   }
 
-  /**
-   * Handle API errors and transform to consistent format
-   */
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
       const response = error.response?.data as any;
@@ -123,20 +91,8 @@ class ApiClient {
         details: response?.error?.details,
       };
     }
-
-    if (error instanceof Error) {
-      return {
-        code: 'NETWORK_ERROR',
-        message: error.message,
-        statusCode: 0,
-      };
-    }
-
-    return {
-      code: 'INTERNAL_ERROR',
-      message: 'An unexpected error occurred',
-      statusCode: 0,
-    };
+    if (error instanceof Error) return { code: 'NETWORK_ERROR', message: error.message, statusCode: 0 };
+    return { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred', statusCode: 0 };
   }
 
   private async refreshAccessToken(): Promise<string> {
@@ -144,18 +100,12 @@ class ApiClient {
       this.setAccessToken(DEMO_SESSION, DEMO_SESSION_TTL);
       return DEMO_SESSION;
     }
-
     const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
+    if (!refreshToken) throw new Error('No refresh token available');
     try {
       const response = await this.client.post<ApiResponse>('/auth/refresh', { refreshToken });
-      if (!response.data.success || !response.data.data) {
-        throw new Error('Token refresh failed');
-      }
-      const { accessToken, expiresIn } = response.data.data as any;
+      if (!response.data.success || !response.data.data) throw new Error('Token refresh failed');
+      const { accessToken, expiresIn } = response.data.data as { accessToken: string; expiresIn: number };
       this.setAccessToken(accessToken, expiresIn);
       return accessToken;
     } catch (error) {
@@ -166,15 +116,13 @@ class ApiClient {
 
   private setAccessToken(token: string, expiresIn: number) {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    const expirationTime = new Date().getTime() + expiresIn * 1000;
-    localStorage.setItem(`${TOKEN_STORAGE_KEY}_expires`, String(expirationTime));
+    localStorage.setItem(`${TOKEN_STORAGE_KEY}_expires`, String(new Date().getTime() + expiresIn * 1000));
   }
 
   private getAccessToken(): string | null {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY);
     const expiresAt = localStorage.getItem(`${TOKEN_STORAGE_KEY}_expires`);
     if (!token || !expiresAt) return null;
-
     if (new Date().getTime() > parseInt(expiresAt, 10)) {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       localStorage.removeItem(`${TOKEN_STORAGE_KEY}_expires`);
@@ -183,12 +131,11 @@ class ApiClient {
     return token;
   }
 
-  private getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-  }
+  private getRefreshToken(): string | null { return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY); }
 
-  private setRefreshToken(token: string) {
-    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  private setRefreshToken(token: string | null | undefined) {
+    if (token) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+    else localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
   }
 
   private clearAuth() {
@@ -207,22 +154,15 @@ class ApiClient {
     }
   }
 
-  public getUser(): User | null {
-    return this.currentUser;
-  }
+  public getUser(): User | null { return this.currentUser; }
+  public isAuthenticated(): boolean { return this.getAccessToken() !== null && this.currentUser !== null; }
 
-  public isAuthenticated(): boolean {
-    return this.getAccessToken() !== null && this.currentUser !== null;
-  }
-
-  public setAuthTokens(accessToken: string, refreshToken: string, expiresIn: number) {
+  public setAuthTokens(accessToken: string, refreshToken: string | null | undefined, expiresIn: number) {
     this.setAccessToken(accessToken, expiresIn);
     this.setRefreshToken(refreshToken);
   }
 
-  public logout() {
-    this.clearAuth();
-  }
+  public logout() { this.clearAuth(); }
 
   public async get<T = unknown>(url: string, config?: any) {
     const demoResponse = demoGet<T>(url);
@@ -238,11 +178,8 @@ class ApiClient {
     return response.data;
   }
 
-  /** Upload a file without serializing it as JSON. */
   public async upload<T = unknown>(url: string, data: FormData) {
-    const response = await this.client.post<ApiResponse<T>>(url, data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await this.client.post<ApiResponse<T>>(url, data, { headers: { 'Content-Type': 'multipart/form-data' } });
     return response.data;
   }
 
