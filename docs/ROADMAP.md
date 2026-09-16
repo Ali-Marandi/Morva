@@ -38,6 +38,7 @@
 - M3.25 population-scoped ledger treatment activation boundary with immutable population/Rule Pack evidence binding and fail-closed execution readiness
 - M3.26 snapshot-driven replay certification boundary with immutable snapshot/Rule Pack/input/output hashes, deterministic certification fingerprinting and fail-closed status
 - M3.27 three-way reconciliation release boundary with exact payroll/accounting/payment batch, employee-count and amount matching plus hard-stop release behavior
+- M3.28 payment exception lifecycle foundation with provider-neutral return/reject/partial-settlement/reversal/unresolved-mismatch states, explicit resolution evidence and fail-closed release guard
 
 ## Current execution queue
 
@@ -53,7 +54,7 @@
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
 12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; live adapter evidence and authorized staging/pilot settlement remain pending.**
-13. Implement payment reversal/return handling and settlement exception workflows.
+13. Extend M3.28 from the provider-neutral lifecycle foundation into payment-item/batch persistence, reversal/return workflows, settlement exception handling, immutable operational evidence and API/UI integration. **No provider-specific semantics may be activated without authoritative contracts.**
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls.
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
 16. Execute target-scale load/concurrency, mutation and financial property-based tests.
