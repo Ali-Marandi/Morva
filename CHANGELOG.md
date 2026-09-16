@@ -2,6 +2,19 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.30 Payment Exception Persistence
+
+### Payment exception persistence
+- Persist provider-neutral payment exception state in SQLAlchemy/PostgreSQL-compatible schema.
+- Persist immutable resolution events with actor, reason, evidence reference, timezone-aware timestamp and deterministic fingerprint.
+- Add a transactional resolution boundary with idempotency-key replay safety.
+- Keep payment-item release fail-closed while any exception remains open or blocked.
+- Add Alembic migration `0021_payment_exception_persistence` and dedicated regression CI coverage.
+
+### Safety
+- No live bank/Treasury integration, provider-specific contract, statutory amount, retry policy or production payment authority is introduced.
+- M3.27 reconciliation and M3.28/M3.29 exception controls remain mandatory.
+
 ## Unreleased — M3.29 Payment Exception Resolution Ledger
 
 ### Payment exception governance
