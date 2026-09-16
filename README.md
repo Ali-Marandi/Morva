@@ -11,6 +11,11 @@
 **Public repository:** `Ali-Marandi/Morva`  
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
+**Latest `main` activity (2026-09-15):**
+- Latest main commit: `2a387a1` — `feat(web): make module workspace interactive in demo mode`
+- Recent merged work includes the local backend end-to-end regression gate and web/authentication hardening.
+- CI and release gates remain fail-closed for any real payroll/payment authority.
+
 **Latest Changes (v1.0.1):**
 - ✅ Security dependency update: `cryptography` 50.x
 - ✅ Python 3.12/3.13 CI green
@@ -65,6 +70,40 @@ Source
 | Web | RTL-compatible React 18/TypeScript/Tailwind CSS web distribution with 14 components, 6 pages, 7 routes, production-optimized Vite build, deployed through GitHub Pages |
 
 The implementation matrix in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md) is the source of truth for capability-level status.
+
+## Official project roadmap
+
+The following roadmap is the canonical delivery sequence for taking Morva from the current enterprise validation candidate to controlled production readiness. Each stage is intended to be a reviewable, evidence-driven increment rather than a one-shot release.
+
+### Acceptance gates
+
+The final acceptance model is based on four gates:
+
+1. **Legal rules** — every active rule has a valid, reviewed `legal_source`; no unresolved `TODO: NEEDS-LEGAL-SOURCE` remains in the authoritative execution path.
+2. **Authoritative payroll samples** — every production rule set is verified against approved real-world payroll reference samples, line by line, for each applicable employee population.
+3. **External integrations** — every required adapter is contract-tested, failure-mode tested and exercised in an authorized staging/pilot environment.
+4. **Security, compliance and recovery** — independent security evidence, disaster-recovery evidence with documented RTO/RPO, and clean three-way reconciliation are complete.
+
+### Delivery sequence
+
+| Stage | Roadmap milestone | Target outcome |
+|---|---|---|
+| 1 | Rules engine + payroll calculation core | Validate the versioned Rule Pack model and calculation engine against the existing golden fixtures; preserve fail-closed legal behavior. |
+| 2 | Explainable payslip | Deliver line-item provenance with a user-facing **«این عدد از کجا آمد؟»** explanation path. |
+| 3 | Karmand Iran + national government SSO | Establish authoritative employment/personnel identity and government authentication integrations through isolated adapters. |
+| 4 | Two pension funds + comparison reporting | Complete the shared adapter/data model while keeping each fund's legal treatment isolated and auditable. |
+| 5 | Teacher ranking + retroactive arrears | Connect approved rank decisions to payroll with snapshot-driven retrospective recalculation and automatic arrears/adjustment artifacts. |
+| 6 | Treasury/payment + three-way reconciliation | Separate entitlement, treasury instruction and actual settlement; automatically flag every mismatch. |
+| 7 | Security hardening + disaster recovery + pilot | Complete production security controls, restore drills and an authorized regional/organizational pilot. |
+| 8 | Gradual province-by-province rollout | Expand under controlled operational monitoring, preserving the same evidence and acceptance gates for every deployment scope. |
+
+### Current execution focus
+
+The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
+
+The next execution queue remains focused on closing the evidence boundary: authoritative master-data confirmation, formal legal Rule Pack approval, approved population-specific ledger treatments, certified historical replay corpus, official external adapters and staging/pilot evidence, full three-way reconciliation, payment return/reversal workflows, production key management and retention, DR/PITR drills, target-scale testing, independent security assessment, and formal finance/legal/operations certification.
+
+> **Important:** The roadmap is a target sequence, not a claim that every stage is already completed. Morva must remain fail-closed for real payroll and real payment until the applicable evidence and approvals are complete.
 
 ## Canonical payroll lifecycle
 
