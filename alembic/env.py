@@ -15,6 +15,7 @@ from morva.persistence import core_hr_records  # noqa: F401
 from morva.persistence import domain_extensions  # noqa: F401
 from morva.persistence import enterprise_models  # noqa: F401
 from morva.persistence import masterdata_records  # noqa: F401
+from morva.persistence import payment_exception_records  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
@@ -48,7 +49,7 @@ def run_migrations_online() -> None:
     )
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
-        with context.begin_transaction():
+        with connection.begin():
             context.run_migrations()
 
 
