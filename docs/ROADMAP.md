@@ -40,6 +40,7 @@
 - M3.27 three-way reconciliation release boundary with exact payroll/accounting/payment batch, employee-count and amount matching plus hard-stop release behavior
 - M3.28 payment exception lifecycle foundation with provider-neutral return/reject/partial-settlement/reversal/unresolved-mismatch states, explicit resolution evidence and fail-closed release guard
 - M3.29 payment exception resolution ledger foundation with immutable event records, explicit resolution evidence, timezone-aware timestamps, deterministic fingerprints and tamper verification
+- M3.30 persisted payment exception state and resolution events with transactional idempotency boundary and dedicated Alembic/pytest gate
 
 ## Current execution queue
 
@@ -55,7 +56,7 @@
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
 12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; live adapter evidence and authorized staging/pilot settlement remain pending.**
-13. Extend M3.29 from the provider-neutral resolution-ledger foundation into payment-item/batch persistence, reversal/return workflows, settlement exception handling and API/UI integration. **No provider-specific semantics may be activated without authoritative contracts.**
+13. Extend M3.30 from persisted exception/resolution state into API/UI workflows and settlement-linked payment-item/batch operations. **Provider-neutral semantics are persisted; provider-specific behavior remains prohibited without authoritative contracts.**
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls.
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
 16. Execute target-scale load/concurrency, mutation and financial property-based tests.
