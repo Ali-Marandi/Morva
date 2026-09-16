@@ -1,6 +1,8 @@
 from .calculator import PayrollCalculation, PayrollCalculator
 from .diff import EmployeeDiff, LineDiff, compare_snapshots, population_component_totals
 from .models import PayrollLine, PayrollResult
+from .payment_exception_ledger import PaymentExceptionEvent, record_resolution, verify_event
+from .payment_exceptions import PaymentException, PaymentExceptionStatus, PaymentExceptionType
 from .policies import ContributionPolicy, TaxBracket, TaxPolicy, demo_iranian_policy_pack
 from .profiles import CalculationMode, ComponentRule, PayrollCalculationProfile, RuleReadiness, observed_source_profile
 from .reconciliation_engine import PopulationReconciliation, flatten_diffs, reconcile_population
@@ -16,6 +18,10 @@ __all__ = [
     "EffectiveOrder",
     "EmployeeDiff",
     "LineDiff",
+    "PaymentException",
+    "PaymentExceptionEvent",
+    "PaymentExceptionStatus",
+    "PaymentExceptionType",
     "PayrollCalculation",
     "PayrollCalculationProfile",
     "PayrollCalculator",
@@ -38,6 +44,8 @@ __all__ = [
     "latest_effective_order",
     "observed_source_profile",
     "population_component_totals",
+    "record_resolution",
     "reconcile_population",
     "replay_many",
+    "verify_event",
 ]
