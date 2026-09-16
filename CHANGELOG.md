@@ -2,6 +2,20 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.28 Payment Exceptions & Reversal Foundation
+
+### Backend
+- Add a provider-neutral payment exception lifecycle covering return, reject, partial settlement, reversal and unresolved reconciliation mismatch.
+- Require explicit resolution actor, reason and evidence reference.
+- Keep payment release fail-closed while any exception remains unresolved.
+
+### Quality
+- Add focused regression coverage for release blocking, explicit resolution evidence and one-time resolution semantics.
+- Add a dedicated M3.28 GitHub Actions gate.
+
+### Safety
+- No live bank/Treasury integration, provider-specific contract, statutory amount or real payment authority is introduced.
+
 ## 1.0.1 — 2026-09-06 Security & CI Patch Release
 
 ### Security
