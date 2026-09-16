@@ -1,0 +1,22 @@
+name: M3.30 Payment Exception Persistence Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  m3-30-payment-exception-persistence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/persistence/payment_exception_records.py tests/test_payment_exception_persistence_m3_30.py alembic/versions/0021_payment_exception_persistence.py
+      - run: pytest -q tests/test_payment_exception_persistence_m3_30.py
+      - run: rm -f morva.db && alembic upgrade head
+      - run: alembic current
