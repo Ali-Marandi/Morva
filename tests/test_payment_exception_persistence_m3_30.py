@@ -127,14 +127,26 @@ def test_persisted_event_fingerprint_verifies_and_detects_tampering() -> None:
     session.commit()
 
     stored = session.query(PaymentExceptionEventRecord).one()
+    occurred_at = stored.occurred_at
+    if occurred_at.tzinfo is None:
+        occurred_at = occurred_at.replace(tzinfo=timezone.utc)
     event = PaymentExceptionEvent(
         exception_id=stored.exception_id,
         status=PaymentExceptionStatus(stored.status),
         actor=stored.actor,
         reason=stored.reason,
         evidence_ref=stored.evidence_ref,
-        occurred_at=stored.occurred_at,
+        occurred_at=occurred_at,
         fingerprint=stored.fingerprint,
     )
     assert verify_event(event)
-    event.fingerprint = "0" * 64 if False else event.fingerprint
+    tampered = PaymentExceptionEvent(
+        exception_id=event.exception_id,
+        status=event.status,
+        actor=event.actor,
+        reason="tampered",
+        evidence_ref=event.evidence_ref,
+        occurred_at=event.occurred_at,
+        fingerprint=event.fingerprint,
+    )
+    assert not verify_event(tampered)
