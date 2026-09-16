@@ -2,19 +2,19 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
-## Unreleased — M3.28 Payment Exceptions & Reversal Foundation
+## Unreleased — M3.29 Payment Exception Resolution Ledger
 
-### Backend
-- Add a provider-neutral payment exception lifecycle covering return, reject, partial settlement, reversal and unresolved reconciliation mismatch.
+### Payment exception governance
+- Add immutable provider-neutral payment exception resolution events.
 - Require explicit resolution actor, reason and evidence reference.
-- Keep payment release fail-closed while any exception remains unresolved.
-
-### Quality
-- Add focused regression coverage for release blocking, explicit resolution evidence and one-time resolution semantics.
-- Add a dedicated M3.28 GitHub Actions gate.
+- Require timezone-aware event timestamps.
+- Add deterministic SHA-256 event fingerprints and tamper verification.
+- Reject second resolution-event creation for already-resolved exceptions.
+- Add dedicated M3.29 CI regression gate.
 
 ### Safety
-- No live bank/Treasury integration, provider-specific contract, statutory amount or real payment authority is introduced.
+- No live bank/Treasury integration, provider-specific contract, statutory amount, retry policy or production payment authority is introduced.
+- M3.27 reconciliation and M3.28 fail-closed exception release controls remain mandatory.
 
 ## 1.0.1 — 2026-09-06 Security & CI Patch Release
 
@@ -37,68 +37,3 @@ All notable Morva implementation and distribution changes are recorded here.
 - **Package version:** `1.0.1`
 - **Canonical branch:** `main`
 - **Release tag:** `v1.0.1`
-
-> Software versioning and distribution do not constitute authorization for real payroll or payment release. See `docs/RELEASE_1_0.md` and the production certification gates for required evidence.
-
-## 1.0.0 — 2026-09-04 Enterprise Web Platform Release
-
-### Web Platform (New)
-- **World-class web platform redesign** - React 18 + TypeScript + Tailwind CSS
-- **14 components and 6 feature pages** implemented:
-  - Dashboard with KPIs, charts, and activity feed
-  - Employees management with filter and status tracking
-  - Payroll processing with visualization and controls
-  - Approvals workflow with multi-status filtering
-  - Reports generation and distribution
-  - Settings and configuration management
-- **7 routes** with React Router v6 navigation
-- **Responsive design** (Mobile First: 320px, 768px, 1024px+)
-- **WCAG AA accessibility** compliance
-- **Bundle optimization** with Vite, code splitting, and manual chunking
-- **GitHub Pages deployment** ready with /Morva/ base path
-- **Production build** validated: ~566 KB (gzip: ~159 KB)
-- **Comprehensive documentation**:
-  - BUILD_GUIDE.md with deployment instructions
-  - PRODUCTION_CERTIFICATION_GATES.md with 10 certification gates
-  - NEXT_PHASE_ROADMAP.md with 10-phase implementation roadmap
-
-### Backend & Core (Existing)
-- Enterprise payroll hardening consolidated the canonical payroll lifecycle
-- Fail-closed production boundaries for legal rules and external payments
-- Durable audit chain, rule evidence, sensitive-field protections
-- Hierarchical authorization and integration messaging foundations
-- Employee payroll artifacts with payslip provenance and replay capabilities
-- Production calculation remains blocked without required certifications
-
-### CI/CD & Deployment
-- GitHub Actions workflows validated (`.github/workflows/ci.yml`)
-- Web Pages deployment pipeline active (`.github/workflows/web-pages.yml`)
-- npm dependencies updated and audited
-- Production build configuration optimized
-
-### Documentation
-- Updated README.md with web platform details
-- 10 production certification gates documented
-- 10-phase technical roadmap for backend integration
-- FINAL_COMPLETION_SUMMARY.md with implementation metrics
-
-### Distribution status
-
-- **Package version:** `1.0.0`
-- **Canonical branch:** `main`
-- **GitHub Pages deployment:** Active at `https://ali-marandi.github.io/Morva/`
-- **Web platform status:** ✅ Production-ready
-- **Backend status:** Enterprise validation candidate
-- **Release tag:** `v1.0.0`
-
-> Software versioning and distribution do not constitute authorization for real payroll or payment release. See PRODUCTION_CERTIFICATION_GATES.md for required evidence.
-
-## Previous Releases
-
-### 1.0.0 — Enterprise validation lineage (Core implementation)
-
-- Enterprise payroll hardening consolidated the canonical payroll lifecycle and fail-closed production boundaries.
-- PostgreSQL migrations became part of the CI validation path.
-- Durable audit chain, rule evidence, sensitive-field protections, hierarchical authorization and integration messaging foundations are maintained.
-- Employee payroll artifacts, payslip provenance and deterministic historical replay are persisted.
-- Production calculation remains blocked without approved legal Rule Sets, authoritative source data and required external certifications.
