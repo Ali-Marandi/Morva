@@ -22,6 +22,7 @@ def _register_models() -> None:
     from morva.persistence import domain_extensions  # noqa: F401
     from morva.persistence import enterprise_models  # noqa: F401
     from morva.persistence import masterdata_records  # noqa: F401
+    from morva.persistence import payment_exception_records  # noqa: F401
     from morva.persistence import security_guards  # noqa: F401
 
 
