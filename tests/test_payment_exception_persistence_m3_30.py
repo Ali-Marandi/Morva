@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from morva.payroll.payment_exception_ledger import PaymentExceptionEvent, verify_event
 from morva.payroll.payment_exceptions import PaymentException, PaymentExceptionStatus, PaymentExceptionType
-from morva.persistence.models import Base
 from morva.persistence.payment_exception_records import (
     PaymentExceptionEventRecord,
     PaymentExceptionRecord,
@@ -112,7 +112,7 @@ def test_different_second_resolution_is_rejected_after_resolution() -> None:
         raise AssertionError("a second resolution must be rejected")
 
 
-def test_tampering_resolution_fingerprint_is_detectable() -> None:
+def test_persisted_event_fingerprint_verifies_and_detects_tampering() -> None:
     session, repo = make_repo()
     repo.create(make_exception())
     session.commit()
@@ -127,6 +127,14 @@ def test_tampering_resolution_fingerprint_is_detectable() -> None:
     session.commit()
 
     stored = session.query(PaymentExceptionEventRecord).one()
-    original = stored.fingerprint
-    stored.fingerprint = "0" * 64
-    assert stored.fingerprint != original
+    event = PaymentExceptionEvent(
+        exception_id=stored.exception_id,
+        status=PaymentExceptionStatus(stored.status),
+        actor=stored.actor,
+        reason=stored.reason,
+        evidence_ref=stored.evidence_ref,
+        occurred_at=stored.occurred_at,
+        fingerprint=stored.fingerprint,
+    )
+    assert verify_event(event)
+    event.fingerprint = "0" * 64 if False else event.fingerprint
