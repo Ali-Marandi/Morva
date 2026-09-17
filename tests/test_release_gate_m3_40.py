@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import pytest
 
@@ -106,7 +105,3 @@ def test_gate_blockers_surface_security_and_attestation_failures():
 
     assert any("independent security signoff" in item for item in gate.blockers)
     assert any("release provenance/signing attestation" in item for item in gate.blockers)
-
-
-# Keep the module intentionally free of production financial fixtures; the gate only composes evidence.
-_ = Decimal("0")
