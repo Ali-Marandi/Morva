@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from morva.audit.chain import AuditEvent
-from morva.persistence.database import SessionLocal
 from morva.persistence.models import AuditChainHeadRecord, AuditEventRecord
 
 
@@ -101,6 +100,8 @@ def append_audit_event(
             payload=payload,
             reason=reason,
         )
+    from morva.persistence.database import SessionLocal
+
     with SessionLocal() as own_session:
         record = _append_with_session(
             own_session,
@@ -118,6 +119,8 @@ def append_audit_event(
 
 def verify_audit_chain() -> None:
     """Raise if the persistent audit chain has a gap, mutation, or incorrect head."""
+    from morva.persistence.database import SessionLocal
+
     with SessionLocal() as session:
         events = session.scalars(
             select(AuditEventRecord).order_by(AuditEventRecord.sequence_no.asc())
