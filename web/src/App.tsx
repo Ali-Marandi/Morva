@@ -13,6 +13,7 @@ import SelfService from "./pages/SelfService";
 import Objections from "./pages/Objections";
 import Imports from "./pages/Imports";
 import ModuleWorkspace from "./pages/ModuleWorkspace";
+import PaymentExceptions from "./pages/PaymentExceptions";
 import NotFound from "./pages/NotFound";
 import { authService } from "./services";
 
@@ -42,13 +43,14 @@ function App() {
             <Route path="/self-service" element={<SelfService />} />
             <Route path="/objections" element={<Objections />} />
             <Route path="/payroll" element={<Payroll />} />
+            <Route path="/payment-exceptions" element={<PaymentExceptions />} />
             <Route path="/approvals" element={<Approvals />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/imports" element={<Imports />} />
             <Route path="/modules/*" element={<ModuleWorkspace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
-          </Route>
+          </Routes>
         </Routes>
       </Router>
     </QueryClientProvider>
