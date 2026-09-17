@@ -45,10 +45,14 @@ jobs:
           mkdir -p .ci-recovery
           psql -h 127.0.0.1 -U morva -d morva -v ON_ERROR_STOP=1 -c "CREATE TABLE recovery_marker(id integer primary key, created_at timestamptz not null);"
           psql -h 127.0.0.1 -U morva -d morva -v ON_ERROR_STOP=1 -c "INSERT INTO recovery_marker VALUES (1, clock_timestamp());"
-          pg_dump --host=127.0.0.1 --username=morva --format=custom --no-owner --no-acl morva > .ci-recovery/morva.dump
-          pg_restore --list .ci-recovery/morva.dump > .ci-recovery/restore.list
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:17 \
+            pg_dump --host=127.0.0.1 --username=morva --format=custom --no-owner --no-acl morva > .ci-recovery/morva.dump
+          docker run --rm --network host postgres:17 \
+            pg_restore --list /workspace/.ci-recovery/morva.dump > .ci-recovery/restore.list
           grep -q "recovery_marker" .ci-recovery/restore.list
           createdb --host=127.0.0.1 --username=morva morva_restore
-          pg_restore --host=127.0.0.1 --username=morva --dbname=morva_restore --no-owner --no-acl .ci-recovery/morva.dump
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
+            -v "$PWD/.ci-recovery:/workspace" postgres:17 \
+            pg_restore --host=127.0.0.1 --username=morva --dbname=morva_restore --no-owner --no-acl /workspace/morva.dump
           psql -h 127.0.0.1 -U morva -d morva_restore -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM recovery_marker;" | grep -q "1"
           sha256sum .ci-recovery/morva.dump | tee .ci-recovery/morva.dump.sha256
