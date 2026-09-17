@@ -1,8 +1,13 @@
+import base64
 from dataclasses import replace
 
 import pytest
 
 from morva.runtime.config import settings
+
+
+def _key(byte: int) -> str:
+    return base64.urlsafe_b64encode(bytes([byte]) * 32).decode().rstrip("=")
 
 
 def test_production_requires_versioned_key_rings() -> None:
@@ -32,8 +37,8 @@ def test_development_can_use_legacy_single_key_compatibility() -> None:
     development = replace(
         settings,
         environment="development",
-        field_encryption_key="A" * 32,
-        field_lookup_hmac_key="B" * 32,
+        field_encryption_key=_key(1),
+        field_lookup_hmac_key=_key(2),
         field_encryption_keys="",
         field_lookup_hmac_keys="",
         key_version="v1",
