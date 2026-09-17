@@ -48,6 +48,7 @@
 - M3.35 target-scale payroll batch evidence, parallel deterministic calculation tests, financial property-based invariants and a targeted mutation-killing gate
 - M3.36 independent security assessment preflight contract with fail-closed signoff/finding/control gates, high-confidence secret preflight and dedicated CI gate
 - M3.37 formal release-certification contract with finance/legal/operations signoffs, evidence binding, domain gates and deterministic certification fingerprint
+- M3.38 release-candidate evidence bundle verifier bound to an exact Git commit SHA with fail-closed delegation to M3.37 certification
 
 ## Current execution queue
 
@@ -68,7 +69,7 @@
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence. **M3.34 adds the immutable recovery-evidence contract, encrypted PostgreSQL backup script, PITR restore preparation script and CI validation of isolated PostgreSQL backup/restore. Actual production WAL/PITR drill execution and approved RPO/RTO evidence remain pending operational certification.**
 16. Execute target-scale load/concurrency, mutation and financial property-based tests. **M3.35 adds 10,000+ employee batch evidence, parallel calculator replay coverage, Hypothesis financial invariants and four targeted mutation checks. Representative production workload targets, database/queue contention and independent performance certification remain pending.**
 17. Complete independent security assessment and close critical findings. **M3.36 adds the fail-closed assessment contract, high-confidence secret preflight, focused security regression tests and a dedicated CI gate. An actual independent assessment/report, independent signoff, remediation evidence and environment-specific penetration/abuse-case testing remain pending.**
-18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence. **M3.37 adds the fail-closed release certification contract and dedicated CI gate. Real finance/legal/operations approvals, verified evidence artifacts, release signing and GitHub Release/deployment evidence remain pending.**
+18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence. **M3.37 adds the fail-closed release certification contract and M3.38 adds exact-commit evidence-bundle verification. Real finance/legal/operations approvals, verified external evidence artifacts, release signing and GitHub Release/deployment evidence remain pending.**
 
 ## Production gate
 
