@@ -1,0 +1,54 @@
+name: M3.34 Backup PITR DR Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  m3-34-recovery:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: morva
+          POSTGRES_USER: morva
+          POSTGRES_PASSWORD: morva
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U morva -d morva"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project
+        run: python -m pip install -e '.[dev]'
+      - name: Run recovery evidence tests
+        run: pytest -q tests/test_disaster_recovery_m3_34.py
+      - name: Lint recovery code and scripts
+        run: |
+          ruff check src/morva/runtime/disaster_recovery.py tests/test_disaster_recovery_m3_34.py
+          bash -n ops/postgres/backup.sh
+          bash -n ops/postgres/pitr-restore.sh
+      - name: Verify PostgreSQL backup and isolated restore
+        env:
+          PGPASSWORD: morva
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-recovery
+          psql -h 127.0.0.1 -U morva -d morva -v ON_ERROR_STOP=1 -c "CREATE TABLE recovery_marker(id integer primary key, created_at timestamptz not null);"
+          psql -h 127.0.0.1 -U morva -d morva -v ON_ERROR_STOP=1 -c "INSERT INTO recovery_marker VALUES (1, clock_timestamp());"
+          pg_dump --host=127.0.0.1 --username=morva --format=custom --no-owner --no-acl morva > .ci-recovery/morva.dump
+          pg_restore --list .ci-recovery/morva.dump > .ci-recovery/restore.list
+          grep -q "recovery_marker" .ci-recovery/restore.list
+          createdb --host=127.0.0.1 --username=morva morva_restore
+          pg_restore --host=127.0.0.1 --username=morva --dbname=morva_restore --no-owner --no-acl .ci-recovery/morva.dump
+          psql -h 127.0.0.1 -U morva -d morva_restore -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM recovery_marker;" | grep -q "1"
+          sha256sum .ci-recovery/morva.dump | tee .ci-recovery/morva.dump.sha256
