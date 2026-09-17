@@ -17,4 +17,4 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e '.[dev]'
       - run: ruff check src/morva/payroll/payment_settlement.py tests/test_payment_settlement_m3_32.py
-      - run: pytest -q tests/test_payment_settlement_m3_32.py tests/test_payment_exception_persistence.py
+      - run: pytest -q tests/test_payment_settlement_m3_32.py tests/test_payment_exception_api_m3_31.py
