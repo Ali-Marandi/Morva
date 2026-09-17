@@ -46,6 +46,7 @@
 - M3.33 versioned managed application key ring with AES-256-GCM field encryption, context-bound HMAC-SHA-256 lookup tokens, retained-key decryption during rotation and production fail-closed enforcement of versioned key-ring configuration
 - M3.34 disaster-recovery evidence contract plus PostgreSQL encrypted-backup/PITR operational scripts and dedicated recovery CI gate
 - M3.35 target-scale payroll batch evidence, parallel deterministic calculation tests, financial property-based invariants and a targeted mutation-killing gate
+- M3.36 independent security assessment preflight contract with fail-closed signoff/finding/control gates, high-confidence secret preflight and dedicated CI gate
 
 ## Current execution queue
 
@@ -65,7 +66,7 @@
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls. **M3.33 implements the application-side versioned key-ring, authenticated encryption/lookup primitives, retained-key rotation compatibility and production configuration gate. Infrastructure-managed database/storage encryption, KMS/HSM custody, automated secret rotation, backup-key segregation, retention evidence and independent security validation remain pending operational work.**
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence. **M3.34 adds the immutable recovery-evidence contract, encrypted PostgreSQL backup script, PITR restore preparation script and CI validation of isolated PostgreSQL backup/restore. Actual production WAL/PITR drill execution and approved RPO/RTO evidence remain pending operational certification.**
 16. Execute target-scale load/concurrency, mutation and financial property-based tests. **M3.35 adds 10,000+ employee batch evidence, parallel calculator replay coverage, Hypothesis financial invariants and four targeted mutation checks. Representative production workload targets, database/queue contention and independent performance certification remain pending.**
-17. Complete independent security assessment and close critical findings.
+17. Complete independent security assessment and close critical findings. **M3.36 adds the fail-closed assessment contract, high-confidence secret preflight, focused security regression tests and a dedicated CI gate. An actual independent assessment/report, independent signoff, remediation evidence and environment-specific penetration/abuse-case testing remain pending.**
 18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence.
 
 ## Production gate
