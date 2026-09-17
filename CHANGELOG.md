@@ -2,6 +2,25 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.33 Managed Key Hardening
+
+### Production security
+- Add a provider-neutral, versioned `ManagedKeyRing` with exactly one active application key version and retained versions for rotation compatibility.
+- Encrypt sensitive application fields with AES-256-GCM using a random 96-bit nonce and optional associated data.
+- Generate context-bound HMAC-SHA-256 lookup tokens so sensitive lookup values do not require reversible plaintext indexes.
+- Bind encrypted values to their key version and fail closed when the referenced version is no longer retained.
+- Require matched, correctly sized encryption/HMAC key material and versioned key maps in production configuration.
+- Add a configurable minimum managed-key retention window of 30 days, defaulting to 90 days.
+- Document the separation between application cryptography and infrastructure responsibilities such as KMS/HSM custody, storage encryption-at-rest, backup-key segregation and automated secret rotation.
+
+### CI / verification
+- Add dedicated M3.33 regression coverage for encryption/decryption, context binding, key rotation, retired-key failure and production configuration enforcement.
+- Add a dedicated M3.33 GitHub Actions hardening gate.
+
+### Safety
+- No provider-specific bank/Treasury credentials, payment authority, statutory rates or live settlement behavior are introduced.
+- Production certification remains blocked pending operational key custody, database/storage encryption evidence, rotation/retention evidence, independent security review and the other release gates in `docs/ROADMAP.md`.
+
 ## Unreleased — M3.31 Payment Exception API Workflow
 
 ### Payment exception operations
