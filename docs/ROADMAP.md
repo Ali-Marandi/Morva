@@ -44,6 +44,7 @@
 - M3.31 provider-neutral payment exception API workflow with authenticated create/list/event-history/resolve operations, resolution evidence, RBAC boundary and idempotent audit behavior
 - M3.32 provider-neutral payment-batch settlement hard-stop boundary with deterministic per-item release evaluation and fail-closed unresolved-exception blocking
 - M3.33 versioned managed application key ring with AES-256-GCM field encryption, context-bound HMAC-SHA-256 lookup tokens, retained-key decryption during rotation and production fail-closed enforcement of versioned key-ring configuration
+- M3.34 disaster-recovery evidence contract plus PostgreSQL encrypted-backup/PITR operational scripts and dedicated recovery CI gate
 
 ## Current execution queue
 
@@ -61,7 +62,7 @@
 12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; M3.32 now blocks settlement at the payment-batch boundary when any member item has an unresolved exception. Live adapter evidence and authorized staging/pilot settlement remain pending.**
 13. Extend M3.30 from persisted exception/resolution state into API/UI workflows and settlement-linked payment-item/batch operations. **M3.31 adds authenticated provider-neutral API workflows for exception creation, open/all listing, immutable event history and idempotent resolution. M3.32 adds a provider-neutral batch/item release guard that consumes the existing exception state and fails closed. Provider-specific settlement behavior remains prohibited without authoritative contracts.**
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls. **M3.33 implements the application-side versioned key-ring, authenticated encryption/lookup primitives, retained-key rotation compatibility and production configuration gate. Infrastructure-managed database/storage encryption, KMS/HSM custody, automated secret rotation, backup-key segregation, retention evidence and independent security validation remain pending operational work.**
-15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
+15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence. **M3.34 adds the immutable recovery-evidence contract, encrypted PostgreSQL backup script, PITR restore preparation script and CI validation of isolated PostgreSQL backup/restore. Actual production WAL/PITR drill execution and approved RPO/RTO evidence remain pending operational certification.**
 16. Execute target-scale load/concurrency, mutation and financial property-based tests.
 17. Complete independent security assessment and close critical findings.
 18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence.
