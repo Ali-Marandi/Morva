@@ -41,6 +41,7 @@
 - M3.28 payment exception lifecycle foundation with provider-neutral return/reject/partial-settlement/reversal/unresolved-mismatch states, explicit resolution evidence and fail-closed release guard
 - M3.29 payment exception resolution ledger foundation with immutable event records, explicit resolution evidence, timezone-aware timestamps, deterministic fingerprints and tamper verification
 - M3.30 persisted payment exception state and resolution events with transactional idempotency boundary and dedicated Alembic/pytest gate
+- M3.31 provider-neutral payment exception API workflow with authenticated create/list/event-history/resolve operations, resolution evidence, RBAC boundary and idempotent audit behavior
 
 ## Current execution queue
 
@@ -56,7 +57,7 @@
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
 12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; live adapter evidence and authorized staging/pilot settlement remain pending.**
-13. Extend M3.30 from persisted exception/resolution state into API/UI workflows and settlement-linked payment-item/batch operations. **Provider-neutral semantics are persisted; provider-specific behavior remains prohibited without authoritative contracts.**
+13. Extend M3.30 from persisted exception/resolution state into API/UI workflows. **M3.31 adds authenticated provider-neutral API workflows for exception creation, open/all listing, immutable event history and idempotent resolution. Settlement-linked payment-item/batch operations remain pending until authoritative contracts exist.**
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls.
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
 16. Execute target-scale load/concurrency, mutation and financial property-based tests.
