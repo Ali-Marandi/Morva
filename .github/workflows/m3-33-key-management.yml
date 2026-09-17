@@ -16,5 +16,5 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e '.[dev]'
-      - run: ruff check src/morva/runtime/key_management.py src/morva/runtime/config.py tests/test_key_management_m3_33.py
-      - run: pytest -q tests/test_key_management_m3_33.py tests/test_runtime_config.py
+      - run: ruff check src/morva/runtime/key_management.py src/morva/runtime/config.py tests/test_key_management_m3_33.py tests/test_runtime_config_m3_33.py
+      - run: pytest -q tests/test_key_management_m3_33.py tests/test_runtime_config_m3_33.py
