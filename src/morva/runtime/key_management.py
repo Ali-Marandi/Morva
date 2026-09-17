@@ -62,7 +62,8 @@ class ManagedKeyRing:
     @staticmethod
     def _decode_key(value: str, *, label: str) -> bytes:
         try:
-            return base64.urlsafe_b64decode(value.encode("ascii"))
+            normalized = value + "=" * (-len(value) % 4)
+            return base64.urlsafe_b64decode(normalized.encode("ascii"))
         except (ValueError, UnicodeError) as exc:
             raise InvalidKeyMaterialError(f"invalid base64 {label}") from exc
 
