@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, BookOpenCheck, Calculator, FileBarChart, FileText, GraduationCap, Landmark, ReceiptText, Users, WalletCards } from 'lucide-react';
+import { BookOpenCheck, FileBarChart, GraduationCap, ReceiptText, Users, WalletCards } from 'lucide-react';
 
 export interface ModuleItem {
   id: string;
@@ -37,7 +37,7 @@ export const moduleMenus: ModuleMenu[] = [
       { id: 'current-payroll', label: 'محاسبه جاری', children: [{ id: 'current-request', label: 'درخواست محاسبه' }, { id: 'current-results', label: 'نتایج محاسبه حقوق' }] },
       { id: 'deferred-payroll', label: 'محاسبه معوق', children: [{ id: 'deferred-request', label: 'درخواست محاسبه معوق' }, { id: 'deferred-results', label: 'نتایج محاسبه معوق' }] },
       { id: 'debt-payroll', label: 'محاسبه دیون', children: [{ id: 'debt-request', label: 'درخواست محاسبه دیون' }, { id: 'debt-results', label: 'نتایج محاسبه دیون' }] },
-      { id: 'pay-request', label: 'درخواست وجه' }, { id: 'payslip', label: 'فیش حقوقی' }, { id: 'calculation-steps', label: 'مدیریت مراحل محاسبات' },
+      { id: 'pay-request', label: 'درخواست وجه' }, { id: 'payslip', label: 'فیش حقوقی' }, { id: 'payment-exceptions', label: 'استثناهای پرداخت' }, { id: 'calculation-steps', label: 'مدیریت مراحل محاسبات' },
     ],
   },
   {
