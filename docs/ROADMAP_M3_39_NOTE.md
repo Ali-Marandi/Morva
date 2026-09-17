@@ -1,0 +1,1 @@
+M3.39 is implemented on `main` and recorded by the release attestation contract in `src/morva/runtime/release_attestation.py`. The canonical `docs/ROADMAP.md` still requires its M3.39 line to be reconciled against the current main tree before the next release milestone.
