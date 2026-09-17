@@ -46,12 +46,12 @@ def certification(ready: bool = True) -> ReleaseCertification:
     )
 
 
-def attestation(ready: bool = True) -> ReleaseAttestation:
+def attestation(certification_fingerprint: str, ready: bool = True) -> ReleaseAttestation:
     return ReleaseAttestation(
         release_id="morva-1.0.1",
         tag="v1.0.1",
         candidate_sha=SHA,
-        certification_fingerprint="c" * 64,
+        certification_fingerprint=certification_fingerprint,
         evidence_bundle_fingerprint="d" * 64,
         artifacts=(ArtifactAttestation("dist/morva.tar.gz", "e" * 64),) if ready else (),
         signer="release-signer" if ready else None,
@@ -62,7 +62,8 @@ def attestation(ready: bool = True) -> ReleaseAttestation:
 
 
 def test_aggregate_release_gate_requires_every_domain():
-    gate = ReleaseGate(SHA, security(), certification(False), attestation())
+    cert = certification(False)
+    gate = ReleaseGate(SHA, security(), cert, attestation(cert.fingerprint))
 
     assert gate.release_ready is False
     assert "formal release certification is incomplete" in gate.blockers
@@ -71,7 +72,8 @@ def test_aggregate_release_gate_requires_every_domain():
 
 
 def test_aggregate_release_gate_passes_only_when_all_contracts_are_ready():
-    gate = ReleaseGate(SHA, security(), certification(), attestation())
+    cert = certification()
+    gate = ReleaseGate(SHA, security(), cert, attestation(cert.fingerprint))
 
     assert gate.release_ready is True
     gate.assert_release_ready()
@@ -96,12 +98,20 @@ def test_aggregate_release_gate_rejects_sha_mismatch():
         ),
     )
 
+    cert = certification()
     with pytest.raises(ReleaseGateError, match="candidate_sha"):
-        ReleaseGate(SHA, security(), mismatched, attestation())
+        ReleaseGate(SHA, security(), mismatched, attestation(cert.fingerprint))
+
+
+def test_aggregate_release_gate_rejects_certification_fingerprint_mismatch():
+    cert = certification()
+    with pytest.raises(ReleaseGateError, match="certification_fingerprint"):
+        ReleaseGate(SHA, security(), cert, attestation("f" * 64))
 
 
 def test_gate_blockers_surface_security_and_attestation_failures():
-    gate = ReleaseGate(SHA, security(False), certification(), attestation(False))
+    cert = certification()
+    gate = ReleaseGate(SHA, security(False), cert, attestation(cert.fingerprint, False))
 
     assert any("independent security signoff" in item for item in gate.blockers)
     assert any("release provenance/signing attestation" in item for item in gate.blockers)
