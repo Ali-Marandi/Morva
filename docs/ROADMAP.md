@@ -42,6 +42,7 @@
 - M3.29 payment exception resolution ledger foundation with immutable event records, explicit resolution evidence, timezone-aware timestamps, deterministic fingerprints and tamper verification
 - M3.30 persisted payment exception state and resolution events with transactional idempotency boundary and dedicated Alembic/pytest gate
 - M3.31 provider-neutral payment exception API workflow with authenticated create/list/event-history/resolve operations, resolution evidence, RBAC boundary and idempotent audit behavior
+- M3.32 provider-neutral payment-batch settlement hard-stop boundary with deterministic per-item release evaluation and fail-closed unresolved-exception blocking
 
 ## Current execution queue
 
@@ -56,8 +57,8 @@
 9. Complete employee self-service, objection/case management and production PDF/reporting. **M3.15 foundation and M3.16 UX hardening implemented: authenticated self-service profile/payslips/orders, artifact-bound PDF download, persistent employee cases, payslip detail/provenance view, period filter and resilient download UX. M3.22 identity-directory reconciliation is now implemented; broader reporting, document-template certification and enterprise grievance policy/SLA evidence remain pending.**
 10. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
 11. Run staging tests for every adapter and at least one pilot environment where authorized.
-12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; live adapter evidence and authorized staging/pilot settlement remain pending.**
-13. Extend M3.30 from persisted exception/resolution state into API/UI workflows. **M3.31 adds authenticated provider-neutral API workflows for exception creation, open/all listing, immutable event history and idempotent resolution. Settlement-linked payment-item/batch operations remain pending until authoritative contracts exist.**
+12. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; M3.32 now blocks settlement at the payment-batch boundary when any member item has an unresolved exception. Live adapter evidence and authorized staging/pilot settlement remain pending.**
+13. Extend M3.30 from persisted exception/resolution state into API/UI workflows and settlement-linked payment-item/batch operations. **M3.31 adds authenticated provider-neutral API workflows for exception creation, open/all listing, immutable event history and idempotent resolution. M3.32 adds a provider-neutral batch/item release guard that consumes the existing exception state and fails closed. Provider-specific settlement behavior remains prohibited without authoritative contracts.**
 14. Complete production key-management, encryption-at-rest, secret rotation and retention controls.
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence.
 16. Execute target-scale load/concurrency, mutation and financial property-based tests.
