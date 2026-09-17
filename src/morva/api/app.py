@@ -11,6 +11,7 @@ from morva.api.v1.masterdata import router as masterdata_router
 from morva.api.v1.masterdata_acceptance import router as masterdata_acceptance_router
 from morva.api.v1.masterdata_validation import router as masterdata_validation_router
 from morva.api.v1.order_approvals import router as order_approvals_router
+from morva.api.v1.payment_exceptions import router as payment_exceptions_router
 from morva.api.v1.payroll import router as payroll_router
 from morva.api.v1.reconciliation import router as reconciliation_router
 from morva.api.v1.rule_governance import router as rule_governance_router
@@ -32,6 +33,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Morva Payroll Platform", version="1.0.1", description="Production-oriented payroll platform for Iranian public-sector education.", lifespan=lifespan)
 protected_dependencies = [Depends(get_current_principal)]
 app.include_router(payroll_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(payment_exceptions_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(imports_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(reconciliation_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(rules_router, prefix="/api/v1", dependencies=protected_dependencies)
