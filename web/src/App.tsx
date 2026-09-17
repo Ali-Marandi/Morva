@@ -50,7 +50,7 @@ function App() {
             <Route path="/modules/*" element={<ModuleWorkspace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
+          </Route>
         </Routes>
       </Router>
     </QueryClientProvider>
