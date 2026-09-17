@@ -67,3 +67,36 @@ class ReleaseManifest:
     def assert_matches(self, expected_sha: str) -> None:
         if expected_sha.lower() != self.candidate_sha.lower():
             raise ReleaseManifestError("candidate_sha does not match expected release commit")
+
+    def verify_files(self, artifact_dir: Path) -> None:
+        root = artifact_dir.resolve()
+        if not root.is_dir():
+            raise ReleaseManifestError(f"artifact directory does not exist: {root}")
+        expected = {item.path: item for item in self.artifacts}
+        actual_paths = {
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*")
+            if path.is_file() and not path.name.startswith(".")
+        }
+        missing = sorted(set(expected) - actual_paths)
+        unexpected = sorted(actual_paths - set(expected))
+        if missing or unexpected:
+            details = []
+            if missing:
+                details.append(f"missing artifacts: {', '.join(missing)}")
+            if unexpected:
+                details.append(f"unexpected artifacts: {', '.join(unexpected)}")
+            raise ReleaseManifestError("; ".join(details))
+
+        for relative_path, expected_artifact in expected.items():
+            path = root / relative_path
+            digest = sha256()
+            with path.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            actual_sha = digest.hexdigest()
+            actual_size = path.stat().st_size
+            if actual_sha != expected_artifact.sha256.lower():
+                raise ReleaseManifestError(f"artifact sha256 mismatch: {relative_path}")
+            if actual_size != expected_artifact.size_bytes:
+                raise ReleaseManifestError(f"artifact size mismatch: {relative_path}")
