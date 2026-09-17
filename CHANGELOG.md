@@ -2,6 +2,21 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.31 Payment Exception API Workflow
+
+### Payment exception operations
+- Add authenticated provider-neutral API endpoints to create and list payment exceptions.
+- Add immutable resolution event-history endpoint for operational/audit views.
+- Add resolution endpoint requiring actor, reason, evidence reference and `Idempotency-Key`.
+- Enforce RBAC through the existing `payroll.payment.reconcile` permission boundary.
+- Preserve idempotent replay behavior without duplicating the resolution audit event.
+- Add dedicated M3.31 API regression CI gate covering create/list/resolve/replay/second-resolution behavior.
+
+### Safety
+- No live bank/Treasury integration, provider-specific contract, statutory amount, retry policy or production payment authority is introduced.
+- Settlement-linked payment-item/batch operations remain pending until authoritative provider contracts are available.
+- M3.27 reconciliation and M3.28/M3.29/M3.30 exception controls remain mandatory.
+
 ## Unreleased — M3.30 Payment Exception Persistence
 
 ### Payment exception persistence
