@@ -13,6 +13,7 @@ export { approvalService } from './approvals';
 export { reportService } from './reports';
 export { selfService } from './self-service';
 export { importService } from './imports';
+export { paymentExceptionService } from './payment-exceptions';
 export type { ImportSource, ImportSummary, UploadResult } from './imports';
 
 // React Query hooks
@@ -34,7 +35,6 @@ export {
   useApprovePayroll,
   usePayrollStats,
   useApprovals,
-  usePendingApprovals,
   useApproveRequest,
   useRejectRequest,
   useApprovalsStats,
