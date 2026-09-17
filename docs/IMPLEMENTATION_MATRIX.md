@@ -22,7 +22,7 @@
 | 16 | Management Dashboard | authenticated employee/payroll/approval summary APIs wired to the operational dashboard; historical charts and broader operational KPIs pending |
 | 17 | Anomaly Detection | deterministic/scoring foundation |
 | 18 | Forecast / Budget AI | advisory-only foundations |
-| 19 | Production Security | OIDC/JWT, MFA, permissions, sensitive-field crypto primitives implemented; operational hardening and independent review pending |
+| 19 | Production Security | **M3.33 adds a versioned managed application key ring, AES-256-GCM authenticated field encryption, context-bound HMAC-SHA-256 lookup tokens, retained-key decrypt support for rotation, and fail-closed production enforcement of versioned key-ring configuration; infrastructure KMS/HSM custody, database/storage encryption-at-rest evidence, automated secret-rotation workflow, backup-key segregation, retention evidence and independent security review remain pending** |
 | 20 | DR / PITR | executable PostgreSQL drill script + runbook added; target-environment restore evidence pending |
 | 21 | Load / Performance | fixtures/scenarios; target-environment execution pending |
 | 22 | Golden Regression | unit/integration/property-based foundation; expanded authoritative legal corpus pending |
@@ -74,6 +74,10 @@ M3.15 adds an authenticated employee boundary at `/api/v1/self` and `/api/v1/cas
 ## Authoritative Master Data / M3.17 Governance
 
 M3.17 extends the master-data integrity gate with fail-closed assignment checks: organization and position targets must resolve and be active; assignment ranges must be valid; assignment intervals for the same employee may not overlap; and an active employee must have exactly one open-ended assignment. Attendance remains blocked on missing employee reference, invalid period/status, negative units, invalid SHA-256 source hash or missing approval evidence. Persisted teacher-rank decision and appeal states remain blocked when decision provenance is absent or tampered. These controls prove technical integrity and provenance only; authoritative organizational confirmation remains an explicit acceptance step.
+
+## Production Key Management / M3.33 Governance
+
+M3.33 provides an application-side `ManagedKeyRing` that carries a single active version plus retained versions needed to decrypt existing ciphertext during rotation. Field encryption uses AES-256-GCM with a random 96-bit nonce and optional associated data; lookup values use context-bound HMAC-SHA-256 rather than reversible plaintext indexes. Ciphertexts carry their key version and fail closed when that version is not retained. Production configuration requires versioned encryption and lookup key maps and rejects undersized/mismatched key material. This is application-side cryptographic hardening only: KMS/HSM custody, database/storage encryption-at-rest, automated secret rotation, backup-key segregation, operational retention attestation and independent security review remain deployment requirements.
 
 ## Release position
 
