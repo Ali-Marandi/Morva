@@ -1,0 +1,25 @@
+name: M3.38 release candidate verifier
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-candidate:
+    name: Release candidate evidence verifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check tools/m3_38_release_candidate_check.py tests/test_release_candidate_check_m3_38.py
+      - run: pytest -q tests/test_release_candidate_check_m3_38.py
