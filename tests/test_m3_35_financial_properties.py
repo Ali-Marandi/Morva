@@ -30,6 +30,55 @@ def payroll_lines(draw: Any) -> tuple[PayrollLine, ...]:
     return tuple(lines)
 
 
+def test_taxable_flag_is_enforced() -> None:
+    lines = (
+        PayrollLine("T", "Taxable", Decimal("100"), "earning", taxable=True),
+        PayrollLine("N", "Non taxable", Decimal("900"), "earning", taxable=False),
+    )
+    calculation = PayrollCalculator().calculate(
+        employee_no="E-M3-35", period="1405-01", ruleset_version="explicit", lines=lines
+    )
+
+    assert calculation.taxable_income == Decimal("100")
+
+
+def test_pensionable_flag_is_enforced() -> None:
+    policy = ContributionPolicy("PENSION_EXPLICIT", Decimal("1.00"))
+    lines = (
+        PayrollLine("P", "Pensionable", Decimal("100"), "earning", pensionable=True),
+        PayrollLine("N", "Other", Decimal("900"), "earning", pensionable=False),
+    )
+    calculation = PayrollCalculator().calculate(
+        employee_no="E-M3-35",
+        period="1405-01",
+        ruleset_version="explicit",
+        lines=lines,
+        contribution_policies=(policy,),
+    )
+
+    assert calculation.contributions == Decimal("100.00")
+
+
+def test_net_is_subtractive() -> None:
+    result = PayrollCalculator().calculate(
+        employee_no="E-M3-35",
+        period="1405-01",
+        ruleset_version="explicit",
+        lines=(
+            PayrollLine("E", "Earning", Decimal("100"), "earning"),
+            PayrollLine("D", "Deduction", Decimal("40"), "deduction"),
+        ),
+    ).result
+
+    assert result.net == Decimal("60")
+
+
+def test_contribution_ceiling_is_enforced() -> None:
+    policy = ContributionPolicy("CEILING_EXPLICIT", Decimal("1.00"), Decimal("100"))
+
+    assert policy.calculate(Decimal("1000")) == Decimal("100.00")
+
+
 @given(payroll_lines())
 @settings(max_examples=100, deadline=None)
 def test_payroll_result_preserves_financial_conservation(lines: tuple[PayrollLine, ...]) -> None:
