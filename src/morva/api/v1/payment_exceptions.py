@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -157,6 +156,12 @@ def resolve_payment_exception(
         raise HTTPException(status_code=403, detail="resolution actor must match authenticated principal")
 
     with SessionLocal() as session:
+        existing_event = session.scalar(
+            select(PaymentExceptionEventRecord).where(
+                PaymentExceptionEventRecord.exception_id == exception_id.strip(),
+                PaymentExceptionEventRecord.idempotency_key == idempotency_key.strip(),
+            )
+        )
         repository = PaymentExceptionRepository(session)
         try:
             event = repository.resolve(
@@ -171,19 +176,20 @@ def resolve_payment_exception(
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-        append_audit_event(
-            event_type="payment.exception.resolved",
-            entity_type="payment_exception",
-            entity_id=event.exception_id,
-            actor_id=principal.user_id,
-            payload={
-                "status": event.status,
-                "evidence_ref": event.evidence_ref,
-                "fingerprint": event.fingerprint,
-                "idempotency_key": event.idempotency_key,
-            },
-            reason=event.reason,
-            session=session,
-        )
+        if existing_event is None:
+            append_audit_event(
+                event_type="payment.exception.resolved",
+                entity_type="payment_exception",
+                entity_id=event.exception_id,
+                actor_id=principal.user_id,
+                payload={
+                    "status": event.status,
+                    "evidence_ref": event.evidence_ref,
+                    "fingerprint": event.fingerprint,
+                    "idempotency_key": event.idempotency_key,
+                },
+                reason=event.reason,
+                session=session,
+            )
         session.commit()
         return PaymentExceptionEventResponse.model_validate(event)
