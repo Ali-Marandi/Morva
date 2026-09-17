@@ -19,6 +19,27 @@ def test_manifest_hashes_real_artifacts_and_is_deterministic(tmp_path: Path):
     assert [item.path for item in first.artifacts] == ["a.txt", "b.txt"]
     assert all(len(item.sha256) == 64 for item in first.artifacts)
     assert first.fingerprint == second.fingerprint
+    first.verify_files(tmp_path)
+
+
+def test_manifest_detects_modified_artifact(tmp_path: Path):
+    target = tmp_path / "package.whl"
+    target.write_bytes(b"original")
+    manifest = build_manifest(tmp_path, "morva-1.0.1", "v1.0.1", SHA)
+
+    target.write_bytes(b"tampered")
+    with pytest.raises(ReleaseManifestError, match="sha256 mismatch"):
+        manifest.verify_files(tmp_path)
+
+
+def test_manifest_detects_added_artifact(tmp_path: Path):
+    target = tmp_path / "package.whl"
+    target.write_bytes(b"original")
+    manifest = build_manifest(tmp_path, "morva-1.0.1", "v1.0.1", SHA)
+
+    (tmp_path / "unexpected.txt").write_text("unexpected", encoding="utf-8")
+    with pytest.raises(ReleaseManifestError, match="unexpected artifacts"):
+        manifest.verify_files(tmp_path)
 
 
 def test_manifest_requires_exact_candidate_sha():
