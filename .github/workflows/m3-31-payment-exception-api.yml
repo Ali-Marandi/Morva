@@ -1,0 +1,20 @@
+name: M3.31 Payment Exception API Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  m3-31-payment-exception-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/api/v1/payment_exceptions.py src/morva/api/app.py tests/test_payment_exception_api_m3_31.py
+      - run: pytest -q tests/test_payment_exception_api_m3_31.py
