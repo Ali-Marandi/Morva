@@ -52,5 +52,6 @@ __all__ = [
     "population_component_totals",
     "record_resolution",
     "reconcile_population",
+    "replay_many",
     "verify_event",
 ]
