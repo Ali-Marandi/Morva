@@ -37,9 +37,9 @@ jobs:
           --release-id "morva-${RELEASE_TAG}"
           --tag "${RELEASE_TAG}"
           --candidate-sha "${GITHUB_SHA}"
-          --output dist/release-manifest.json
+          --output release-evidence-manifest.json
       - name: Verify generated manifest
         run: >-
           python tools/m3_41_release_manifest.py dist
           --candidate-sha "${GITHUB_SHA}"
-          --verify dist/release-manifest.json
+          --verify release-evidence-manifest.json
