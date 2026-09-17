@@ -32,6 +32,10 @@ class ReleaseGate:
         ):
             if value.lower() != expected:
                 raise ReleaseGateError(f"{name} candidate_sha does not match release gate SHA")
+        if self.attestation.release_id != self.certification.release_id:
+            raise ReleaseGateError("attestation release_id does not match certification release_id")
+        if self.attestation.certification_fingerprint.lower() != self.certification.fingerprint:
+            raise ReleaseGateError("attestation certification_fingerprint does not match certification")
 
     @property
     def release_ready(self) -> bool:
