@@ -51,6 +51,7 @@
 - M3.38 release-candidate evidence bundle verifier bound to an exact Git commit SHA with fail-closed delegation to M3.37 certification
 - M3.39 release provenance and signing attestation contract with artifact hashes and deterministic final-release fingerprint
 - M3.40 aggregate release gate composing M3.36 security, M3.37 certification and M3.39 attestation with exact candidate-SHA consistency and structured fail-closed blockers
+- M3.41 release package integrity contract with deterministic artifact manifest, exact candidate-SHA binding, tamper detection and dedicated build/verify CI gate
 
 ## Current execution queue
 
@@ -71,7 +72,7 @@
 15. Execute encrypted backup, WAL/PITR restore and disaster-recovery drills with recorded RTO/RPO evidence. **M3.34 adds the immutable recovery-evidence contract, encrypted PostgreSQL backup script, PITR restore preparation script and CI validation of isolated PostgreSQL backup/restore. Actual production WAL/PITR drill execution and approved RPO/RTO evidence remain pending operational certification.**
 16. Execute target-scale load/concurrency, mutation and financial property-based tests. **M3.35 adds 10,000+ employee batch evidence, parallel calculator replay coverage, Hypothesis financial invariants and four targeted mutation checks. Representative production workload targets, database/queue contention and independent performance certification remain pending.**
 17. Complete independent security assessment and close critical findings. **M3.36 adds the fail-closed assessment contract, high-confidence secret preflight, focused security regression tests and a dedicated CI gate. An actual independent assessment/report, independent signoff, remediation evidence and environment-specific penetration/abuse-case testing remain pending.**
-18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence. **M3.37 adds the fail-closed release certification contract, M3.38 adds exact-commit evidence-bundle verification, M3.39 binds final artifacts and signing provenance, and M3.40 composes these into one aggregate fail-closed release gate. Real finance/legal/operations approvals, verified external evidence artifacts, cryptographic signing, publication and deployment evidence remain pending.**
+18. Obtain formal finance/legal/operations certification; then produce the matching software tag, GitHub Release, artifacts and deployment evidence. **M3.37 adds the fail-closed release certification contract, M3.38 adds exact-commit evidence-bundle verification, M3.39 binds final artifacts and signing provenance, M3.40 composes these into one aggregate fail-closed release gate, and M3.41 builds/verifies the concrete Release artifacts against a SHA-256 manifest. Real finance/legal/operations approvals, verified external evidence artifacts, cryptographic signing, publication and deployment evidence remain pending.**
 
 ## Production gate
 
