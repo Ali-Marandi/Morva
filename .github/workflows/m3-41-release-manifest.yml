@@ -1,0 +1,45 @@
+name: M3.41 Release Package Integrity Gate
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-manifest:
+    name: Build and verify release artifact manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install build
+      - run: ruff check src/morva/runtime/release_manifest.py tests/test_release_manifest_m3_41.py tools/m3_41_release_manifest.py
+      - run: pytest -q tests/test_release_manifest_m3_41.py
+      - name: Build distributions
+        run: rm -rf dist && python -m build --outdir dist
+      - name: Generate release manifest
+        env:
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('ci-{0}', github.sha) }}
+        run: >-
+          python tools/m3_41_release_manifest.py dist
+          --release-id "morva-${RELEASE_TAG}"
+          --tag "${RELEASE_TAG}"
+          --candidate-sha "${GITHUB_SHA}"
+          --output dist/release-manifest.json
+      - name: Verify generated manifest
+        run: >-
+          python tools/m3_41_release_manifest.py dist
+          --candidate-sha "${GITHUB_SHA}"
+          --verify dist/release-manifest.json
