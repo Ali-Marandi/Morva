@@ -4,46 +4,54 @@ from hashlib import sha256
 from pathlib import Path
 
 import pytest
-
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
+from morva.runtime.release_manifest import ReleaseArtifact, ReleaseManifest
+from morva.runtime.signed_trusted_key_registry import SignedTrustedKeyRegistry
 from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
 from tools.m3_44_evidence_verifier import verify_bundle
 
 
-NOW = datetime(2026, 9, 18, 4, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 9, 18, 6, 0, tzinfo=timezone.utc)
 SHA = "a" * 40
 TAG = "v1.0.1"
 RELEASE_ID = "morva-1.0.1"
 
 
-def write_source_files(root: Path) -> tuple[Path, Path, Path, str, str, str]:
-    manifest_payload = {
-        "release_id": RELEASE_ID,
-        "tag": TAG,
-        "candidate_sha": SHA,
-        "artifacts": [{"path": "package.whl", "sha256": "b" * 64, "size_bytes": 4}],
-    }
-    from morva.runtime.release_manifest import ReleaseManifest, ReleaseArtifact
-
-    manifest = ReleaseManifest(
-        RELEASE_ID, TAG, SHA, (ReleaseArtifact("package.whl", "b" * 64, 4),)
-    )
-    manifest_payload["fingerprint"] = manifest.fingerprint
-    manifest_file = root / "manifest.json"
-    manifest_file.write_text(
-        json.dumps(manifest_payload, sort_keys=True), encoding="utf-8"
-    )
-
+def make_sources(root: Path):
+    from morva.runtime.release_attestation import ArtifactAttestation, ReleaseAttestation
     from morva.runtime.release_certification import ReleaseCertification
     from morva.runtime.release_gate import ReleaseGate
-    from morva.runtime.release_attestation import ArtifactAttestation, ReleaseAttestation
+    from morva.runtime.release_rehearsal import ReleaseRehearsal
     from morva.runtime.security_assessment import SecurityAssessment
 
+    manifest = ReleaseManifest(
+        RELEASE_ID,
+        TAG,
+        SHA,
+        (ReleaseArtifact("package.whl", "b" * 64, 4),),
+    )
+    manifest_file = root / "manifest.json"
+    manifest_file.write_text(
+        json.dumps(
+            {
+                "release_id": RELEASE_ID,
+                "tag": TAG,
+                "candidate_sha": SHA,
+                "artifacts": [
+                    {"path": "package.whl", "sha256": "b" * 64, "size_bytes": 4}
+                ],
+                "fingerprint": manifest.fingerprint,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
     security = SecurityAssessment(
-        assessment_id="SEC-M3-44",
+        assessment_id="SEC-M3-46",
         assessed_at=NOW,
         scope_hash="c" * 64,
         required_controls=("authentication",),
@@ -109,160 +117,191 @@ def write_source_files(root: Path) -> tuple[Path, Path, Path, str, str, str]:
         encoding="utf-8",
     )
 
-    rehearsal = {
-        "release_id": RELEASE_ID,
-        "tag": TAG,
-        "candidate_sha": SHA,
-        "manifest_fingerprint": manifest.fingerprint,
-        "gate_fingerprint": gate.fingerprint,
-    }
-    from morva.runtime.release_rehearsal import ReleaseRehearsal
-
-    rehearsal_obj = ReleaseRehearsal(SHA, TAG, manifest, gate)
-    rehearsal["rehearsal_fingerprint"] = rehearsal_obj.fingerprint
+    rehearsal = ReleaseRehearsal(SHA, TAG, manifest, gate)
     rehearsal_file = root / "rehearsal.json"
-    rehearsal_file.write_text(json.dumps(rehearsal, sort_keys=True), encoding="utf-8")
-    return (
-        manifest_file,
-        gate_file,
-        rehearsal_file,
-        manifest.fingerprint,
-        gate.fingerprint,
-        rehearsal_obj.fingerprint,
-    )
-
-
-def make_bundle(root: Path) -> tuple[Path, Path, Path]:
-    manifest, gate, rehearsal, mf, gf, rf = write_source_files(root)
-    paths = (manifest, gate, rehearsal)
-    evidence = tuple(
-        EvidenceFile(
-            path.name,
-            sha256(path.read_bytes()).hexdigest(),
-            path.stat().st_size,
-        )
-        for path in paths
-    )
-    bundle = ReleaseEvidenceBundle(
-        RELEASE_ID, TAG, SHA, mf, gf, rf, evidence
-    )
-    private_key = Ed25519PrivateKey.generate()
-    signed = bundle.sign(private_key, NOW)
-
-    bundle_payload = {
-        "release_id": signed.release_id,
-        "tag": signed.tag,
-        "candidate_sha": signed.candidate_sha,
-        "manifest_fingerprint": signed.manifest_fingerprint,
-        "gate_fingerprint": signed.gate_fingerprint,
-        "rehearsal_fingerprint": signed.rehearsal_fingerprint,
-        "evidence_files": [
-            {"path": item.path, "sha256": item.sha256, "size_bytes": item.size_bytes}
-            for item in signed.evidence_files
-        ],
-        "fingerprint": signed.fingerprint,
-        "signature": {
-            "algorithm": signed.signature.algorithm,
-            "key_id": signed.signature.key_id,
-            "signature_b64": signed.signature.signature_b64,
-            "signed_at": signed.signature.signed_at.isoformat(),
-        },
-    }
-    bundle_file = root / "bundle.json"
-    bundle_file.write_text(json.dumps(bundle_payload, sort_keys=True), encoding="utf-8")
-    public_file = root / "public.pem"
-    public_key = private_key.public_key()
-    public_file.write_bytes(
-        public_key.public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-    )
-    registry = TrustedKeyRegistry(
-        registry_id="morva-ci",
-        version=1,
-        keys=(
-            TrustedSigningKey(
-                key_id=TrustedKeyRegistry.key_id_for(public_key),
-                public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public_key),
-                status="active",
-                valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            ),
-        ),
-    )
-    registry_file = root / "registry.json"
-    registry_file.write_text(
+    rehearsal_file.write_text(
         json.dumps(
             {
-                "registry_id": registry.registry_id,
-                "version": registry.version,
-                "keys": [
-                    {
-                        "key_id": item.key_id,
-                        "public_key_sha256": item.public_key_sha256,
-                        "status": item.status,
-                        "valid_from": item.valid_from.isoformat(),
-                        "valid_until": item.valid_until.isoformat()
-                        if item.valid_until
-                        else None,
-                        "replacement_key_id": item.replacement_key_id,
-                    }
-                    for item in registry.keys
-                ],
-                "fingerprint": registry.fingerprint,
+                "release_id": RELEASE_ID,
+                "tag": TAG,
+                "candidate_sha": SHA,
+                "manifest_fingerprint": manifest.fingerprint,
+                "gate_fingerprint": gate.fingerprint,
+                "rehearsal_fingerprint": rehearsal.fingerprint,
             },
             sort_keys=True,
         ),
         encoding="utf-8",
     )
-    return bundle_file, public_file, registry_file
+    return manifest_file, gate_file, rehearsal_file, rehearsal
 
 
-def test_independent_verifier_reconstructs_and_verifies_chain(tmp_path: Path):
-    bundle_file, public_file, registry_file = make_bundle(tmp_path)
-    verify_bundle(
-        bundle_file,
-        tmp_path / "manifest.json",
-        tmp_path / "gate.json",
-        tmp_path / "rehearsal.json",
-        public_file,
-        registry_file,
-        tmp_path,
+def write_bundle(root: Path, rehearsal):
+    signer = Ed25519PrivateKey.generate()
+    public = signer.public_key()
+    evidence_files = tuple(
+        EvidenceFile(
+            path.name,
+            sha256(path.read_bytes()).hexdigest(),
+            path.stat().st_size,
+        )
+        for path in (
+            root / "manifest.json",
+            root / "gate.json",
+            root / "rehearsal.json",
+        )
+    )
+    bundle = ReleaseEvidenceBundle(
+        RELEASE_ID,
+        TAG,
         SHA,
+        rehearsal.manifest.fingerprint,
+        rehearsal.gate.fingerprint,
+        rehearsal.fingerprint,
+        evidence_files,
+    ).sign(signer, NOW)
+    bundle_payload = {
+        "release_id": bundle.release_id,
+        "tag": bundle.tag,
+        "candidate_sha": bundle.candidate_sha,
+        "manifest_fingerprint": bundle.manifest_fingerprint,
+        "gate_fingerprint": bundle.gate_fingerprint,
+        "rehearsal_fingerprint": bundle.rehearsal_fingerprint,
+        "evidence_files": [
+            {
+                "path": item.path,
+                "sha256": item.sha256,
+                "size_bytes": item.size_bytes,
+            }
+            for item in bundle.evidence_files
+        ],
+        "fingerprint": bundle.fingerprint,
+        "signature": {
+            "algorithm": bundle.signature.algorithm,
+            "key_id": bundle.signature.key_id,
+            "signature_b64": bundle.signature.signature_b64,
+            "signed_at": bundle.signature.signed_at.isoformat(),
+        },
+    }
+    bundle_file = root / "bundle.json"
+    bundle_file.write_text(
+        json.dumps(bundle_payload, sort_keys=True), encoding="utf-8"
+    )
+    public_file = root / "public.pem"
+    public_file.write_bytes(
+        public.public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    )
+    root_key = Ed25519PrivateKey.generate()
+    registry = TrustedKeyRegistry(
+        "morva-signing",
+        1,
+        (
+            TrustedSigningKey(
+                key_id=TrustedKeyRegistry.key_id_for(public),
+                public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public),
+                status="active",
+                valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            ),
+        ),
+    )
+    signed_registry = SignedTrustedKeyRegistry(registry).sign(root_key, NOW)
+    registry_payload = {
+        "registry": {
+            "registry_id": registry.registry_id,
+            "version": registry.version,
+            "keys": [
+                {
+                    "key_id": item.key_id,
+                    "public_key_sha256": item.public_key_sha256,
+                    "status": item.status,
+                    "valid_from": item.valid_from.isoformat(),
+                    "valid_until": None,
+                    "replacement_key_id": None,
+                }
+                for item in registry.keys
+            ],
+            "fingerprint": registry.fingerprint,
+        },
+        "signature": {
+            "algorithm": signed_registry.signature.algorithm,
+            "root_key_id": signed_registry.signature.root_key_id,
+            "signature_b64": signed_registry.signature.signature_b64,
+            "signed_at": signed_registry.signature.signed_at.isoformat(),
+        },
+        "fingerprint": signed_registry.fingerprint,
+    }
+    registry_file = root / "registry.json"
+    registry_file.write_text(
+        json.dumps(registry_payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    root_public_file = root / "root-public.pem"
+    root_public_file.write_bytes(
+        root_key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    )
+    return bundle_file, public_file, registry_file, root_public_file
+
+
+def test_independent_verifier_reconstructs_signed_trust_chain(tmp_path: Path):
+    manifest, gate, rehearsal, rehearsal_obj = make_sources(tmp_path)
+    bundle, public, registry, root_public = write_bundle(tmp_path, rehearsal_obj)
+
+    verify_bundle(
+        bundle_file=bundle,
+        manifest_file=manifest,
+        gate_file=gate,
+        rehearsal_file=rehearsal,
+        public_key_file=public,
+        registry_file=registry,
+        root=tmp_path,
+        expected_sha=SHA,
+        verified_at=NOW,
+        registry_root_public_key=root_public,
     )
 
 
-def test_independent_verifier_rejects_tampered_rehearsal(tmp_path: Path):
-    bundle_file, public_file, registry_file = make_bundle(tmp_path)
-    path = tmp_path / "rehearsal.json"
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    payload["tag"] = "v9.9.9"
-    path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+def test_independent_verifier_rejects_unsigned_registry(tmp_path: Path):
+    manifest, gate, rehearsal, rehearsal_obj = make_sources(tmp_path)
+    bundle, public, registry, root_public = write_bundle(tmp_path, rehearsal_obj)
+    payload = json.loads(registry.read_text(encoding="utf-8"))
+    payload["signature"] = None
+    registry.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unsigned"):
         verify_bundle(
-            bundle_file,
-            tmp_path / "manifest.json",
-            tmp_path / "gate.json",
-            path,
-            public_file,
-            registry_file,
-            tmp_path,
-            SHA,
+            bundle_file=bundle,
+            manifest_file=manifest,
+            gate_file=gate,
+            rehearsal_file=rehearsal,
+            public_key_file=public,
+            registry_file=registry,
+            root=tmp_path,
+            expected_sha=SHA,
+            verified_at=NOW,
+            registry_root_public_key=root_public,
         )
 
 
 def test_independent_verifier_rejects_wrong_expected_sha(tmp_path: Path):
-    bundle_file, public_file, registry_file = make_bundle(tmp_path)
+    manifest, gate, rehearsal, rehearsal_obj = make_sources(tmp_path)
+    bundle, public, registry, root_public = write_bundle(tmp_path, rehearsal_obj)
 
     with pytest.raises(ValueError, match="expected release commit"):
         verify_bundle(
-            bundle_file,
-            tmp_path / "manifest.json",
-            tmp_path / "gate.json",
-            tmp_path / "rehearsal.json",
-            public_file,
-            registry_file,
-            tmp_path,
-            "f" * 40,
+            bundle_file=bundle,
+            manifest_file=manifest,
+            gate_file=gate,
+            rehearsal_file=rehearsal,
+            public_key_file=public,
+            registry_file=registry,
+            root=tmp_path,
+            expected_sha="f" * 40,
+            verified_at=NOW,
+            registry_root_public_key=root_public,
         )
