@@ -240,3 +240,15 @@ def test_registry_binding_changes_bundle_fingerprint():
     )
 
     assert first.fingerprint != changed.fingerprint
+
+
+
+def test_registry_metadata_is_included_in_signature_payload():
+    private_key = Ed25519PrivateKey.generate()
+    bundle, _ = make_bundle(Path("/tmp"))
+    signed = bundle.sign(private_key, NOW)
+    payload = signed.signing_bytes(signed.signature).decode("utf-8")
+
+    assert '"registry_id":"morva-signing"' in payload
+    assert '"registry_version":1' in payload
+    assert '"registry_fingerprint":"' + REGISTRY_FINGERPRINT + '"' in payload
