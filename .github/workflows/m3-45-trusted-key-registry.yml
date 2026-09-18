@@ -1,0 +1,37 @@
+name: M3.45 Trusted Signing Key Registry
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trusted-key-registry:
+    name: Validate trusted signing-key registry and rotation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_evidence.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_44_evidence_verifier.py
+          tools/m3_45_trusted_key_registry.py
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_trusted_key_registry_m3_45.py
+      - run: >
+          pytest -q
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_trusted_key_registry_m3_45.py
