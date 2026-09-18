@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,7 @@ from morva.runtime.release_evidence import (
     ReleaseEvidenceError,
 )
 from morva.runtime.release_gate import ReleaseGate
-from morva.runtime.release_manifest import ReleaseManifest
+from morva.runtime.release_manifest import ReleaseArtifact, ReleaseManifest
 from morva.runtime.release_rehearsal import ReleaseRehearsal
 from morva.runtime.security_assessment import SecurityAssessment
 
@@ -24,18 +25,17 @@ RELEASE_ID = "morva-1.0.1"
 
 
 def make_rehearsal(tmp_path: Path) -> ReleaseRehearsal:
-    (tmp_path / "manifest.json").write_text("manifest", encoding="utf-8")
-    (tmp_path / "gate.json").write_text("gate", encoding="utf-8")
-    (tmp_path / "rehearsal.json").write_text("rehearsal", encoding="utf-8")
+    for name, content in (
+        ("manifest.json", "manifest"),
+        ("gate.json", "gate"),
+        ("rehearsal.json", "rehearsal"),
+    ):
+        (tmp_path / name).write_text(content, encoding="utf-8")
     manifest = ReleaseManifest(
         release_id=RELEASE_ID,
         tag=TAG,
         candidate_sha=SHA,
-        artifacts=(
-            __import__("morva.runtime.release_manifest", fromlist=["ReleaseArtifact"]).ReleaseArtifact(
-                "package.whl", "b" * 64, 10
-            ),
-        ),
+        artifacts=(ReleaseArtifact("package.whl", "b" * 64, 10),),
     )
     security = SecurityAssessment(
         assessment_id="SEC-M3-43",
@@ -74,16 +74,17 @@ def make_rehearsal(tmp_path: Path) -> ReleaseRehearsal:
         signature_uri="evidence://signature",
         release_uri="evidence://release",
     )
-    gate = ReleaseGate(SHA, security, cert, attestation)
-    return ReleaseRehearsal(SHA, TAG, manifest, gate)
+    return ReleaseRehearsal(SHA, TAG, manifest, ReleaseGate(SHA, security, cert, attestation))
 
 
 def make_bundle(tmp_path: Path) -> tuple[ReleaseEvidenceBundle, Ed25519PrivateKey]:
     rehearsal = make_rehearsal(tmp_path)
     files = tuple(
-        EvidenceFile(name, (tmp_path / name).read_bytes() and __import__("hashlib").sha256(
-            (tmp_path / name).read_bytes()
-        ).hexdigest(), (tmp_path / name).stat().st_size)
+        EvidenceFile(
+            name,
+            sha256((tmp_path / name).read_bytes()).hexdigest(),
+            (tmp_path / name).stat().st_size,
+        )
         for name in ("manifest.json", "gate.json", "rehearsal.json")
     )
     bundle = ReleaseEvidenceBundle(
@@ -105,8 +106,8 @@ def test_signed_bundle_round_trips_and_verifies_files(tmp_path: Path):
     signed.verify_files(tmp_path)
     signed.verify_signature(private_key.public_key())
     signed.assert_matches_rehearsal(make_rehearsal(tmp_path))
+    signed.assert_signed()
     assert signed.signature is not None
-    assert signed.fingerprint == signed.fingerprint
 
 
 def test_bundle_rejects_wrong_public_key(tmp_path: Path):
@@ -168,5 +169,4 @@ def test_bundle_fingerprint_changes_when_bound_identity_changes():
         rehearsal_fingerprint="c" * 64,
         evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
     )
-
     assert base.fingerprint != changed.fingerprint
