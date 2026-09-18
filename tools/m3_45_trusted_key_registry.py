@@ -7,7 +7,11 @@ from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
-from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedKeyRegistryError, TrustedSigningKey
+from morva.runtime.trusted_key_registry import (
+    TrustedKeyRegistry,
+    TrustedKeyRegistryError,
+    TrustedSigningKey,
+)
 
 
 def load_registry(path: Path) -> TrustedKeyRegistry:
