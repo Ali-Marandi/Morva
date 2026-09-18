@@ -125,7 +125,6 @@ def main() -> int:
     print(f"candidate_sha={bundle.candidate_sha}")
     print(f"bundle_fingerprint={bundle.fingerprint}")
     print(f"key_id={bundle.signature.key_id}")
-    print(f"aggregate_gate_ready={rehearsal.release_ready}")
     return 0
 
 
