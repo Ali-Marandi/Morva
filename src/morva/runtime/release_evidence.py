@@ -98,6 +98,13 @@ class ReleaseEvidenceBundle:
     @property
     def fingerprint(self) -> str:
         payload = self._payload()
+        signature = self.signature
+        if signature is not None:
+            payload["signature_context"] = {
+                "algorithm": signature.algorithm,
+                "key_id": signature.key_id,
+                "signed_at": signature.signed_at.isoformat(),
+            }
         canonical = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
         return sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -115,9 +122,18 @@ class ReleaseEvidenceBundle:
             ),
         }
 
-    def signing_bytes(self) -> bytes:
+    def signing_bytes(self, signature_context: EvidenceBundleSignature | None = None) -> bytes:
+        payload = self._payload()
+        context = signature_context or self.signature
+        if context is None:
+            raise ReleaseEvidenceError("signature context is required for signing")
+        payload["signature_context"] = {
+            "algorithm": context.algorithm,
+            "key_id": context.key_id,
+            "signed_at": context.signed_at.isoformat(),
+        }
         canonical = json.dumps(
-            self._payload(), ensure_ascii=True, sort_keys=True, separators=(",", ":")
+            payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")
         )
         return canonical.encode("utf-8")
 
@@ -157,7 +173,13 @@ class ReleaseEvidenceBundle:
             format=serialization.PublicFormat.Raw,
         )
         key_id = sha256(public_bytes).hexdigest()
-        signature = b64encode(private_key.sign(self.signing_bytes())).decode("ascii")
+        context = EvidenceBundleSignature(
+            algorithm="Ed25519",
+            key_id=key_id,
+            signature_b64="A" * 88,
+            signed_at=signed_at,
+        )
+        signature = b64encode(private_key.sign(self.signing_bytes(context))).decode("ascii")
         return ReleaseEvidenceBundle(
             release_id=self.release_id,
             tag=self.tag,
@@ -167,10 +189,10 @@ class ReleaseEvidenceBundle:
             rehearsal_fingerprint=self.rehearsal_fingerprint,
             evidence_files=self.evidence_files,
             signature=EvidenceBundleSignature(
-                algorithm="Ed25519",
-                key_id=key_id,
+                algorithm=context.algorithm,
+                key_id=context.key_id,
                 signature_b64=signature,
-                signed_at=signed_at,
+                signed_at=context.signed_at,
             ),
         )
 
@@ -187,7 +209,7 @@ class ReleaseEvidenceBundle:
         try:
             public_key.verify(
                 b64decode(self.signature.signature_b64, validate=True),
-                self.signing_bytes(),
+                self.signing_bytes(self.signature),
             )
         except Exception as exc:
             raise ReleaseEvidenceError("evidence bundle signature verification failed") from exc
