@@ -78,9 +78,7 @@ def verify_bundle(
         raise ReleaseEvidenceError("evidence bundle is unsigned")
     registry.assert_trusted(bundle.signature.key_id, public_key, check_time)
     bundle.verify_signature(public_key)
-    rehearsal = _assert_source_binding(
-        bundle, manifest_file, gate_file, rehearsal_file, root
-    )
+    _assert_source_binding(bundle, manifest_file, gate_file, rehearsal_file, root)
     if expected_sha and bundle.candidate_sha.lower() != expected_sha.lower():
         raise ReleaseEvidenceError("bundle candidate_sha does not match expected release commit")
     return bundle
