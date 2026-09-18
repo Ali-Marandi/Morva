@@ -18,7 +18,7 @@ def _dt(value: str) -> datetime:
     return parsed
 
 
-def _load(path: Path) -> ReleaseGate:
+def load_release_gate(path: Path) -> ReleaseGate:
     payload = json.loads(path.read_text(encoding="utf-8"))
     security_payload = payload["security_assessment"]
     security = SecurityAssessment(
@@ -27,7 +27,9 @@ def _load(path: Path) -> ReleaseGate:
         scope_hash=security_payload["scope_hash"],
         required_controls=tuple(security_payload["required_controls"]),
         verified_controls=tuple(security_payload["verified_controls"]),
-        findings=tuple(SecurityFinding(**finding) for finding in security_payload.get("findings", ())),
+        findings=tuple(
+            SecurityFinding(**finding) for finding in security_payload.get("findings", ())
+        ),
         independent_assessor=security_payload.get("independent_assessor"),
         independent_report_uri=security_payload.get("independent_report_uri"),
         independent_signed_at=(
@@ -43,7 +45,9 @@ def _load(path: Path) -> ReleaseGate:
         candidate_sha=certification_payload["candidate_sha"],
         required_evidence=tuple(certification_payload["required_evidence"]),
         verified_evidence=tuple(certification_payload["verified_evidence"]),
-        security_signoff_complete=bool(certification_payload.get("security_signoff_complete", False)),
+        security_signoff_complete=bool(
+            certification_payload.get("security_signoff_complete", False)
+        ),
         disaster_recovery_signoff_complete=bool(
             certification_payload.get("disaster_recovery_signoff_complete", False)
         ),
@@ -69,9 +73,15 @@ def _load(path: Path) -> ReleaseGate:
         candidate_sha=attestation_payload["candidate_sha"],
         certification_fingerprint=attestation_payload["certification_fingerprint"],
         evidence_bundle_fingerprint=attestation_payload["evidence_bundle_fingerprint"],
-        artifacts=tuple(ArtifactAttestation(**artifact) for artifact in attestation_payload["artifacts"]),
+        artifacts=tuple(
+            ArtifactAttestation(**artifact) for artifact in attestation_payload["artifacts"]
+        ),
         signer=attestation_payload.get("signer"),
-        signed_at=_dt(attestation_payload["signed_at"]) if attestation_payload.get("signed_at") else None,
+        signed_at=(
+            _dt(attestation_payload["signed_at"])
+            if attestation_payload.get("signed_at")
+            else None
+        ),
         signature_uri=attestation_payload.get("signature_uri"),
         release_uri=attestation_payload.get("release_uri"),
     )
@@ -83,7 +93,7 @@ def main() -> int:
     parser.add_argument("evidence_file", type=Path)
     args = parser.parse_args()
 
-    gate = _load(args.evidence_file)
+    gate = load_release_gate(args.evidence_file)
     gate.assert_release_ready()
     print("M3.40 release gate passed")
     print(f"candidate_sha={gate.candidate_sha}")
