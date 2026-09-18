@@ -22,6 +22,9 @@ NOW = datetime(2026, 9, 18, 3, 0, tzinfo=timezone.utc)
 SHA = "a" * 40
 TAG = "v1.0.1"
 RELEASE_ID = "morva-1.0.1"
+REGISTRY_ID = "morva-signing"
+REGISTRY_VERSION = 1
+REGISTRY_FINGERPRINT = "e" * 64
 
 
 def make_rehearsal(tmp_path: Path) -> ReleaseRehearsal:
@@ -94,6 +97,9 @@ def make_bundle(tmp_path: Path) -> tuple[ReleaseEvidenceBundle, Ed25519PrivateKe
         manifest_fingerprint=rehearsal.manifest.fingerprint,
         gate_fingerprint=rehearsal.gate.fingerprint,
         rehearsal_fingerprint=rehearsal.fingerprint,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
         evidence_files=files,
     )
     return bundle, Ed25519PrivateKey.generate()
@@ -126,6 +132,9 @@ def test_signature_timestamp_is_bound_to_the_signed_payload(tmp_path: Path):
         manifest_fingerprint=signed.manifest_fingerprint,
         gate_fingerprint=signed.gate_fingerprint,
         rehearsal_fingerprint=signed.rehearsal_fingerprint,
+        registry_id=signed.registry_id,
+        registry_version=signed.registry_version,
+        registry_fingerprint=signed.registry_fingerprint,
         evidence_files=signed.evidence_files,
         signature=changed_context,
     )
@@ -158,6 +167,9 @@ def test_bundle_rejects_unsigned_and_bad_signature_shape():
         manifest_fingerprint="a" * 64,
         gate_fingerprint="b" * 64,
         rehearsal_fingerprint="c" * 64,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
         evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
     )
 
