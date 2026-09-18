@@ -44,9 +44,14 @@ jobs:
           tests/test_release_evidence_m3_43.py
       - name: Build distributions
         run: rm -rf dist && python -m build --outdir dist
+      - name: Resolve release tag
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> "${GITHUB_ENV}"
+          else
+            echo "RELEASE_TAG=ci-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+          fi
       - name: Generate M3.41 manifest
-        env:
-          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('ci-{0}', github.sha) }}
         run: >
           python tools/m3_41_release_manifest.py dist
           --release-id "morva-${RELEASE_TAG}"
