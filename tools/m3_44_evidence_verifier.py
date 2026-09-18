@@ -5,7 +5,6 @@ import json
 import os
 from pathlib import Path
 
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from morva.runtime.release_evidence import (
@@ -13,6 +12,7 @@ from morva.runtime.release_evidence import (
     ReleaseEvidenceError,
     load_evidence_bundle,
 )
+from tools.m3_45_trusted_key_registry import load_public_key, load_registry
 from morva.runtime.release_rehearsal import ReleaseRehearsal
 from tools.m3_40_release_gate import load_release_gate
 from tools.m3_41_release_manifest import load_manifest
@@ -60,24 +60,27 @@ def _assert_source_binding(
     return rehearsal
 
 
-def _load_public_key(path: Path) -> Ed25519PublicKey:
-    key = serialization.load_pem_public_key(path.read_bytes())
-    if not isinstance(key, Ed25519PublicKey):
-        raise TypeError("public key must be Ed25519")
-    return key
-
-
 def verify_bundle(
     bundle_file: Path,
     manifest_file: Path,
     gate_file: Path,
     rehearsal_file: Path,
     public_key_file: Path,
+    registry_file: Path,
     root: Path,
     expected_sha: str = "",
+    verified_at: datetime | None = None,
 ) -> ReleaseEvidenceBundle:
+    from datetime import datetime, timezone
+
     bundle = load_evidence_bundle(bundle_file)
-    bundle.verify_signature(_load_public_key(public_key_file))
+    public_key = load_public_key(public_key_file)
+    registry = load_registry(registry_file)
+    check_time = verified_at or datetime.now(timezone.utc)
+    if bundle.signature is None:
+        raise ReleaseEvidenceError("evidence bundle is unsigned")
+    registry.assert_trusted(bundle.signature.key_id, public_key, check_time)
+    bundle.verify_signature(public_key)
     rehearsal = _assert_source_binding(
         bundle, manifest_file, gate_file, rehearsal_file, root
     )
@@ -95,7 +98,12 @@ def main() -> int:
     parser.add_argument("--gate", type=Path, required=True)
     parser.add_argument("--rehearsal", type=Path, required=True)
     parser.add_argument("--public-key", type=Path, required=True)
+    parser.add_argument("--registry", type=Path, required=True)
     parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument(
+        "--verified-at",
+        help="Registry evaluation time in ISO-8601 form; defaults to current UTC time.",
+    )
     parser.add_argument(
         "--expected-sha",
         default=os.getenv("GITHUB_SHA", ""),
@@ -109,8 +117,12 @@ def main() -> int:
         args.gate,
         args.rehearsal,
         args.public_key,
+        args.registry,
         args.root,
         args.expected_sha,
+        datetime.fromisoformat(args.verified_at.replace("Z", "+00:00"))
+        if args.verified_at
+        else None,
     )
     print("M3.44 independent evidence verifier passed")
     print(f"release_id={bundle.release_id}")
