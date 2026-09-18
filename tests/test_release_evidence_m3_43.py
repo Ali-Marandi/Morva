@@ -243,9 +243,9 @@ def test_registry_binding_changes_bundle_fingerprint():
 
 
 
-def test_registry_metadata_is_included_in_signature_payload():
+def test_registry_metadata_is_included_in_signature_payload(tmp_path: Path):
     private_key = Ed25519PrivateKey.generate()
-    bundle, _ = make_bundle(Path("/tmp"))
+    bundle, _ = make_bundle(tmp_path)
     signed = bundle.sign(private_key, NOW)
     payload = signed.signing_bytes(signed.signature).decode("utf-8")
 
