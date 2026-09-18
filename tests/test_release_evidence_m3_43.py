@@ -193,6 +193,9 @@ def test_bundle_fingerprint_changes_when_bound_identity_changes():
         manifest_fingerprint="a" * 64,
         gate_fingerprint="b" * 64,
         rehearsal_fingerprint="c" * 64,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
         evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
     )
     changed = ReleaseEvidenceBundle(
@@ -202,6 +205,38 @@ def test_bundle_fingerprint_changes_when_bound_identity_changes():
         manifest_fingerprint="a" * 64,
         gate_fingerprint="b" * 64,
         rehearsal_fingerprint="c" * 64,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
         evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
     )
     assert base.fingerprint != changed.fingerprint
+
+
+def test_registry_binding_changes_bundle_fingerprint():
+    first = ReleaseEvidenceBundle(
+        release_id=RELEASE_ID,
+        tag=TAG,
+        candidate_sha=SHA,
+        manifest_fingerprint="a" * 64,
+        gate_fingerprint="b" * 64,
+        rehearsal_fingerprint="c" * 64,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
+        evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
+    )
+    changed = ReleaseEvidenceBundle(
+        release_id=RELEASE_ID,
+        tag=TAG,
+        candidate_sha=SHA,
+        manifest_fingerprint="a" * 64,
+        gate_fingerprint="b" * 64,
+        rehearsal_fingerprint="c" * 64,
+        registry_id=REGISTRY_ID,
+        registry_version=REGISTRY_VERSION + 1,
+        registry_fingerprint=REGISTRY_FINGERPRINT,
+        evidence_files=(EvidenceFile("manifest.json", "d" * 64, 1),),
+    )
+
+    assert first.fingerprint != changed.fingerprint
