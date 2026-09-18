@@ -167,6 +167,9 @@ def write_bundle(root: Path, rehearsal):
         "manifest_fingerprint": bundle.manifest_fingerprint,
         "gate_fingerprint": bundle.gate_fingerprint,
         "rehearsal_fingerprint": bundle.rehearsal_fingerprint,
+        "registry_id": bundle.registry_id,
+        "registry_version": bundle.registry_version,
+        "registry_fingerprint": bundle.registry_fingerprint,
         "evidence_files": [
             {
                 "path": item.path,
