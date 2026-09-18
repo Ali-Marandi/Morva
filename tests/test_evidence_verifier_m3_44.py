@@ -139,6 +139,52 @@ def make_sources(root: Path):
 def write_bundle(root: Path, rehearsal):
     signer = Ed25519PrivateKey.generate()
     public = signer.public_key()
+    root_key = Ed25519PrivateKey.generate()
+    registry = TrustedKeyRegistry(
+        "morva-signing",
+        1,
+        (
+            TrustedSigningKey(
+                key_id=TrustedKeyRegistry.key_id_for(public),
+                public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public),
+                status="active",
+                valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            ),
+        ),
+    )
+    signed_registry = SignedTrustedKeyRegistry(registry).sign(root_key, NOW)
+    registry_payload = {
+        "registry": {
+            "registry_id": registry.registry_id,
+            "version": registry.version,
+            "keys": [
+                {
+                    "key_id": item.key_id,
+                    "public_key_sha256": item.public_key_sha256,
+                    "status": item.status,
+                    "valid_from": item.valid_from.isoformat(),
+                    "valid_until": (
+                        item.valid_until.isoformat() if item.valid_until else None
+                    ),
+                    "replacement_key_id": item.replacement_key_id,
+                }
+                for item in registry.keys
+            ],
+            "fingerprint": registry.fingerprint,
+        },
+        "signature": {
+            "algorithm": signed_registry.signature.algorithm,
+            "root_key_id": signed_registry.signature.root_key_id,
+            "signature_b64": signed_registry.signature.signature_b64,
+            "signed_at": signed_registry.signature.signed_at.isoformat(),
+        },
+        "fingerprint": signed_registry.fingerprint,
+    }
+    registry_file = root / "registry.json"
+    registry_file.write_text(
+        json.dumps(registry_payload, sort_keys=True),
+        encoding="utf-8",
+    )
     evidence_files = tuple(
         EvidenceFile(
             path.name,
@@ -149,6 +195,7 @@ def write_bundle(root: Path, rehearsal):
             root / "manifest.json",
             root / "gate.json",
             root / "rehearsal.json",
+            registry_file,
         )
     )
     bundle = ReleaseEvidenceBundle(
@@ -158,6 +205,9 @@ def write_bundle(root: Path, rehearsal):
         rehearsal.manifest.fingerprint,
         rehearsal.gate.fingerprint,
         rehearsal.fingerprint,
+        registry.registry_id,
+        registry.version,
+        registry.fingerprint,
         evidence_files,
     ).sign(signer, NOW)
     bundle_payload = {
@@ -188,7 +238,8 @@ def write_bundle(root: Path, rehearsal):
     }
     bundle_file = root / "bundle.json"
     bundle_file.write_text(
-        json.dumps(bundle_payload, sort_keys=True), encoding="utf-8"
+        json.dumps(bundle_payload, sort_keys=True),
+        encoding="utf-8",
     )
     public_file = root / "public.pem"
     public_file.write_bytes(
@@ -196,50 +247,6 @@ def write_bundle(root: Path, rehearsal):
             serialization.Encoding.PEM,
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
-    )
-    root_key = Ed25519PrivateKey.generate()
-    registry = TrustedKeyRegistry(
-        "morva-signing",
-        1,
-        (
-            TrustedSigningKey(
-                key_id=TrustedKeyRegistry.key_id_for(public),
-                public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public),
-                status="active",
-                valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
-            ),
-        ),
-    )
-    signed_registry = SignedTrustedKeyRegistry(registry).sign(root_key, NOW)
-    registry_payload = {
-        "registry": {
-            "registry_id": registry.registry_id,
-            "version": registry.version,
-            "keys": [
-                {
-                    "key_id": item.key_id,
-                    "public_key_sha256": item.public_key_sha256,
-                    "status": item.status,
-                    "valid_from": item.valid_from.isoformat(),
-                    "valid_until": None,
-                    "replacement_key_id": None,
-                }
-                for item in registry.keys
-            ],
-            "fingerprint": registry.fingerprint,
-        },
-        "signature": {
-            "algorithm": signed_registry.signature.algorithm,
-            "root_key_id": signed_registry.signature.root_key_id,
-            "signature_b64": signed_registry.signature.signature_b64,
-            "signed_at": signed_registry.signature.signed_at.isoformat(),
-        },
-        "fingerprint": signed_registry.fingerprint,
-    }
-    registry_file = root / "registry.json"
-    registry_file.write_text(
-        json.dumps(registry_payload, sort_keys=True),
-        encoding="utf-8",
     )
     root_public_file = root / "root-public.pem"
     root_public_file.write_bytes(
@@ -249,6 +256,7 @@ def write_bundle(root: Path, rehearsal):
         )
     )
     return bundle_file, public_file, registry_file, root_public_file
+
 
 
 def test_independent_verifier_reconstructs_signed_trust_chain(tmp_path: Path):
