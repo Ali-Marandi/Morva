@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 
+import pytest
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -231,13 +233,11 @@ def test_independent_verifier_reconstructs_and_verifies_chain(tmp_path: Path):
 
 
 def test_independent_verifier_rejects_tampered_rehearsal(tmp_path: Path):
-    bundle_file, public_file = make_bundle(tmp_path)
+    bundle_file, public_file, registry_file = make_bundle(tmp_path)
     path = tmp_path / "rehearsal.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
     payload["tag"] = "v9.9.9"
     path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-
-    import pytest
 
     with pytest.raises(ValueError):
         verify_bundle(
@@ -246,15 +246,14 @@ def test_independent_verifier_rejects_tampered_rehearsal(tmp_path: Path):
             tmp_path / "gate.json",
             path,
             public_file,
+            registry_file,
             tmp_path,
             SHA,
         )
 
 
 def test_independent_verifier_rejects_wrong_expected_sha(tmp_path: Path):
-    bundle_file, public_file = make_bundle(tmp_path)
-
-    import pytest
+    bundle_file, public_file, registry_file = make_bundle(tmp_path)
 
     with pytest.raises(ValueError, match="expected release commit"):
         verify_bundle(
@@ -263,6 +262,7 @@ def test_independent_verifier_rejects_wrong_expected_sha(tmp_path: Path):
             tmp_path / "gate.json",
             tmp_path / "rehearsal.json",
             public_file,
+            registry_file,
             tmp_path,
             "f" * 40,
         )
