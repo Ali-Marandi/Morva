@@ -10,7 +10,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
-from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
+from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle, load_evidence_bundle
 from morva.runtime.release_rehearsal import ReleaseRehearsal
 from tools.m3_40_release_gate import load_release_gate
 from tools.m3_41_release_manifest import load_manifest
@@ -22,11 +22,28 @@ def _hash_file(path: Path, root: Path) -> EvidenceFile:
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
-    return EvidenceFile(path.relative_to(root).as_posix(), digest.hexdigest(), path.stat().st_size)
+    return EvidenceFile(
+        path.relative_to(root).as_posix(),
+        digest.hexdigest(),
+        path.stat().st_size,
+    )
 
 
 def _load_rehearsal_summary(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _assert_registry_binding(
+    bundle: ReleaseEvidenceBundle,
+    registry_file: Path,
+) -> None:
+    registry = load_signed_registry(registry_file).registry
+    if bundle.registry_id != registry.registry_id:
+        raise ValueError("bundle registry_id does not match trusted registry")
+    if bundle.registry_version != registry.version:
+        raise ValueError("bundle registry_version does not match trusted registry")
+    if bundle.registry_fingerprint != registry.fingerprint:
+        raise ValueError("bundle registry_fingerprint does not match trusted registry")
 
 
 def build_bundle(
@@ -111,20 +128,6 @@ def _write_bundle(bundle: ReleaseEvidenceBundle, output: Path) -> None:
     )
 
 
-def _load_bundle(path: Path) -> ReleaseEvidenceBundle:
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    from morva.runtime.release_evidence import EvidenceBundleSignature, load_evidence_bundle
-
-    bundle = load_evidence_bundle(path)
-    if payload.get("fingerprint") != bundle.fingerprint:
-        raise ValueError("release evidence bundle fingerprint does not match its contents")
-    if bundle.signature is None:
-        return bundle
-    if payload.get("signature") is None:
-        raise ValueError("release evidence bundle signature is missing")
-    return bundle
-
-
 def _load_private_key(path: Path) -> Ed25519PrivateKey:
     key = serialization.load_pem_private_key(path.read_bytes(), password=None)
     if not isinstance(key, Ed25519PrivateKey):
@@ -155,11 +158,12 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.verify:
-        if not args.public_key:
-            raise SystemExit("--public-key is required with --verify")
-        bundle = _load_bundle(args.bundle_file)
+        if not args.public_key or not args.registry:
+            raise SystemExit("--public-key and --registry are required with --verify")
+        bundle = load_evidence_bundle(args.bundle_file)
         bundle.verify_files(args.root)
         bundle.verify_signature(_load_public_key(args.public_key))
+        _assert_registry_binding(bundle, args.registry)
         if args.expected_sha and bundle.candidate_sha.lower() != args.expected_sha.lower():
             raise SystemExit("candidate_sha does not match the expected release commit")
         print("M3.43 signed evidence bundle verified")
