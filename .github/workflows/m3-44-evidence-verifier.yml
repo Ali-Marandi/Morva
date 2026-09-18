@@ -37,12 +37,17 @@ jobs:
           tools/m3_43_release_evidence.py
           tools/m3_44_evidence_verifier.py
           tests/test_evidence_verifier_m3_44.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_46_signed_trusted_registry.py
+          tests/test_signed_trusted_key_registry_m3_46.py
       - run: >
           pytest -q
           tests/test_release_manifest_m3_41.py
           tests/test_release_rehearsal_m3_42.py
           tests/test_release_evidence_m3_43.py
           tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
       - name: Build distributions
         run: rm -rf dist && python -m build --outdir dist
       - name: Resolve release tag
@@ -204,17 +209,20 @@ jobs:
           --private-key ci-ed25519-private.pem
           --output release-evidence-bundle.json
           --expected-sha "${GITHUB_SHA}"
-      - name: Create trusted signing-key registry
+      - name: Create and sign trusted signing-key registry
         run: |
           python - <<'PY'
-          import json
           from datetime import datetime, timezone
           from pathlib import Path
 
           from cryptography.hazmat.primitives import serialization
-          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-          public = serialization.load_pem_public_key(
+          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+          from morva.runtime.signed_trusted_key_registry import SignedTrustedKeyRegistry
+          from tools.m3_46_signed_trusted_registry import write_signed_registry
+
+          signing_public = serialization.load_pem_public_key(
               Path("ci-ed25519-public.pem").read_bytes()
           )
           registry = TrustedKeyRegistry(
@@ -222,36 +230,33 @@ jobs:
               version=1,
               keys=(
                   TrustedSigningKey(
-                      key_id=TrustedKeyRegistry.key_id_for(public),
-                      public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public),
+                      key_id=TrustedKeyRegistry.key_id_for(signing_public),
+                      public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(signing_public),
                       status="active",
                       valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
                   ),
               ),
           )
-          payload = {
-              "registry_id": registry.registry_id,
-              "version": registry.version,
-              "keys": [
-                  {
-                      "key_id": item.key_id,
-                      "public_key_sha256": item.public_key_sha256,
-                      "status": item.status,
-                      "valid_from": item.valid_from.isoformat(),
-                      "valid_until": (
-                          item.valid_until.isoformat() if item.valid_until else None
-                      ),
-                      "replacement_key_id": item.replacement_key_id,
-                  }
-                  for item in registry.keys
-              ],
-              "fingerprint": registry.fingerprint,
-          }
-          Path("trusted-key-registry.json").write_text(
-              json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2) + "\n",
-              encoding="utf-8",
+          root = Ed25519PrivateKey.generate()
+          Path("ci-registry-root-private.pem").write_bytes(
+              root.private_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PrivateFormat.PKCS8,
+                  serialization.NoEncryption(),
+              )
           )
+          Path("ci-registry-root-public.pem").write_bytes(
+              root.public_key().public_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PublicFormat.SubjectPublicKeyInfo,
+              )
+          )
+          signed = SignedTrustedKeyRegistry(registry).sign(
+              root, datetime(2026, 1, 1, tzinfo=timezone.utc)
+          )
+          write_signed_registry(signed, Path("trusted-key-registry.json"))
           PY
+          chmod 600 ci-registry-root-private.pem
       - name: Independently verify evidence chain
         run: >
           python tools/m3_44_evidence_verifier.py
@@ -261,14 +266,13 @@ jobs:
           --rehearsal release-rehearsal-evidence.json
           --public-key ci-ed25519-public.pem
           --registry trusted-key-registry.json
+          --registry-root-public-key ci-registry-root-public.pem
           --root .
           --expected-sha "${GITHUB_SHA}"
       - name: Confirm private key is excluded
         run: |
-          if find . -maxdepth 1 -name 'ci-ed25519-private.pem' -print -quit | grep -q .; then
-            rm -f ci-ed25519-private.pem
-            echo "Ephemeral private key removed before artifact upload."
-          fi
+          rm -f ci-ed25519-private.pem ci-registry-root-private.pem
+          echo "Ephemeral private keys removed before artifact upload."
       - name: Upload verifier evidence
         uses: actions/upload-artifact@v4
         with:
@@ -281,4 +285,5 @@ jobs:
             release-evidence-bundle.json
             ci-ed25519-public.pem
             trusted-key-registry.json
+            ci-registry-root-public.pem
           if-no-files-found: error
