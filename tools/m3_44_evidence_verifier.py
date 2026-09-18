@@ -27,6 +27,7 @@ def _assert_source_binding(
     manifest_file: Path,
     gate_file: Path,
     rehearsal_file: Path,
+    registry_file: Path,
     root: Path,
 ) -> ReleaseRehearsal:
     manifest = load_manifest(manifest_file)
@@ -48,7 +49,7 @@ def _assert_source_binding(
             )
     bundle.assert_matches_rehearsal(rehearsal)
     bundle.verify_files(root)
-    source_paths = (manifest_file, gate_file, rehearsal_file)
+    source_paths = (manifest_file, gate_file, rehearsal_file, registry_file)
     indexed = {item.path: item for item in bundle.evidence_files}
     for source in source_paths:
         relative = source.resolve().relative_to(root.resolve()).as_posix()
@@ -90,7 +91,9 @@ def verify_bundle(
     if bundle.registry_fingerprint != signed_registry.registry.fingerprint:
         raise ReleaseEvidenceError("bundle registry_fingerprint does not match trusted registry")
     bundle.verify_signature(public_key)
-    _assert_source_binding(bundle, manifest_file, gate_file, rehearsal_file, root)
+    _assert_source_binding(
+        bundle, manifest_file, gate_file, rehearsal_file, registry_file, root
+    )
     if expected_sha and bundle.candidate_sha.lower() != expected_sha.lower():
         raise ReleaseEvidenceError("bundle candidate_sha does not match expected release commit")
     return bundle
