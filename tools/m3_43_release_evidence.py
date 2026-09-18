@@ -73,7 +73,7 @@ def build_bundle(
 
     files = tuple(
         _hash_file(path.resolve(), root.resolve())
-        for path in (manifest_file, gate_file, rehearsal_file)
+        for path in (manifest_file, gate_file, rehearsal_file, registry_file)
     )
     bundle = ReleaseEvidenceBundle(
         release_id=rehearsal.manifest.release_id,
