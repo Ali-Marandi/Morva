@@ -1,0 +1,64 @@
+name: M3.47 Evidence Trust-Registry Binding
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  registry-binding:
+    name: Verify evidence bundle trust-registry binding
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_evidence.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_43_release_evidence.py
+          tools/m3_44_evidence_verifier.py
+          tools/m3_46_signed_trusted_registry.py
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+      - run: >
+          pytest -q
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+      - name: Confirm M3.47 fields are part of evidence serialization
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
+
+          bundle = ReleaseEvidenceBundle(
+              release_id="morva-1.0.1",
+              tag="v1.0.1",
+              candidate_sha="a" * 40,
+              manifest_fingerprint="b" * 64,
+              gate_fingerprint="c" * 64,
+              rehearsal_fingerprint="d" * 64,
+              registry_id="morva-signing",
+              registry_version=7,
+              registry_fingerprint="e" * 64,
+              evidence_files=(EvidenceFile("registry.json", "f" * 64, 1),),
+          )
+          if '"registry_id":"morva-signing"' not in bundle.signing_bytes().decode():
+              raise SystemExit("registry_id missing from signed payload")
+          if bundle.registry_version != 7 or bundle.registry_fingerprint != "e" * 64:
+              raise SystemExit("registry binding fields are incorrect")
+          print("M3.47 registry binding serialization confirmed.")
+          PY
