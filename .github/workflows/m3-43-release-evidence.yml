@@ -36,6 +36,10 @@ jobs:
           tools/m3_42_release_rehearsal.py
           tools/m3_43_release_evidence.py
           tests/test_release_evidence_m3_43.py
+          src/morva/runtime/trusted_key_registry.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          tools/m3_46_signed_trusted_registry.py
+          tests/test_signed_trusted_key_registry_m3_46.py
       - run: >
           pytest -q
           tests/test_release_gate_m3_40.py
@@ -183,6 +187,54 @@ jobs:
           )
           PY
           chmod 600 ci-ed25519-private.pem
+      - name: Create and sign trusted signing-key registry
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+          from morva.runtime.signed_trusted_key_registry import SignedTrustedKeyRegistry
+          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+          from tools.m3_46_signed_trusted_registry import write_signed_registry
+
+          signing_public = serialization.load_pem_public_key(
+              Path("ci-ed25519-public.pem").read_bytes()
+          )
+          registry = TrustedKeyRegistry(
+              registry_id="ci-rehearsal-signing",
+              version=1,
+              keys=(
+                  TrustedSigningKey(
+                      key_id=TrustedKeyRegistry.key_id_for(signing_public),
+                      public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(signing_public),
+                      status="active",
+                      valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                  ),
+              ),
+          )
+          root = Ed25519PrivateKey.generate()
+          Path("ci-registry-root-private.pem").write_bytes(
+              root.private_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PrivateFormat.PKCS8,
+                  serialization.NoEncryption(),
+              )
+          )
+          Path("ci-registry-root-public.pem").write_bytes(
+              root.public_key().public_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PublicFormat.SubjectPublicKeyInfo,
+              )
+          )
+          signed = SignedTrustedKeyRegistry(registry).sign(
+              root, datetime(2026, 1, 1, tzinfo=timezone.utc)
+          )
+          write_signed_registry(signed, Path("trusted-key-registry.json"))
+          PY
+          chmod 600 ci-registry-root-private.pem
       - name: Sign M3.43 evidence bundle
         run: >
           python tools/m3_43_release_evidence.py
@@ -190,6 +242,7 @@ jobs:
           --manifest release-evidence-manifest.json
           --gate release-gate-rehearsal.json
           --rehearsal release-rehearsal-evidence.json
+          --registry trusted-key-registry.json
           --root .
           --private-key ci-ed25519-private.pem
           --output release-evidence-bundle.json
@@ -200,6 +253,7 @@ jobs:
           release-evidence-bundle.json
           --root .
           --public-key ci-ed25519-public.pem
+          --registry trusted-key-registry.json
           --verify
           --expected-sha "${GITHUB_SHA}"
       - name: Confirm rehearsal remains non-production
@@ -226,4 +280,6 @@ jobs:
             release-rehearsal-evidence.json
             release-evidence-bundle.json
             ci-ed25519-public.pem
+            trusted-key-registry.json
+            ci-registry-root-public.pem
           if-no-files-found: error
