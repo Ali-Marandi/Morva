@@ -80,9 +80,15 @@ def verify_bundle(
     check_time = verified_at or datetime.now(timezone.utc)
     if bundle.signature is None:
         raise ReleaseEvidenceError("evidence bundle is unsigned")
-    registry_public_key = _load_public_key(registry_root_public_key)
+    registry_public_key = load_public_key(registry_root_public_key)
     signed_registry.verify_signature(registry_public_key)
     signed_registry.registry.assert_trusted(bundle.signature.key_id, public_key, check_time)
+    if bundle.registry_id != signed_registry.registry.registry_id:
+        raise ReleaseEvidenceError("bundle registry_id does not match trusted registry")
+    if bundle.registry_version != signed_registry.registry.version:
+        raise ReleaseEvidenceError("bundle registry_version does not match trusted registry")
+    if bundle.registry_fingerprint != signed_registry.registry.fingerprint:
+        raise ReleaseEvidenceError("bundle registry_fingerprint does not match trusted registry")
     bundle.verify_signature(public_key)
     _assert_source_binding(bundle, manifest_file, gate_file, rehearsal_file, root)
     if expected_sha and bundle.candidate_sha.lower() != expected_sha.lower():
