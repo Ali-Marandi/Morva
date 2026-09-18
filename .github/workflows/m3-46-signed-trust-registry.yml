@@ -1,0 +1,40 @@
+name: M3.46 Signed Trust Registry Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-trust-registry:
+    name: Verify root-signed trust registry and key lifecycle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/trusted_key_registry.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          tools/m3_45_trusted_key_registry.py
+          tools/m3_46_signed_trusted_registry.py
+          tools/m3_44_evidence_verifier.py
+          tests/test_trusted_key_registry_m3_45.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+      - run: >
+          pytest -q
+          tests/test_trusted_key_registry_m3_45.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
