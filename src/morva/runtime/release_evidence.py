@@ -176,7 +176,7 @@ class ReleaseEvidenceBundle:
         context = EvidenceBundleSignature(
             algorithm="Ed25519",
             key_id=key_id,
-            signature_b64="A" * 88,
+            signature_b64=b64encode(b"\\x00" * 64).decode("ascii"),
             signed_at=signed_at,
         )
         signature = b64encode(private_key.sign(self.signing_bytes(context))).decode("ascii")
