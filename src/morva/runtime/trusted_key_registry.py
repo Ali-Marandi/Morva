@@ -101,11 +101,11 @@ class TrustedKeyRegistry:
 
     @staticmethod
     def public_key_sha256_for(public_key: Ed25519PublicKey) -> str:
-        raw = public_key.public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
+        der = public_key.public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
-        return sha256(raw).hexdigest()
+        return sha256(der).hexdigest()
 
     def assert_trusted(
         self,
