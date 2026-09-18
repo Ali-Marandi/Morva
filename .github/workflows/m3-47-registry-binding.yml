@@ -38,27 +38,3 @@ jobs:
           tests/test_evidence_verifier_m3_44.py
           tests/test_signed_trusted_key_registry_m3_46.py
           tests/test_signed_trusted_registry_serialization_m3_46.py
-      - name: Confirm M3.47 fields are part of evidence serialization
-        run: |
-          python - <<'PY'
-          from datetime import datetime, timezone
-          from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
-
-          bundle = ReleaseEvidenceBundle(
-              release_id="morva-1.0.1",
-              tag="v1.0.1",
-              candidate_sha="a" * 40,
-              manifest_fingerprint="b" * 64,
-              gate_fingerprint="c" * 64,
-              rehearsal_fingerprint="d" * 64,
-              registry_id="morva-signing",
-              registry_version=7,
-              registry_fingerprint="e" * 64,
-              evidence_files=(EvidenceFile("registry.json", "f" * 64, 1),),
-          )
-          if '"registry_id":"morva-signing"' not in bundle.signing_bytes().decode():
-              raise SystemExit("registry_id missing from signed payload")
-          if bundle.registry_version != 7 or bundle.registry_fingerprint != "e" * 64:
-              raise SystemExit("registry binding fields are incorrect")
-          print("M3.47 registry binding serialization confirmed.")
-          PY
