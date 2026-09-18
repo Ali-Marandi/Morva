@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 
 from morva.runtime.release_rehearsal import ReleaseRehearsal
-from tools.m3_38_release_candidate_check import load_certification
 from tools.m3_40_release_gate import load_release_gate
 from tools.m3_41_release_manifest import load_manifest
 
