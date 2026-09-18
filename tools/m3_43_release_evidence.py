@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from base64 import b64decode
 import json
 import os
 from datetime import datetime, timezone
