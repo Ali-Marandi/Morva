@@ -70,6 +70,9 @@ class ReleaseEvidenceBundle:
     manifest_fingerprint: str
     gate_fingerprint: str
     rehearsal_fingerprint: str
+    registry_id: str
+    registry_version: int
+    registry_fingerprint: str
     evidence_files: tuple[EvidenceFile, ...]
     signature: EvidenceBundleSignature | None = None
 
@@ -80,10 +83,15 @@ class ReleaseEvidenceBundle:
             char not in "0123456789abcdef" for char in self.candidate_sha.lower()
         ):
             raise ReleaseEvidenceError("candidate_sha must be a Git commit SHA-1")
+        if not self.registry_id.strip():
+            raise ReleaseEvidenceError("registry_id is required")
+        if self.registry_version < 1:
+            raise ReleaseEvidenceError("registry_version must be positive")
         for name, value in (
             ("manifest_fingerprint", self.manifest_fingerprint),
             ("gate_fingerprint", self.gate_fingerprint),
             ("rehearsal_fingerprint", self.rehearsal_fingerprint),
+            ("registry_fingerprint", self.registry_fingerprint),
         ):
             if len(value) != 64 or any(
                 char not in "0123456789abcdef" for char in value.lower()
@@ -116,6 +124,9 @@ class ReleaseEvidenceBundle:
             "manifest_fingerprint": self.manifest_fingerprint.lower(),
             "gate_fingerprint": self.gate_fingerprint.lower(),
             "rehearsal_fingerprint": self.rehearsal_fingerprint.lower(),
+            "registry_id": self.registry_id,
+            "registry_version": self.registry_version,
+            "registry_fingerprint": self.registry_fingerprint.lower(),
             "evidence_files": tuple(
                 (item.path, item.sha256.lower(), item.size_bytes)
                 for item in self.evidence_files
@@ -187,6 +198,9 @@ class ReleaseEvidenceBundle:
             manifest_fingerprint=self.manifest_fingerprint,
             gate_fingerprint=self.gate_fingerprint,
             rehearsal_fingerprint=self.rehearsal_fingerprint,
+            registry_id=self.registry_id,
+            registry_version=self.registry_version,
+            registry_fingerprint=self.registry_fingerprint,
             evidence_files=self.evidence_files,
             signature=EvidenceBundleSignature(
                 algorithm=context.algorithm,
@@ -245,6 +259,9 @@ def load_evidence_bundle(path: Path) -> ReleaseEvidenceBundle:
         manifest_fingerprint=payload["manifest_fingerprint"],
         gate_fingerprint=payload["gate_fingerprint"],
         rehearsal_fingerprint=payload["rehearsal_fingerprint"],
+        registry_id=payload["registry_id"],
+        registry_version=int(payload["registry_version"]),
+        registry_fingerprint=payload["registry_fingerprint"],
         evidence_files=tuple(
             EvidenceFile(**item) for item in payload["evidence_files"]
         ),
