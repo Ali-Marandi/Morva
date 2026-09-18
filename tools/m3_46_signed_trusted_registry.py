@@ -12,7 +12,45 @@ from morva.runtime.signed_trusted_key_registry import (
     SignedTrustedRegistryError,
     TrustedRegistrySignature,
 )
-from tools.m3_45_trusted_key_registry import load_registry
+from morva.runtime.trusted_key_registry import (
+    TrustedKeyRegistry,
+    TrustedSigningKey,
+)
+
+
+def _load_datetime(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise SignedTrustedRegistryError("registry timestamps must be timezone-aware")
+    return parsed
+
+
+def _registry_from_payload(payload: dict[str, object]) -> TrustedKeyRegistry:
+    keys = tuple(
+        TrustedSigningKey(
+            key_id=item["key_id"],
+            public_key_sha256=item["public_key_sha256"],
+            status=item["status"],
+            valid_from=_load_datetime(item["valid_from"]),
+            valid_until=(
+                _load_datetime(item["valid_until"])
+                if item.get("valid_until")
+                else None
+            ),
+            replacement_key_id=item.get("replacement_key_id"),
+        )
+        for item in payload["keys"]
+    )
+    registry = TrustedKeyRegistry(
+        registry_id=payload["registry_id"],
+        version=int(payload["version"]),
+        keys=keys,
+    )
+    if payload.get("fingerprint") != registry.fingerprint:
+        raise SignedTrustedRegistryError(
+            "trusted key registry fingerprint does not match its contents"
+        )
+    return registry
 
 
 def load_signed_registry(path: Path) -> SignedTrustedKeyRegistry:
@@ -23,23 +61,12 @@ def load_signed_registry(path: Path) -> SignedTrustedKeyRegistry:
             algorithm=signature_payload["algorithm"],
             root_key_id=signature_payload["root_key_id"],
             signature_b64=signature_payload["signature_b64"],
-            signed_at=datetime.fromisoformat(
-                signature_payload["signed_at"].replace("Z", "+00:00")
-            ),
+            signed_at=_load_datetime(signature_payload["signed_at"]),
         )
         if signature_payload
         else None
     )
-    registry_payload = payload["registry"]
-    registry_path = path.with_name(f".{path.name}.registry.json")
-    registry_path.write_text(
-        json.dumps(registry_payload, ensure_ascii=True, sort_keys=True),
-        encoding="utf-8",
-    )
-    try:
-        registry = load_registry(registry_path)
-    finally:
-        registry_path.unlink(missing_ok=True)
+    registry = _registry_from_payload(payload["registry"])
     envelope = SignedTrustedKeyRegistry(registry=registry, signature=signature)
     if payload.get("fingerprint") != envelope.fingerprint:
         raise SignedTrustedRegistryError(
