@@ -41,6 +41,7 @@ jobs:
           src/morva/runtime/trusted_key_registry.py
           tools/m3_46_signed_trusted_registry.py
           tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
       - run: >
           pytest -q
           tests/test_release_manifest_m3_41.py
@@ -198,17 +199,6 @@ jobs:
           )
           PY
           chmod 600 ci-ed25519-private.pem
-      - name: Sign evidence bundle
-        run: >
-          python tools/m3_43_release_evidence.py
-          release-evidence-bundle.json
-          --manifest release-evidence-manifest.json
-          --gate release-gate-rehearsal.json
-          --rehearsal release-rehearsal-evidence.json
-          --root .
-          --private-key ci-ed25519-private.pem
-          --output release-evidence-bundle.json
-          --expected-sha "${GITHUB_SHA}"
       - name: Create and sign trusted signing-key registry
         run: |
           python - <<'PY'
@@ -257,6 +247,19 @@ jobs:
           write_signed_registry(signed, Path("trusted-key-registry.json"))
           PY
           chmod 600 ci-registry-root-private.pem
+
+      - name: Sign evidence bundle
+        run: >
+          python tools/m3_43_release_evidence.py
+          release-evidence-bundle.json
+          --manifest release-evidence-manifest.json
+          --gate release-gate-rehearsal.json
+          --rehearsal release-rehearsal-evidence.json
+          --registry trusted-key-registry.json
+          --root .
+          --private-key ci-ed25519-private.pem
+          --output release-evidence-bundle.json
+          --expected-sha "${GITHUB_SHA}"
       - name: Independently verify evidence chain
         run: >
           python tools/m3_44_evidence_verifier.py
