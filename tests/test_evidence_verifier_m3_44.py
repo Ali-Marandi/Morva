@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
+from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
 from tools.m3_44_evidence_verifier import verify_bundle
 
 
@@ -129,7 +130,7 @@ def write_source_files(root: Path) -> tuple[Path, Path, Path, str, str, str]:
     )
 
 
-def make_bundle(root: Path) -> tuple[Path, Path]:
+def make_bundle(root: Path) -> tuple[Path, Path, Path]:
     manifest, gate, rehearsal, mf, gf, rf = write_source_files(root)
     paths = (manifest, gate, rehearsal)
     evidence = tuple(
@@ -168,23 +169,62 @@ def make_bundle(root: Path) -> tuple[Path, Path]:
     bundle_file = root / "bundle.json"
     bundle_file.write_text(json.dumps(bundle_payload, sort_keys=True), encoding="utf-8")
     public_file = root / "public.pem"
+    public_key = private_key.public_key()
     public_file.write_bytes(
-        private_key.public_key().public_bytes(
+        public_key.public_bytes(
             serialization.Encoding.PEM,
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
     )
-    return bundle_file, public_file
+    registry = TrustedKeyRegistry(
+        registry_id="morva-ci",
+        version=1,
+        keys=(
+            TrustedSigningKey(
+                key_id=TrustedKeyRegistry.key_id_for(public_key),
+                public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public_key),
+                status="active",
+                valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            ),
+        ),
+    )
+    registry_file = root / "registry.json"
+    registry_file.write_text(
+        json.dumps(
+            {
+                "registry_id": registry.registry_id,
+                "version": registry.version,
+                "keys": [
+                    {
+                        "key_id": item.key_id,
+                        "public_key_sha256": item.public_key_sha256,
+                        "status": item.status,
+                        "valid_from": item.valid_from.isoformat(),
+                        "valid_until": item.valid_until.isoformat()
+                        if item.valid_until
+                        else None,
+                        "replacement_key_id": item.replacement_key_id,
+                    }
+                    for item in registry.keys
+                ],
+                "fingerprint": registry.fingerprint,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return bundle_file, public_file, registry_file
 
 
 def test_independent_verifier_reconstructs_and_verifies_chain(tmp_path: Path):
-    bundle_file, public_file = make_bundle(tmp_path)
+    bundle_file, public_file, registry_file = make_bundle(tmp_path)
     verify_bundle(
         bundle_file,
         tmp_path / "manifest.json",
         tmp_path / "gate.json",
         tmp_path / "rehearsal.json",
         public_file,
+        registry_file,
         tmp_path,
         SHA,
     )
