@@ -14,6 +14,7 @@ from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle
 from morva.runtime.release_rehearsal import ReleaseRehearsal
 from tools.m3_40_release_gate import load_release_gate
 from tools.m3_41_release_manifest import load_manifest
+from tools.m3_46_signed_trusted_registry import load_signed_registry
 
 
 def _hash_file(path: Path, root: Path) -> EvidenceFile:
@@ -29,10 +30,15 @@ def _load_rehearsal_summary(path: Path) -> dict[str, object]:
 
 
 def build_bundle(
-    manifest_file: Path, gate_file: Path, rehearsal_file: Path, root: Path
+    manifest_file: Path,
+    gate_file: Path,
+    rehearsal_file: Path,
+    registry_file: Path,
+    root: Path,
 ) -> ReleaseEvidenceBundle:
     manifest = load_manifest(manifest_file)
     gate = load_release_gate(gate_file)
+    registry = load_signed_registry(registry_file)
     rehearsal = ReleaseRehearsal(manifest.candidate_sha, manifest.tag, manifest, gate)
     summary = _load_rehearsal_summary(rehearsal_file)
 
@@ -59,6 +65,9 @@ def build_bundle(
         manifest_fingerprint=rehearsal.manifest.fingerprint,
         gate_fingerprint=rehearsal.gate.fingerprint,
         rehearsal_fingerprint=rehearsal.fingerprint,
+        registry_id=registry.registry.registry_id,
+        registry_version=registry.registry.version,
+        registry_fingerprint=registry.registry.fingerprint,
         evidence_files=files,
     )
     bundle.verify_files(root)
@@ -81,6 +90,9 @@ def _write_bundle(bundle: ReleaseEvidenceBundle, output: Path) -> None:
         "manifest_fingerprint": bundle.manifest_fingerprint,
         "gate_fingerprint": bundle.gate_fingerprint,
         "rehearsal_fingerprint": bundle.rehearsal_fingerprint,
+        "registry_id": bundle.registry_id,
+        "registry_version": bundle.registry_version,
+        "registry_fingerprint": bundle.registry_fingerprint,
         "evidence_files": [
             {
                 "path": item.path,
@@ -101,31 +113,15 @@ def _write_bundle(bundle: ReleaseEvidenceBundle, output: Path) -> None:
 
 def _load_bundle(path: Path) -> ReleaseEvidenceBundle:
     payload = json.loads(path.read_text(encoding="utf-8"))
-    from morva.runtime.release_evidence import EvidenceBundleSignature
+    from morva.runtime.release_evidence import EvidenceBundleSignature, load_evidence_bundle
 
-    signature_payload = payload.get("signature")
-    signature = (
-        EvidenceBundleSignature(
-            algorithm=signature_payload["algorithm"],
-            key_id=signature_payload["key_id"],
-            signature_b64=signature_payload["signature_b64"],
-            signed_at=datetime.fromisoformat(signature_payload["signed_at"].replace("Z", "+00:00")),
-        )
-        if signature_payload
-        else None
-    )
-    bundle = ReleaseEvidenceBundle(
-        release_id=payload["release_id"],
-        tag=payload["tag"],
-        candidate_sha=payload["candidate_sha"],
-        manifest_fingerprint=payload["manifest_fingerprint"],
-        gate_fingerprint=payload["gate_fingerprint"],
-        rehearsal_fingerprint=payload["rehearsal_fingerprint"],
-        evidence_files=tuple(EvidenceFile(**item) for item in payload["evidence_files"]),
-        signature=signature,
-    )
+    bundle = load_evidence_bundle(path)
     if payload.get("fingerprint") != bundle.fingerprint:
         raise ValueError("release evidence bundle fingerprint does not match its contents")
+    if bundle.signature is None:
+        return bundle
+    if payload.get("signature") is None:
+        raise ValueError("release evidence bundle signature is missing")
     return bundle
 
 
@@ -149,6 +145,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--gate", type=Path)
     parser.add_argument("--rehearsal", type=Path)
+    parser.add_argument("--registry", type=Path)
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--private-key", type=Path)
     parser.add_argument("--public-key", type=Path)
@@ -168,23 +165,37 @@ def main() -> int:
         print("M3.43 signed evidence bundle verified")
         print(f"release_id={bundle.release_id}")
         print(f"candidate_sha={bundle.candidate_sha}")
+        print(f"registry={bundle.registry_id}@{bundle.registry_version}")
         print(f"bundle_fingerprint={bundle.fingerprint}")
         print(f"key_id={bundle.signature.key_id}")
         return 0
 
-    if not (args.manifest and args.gate and args.rehearsal and args.private_key and args.output):
+    if not (
+        args.manifest
+        and args.gate
+        and args.rehearsal
+        and args.registry
+        and args.private_key
+        and args.output
+    ):
         raise SystemExit(
-            "--manifest, --gate, --rehearsal, --private-key and --output are required"
+            "--manifest, --gate, --rehearsal, --registry, --private-key and --output are required"
         )
-    bundle = build_bundle(args.manifest, args.gate, args.rehearsal, args.root)
-    if args.expected_sha:
-        if bundle.candidate_sha.lower() != args.expected_sha.lower():
-            raise SystemExit("candidate_sha does not match the expected release commit")
+    bundle = build_bundle(
+        args.manifest,
+        args.gate,
+        args.rehearsal,
+        args.registry,
+        args.root,
+    )
+    if args.expected_sha and bundle.candidate_sha.lower() != args.expected_sha.lower():
+        raise SystemExit("candidate_sha does not match the expected release commit")
     signed = bundle.sign(_load_private_key(args.private_key), datetime.now(timezone.utc))
     _write_bundle(signed, args.output)
     print("M3.43 signed evidence bundle written")
     print(f"release_id={signed.release_id}")
     print(f"candidate_sha={signed.candidate_sha}")
+    print(f"registry={signed.registry_id}@{signed.registry_version}")
     print(f"bundle_fingerprint={signed.fingerprint}")
     print(f"key_id={signed.signature.key_id}")
     return 0
