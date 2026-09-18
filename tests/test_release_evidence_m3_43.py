@@ -110,6 +110,29 @@ def test_signed_bundle_round_trips_and_verifies_files(tmp_path: Path):
     assert signed.signature is not None
 
 
+def test_signature_timestamp_is_bound_to_the_signed_payload(tmp_path: Path):
+    bundle, private_key = make_bundle(tmp_path)
+    signed = bundle.sign(private_key, NOW)
+    changed_context = EvidenceBundleSignature(
+        algorithm=signed.signature.algorithm,
+        key_id=signed.signature.key_id,
+        signature_b64=signed.signature.signature_b64,
+        signed_at=datetime(2026, 9, 19, 3, 0, tzinfo=timezone.utc),
+    )
+    changed = ReleaseEvidenceBundle(
+        release_id=signed.release_id,
+        tag=signed.tag,
+        candidate_sha=signed.candidate_sha,
+        manifest_fingerprint=signed.manifest_fingerprint,
+        gate_fingerprint=signed.gate_fingerprint,
+        rehearsal_fingerprint=signed.rehearsal_fingerprint,
+        evidence_files=signed.evidence_files,
+        signature=changed_context,
+    )
+    with pytest.raises(ReleaseEvidenceError, match="verification failed"):
+        changed.verify_signature(private_key.public_key())
+
+
 def test_bundle_rejects_wrong_public_key(tmp_path: Path):
     bundle, private_key = make_bundle(tmp_path)
     signed = bundle.sign(private_key, NOW)
