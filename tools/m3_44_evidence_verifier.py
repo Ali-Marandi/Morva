@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
-
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from morva.runtime.release_evidence import (
     ReleaseEvidenceBundle,
     ReleaseEvidenceError,
     load_evidence_bundle,
 )
-from tools.m3_45_trusted_key_registry import load_public_key, load_registry
 from morva.runtime.release_rehearsal import ReleaseRehearsal
+from tools.m3_45_trusted_key_registry import load_public_key, load_registry
 from tools.m3_40_release_gate import load_release_gate
 from tools.m3_41_release_manifest import load_manifest
 
@@ -71,8 +70,6 @@ def verify_bundle(
     expected_sha: str = "",
     verified_at: datetime | None = None,
 ) -> ReleaseEvidenceBundle:
-    from datetime import datetime, timezone
-
     bundle = load_evidence_bundle(bundle_file)
     public_key = load_public_key(public_key_file)
     registry = load_registry(registry_file)
@@ -130,7 +127,7 @@ def main() -> int:
     print(f"candidate_sha={bundle.candidate_sha}")
     print(f"bundle_fingerprint={bundle.fingerprint}")
     print(f"key_id={bundle.signature.key_id}")
-    print("aggregate_gate_ready=False")
+    print(f"aggregate_gate_ready={rehearsal.release_ready}")
     return 0
 
 
