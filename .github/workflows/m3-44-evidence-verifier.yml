@@ -204,6 +204,54 @@ jobs:
           --private-key ci-ed25519-private.pem
           --output release-evidence-bundle.json
           --expected-sha "${GITHUB_SHA}"
+      - name: Create trusted signing-key registry
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from cryptography.hazmat.primitives import serialization
+          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+
+          public = serialization.load_pem_public_key(
+              Path("ci-ed25519-public.pem").read_bytes()
+          )
+          registry = TrustedKeyRegistry(
+              registry_id="ci-rehearsal-signing",
+              version=1,
+              keys=(
+                  TrustedSigningKey(
+                      key_id=TrustedKeyRegistry.key_id_for(public),
+                      public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(public),
+                      status="active",
+                      valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                  ),
+              ),
+          )
+          payload = {
+              "registry_id": registry.registry_id,
+              "version": registry.version,
+              "keys": [
+                  {
+                      "key_id": item.key_id,
+                      "public_key_sha256": item.public_key_sha256,
+                      "status": item.status,
+                      "valid_from": item.valid_from.isoformat(),
+                      "valid_until": (
+                          item.valid_until.isoformat() if item.valid_until else None
+                      ),
+                      "replacement_key_id": item.replacement_key_id,
+                  }
+                  for item in registry.keys
+              ],
+              "fingerprint": registry.fingerprint,
+          }
+          Path("trusted-key-registry.json").write_text(
+              json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
       - name: Independently verify evidence chain
         run: >
           python tools/m3_44_evidence_verifier.py
@@ -212,6 +260,7 @@ jobs:
           --gate release-gate-rehearsal.json
           --rehearsal release-rehearsal-evidence.json
           --public-key ci-ed25519-public.pem
+          --registry trusted-key-registry.json
           --root .
           --expected-sha "${GITHUB_SHA}"
       - name: Confirm private key is excluded
@@ -231,4 +280,5 @@ jobs:
             release-rehearsal-evidence.json
             release-evidence-bundle.json
             ci-ed25519-public.pem
+            trusted-key-registry.json
           if-no-files-found: error
