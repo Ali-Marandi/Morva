@@ -1,0 +1,224 @@
+name: M3.43 Signed Release Evidence Bundle
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-evidence-rehearsal:
+    name: Build and verify signed evidence bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install build
+      - run: >
+          ruff check
+          src/morva/runtime/release_evidence.py
+          src/morva/runtime/release_gate.py
+          src/morva/runtime/release_manifest.py
+          src/morva/runtime/release_rehearsal.py
+          tools/m3_40_release_gate.py
+          tools/m3_41_release_manifest.py
+          tools/m3_42_release_rehearsal.py
+          tools/m3_43_release_evidence.py
+          tests/test_release_evidence_m3_43.py
+      - run: >
+          pytest -q
+          tests/test_release_gate_m3_40.py
+          tests/test_release_manifest_m3_41.py
+          tests/test_release_rehearsal_m3_42.py
+          tests/test_release_evidence_m3_43.py
+      - name: Build distributions
+        run: rm -rf dist && python -m build --outdir dist
+      - name: Generate M3.41 manifest
+        env:
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('ci-{0}', github.sha) }}
+        run: >
+          python tools/m3_41_release_manifest.py dist
+          --release-id "morva-${RELEASE_TAG}"
+          --tag "${RELEASE_TAG}"
+          --candidate-sha "${GITHUB_SHA}"
+          --output release-evidence-manifest.json
+      - name: Verify M3.41 manifest
+        run: >
+          python tools/m3_41_release_manifest.py dist
+          --candidate-sha "${GITHUB_SHA}"
+          --verify release-evidence-manifest.json
+      - name: Create M3.42 rehearsal gate
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from morva.runtime.release_attestation import ArtifactAttestation, ReleaseAttestation
+          from morva.runtime.release_certification import ReleaseCertification
+          from morva.runtime.release_gate import ReleaseGate
+          from morva.runtime.security_assessment import SecurityAssessment
+          from tools.m3_41_release_manifest import load_manifest
+
+          manifest = load_manifest(Path("release-evidence-manifest.json"))
+          now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+          security = SecurityAssessment(
+              assessment_id="CI-REHEARSAL-M3-43",
+              assessed_at=now,
+              scope_hash="0" * 64,
+              required_controls=("authentication", "authorization", "cryptography", "auditability"),
+              verified_controls=(),
+          )
+          certification = ReleaseCertification(
+              release_id=manifest.release_id,
+              candidate_sha=manifest.candidate_sha,
+              required_evidence=(
+                  "security-report",
+                  "dr-evidence",
+                  "load-evidence",
+                  "reconciliation-evidence",
+              ),
+              verified_evidence=(),
+          )
+          attestation = ReleaseAttestation(
+              release_id=manifest.release_id,
+              tag=manifest.tag,
+              candidate_sha=manifest.candidate_sha,
+              certification_fingerprint=certification.fingerprint,
+              evidence_bundle_fingerprint="1" * 64,
+              artifacts=tuple(
+                  ArtifactAttestation(item.path, item.sha256) for item in manifest.artifacts
+              ),
+          )
+          gate = ReleaseGate(manifest.candidate_sha, security, certification, attestation)
+          if gate.release_ready:
+              raise SystemExit("rehearsal gate unexpectedly became ready")
+          payload = {
+              "rehearsal_only": True,
+              "candidate_sha": gate.candidate_sha,
+              "security_assessment": {
+                  "assessment_id": security.assessment_id,
+                  "assessed_at": security.assessed_at.isoformat(),
+                  "scope_hash": security.scope_hash,
+                  "required_controls": list(security.required_controls),
+                  "verified_controls": list(security.verified_controls),
+                  "findings": [],
+              },
+              "certification": {
+                  "release_id": certification.release_id,
+                  "candidate_sha": certification.candidate_sha,
+                  "required_evidence": list(certification.required_evidence),
+                  "verified_evidence": list(certification.verified_evidence),
+                  "security_signoff_complete": False,
+                  "disaster_recovery_signoff_complete": False,
+                  "load_signoff_complete": False,
+                  "reconciliation_signoff_complete": False,
+                  "signoffs": [],
+              },
+              "attestation": {
+                  "release_id": attestation.release_id,
+                  "tag": attestation.tag,
+                  "candidate_sha": attestation.candidate_sha,
+                  "certification_fingerprint": attestation.certification_fingerprint,
+                  "evidence_bundle_fingerprint": attestation.evidence_bundle_fingerprint,
+                  "artifacts": [
+                      {"path": item.path, "sha256": item.sha256}
+                      for item in attestation.artifacts
+                  ],
+                  "signer": None,
+                  "signed_at": None,
+                  "signature_uri": None,
+                  "release_uri": None,
+              },
+          }
+          Path("release-gate-rehearsal.json").write_text(
+              json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Execute M3.42 rehearsal
+        run: >
+          python tools/m3_42_release_rehearsal.py
+          release-evidence-manifest.json
+          release-gate-rehearsal.json
+          --artifact-dir dist
+          --expected-sha "${GITHUB_SHA}"
+          --output release-rehearsal-evidence.json
+      - name: Generate ephemeral CI signing key
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+          key = Ed25519PrivateKey.generate()
+          Path("ci-ed25519-private.pem").write_bytes(
+              key.private_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PrivateFormat.PKCS8,
+                  serialization.NoEncryption(),
+              )
+          )
+          Path("ci-ed25519-public.pem").write_bytes(
+              key.public_key().public_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PublicFormat.SubjectPublicKeyInfo,
+              )
+          )
+          PY
+          chmod 600 ci-ed25519-private.pem
+      - name: Sign M3.43 evidence bundle
+        run: >
+          python tools/m3_43_release_evidence.py
+          release-evidence-bundle.json
+          --manifest release-evidence-manifest.json
+          --gate release-gate-rehearsal.json
+          --rehearsal release-rehearsal-evidence.json
+          --root .
+          --private-key ci-ed25519-private.pem
+          --output release-evidence-bundle.json
+          --expected-sha "${GITHUB_SHA}"
+      - name: Verify M3.43 signature and evidence files
+        run: >
+          python tools/m3_43_release_evidence.py
+          release-evidence-bundle.json
+          --root .
+          --public-key ci-ed25519-public.pem
+          --verify
+          --expected-sha "${GITHUB_SHA}"
+      - name: Confirm rehearsal remains non-production
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(
+              Path("release-rehearsal-evidence.json").read_text(encoding="utf-8")
+          )
+          if payload["aggregate_gate_ready"]:
+              raise SystemExit("signed rehearsal unexpectedly became production-ready")
+          print("Signed evidence bundle verified; aggregate gate remains blocked.")
+          PY
+      - name: Upload signed rehearsal evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: morva-m3-43-signed-evidence-rehearsal
+          path: |
+            dist/
+            release-evidence-manifest.json
+            release-gate-rehearsal.json
+            release-rehearsal-evidence.json
+            release-evidence-bundle.json
+            ci-ed25519-public.pem
+          if-no-files-found: error
