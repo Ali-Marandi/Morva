@@ -199,3 +199,37 @@ class ReleaseEvidenceBundle:
     @property
     def production_ready(self) -> bool:
         return False
+
+
+def load_evidence_bundle(path: Path) -> ReleaseEvidenceBundle:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    signature_payload = payload.get("signature")
+    signature = (
+        EvidenceBundleSignature(
+            algorithm=signature_payload["algorithm"],
+            key_id=signature_payload["key_id"],
+            signature_b64=signature_payload["signature_b64"],
+            signed_at=datetime.fromisoformat(
+                signature_payload["signed_at"].replace("Z", "+00:00")
+            ),
+        )
+        if signature_payload
+        else None
+    )
+    bundle = ReleaseEvidenceBundle(
+        release_id=payload["release_id"],
+        tag=payload["tag"],
+        candidate_sha=payload["candidate_sha"],
+        manifest_fingerprint=payload["manifest_fingerprint"],
+        gate_fingerprint=payload["gate_fingerprint"],
+        rehearsal_fingerprint=payload["rehearsal_fingerprint"],
+        evidence_files=tuple(
+            EvidenceFile(**item) for item in payload["evidence_files"]
+        ),
+        signature=signature,
+    )
+    if payload.get("fingerprint") != bundle.fingerprint:
+        raise ReleaseEvidenceError(
+            "release evidence bundle fingerprint does not match its contents"
+        )
+    return bundle
