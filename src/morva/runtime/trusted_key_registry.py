@@ -132,6 +132,31 @@ class TrustedKeyRegistry:
             raise TrustedKeyRegistryError("signing key is already registered")
         return TrustedKeyRegistry(self.registry_id, self.version + 1, self.keys + (key,))
 
+    def rotate_key(
+        self,
+        current_key_id: str,
+        replacement: TrustedSigningKey,
+    ) -> "TrustedKeyRegistry":
+        current = self.key(current_key_id)
+        if current.status != "active":
+            raise TrustedKeyRegistryError("only an active key can be rotated")
+        if any(item.key_id == replacement.key_id for item in self.keys):
+            raise TrustedKeyRegistryError("replacement signing key is already registered")
+        if replacement.status != "active":
+            raise TrustedKeyRegistryError("replacement signing key must be active")
+        retired = TrustedSigningKey(
+            key_id=current.key_id,
+            public_key_sha256=current.public_key_sha256,
+            status="retired",
+            valid_from=current.valid_from,
+            valid_until=current.valid_until,
+            replacement_key_id=replacement.key_id,
+        )
+        keys = tuple(
+            retired if item.key_id == current_key_id else item for item in self.keys
+        ) + (replacement,)
+        return TrustedKeyRegistry(self.registry_id, self.version + 1, keys)
+
     def revoke_key(self, key_id: str) -> "TrustedKeyRegistry":
         record = self.key(key_id)
         if record.status == "revoked":
