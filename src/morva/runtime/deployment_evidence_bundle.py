@@ -8,19 +8,10 @@ import shutil
 import tarfile
 import tempfile
 
-from morva.runtime.deployment_evidence_verifier import (
-    DeploymentEvidenceGateError,
-    DeploymentEvidenceVerificationReceipt,
-    verify_deployment_evidence,
-)
+from morva.runtime.deployment_evidence_verifier import verify_deployment_evidence
 from morva.runtime.release_deployment_evidence import (
-    DeploymentEvidenceGate,
-    DeploymentEvidenceAttestation,
     load_attestation,
     load_release_receipt,
-)
-from morva.runtime.release_post_publication import (
-    ReleasePostPublicationError,
 )
 
 
@@ -488,6 +479,15 @@ def verify_deployment_evidence_bundle(
                 "bundle pack fingerprint mismatch"
             )
         source_by_name = {source.name: source for source in bundle.source_manifest}
+        expected_members = set(source_by_name) | {"pack.json"}
+        actual_members = {
+            member.name
+            for member in tarfile.open(archive_path, mode="r:gz").getmembers()
+        }
+        if actual_members != expected_members:
+            raise DeploymentEvidenceBundleError(
+                "bundle archive member set mismatch"
+            )
         for name in source_by_name:
             path = extracted / name
             digest, size = _hash_file(path)
