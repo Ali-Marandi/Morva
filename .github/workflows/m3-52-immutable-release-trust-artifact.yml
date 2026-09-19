@@ -1,0 +1,132 @@
+name: M3.52 Immutable Release Trust Artifact
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  publish-trust-artifact:
+    name: Build, verify and publish trust artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_trust_artifact.py
+          tools/m3_52_release_trust_artifact.py
+          tests/test_release_trust_artifact_m3_52.py
+          src/morva/runtime/release_trust_pack.py
+          tools/m3_51_release_trust_pack.py
+      - run: >
+          pytest -q
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+      - name: Build rehearsal trust artifact
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+
+          from tests.test_release_trust_pack_m3_51 import build_test_pack
+          from tools.m3_52_release_trust_artifact import build_artifact, verify_artifact
+
+          expected_sha = os.environ["EXPECTED_SHA"]
+          with TemporaryDirectory(prefix="morva-m3-52-fixture-") as temp:
+              fixture_root = Path(temp)
+              _, _, pack_dir = build_test_pack(fixture_root, "pack")
+              output = Path("rehearsal")
+              output.mkdir(parents=True, exist_ok=True)
+              archive = output / "morva-m3-52-trust-evidence.tar.gz"
+              metadata = output / "morva-m3-52-trust-artifact.json"
+              # The fixture uses a fixed test SHA; verify the artifact against it
+              # while ensuring the production workflow itself remains rehearsal-only.
+              build_artifact(
+                  pack_directory=pack_dir,
+                  output_archive=archive,
+                  metadata_file=metadata,
+                  expected_sha="a" * 40,
+              )
+              verify_artifact(
+                  archive_path=archive,
+                  metadata_file=metadata,
+                  expected_sha="a" * 40,
+              )
+          print(f"candidate_sha_fixture={expected_sha}")
+          print("M3.52 artifact rehearsal verification passed")
+          PY
+      - name: Confirm no private keys are present
+        run: |
+          if find rehearsal -type f -print0 | xargs -0 grep -Il -- 'BEGIN .*PRIVATE KEY' | head -n 1 | grep -q .; then
+            echo 'private-key material detected in rehearsal artifact'
+            exit 1
+          fi
+      - name: Upload immutable trust artifact
+        id: trust-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: rehearsal/morva-m3-52-trust-evidence.tar.gz
+          if-no-files-found: error
+          archive: false
+      - name: Create publication attestation
+        env:
+          ARTIFACT_ID: ${{ steps.trust-artifact.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.trust-artifact.outputs.artifact-url }}
+          ARTIFACT_DIGEST: ${{ steps.trust-artifact.outputs.artifact-digest }}
+          RUN_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = json.loads(Path(
+              "rehearsal/morva-m3-52-trust-artifact.json"
+          ).read_text(encoding="utf-8"))
+          source["publication"] = {
+              "repository": os.environ["REPOSITORY"],
+              "workflow_run_id": int(os.environ["RUN_ID"]),
+              "candidate_sha": os.environ["COMMIT_SHA"],
+              "github_artifact_id": int(os.environ["ARTIFACT_ID"]),
+              "github_artifact_url": os.environ["ARTIFACT_URL"],
+              "github_artifact_digest": os.environ["ARTIFACT_DIGEST"],
+          }
+          Path(
+              "rehearsal/morva-m3-52-publication-attestation.json"
+          ).write_text(
+              json.dumps(source, ensure_ascii=True, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Upload publication attestation
+        uses: actions/upload-artifact@v7
+        with:
+          path: rehearsal/morva-m3-52-publication-attestation.json
+          if-no-files-found: error
+          archive: false
+      - name: Record immutable artifact identity
+        env:
+          ARTIFACT_ID: ${{ steps.trust-artifact.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.trust-artifact.outputs.artifact-digest }}
+        run: |
+          echo "### M3.52 immutable trust artifact" >> "$GITHUB_STEP_SUMMARY"
+          echo "artifact_id=$ARTIFACT_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo "github_artifact_digest=$ARTIFACT_DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          echo "The repository artifact is rehearsal-only and does not authorize production payroll/payment." >> "$GITHUB_STEP_SUMMARY"
