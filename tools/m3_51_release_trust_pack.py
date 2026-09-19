@@ -64,6 +64,8 @@ def _copy_sources(
     entries: list[TrustPackSource] = []
     for role, source in inputs.items():
         target_path = _copy_source(source, root, sources_root)
+        if target_path == "sources/__m3_50__/chain_verification.json":
+            raise ReleaseTrustPackError("source path is reserved for the M3.50 receipt")
         digest, size = _hash_file(output / target_path)
         entries.append(TrustPackSource(role, target_path, digest, size))
 
@@ -235,6 +237,7 @@ def build_pack(
         current_registry_fingerprint=result.current_registry_fingerprint,
         sources=sources,
     )
+    pack.verify_files(output)
     _write_pack(pack, output)
     return pack
 
