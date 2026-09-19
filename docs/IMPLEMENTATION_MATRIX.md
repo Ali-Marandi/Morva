@@ -34,7 +34,7 @@
 | 28 | Core HR Effective Snapshots | implemented immutable period snapshot creation/read API with deterministic content hash; payroll/order population integration and production master-data evidence pending |
 | 29 | Employee Objection / Case Management | **M3.15 implemented persistent case creation/list/detail/status lifecycle, employee-only self access, organization-hierarchy authorization for staff handling, resolution requirements and audit events; formal enterprise grievance policy/SLA evidence pending** |
 | 30 | Employee Payslip PDF | **M3.15 implemented deterministic artifact-bound PDF download behind authenticated self-service and snapshot/hash verification; M3.16 adds a tested user-facing detail/provenance view and resilient download workflow; typography/localization and production document-template certification pending** |
-| 31 | Release Trust / Key Rotation | **M3.48 adds a deterministic fail-closed rotation ceremony binding consecutive signed trust-registry versions to the exact old/new key IDs, effective replacement-key time and root trust anchor; production key custody and authorization evidence remain pending** |
+| 31 | Release Trust / Key Rotation | **M3.48 adds a deterministic fail-closed rotation ceremony binding consecutive signed trust-registry versions to the exact old/new key IDs, effective replacement-key time and root trust anchor; M3.49 adds root trust-anchor handoff and independent Recovery Anchor emergency-recovery authorization; production key custody and authorization evidence remain pending** |
 
 ## Canonical payroll lifecycle
 
