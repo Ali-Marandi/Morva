@@ -41,10 +41,11 @@ jobs:
       - name: Rehearse publication gate
         run: |
           python - <<'PY'
+          from datetime import datetime, timezone
           from pathlib import Path
           from tempfile import TemporaryDirectory
 
-          from tests.test_release_trust_artifact_m3_52 import build_test_pack
+          from tests.test_release_trust_pack_m3_51 import build_test_pack
           from tools.m3_52_release_trust_artifact import build_artifact
           from tools.m3_53_release_publication_gate import build_gate, verify_gate
 
@@ -69,7 +70,7 @@ jobs:
                   output_gate=gate_file,
                   expected_sha="a" * 40,
                   expected_tag=artifact.tag,
-                  verified_at=artifact_to_datetime(artifact),
+                  verified_at=datetime(2026, 9, 19, 22, 0, tzinfo=timezone.utc),
               )
               verify_gate(
                   gate_file=gate_file,
@@ -80,10 +81,6 @@ jobs:
                   expected_sha="a" * 40,
               )
           print("M3.53 rehearsal publication gate verified")
-
-          def artifact_to_datetime(_artifact):
-              from datetime import datetime
-              return datetime(2026, 9, 19, 22, 0, tzinfo=__import__("datetime").timezone.utc)
           PY
       - name: Rehearsal-only boundary
         run: |
