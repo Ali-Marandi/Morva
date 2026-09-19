@@ -35,18 +35,14 @@ jobs:
           tests/test_release_trust_pack_m3_51.py
           tests/test_trust_chain_m3_50.py
       - name: Build rehearsal trust artifact
-        env:
-          EXPECTED_SHA: ${{ github.sha }}
         run: |
           python - <<'PY'
-          import os
           from pathlib import Path
           from tempfile import TemporaryDirectory
 
           from tests.test_release_trust_pack_m3_51 import build_test_pack
           from tools.m3_52_release_trust_artifact import build_artifact, verify_artifact
 
-          expected_sha = os.environ["EXPECTED_SHA"]
           with TemporaryDirectory(prefix="morva-m3-52-fixture-") as temp:
               fixture_root = Path(temp)
               _, _, pack_dir = build_test_pack(fixture_root, "pack")
@@ -54,8 +50,7 @@ jobs:
               output.mkdir(parents=True, exist_ok=True)
               archive = output / "morva-m3-52-trust-evidence.tar.gz"
               metadata = output / "morva-m3-52-trust-artifact.json"
-              # The fixture uses a fixed test SHA; verify the artifact against it
-              # while ensuring the production workflow itself remains rehearsal-only.
+              # The fixture uses a fixed test SHA; production authorization is not implied.
               build_artifact(
                   pack_directory=pack_dir,
                   output_archive=archive,
@@ -67,12 +62,13 @@ jobs:
                   metadata_file=metadata,
                   expected_sha="a" * 40,
               )
-          print(f"candidate_sha_fixture={expected_sha}")
           print("M3.52 artifact rehearsal verification passed")
           PY
       - name: Confirm no private keys are present
         run: |
-          if find rehearsal -type f -print0 | xargs -0 grep -Il -- 'BEGIN .*PRIVATE KEY' | head -n 1 | grep -q .; then
+          if find rehearsal -type f -print0 \
+          | xargs -0 grep -Il -- 'BEGIN .*PRIVATE KEY' \
+          | head -n 1 | grep -q .; then
             echo 'private-key material detected in rehearsal artifact'
             exit 1
           fi
@@ -103,7 +99,8 @@ jobs:
           source["publication"] = {
               "repository": os.environ["REPOSITORY"],
               "workflow_run_id": int(os.environ["RUN_ID"]),
-              "candidate_sha": os.environ["COMMIT_SHA"],
+              "workflow_commit_sha": os.environ["COMMIT_SHA"],
+              "rehearsal_artifact_candidate_sha": source["candidate_sha"],
               "github_artifact_id": int(os.environ["ARTIFACT_ID"]),
               "github_artifact_url": os.environ["ARTIFACT_URL"],
               "github_artifact_digest": os.environ["ARTIFACT_DIGEST"],
