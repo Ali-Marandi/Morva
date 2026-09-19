@@ -1,0 +1,41 @@
+name: M3.61 Production Boundary Policy Scanner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: Scan release and deployment boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/production_boundary_policy.py
+          tools/m3_61_production_boundary_policy.py
+          tests/test_production_boundary_policy_m3_61.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_production_boundary_policy_m3_61.py
+      - name: Policy scan
+        run: >
+          python tools/m3_61_production_boundary_policy.py
+          --repository Ali-Marandi/Morva
+          --output /tmp/m3-61-policy.json
+      - name: Record production boundary
+        run: |
+          echo "M3.61 scans release/deployment workflows for mutation and sensitive material." >> "$GITHUB_STEP_SUMMARY"
