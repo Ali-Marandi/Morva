@@ -44,12 +44,15 @@ jobs:
       - name: Confirm no deployment or release mutations
         shell: bash
         run: |
-          pattern='^[[:space:]]*(kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy))'
-          pattern2='^[[:space:]]*(gh release (create|edit|delete|upload)|git (push|tag) )'
-          for pattern in "$pattern" "$pattern2"; do
+          pattern='^[[:space:]]*(kubectl (apply|delete)|'
+          pattern+='helm (install|upgrade|rollback)|'
+          pattern+='terraform (apply|destroy)|'
+          pattern+='gh release (create|edit|delete|upload)|'
+          pattern+='git (push|tag) )'
+          for command_pattern in "$pattern"; do
             for file in .github/workflows/*; do
               [ -f "$file" ] || continue
-              if grep -InE -- "$pattern" "$file"; then
+              if grep -InE -- "$command_pattern" "$file"; then
                 echo "forbidden deployment/release mutation command found"
                 exit 1
               fi
@@ -57,5 +60,5 @@ jobs:
           done
       - name: Record production boundary
         run: |
-          echo "M3.56 is an evidence gate, not a deployment executor." >> "$GITHUB_STEP_SUMMARY"
+          echo "M3.56 is an evidence gate." >> "$GITHUB_STEP_SUMMARY"
           echo "No deployment, Release, tag or asset mutation is performed." >> "$GITHUB_STEP_SUMMARY"
