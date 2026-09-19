@@ -43,7 +43,9 @@ jobs:
           tests/test_trust_chain_m3_50.py
       - name: Confirm executor never publishes in CI
         run: |
-          if git ls-files -z | xargs -0 grep -Il -- 'gh release create' | grep -E '^\.github/workflows/'; then
+          if git ls-files -z \
+          | xargs -0 grep -Il -- 'gh release create' \
+          | grep -E '^\\.github/workflows/'; then
             echo 'direct release publication command must not be embedded in CI workflow files'
             exit 1
           fi
