@@ -6,6 +6,7 @@ from datetime import datetime
 from hashlib import sha256
 import json
 
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
@@ -120,7 +121,10 @@ class RootRotationCeremony:
 
     @staticmethod
     def root_key_id_for(public_key: Ed25519PublicKey) -> str:
-        raw = public_key.public_bytes_raw()
+        raw = public_key.public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
         return sha256(raw).hexdigest()
 
     @classmethod
@@ -158,36 +162,28 @@ class RootRotationCeremony:
             old_root_action=old_root_action,
             previous_registry_fingerprint=previous.registry.fingerprint,
             new_registry_fingerprint=current.registry.fingerprint,
-            old_root_signature_b64=b64encode(
-                old_root_private_key.sign(b"pending")
-            ).decode("ascii"),
-            new_root_signature_b64=b64encode(
-                new_root_private_key.sign(b"pending")
-            ).decode("ascii"),
+            old_root_signature_b64=b64encode(b"\\x00" * 64).decode("ascii"),
+            new_root_signature_b64=b64encode(b"\\x00" * 64).decode("ascii"),
         )
         payload = draft.signing_bytes()
         return cls(
-            **{
-                **draft.__dict__ if hasattr(draft, "__dict__") else {
-                    "ceremony_id": draft.ceremony_id,
-                    "registry_id": draft.registry_id,
-                    "from_version": draft.from_version,
-                    "to_version": draft.to_version,
-                    "old_root_key_id": draft.old_root_key_id,
-                    "new_root_key_id": draft.new_root_key_id,
-                    "effective_at": draft.effective_at,
-                    "transition_kind": draft.transition_kind,
-                    "old_root_action": draft.old_root_action,
-                    "previous_registry_fingerprint": draft.previous_registry_fingerprint,
-                    "new_registry_fingerprint": draft.new_registry_fingerprint,
-                    "old_root_signature_b64": b64encode(
-                        old_root_private_key.sign(payload)
-                    ).decode("ascii"),
-                    "new_root_signature_b64": b64encode(
-                        new_root_private_key.sign(payload)
-                    ).decode("ascii"),
-                },
-            }
+            ceremony_id=draft.ceremony_id,
+            registry_id=draft.registry_id,
+            from_version=draft.from_version,
+            to_version=draft.to_version,
+            old_root_key_id=draft.old_root_key_id,
+            new_root_key_id=draft.new_root_key_id,
+            effective_at=draft.effective_at,
+            transition_kind=draft.transition_kind,
+            old_root_action=draft.old_root_action,
+            previous_registry_fingerprint=draft.previous_registry_fingerprint,
+            new_registry_fingerprint=draft.new_registry_fingerprint,
+            old_root_signature_b64=b64encode(
+                old_root_private_key.sign(payload)
+            ).decode("ascii"),
+            new_root_signature_b64=b64encode(
+                new_root_private_key.sign(payload)
+            ).decode("ascii"),
         )
 
     def assert_source_bindings(
