@@ -51,4 +51,5 @@ jobs:
       - name: Record production boundary
         run: |
           echo "M3.62 is a technical evidence gate only." >> "$GITHUB_STEP_SUMMARY"
-          echo "No release, deployment or infrastructure mutation is performed." >> "$GITHUB_STEP_SUMMARY"
+          echo "No release or deployment mutation is performed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Infrastructure mutation is also forbidden." >> "$GITHUB_STEP_SUMMARY"
