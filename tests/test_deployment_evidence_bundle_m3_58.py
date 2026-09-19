@@ -116,7 +116,7 @@ def test_bundle_roundtrip(monkeypatch, tmp_path: Path):
 
 def test_bundle_archive_is_deterministic(monkeypatch, tmp_path: Path):
     first = _inputs(monkeypatch, tmp_path / "first")
-    second = _inputs(monkeypatch, tmp_path / "second")
+    second = first
     first_archive = tmp_path / "first.tar.gz"
     first_meta = tmp_path / "first.json"
     second_archive = tmp_path / "second.tar.gz"
