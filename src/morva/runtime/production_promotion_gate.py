@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 from morva.runtime.deployment_evidence_bundle import (
-    DeploymentEvidenceBundle,
     DeploymentEvidenceBundleError,
     verify_deployment_evidence_bundle,
 )
