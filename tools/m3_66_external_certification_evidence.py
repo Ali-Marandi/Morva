@@ -18,15 +18,22 @@ def main() -> int:
     )
     parser.add_argument("--repository", required=True)
     parser.add_argument("--candidate-sha", required=True)
+    parser.add_argument("--checked-at", required=False)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("evidence", nargs="+", type=Path)
     args = parser.parse_args()
 
     try:
+        checked_at = (
+            datetime.fromisoformat(args.checked_at)
+            if args.checked_at
+            else datetime.now(timezone.utc)
+        )
         items = build_evidence_registry(
             tuple(args.evidence),
             repository=args.repository,
             candidate_sha=args.candidate_sha,
+            checked_at=checked_at,
         )
         registry = ExternalCertificationEvidenceRegistry(
             registry_version=1,
