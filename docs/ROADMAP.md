@@ -61,6 +61,7 @@
 - M3.48 deterministic trusted-key rotation ceremony contract binding consecutive registry versions, exact old/new key IDs, effective time, root trust anchor and fail-closed transition verification
 - M3.49 root trust-anchor rotation and emergency-recovery ceremony with dual scheduled handoff signatures, independent Recovery Anchor authorization for emergency revoke, exact registry fingerprints and fail-closed continuity checks
 - M3.50 independent trust-chain verification composing M3.43/M3.47 signed release evidence with M3.48 signing-key rotation and M3.49 root trust-anchor transition across three exact Registry versions
+- M3.51 deterministic release trust evidence pack that records the full M3.50 trust chain, exact public verification sources, SHA-256/size manifest and fail-closed pack verification without private-key material
 
 ## Current execution queue
 
