@@ -63,6 +63,7 @@
 - M3.50 independent trust-chain verification composing M3.43/M3.47 signed release evidence with M3.48 signing-key rotation and M3.49 root trust-anchor transition across three exact Registry versions
 - M3.51 deterministic release trust evidence pack that records the full M3.50 trust chain, exact public verification sources, SHA-256/size manifest and fail-closed pack verification without private-key material
 - M3.52 deterministic immutable release-trust archive artifact with write-once output, normalized USTAR/GZIP representation, archive digest/size metadata, safe extraction verification and rehearsal-only GitHub Actions publication attestation
+- M3.53 fail-closed release publication gate binding repository, release ID, tag, exact candidate SHA and M3.52 artifact identity into a deterministic publication-input fingerprint
 
 ## Current execution queue
 
