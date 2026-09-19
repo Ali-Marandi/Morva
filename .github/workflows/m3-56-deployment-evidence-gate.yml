@@ -61,4 +61,5 @@ jobs:
       - name: Record production boundary
         run: |
           echo "M3.56 is an evidence gate." >> "$GITHUB_STEP_SUMMARY"
-          echo "No deployment, Release, tag or asset mutation is performed." >> "$GITHUB_STEP_SUMMARY"
+          echo "No deployment, Release or tag mutation is performed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release asset mutation is also forbidden." >> "$GITHUB_STEP_SUMMARY"
