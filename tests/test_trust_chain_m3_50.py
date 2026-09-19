@@ -417,18 +417,22 @@ def test_chain_rejects_release_bundle_bound_to_wrong_registry(tmp_path: Path):
         )
 
 
-def test_chain_fingerprint_changes_when_bundle_changes(tmp_path: Path):
+def test_chain_fingerprint_changes_when_release_identity_changes(tmp_path: Path):
     fixture = make_fixture(tmp_path)
-    verification = verify_trust_chain(
-        previous=SignedTrustedKeyRegistry(fixture["previous"]).sign(
-            fixture["old_root"], NOW
-        ),
-        intermediate=SignedTrustedKeyRegistry(fixture["intermediate"]).sign(
-            fixture["old_root"], NOW + timedelta(minutes=1)
-        ),
-        current=SignedTrustedKeyRegistry(fixture["current"]).sign(
-            fixture["new_root"], ROOT_EFFECTIVE
-        ),
+    signed_previous = SignedTrustedKeyRegistry(fixture["previous"]).sign(
+        fixture["old_root"], NOW
+    )
+    signed_intermediate = SignedTrustedKeyRegistry(fixture["intermediate"]).sign(
+        fixture["old_root"], NOW + timedelta(minutes=1)
+    )
+    signed_current = SignedTrustedKeyRegistry(fixture["current"]).sign(
+        fixture["new_root"], ROOT_EFFECTIVE
+    )
+
+    first = verify_trust_chain(
+        previous=signed_previous,
+        intermediate=signed_intermediate,
+        current=signed_current,
         signing_key_rotation=fixture["sign_rotation"],
         root_rotation=fixture["root_rotation"],
         release_bundle=fixture["bundle"],
@@ -437,17 +441,49 @@ def test_chain_fingerprint_changes_when_bundle_changes(tmp_path: Path):
         new_root_public_key=fixture["new_root"].public_key(),
         verified_at=VERIFY_AT,
     )
-    changed = ReleaseEvidenceBundle(
-        fixture["bundle"].release_id,
-        fixture["bundle"].tag,
-        fixture["bundle"].candidate_sha,
-        fixture["bundle"].manifest_fingerprint,
-        fixture["bundle"].gate_fingerprint,
-        fixture["bundle"].rehearsal_fingerprint,
-        fixture["bundle"].registry_id,
-        fixture["bundle"].registry_version,
-        fixture["bundle"].registry_fingerprint,
-        fixture["bundle"].evidence_files,
-        fixture["bundle"].signature,
+    changed_bundle = fixture["bundle"].sign(
+        fixture["new_signer"], VERIFY_AT
     )
-    assert verification.fingerprint != changed.fingerprint
+    changed_bundle = ReleaseEvidenceBundle(
+        "morva-1.0.2",
+        changed_bundle.tag,
+        changed_bundle.candidate_sha,
+        changed_bundle.manifest_fingerprint,
+        changed_bundle.gate_fingerprint,
+        changed_bundle.rehearsal_fingerprint,
+        changed_bundle.registry_id,
+        changed_bundle.registry_version,
+        changed_bundle.registry_fingerprint,
+        changed_bundle.evidence_files,
+        changed_bundle.signature,
+    )
+    with pytest.raises(Exception):
+        verify_trust_chain(
+            previous=signed_previous,
+            intermediate=signed_intermediate,
+            current=signed_current,
+            signing_key_rotation=fixture["sign_rotation"],
+            root_rotation=fixture["root_rotation"],
+            release_bundle=changed_bundle,
+            release_signing_public_key=fixture["new_signer"].public_key(),
+            old_root_public_key=fixture["old_root"].public_key(),
+            new_root_public_key=fixture["new_root"].public_key(),
+            verified_at=VERIFY_AT,
+        )
+    assert first.fingerprint != sha256(
+        json.dumps(
+            {
+                "release_id": "morva-1.0.2",
+                "tag": first.tag,
+                "candidate_sha": first.candidate_sha,
+                "previous_registry_fingerprint": first.previous_registry_fingerprint,
+                "intermediate_registry_fingerprint": first.intermediate_registry_fingerprint,
+                "current_registry_fingerprint": first.current_registry_fingerprint,
+                "signing_key_rotation_fingerprint": first.signing_key_rotation_fingerprint,
+                "root_rotation_fingerprint": first.root_rotation_fingerprint,
+                "bundle_fingerprint": first.bundle_fingerprint,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
