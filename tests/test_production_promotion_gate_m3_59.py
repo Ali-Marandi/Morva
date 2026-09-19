@@ -163,3 +163,36 @@ def test_promotion_gate_is_write_once(monkeypatch, tmp_path: Path):
     write_gate(gate, output)
     with pytest.raises(ProductionPromotionGateError, match="write-once"):
         write_gate(gate, output)
+
+def test_promotion_rejects_external_attestation_mismatch(
+    monkeypatch,
+    tmp_path: Path,
+):
+    bundle, metadata, attestation = _promotion_inputs(monkeypatch, tmp_path)
+    from morva.runtime.deployment_evidence_bundle import _load_metadata
+
+    bundle_object = _load_metadata(metadata)
+    payload = _authorization(bundle_object.bundle_fingerprint)
+    authorization = tmp_path / "authorization.json"
+    authorization.write_text(json.dumps(payload), encoding="utf-8")
+
+    external = json.loads(attestation.read_text(encoding="utf-8"))
+    external["deployment_id"] = "different-deployment"
+    attestation.write_text(
+        json.dumps(external, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ProductionPromotionGateError,
+        match="does not match bundle attestation",
+    ):
+        build_production_promotion_gate(
+            bundle_archive=bundle,
+            bundle_metadata=metadata,
+            authorization_file=authorization,
+            deployment_attestation=attestation,
+            repository=REPOSITORY,
+            tag=TAG,
+            candidate_sha=SHA,
+        )
