@@ -138,10 +138,15 @@ def build_evidence_registry(
     *,
     repository: str,
     candidate_sha: str,
+    checked_at: datetime,
 ) -> tuple[ExternalCertificationEvidence, ...]:
     if not paths:
         raise ExternalCertificationEvidenceError(
             "evidence registry cannot be empty"
+        )
+    if checked_at.tzinfo is None:
+        raise ExternalCertificationEvidenceError(
+            "checked_at must be timezone-aware"
         )
     items = tuple(load_evidence(path) for path in paths)
     roles = [item.role for item in items]
@@ -160,7 +165,7 @@ def build_evidence_registry(
         raise ExternalCertificationEvidenceError(
             "external evidence role set mismatch: " + "; ".join(detail)
         )
-    now = datetime.now(timezone.utc)
+    now = checked_at.astimezone(timezone.utc)
     for item in items:
         if item.repository != repository:
             raise ExternalCertificationEvidenceError(
