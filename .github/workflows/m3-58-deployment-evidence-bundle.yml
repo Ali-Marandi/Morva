@@ -42,7 +42,9 @@ jobs:
       - name: Confirm CI is non-mutating
         shell: bash
         run: |
-          pattern='^[[:space:]]*(kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)|gh release (create|edit|delete|upload)|git (push|tag) )'
+          pattern='^[[:space:]]*(kubectl (apply|delete)|'
+          pattern+='helm (install|upgrade|rollback)|terraform (apply|destroy)|'
+          pattern+='gh release (create|edit|delete|upload)|git (push|tag) )'
           for file in .github/workflows/*; do
             [ -f "$file" ] || continue
             if grep -InE -- "$pattern" "$file"; then
