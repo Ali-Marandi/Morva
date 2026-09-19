@@ -32,8 +32,10 @@ class RootRotationCeremony:
     old_root_action: str
     previous_registry_fingerprint: str
     new_registry_fingerprint: str
-    old_root_signature_b64: str
+    old_root_signature_b64: str | None
     new_root_signature_b64: str
+    recovery_anchor_key_id: str | None = None
+    recovery_signature_b64: str | None = None
 
     def __post_init__(self) -> None:
         if not self.ceremony_id.strip() or not self.registry_id.strip():
@@ -53,12 +55,33 @@ class RootRotationCeremony:
         if self.old_root_action not in {"retire", "revoke"}:
             raise RootRotationError("unsupported old-root action")
         if (
+            self.transition_kind == "scheduled_rotation"
+            and self.old_root_action != "retire"
+        ):
+            raise RootRotationError(
+                "scheduled root rotation requires retirement of the old root"
+            )
+        if (
             self.transition_kind == "emergency_recovery"
             and self.old_root_action != "revoke"
         ):
             raise RootRotationError(
                 "emergency recovery requires revocation of the old root"
             )
+        if self.transition_kind == "scheduled_rotation":
+            if not self.old_root_signature_b64:
+                raise RootRotationError(
+                    "scheduled rotation requires the old-root signature"
+                )
+            if self.recovery_anchor_key_id or self.recovery_signature_b64:
+                raise RootRotationError(
+                    "scheduled rotation must not use recovery-anchor authorization"
+                )
+        else:
+            if not self.recovery_anchor_key_id or not self.recovery_signature_b64:
+                raise RootRotationError(
+                    "emergency recovery requires recovery-anchor authorization"
+                )
         for name, value in (
             ("previous_registry_fingerprint", self.previous_registry_fingerprint),
             ("new_registry_fingerprint", self.new_registry_fingerprint),
@@ -67,22 +90,34 @@ class RootRotationCeremony:
                 char not in "0123456789abcdef" for char in value.lower()
             ):
                 raise RootRotationError(f"{name} must be a SHA-256 hex digest")
-        for name, value in (
-            ("old_root_signature_b64", self.old_root_signature_b64),
-            ("new_root_signature_b64", self.new_root_signature_b64),
-        ):
-            if not value.strip():
-                raise RootRotationError(f"{name} is required")
-            try:
-                raw = b64decode(value, validate=True)
-            except Exception as exc:
-                raise RootRotationError(
-                    f"{name} is not valid base64"
-                ) from exc
-            if len(raw) != 64:
-                raise RootRotationError(
-                    f"{name} must contain a 64-byte Ed25519 signature"
-                )
+        self._validate_signature("new_root_signature_b64", self.new_root_signature_b64)
+        if self.old_root_signature_b64:
+            self._validate_signature(
+                "old_root_signature_b64", self.old_root_signature_b64
+            )
+        if self.recovery_signature_b64:
+            self._validate_signature(
+                "recovery_signature_b64", self.recovery_signature_b64
+            )
+
+    @staticmethod
+    def _validate_signature(name: str, value: str) -> None:
+        try:
+            raw = b64decode(value, validate=True)
+        except Exception as exc:
+            raise RootRotationError(f"{name} is not valid base64") from exc
+        if len(raw) != 64:
+            raise RootRotationError(
+                f"{name} must contain a 64-byte Ed25519 signature"
+            )
+
+    @staticmethod
+    def root_key_id_for(public_key: Ed25519PublicKey) -> str:
+        raw = public_key.public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
+        return sha256(raw).hexdigest()
 
     def _payload(self) -> dict[str, object]:
         return {
@@ -95,10 +130,9 @@ class RootRotationCeremony:
             "effective_at": self.effective_at.isoformat(),
             "transition_kind": self.transition_kind,
             "old_root_action": self.old_root_action,
-            "previous_registry_fingerprint": (
-                self.previous_registry_fingerprint.lower()
-            ),
+            "previous_registry_fingerprint": self.previous_registry_fingerprint.lower(),
             "new_registry_fingerprint": self.new_registry_fingerprint.lower(),
+            "recovery_anchor_key_id": self.recovery_anchor_key_id,
         }
 
     @property
@@ -119,14 +153,6 @@ class RootRotationCeremony:
             separators=(",", ":"),
         ).encode("utf-8")
 
-    @staticmethod
-    def root_key_id_for(public_key: Ed25519PublicKey) -> str:
-        raw = public_key.public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
-        return sha256(raw).hexdigest()
-
     @classmethod
     def create(
         cls,
@@ -135,37 +161,79 @@ class RootRotationCeremony:
         registry_id: str,
         previous: SignedTrustedKeyRegistry,
         current: SignedTrustedKeyRegistry,
-        old_root_private_key: Ed25519PrivateKey,
         new_root_private_key: Ed25519PrivateKey,
         effective_at: datetime,
         transition_kind: str,
         old_root_action: str,
+        old_root_private_key: Ed25519PrivateKey | None = None,
+        recovery_anchor_private_key: Ed25519PrivateKey | None = None,
     ) -> "RootRotationCeremony":
-        old_root = old_root_private_key.public_key()
-        new_root = new_root_private_key.public_key()
         if previous.signature is None or current.signature is None:
             raise RootRotationError("both source registries must be signed")
-        if previous.signature.root_key_id != cls.root_key_id_for(old_root):
-            raise RootRotationError("previous registry is not signed by the old root")
+        new_root = new_root_private_key.public_key()
         if current.signature.root_key_id != cls.root_key_id_for(new_root):
             raise RootRotationError("new registry is not signed by the new root")
+
+        old_root_key_id = previous.signature.root_key_id
+        old_root_signature = None
+        if old_root_private_key is not None:
+            old_root = old_root_private_key.public_key()
+            if old_root_key_id != cls.root_key_id_for(old_root):
+                raise RootRotationError(
+                    "old-root private key does not match previous registry"
+                )
+            old_root_signature = "__PENDING__"
+
+        recovery_anchor_key_id = None
+        recovery_signature = None
+        if recovery_anchor_private_key is not None:
+            recovery_anchor_key_id = cls.root_key_id_for(
+                recovery_anchor_private_key.public_key()
+            )
+            recovery_signature = "__PENDING__"
 
         draft = cls(
             ceremony_id=ceremony_id,
             registry_id=registry_id,
             from_version=previous.registry.version,
             to_version=current.registry.version,
-            old_root_key_id=cls.root_key_id_for(old_root),
+            old_root_key_id=old_root_key_id,
             new_root_key_id=cls.root_key_id_for(new_root),
             effective_at=effective_at,
             transition_kind=transition_kind,
             old_root_action=old_root_action,
             previous_registry_fingerprint=previous.registry.fingerprint,
             new_registry_fingerprint=current.registry.fingerprint,
-            old_root_signature_b64=b64encode(b"\\x00" * 64).decode("ascii"),
-            new_root_signature_b64=b64encode(b"\\x00" * 64).decode("ascii"),
+            old_root_signature_b64=(
+                b64encode(b"\x00" * 64).decode("ascii")
+                if old_root_signature
+                else None
+            ),
+            new_root_signature_b64=b64encode(b"\x00" * 64).decode("ascii"),
+            recovery_anchor_key_id=recovery_anchor_key_id,
+            recovery_signature_b64=(
+                b64encode(b"\x00" * 64).decode("ascii")
+                if recovery_signature
+                else None
+            ),
         )
         payload = draft.signing_bytes()
+
+        if transition_kind == "scheduled_rotation" and old_root_private_key is None:
+            raise RootRotationError(
+                "scheduled rotation requires the old-root private key"
+            )
+        if transition_kind == "emergency_recovery" and recovery_anchor_private_key is None:
+            raise RootRotationError(
+                "emergency recovery requires the recovery-anchor private key"
+            )
+        if transition_kind == "scheduled_rotation" and recovery_anchor_private_key:
+            raise RootRotationError(
+                "scheduled rotation must not use recovery-anchor authorization"
+            )
+        if transition_kind == "emergency_recovery" and old_root_private_key:
+            old_root_signature = None
+
         return cls(
             ceremony_id=draft.ceremony_id,
             registry_id=draft.registry_id,
@@ -178,12 +246,22 @@ class RootRotationCeremony:
             old_root_action=draft.old_root_action,
             previous_registry_fingerprint=draft.previous_registry_fingerprint,
             new_registry_fingerprint=draft.new_registry_fingerprint,
-            old_root_signature_b64=b64encode(
-                old_root_private_key.sign(payload)
-            ).decode("ascii"),
+            old_root_signature_b64=(
+                b64encode(old_root_private_key.sign(payload)).decode("ascii")
+                if old_root_private_key is not None
+                and transition_kind == "scheduled_rotation"
+                else None
+            ),
             new_root_signature_b64=b64encode(
                 new_root_private_key.sign(payload)
             ).decode("ascii"),
+            recovery_anchor_key_id=draft.recovery_anchor_key_id,
+            recovery_signature_b64=(
+                b64encode(recovery_anchor_private_key.sign(payload)).decode("ascii")
+                if recovery_anchor_private_key is not None
+                and transition_kind == "emergency_recovery"
+                else None
+            ),
         )
 
     def assert_source_bindings(
@@ -192,6 +270,7 @@ class RootRotationCeremony:
         current: SignedTrustedKeyRegistry,
         old_root_public_key: Ed25519PublicKey,
         new_root_public_key: Ed25519PublicKey,
+        recovery_anchor_public_key: Ed25519PublicKey | None = None,
     ) -> None:
         if previous.signature is None or current.signature is None:
             raise RootRotationError("both source registries must be signed")
@@ -219,38 +298,38 @@ class RootRotationCeremony:
             raise RootRotationError(
                 "new registry fingerprint does not match ceremony"
             )
-
-        try:
-            old_root_public_key.verify(
-                b64decode(self.old_root_signature_b64, validate=True),
-                self.signing_bytes(),
-            )
-            new_root_public_key.verify(
-                b64decode(self.new_root_signature_b64, validate=True),
-                self.signing_bytes(),
-            )
-        except Exception as exc:
-            raise RootRotationError(
-                "root rotation handoff signatures could not be verified"
-            ) from exc
-
         if previous.signature.signed_at > self.effective_at:
             raise RootRotationError(
                 "previous registry cannot be signed after root transition effective_at"
             )
 
-    def assert_recovery_policy(self) -> None:
-        if (
-            self.transition_kind == "scheduled_rotation"
-            and self.old_root_action != "retire"
-        ):
-            raise RootRotationError(
-                "scheduled root rotation requires retirement of the old root"
+        try:
+            new_root_public_key.verify(
+                b64decode(self.new_root_signature_b64, validate=True),
+                self.signing_bytes(),
             )
-        if (
-            self.transition_kind == "emergency_recovery"
-            and self.old_root_action != "revoke"
-        ):
+            if self.transition_kind == "scheduled_rotation":
+                old_root_public_key.verify(
+                    b64decode(self.old_root_signature_b64 or "", validate=True),
+                    self.signing_bytes(),
+                )
+            else:
+                if recovery_anchor_public_key is None:
+                    raise RootRotationError(
+                        "emergency recovery requires recovery-anchor public key"
+                    )
+                recovery_id = self.root_key_id_for(recovery_anchor_public_key)
+                if recovery_id != self.recovery_anchor_key_id:
+                    raise RootRotationError(
+                        "recovery-anchor public key does not match ceremony"
+                    )
+                recovery_anchor_public_key.verify(
+                    b64decode(self.recovery_signature_b64 or "", validate=True),
+                    self.signing_bytes(),
+                )
+        except RootRotationError:
+            raise
+        except Exception as exc:
             raise RootRotationError(
-                "emergency recovery requires revocation of the old root"
-            )
+                "root transition authorization signatures could not be verified"
+            ) from exc
