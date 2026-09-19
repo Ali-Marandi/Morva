@@ -164,13 +164,19 @@ def test_duplicate_roles_are_rejected():
         "intermediate_registry_fingerprint": "2" * 64,
         "current_registry_fingerprint": "3" * 64,
     }
-    sources = tuple(
-        source if role == "manifest" else duplicate if role == "manifest-copy"
-        else TrustPackSource(role, f"sources/{role}.json", "a" * 64, 1)
+    sources = [
+        TrustPackSource(
+            role,
+            f"sources/{role}.json",
+            "a" * 64,
+            1,
+        )
         for role in ReleaseTrustEvidencePack.REQUIRED_ROLES
-    )
-    with pytest.raises(ReleaseTrustPackError, match="source role"):
+    ]
+    sources[-1] = duplicate
+    sources.append(source)
+    with pytest.raises(ReleaseTrustPackError, match="exactly one source"):
         ReleaseTrustEvidencePack(
-            sources=sources,
+            sources=tuple(sources),
             **common,
         )
