@@ -49,5 +49,5 @@ jobs:
           fi
       - name: Record production boundary
         run: |
-          echo 'M3.54 executes publication only when an external authorization attestation matches M3.53.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'M3.54 requires external authorization bound to M3.53.' >> "$GITHUB_STEP_SUMMARY"
           echo 'This CI workflow performs verification only.' >> "$GITHUB_STEP_SUMMARY"
