@@ -13,7 +13,6 @@ from morva.runtime.release_trust_pack import (
     TrustPackSource,
     reject_private_key_material,
 )
-from tools.m3_44_evidence_verifier import load_public_key
 from tools.m3_50_trust_chain_verifier import (
     verify_chain,
     write_verification,
@@ -64,7 +63,7 @@ def _build_sources(
     sources_root.mkdir(parents=True, exist_ok=True)
     entries: list[TrustPackSource] = []
     for role, source in inputs.items():
-        target_path = _copy_source(source, root, sources_root.parent)
+        target_path = _copy_source(source, root, sources_root)
         digest, size = _hash_file(output / target_path)
         entries.append(TrustPackSource(role, target_path, digest, size))
 
@@ -200,8 +199,6 @@ def build_pack(
         expected_sha=expected_sha,
         verified_at=verified_at,
     )
-    _build_public_key = load_public_key(public_key_file)
-    del _build_public_key
     sources = _build_sources(
         root=root,
         output=output,
