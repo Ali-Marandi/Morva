@@ -44,13 +44,16 @@ jobs:
       - name: Confirm no deployment or release mutations
         shell: bash
         run: |
-          pattern='^[[:space:]]*(kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)|gh release (create|edit|delete|upload)|git (push|tag) )'
-          for file in .github/workflows/*; do
-            [ -f "$file" ] || continue
-            if grep -InE -- "$pattern" "$file"; then
-              echo "forbidden deployment/release mutation command found"
-              exit 1
-            fi
+          pattern='^[[:space:]]*(kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy))'
+          pattern2='^[[:space:]]*(gh release (create|edit|delete|upload)|git (push|tag) )'
+          for pattern in "$pattern" "$pattern2"; do
+            for file in .github/workflows/*; do
+              [ -f "$file" ] || continue
+              if grep -InE -- "$pattern" "$file"; then
+                echo "forbidden deployment/release mutation command found"
+                exit 1
+              fi
+            done
           done
       - name: Record production boundary
         run: |
