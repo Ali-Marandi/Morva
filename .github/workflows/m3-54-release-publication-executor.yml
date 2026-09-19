@@ -1,0 +1,53 @@
+name: M3.54 Release Publication Executor
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publication-executor:
+    name: Verify safe release publication executor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_publication_executor.py
+          src/morva/runtime/release_publication_gate.py
+          src/morva/runtime/release_trust_artifact.py
+          src/morva/runtime/release_trust_pack.py
+          tools/m3_54_release_publication_executor.py
+          tools/m3_53_release_publication_gate.py
+          tools/m3_52_release_trust_artifact.py
+          tests/test_release_publication_executor_m3_54.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+      - run: >
+          pytest -q
+          tests/test_release_publication_executor_m3_54.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+      - name: Confirm executor never publishes in CI
+        run: |
+          if git ls-files -z | xargs -0 grep -Il -- 'gh release create' | grep -E '^\.github/workflows/'; then
+            echo 'direct release publication command must not be embedded in CI workflow files'
+            exit 1
+          fi
+      - name: Record production boundary
+        run: |
+          echo 'M3.54 executes publication only when an external authorization attestation matches M3.53.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This CI workflow performs verification only.' >> "$GITHUB_STEP_SUMMARY"
