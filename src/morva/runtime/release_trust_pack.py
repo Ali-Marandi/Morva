@@ -146,7 +146,7 @@ class ReleaseTrustEvidencePack:
         actual = {
             path.relative_to(base).as_posix()
             for path in base.rglob("*")
-            if path.is_file() and path.name != "pack.json"
+            if path.is_file() and path.relative_to(base).as_posix() != "pack.json"
         }
         if actual != expected:
             missing = sorted(expected - actual)
