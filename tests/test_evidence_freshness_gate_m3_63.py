@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -27,8 +27,6 @@ def test_freshness_gate_roundtrip(monkeypatch, tmp_path: Path):
         tmp_path,
     )
     release_receipt = tmp_path / "release-receipt.json"
-    from morva.runtime.release_deployment_evidence import load_release_receipt
-
     # The helper's receipt is not exposed as a standalone path, so derive it
     # from the evidence bundle for the fixture.
     import tarfile
@@ -55,7 +53,7 @@ def test_freshness_gate_roundtrip(monkeypatch, tmp_path: Path):
         max_approval_age_hours=24,
         max_deployment_age_hours=24,
     )
-    assert gate.target_environment == "production" if hasattr(gate, "target_environment") else True
+    assert gate.candidate_sha == SHA
 
 
 def test_stale_approval_is_rejected(monkeypatch, tmp_path: Path):
