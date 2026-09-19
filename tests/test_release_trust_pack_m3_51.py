@@ -9,6 +9,7 @@ from morva.runtime.release_trust_pack import (
     ReleaseTrustEvidencePack,
     ReleaseTrustPackError,
     TrustPackSource,
+    reject_private_key_material,
 )
 from tests.test_trust_chain_m3_50 import make_fixture, SHA, VERIFY_AT
 from tools.m3_51_release_trust_pack import build_pack, verify_pack
@@ -180,26 +181,13 @@ def test_duplicate_roles_are_rejected():
         )
 
 
+
 def test_pack_rejects_private_key_material(tmp_path: Path):
-    _, _, output = build_test_pack(tmp_path)
-    private_key = output / "sources" / "private.key"
+    private_key = tmp_path / "private.key"
     private_key.write_text(
-        "-----BEGIN PRIVATE KEY-----\\nforbidden\\n-----END PRIVATE KEY-----\\n",
+        "-----BEGIN PRIVATE KEY-----\nforbidden\n-----END PRIVATE KEY-----\n",
         encoding="utf-8",
     )
-    pack_file = output / "pack.json"
-    payload = json.loads(pack_file.read_text(encoding="utf-8"))
-    payload["sources"].append(
-        {
-            "role": "forbidden_private_material",
-            "path": "sources/private.key",
-            "sha256": "0" * 64,
-            "size_bytes": private_key.stat().st_size,
-        }
-    )
-    pack_file.write_text(
-        json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2) + "\\n",
-        encoding="utf-8",
-    )
-    with pytest.raises(ReleaseTrustPackError):
-        verify_pack(pack_directory=output, expected_sha=SHA)
+
+    with pytest.raises(ReleaseTrustPackError, match="private key material"):
+        reject_private_key_material(tmp_path)
