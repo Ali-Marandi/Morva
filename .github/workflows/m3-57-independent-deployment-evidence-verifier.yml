@@ -1,0 +1,57 @@
+name: M3.57 Independent Deployment Evidence Verifier
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-verifier:
+    name: Verify deployment evidence independently
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/release_deployment_evidence.py
+          src/morva/runtime/deployment_evidence_verifier.py
+          src/morva/runtime/release_post_publication.py
+          tools/m3_57_deployment_evidence_verifier.py
+          tools/m3_56_deployment_evidence_gate.py
+          tests/test_deployment_evidence_verifier_m3_57.py
+          tests/test_release_deployment_evidence_m3_56.py
+          tests/test_release_post_publication_verifier_m3_55.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_deployment_evidence_verifier_m3_57.py
+          tests/test_release_deployment_evidence_m3_56.py
+          tests/test_release_post_publication_verifier_m3_55.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+      - name: Confirm workflow is read-only
+        shell: bash
+        run: |
+          pattern='^[[:space:]]*(kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)|gh release (create|edit|delete|upload)|git (push|tag) )'
+          for file in .github/workflows/*; do
+            [ -f "$file" ] || continue
+            if grep -InE -- "$pattern" "$file"; then
+              echo "forbidden deployment or release mutation found"
+              exit 1
+            fi
+          done
+      - name: Record production boundary
+        run: |
+          echo "M3.57 is verification-only." >> "$GITHUB_STEP_SUMMARY"
+          echo "It does not deploy, publish or mutate infrastructure." >> "$GITHUB_STEP_SUMMARY"

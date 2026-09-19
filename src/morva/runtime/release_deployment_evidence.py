@@ -38,12 +38,9 @@ class DeploymentEvidenceAttestation:
             )
         if not self.evidence_id.strip():
             raise DeploymentEvidenceGateError("evidence_id is required")
-        if (
-            len(self.release_receipt_fingerprint) != 64
-            or any(
-                c not in "0123456789abcdef"
-                for c in self.release_receipt_fingerprint.lower()
-            )
+        if len(self.release_receipt_fingerprint) != 64 or any(
+            c not in "0123456789abcdef"
+            for c in self.release_receipt_fingerprint.lower()
         ):
             raise DeploymentEvidenceGateError(
                 "release_receipt_fingerprint must be SHA-256"
@@ -57,8 +54,7 @@ class DeploymentEvidenceAttestation:
                 "deployment_status must be succeeded"
             )
         if len(self.deployed_sha) != 40 or any(
-            c not in "0123456789abcdef"
-            for c in self.deployed_sha.lower()
+            c not in "0123456789abcdef" for c in self.deployed_sha.lower()
         ):
             raise DeploymentEvidenceGateError(
                 "deployed_sha must be a Git commit SHA-1"
@@ -116,8 +112,7 @@ class DeploymentEvidenceGate:
                 "repository and release_id are required"
             )
         if len(self.candidate_sha) != 40 or any(
-            c not in "0123456789abcdef"
-            for c in self.candidate_sha.lower()
+            c not in "0123456789abcdef" for c in self.candidate_sha.lower()
         ):
             raise DeploymentEvidenceGateError(
                 "candidate_sha must be a Git commit SHA-1"
@@ -127,22 +122,17 @@ class DeploymentEvidenceGate:
             ("healthcheck_sha256", self.healthcheck_sha256),
         ):
             if len(value) != 64 or any(
-                c not in "0123456789abcdef"
-                for c in value.lower()
+                c not in "0123456789abcdef" for c in value.lower()
             ):
-                raise DeploymentEvidenceGateError(
-                    f"{name} must be SHA-256"
-                )
+                raise DeploymentEvidenceGateError(f"{name} must be SHA-256")
         if len(self.deployed_sha) != 40 or any(
-            c not in "0123456789abcdef"
-            for c in self.deployed_sha.lower()
+            c not in "0123456789abcdef" for c in self.deployed_sha.lower()
         ):
             raise DeploymentEvidenceGateError(
                 "deployed_sha must be a Git commit SHA-1"
             )
         if len(self.rollback_target_sha) != 40 or any(
-            c not in "0123456789abcdef"
-            for c in self.rollback_target_sha.lower()
+            c not in "0123456789abcdef" for c in self.rollback_target_sha.lower()
         ):
             raise DeploymentEvidenceGateError(
                 "rollback_target_sha must be a Git commit SHA-1"
@@ -166,6 +156,16 @@ class DeploymentEvidenceGate:
         if not self.rollback_verified:
             raise DeploymentEvidenceGateError(
                 "rollback verification is required"
+            )
+        try:
+            deployed_at = datetime.fromisoformat(self.deployed_at)
+        except ValueError as exc:
+            raise DeploymentEvidenceGateError(
+                "deployed_at must be an ISO-8601 timestamp"
+            ) from exc
+        if deployed_at.tzinfo is None:
+            raise DeploymentEvidenceGateError(
+                "deployed_at must include a timezone"
             )
         if self.verified_at.tzinfo is None:
             raise DeploymentEvidenceGateError(
@@ -326,12 +326,6 @@ def build_deployment_evidence_gate(
         raise DeploymentEvidenceGateError(
             "deployed SHA does not match candidate SHA"
         )
-    try:
-        datetime.fromisoformat(attestation.deployed_at)
-    except ValueError as exc:
-        raise DeploymentEvidenceGateError(
-            "deployed_at must be an ISO-8601 timestamp"
-        ) from exc
     return DeploymentEvidenceGate(
         gate_version=1,
         repository=repository,
