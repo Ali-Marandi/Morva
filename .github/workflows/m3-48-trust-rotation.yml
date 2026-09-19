@@ -1,0 +1,119 @@
+name: M3.48 Trusted-Key Rotation Ceremony
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trust-rotation:
+    name: Verify trusted-key rotation ceremony
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/trust_rotation.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_46_signed_trusted_registry.py
+          tools/m3_48_trust_rotation.py
+          tests/test_trust_rotation_m3_48.py
+      - run: >
+          pytest -q
+          tests/test_trusted_key_registry_m3_45.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+          tests/test_trust_rotation_m3_48.py
+      - name: Create ephemeral rehearsal registries
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+          from morva.runtime.signed_trusted_key_registry import SignedTrustedKeyRegistry
+          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+          from tools.m3_46_signed_trusted_registry import write_signed_registry
+
+          out = Path("m3_48_rehearsal")
+          out.mkdir()
+
+          root = Ed25519PrivateKey.generate()
+          old = Ed25519PrivateKey.generate()
+          new = Ed25519PrivateKey.generate()
+
+          old_record = TrustedSigningKey(
+              key_id=TrustedKeyRegistry.key_id_for(old.public_key()),
+              public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(old.public_key()),
+              status="active",
+              valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+          )
+          previous = TrustedKeyRegistry("morva-signing", 1, (old_record,))
+          effective_at = datetime(2026, 9, 20, 12, 0, tzinfo=timezone.utc)
+          replacement = TrustedSigningKey(
+              key_id=TrustedKeyRegistry.key_id_for(new.public_key()),
+              public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(new.public_key()),
+              status="active",
+              valid_from=effective_at,
+          )
+          current = previous.rotate_key(old_record.key_id, replacement)
+
+          write_signed_registry(
+              SignedTrustedKeyRegistry(previous).sign(
+                  root, datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc)
+              ),
+              out / "previous.json",
+          )
+          write_signed_registry(
+              SignedTrustedKeyRegistry(current).sign(
+                  root, datetime(2026, 9, 19, 12, 5, tzinfo=timezone.utc)
+              ),
+              out / "current.json",
+          )
+          (out / "root.pem").write_bytes(
+              root.public_key().public_bytes(
+                  encoding=serialization.Encoding.PEM,
+                  format=serialization.PublicFormat.SubjectPublicKeyInfo,
+              )
+          )
+          (out / "old-key-id").write_text(old_record.key_id, encoding="utf-8")
+          (out / "new-key-id").write_text(replacement.key_id, encoding="utf-8")
+          (out / "effective-at").write_text(effective_at.isoformat(), encoding="utf-8")
+          PY
+      - name: Build rotation ceremony
+        run: |
+          python tools/m3_48_trust_rotation.py build             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem             --ceremony-id rotation-001-002             --old-key-id "$(cat m3_48_rehearsal/old-key-id)"             --new-key-id "$(cat m3_48_rehearsal/new-key-id)"             --effective-at "$(cat m3_48_rehearsal/effective-at)"             --output m3_48_rehearsal/ceremony.json
+      - name: Verify rotation ceremony
+        run: |
+          python tools/m3_48_trust_rotation.py verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem
+      - name: Verify tamper rejection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          ceremony = Path("m3_48_rehearsal/ceremony.json")
+          payload = json.loads(ceremony.read_text(encoding="utf-8"))
+          payload["new_key_id"] = "tampered"
+          ceremony.write_text(json.dumps(payload), encoding="utf-8")
+          PY
+          if python tools/m3_48_trust_rotation.py verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem; then
+            echo "tampered ceremony unexpectedly verified"
+            exit 1
+          fi
+      - name: Remove rehearsal private material
+        if: always()
+        run: rm -rf m3_48_rehearsal
