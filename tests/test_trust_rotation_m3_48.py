@@ -253,6 +253,21 @@ def test_serialized_ceremony_is_fail_closed(tmp_path: Path):
         verify_ceremony(ceremony_file, previous_file, current_file, root_file)
 
 
+
+def test_rotation_policy_matches_versioned_key_trust():
+    previous, current, old, new = make_rotation()
+    old_id = TrustedKeyRegistry.key_id_for(old.public_key())
+    new_id = TrustedKeyRegistry.key_id_for(new.public_key())
+    before_effective = EFFECTIVE - timedelta(seconds=1)
+
+    previous.assert_trusted(old_id, old.public_key(), before_effective)
+    with pytest.raises(Exception, match="retired|not registered"):
+        current.assert_trusted(old_id, old.public_key(), EFFECTIVE)
+    current.assert_trusted(new_id, new.public_key(), EFFECTIVE)
+    with pytest.raises(Exception, match="not registered"):
+        previous.assert_trusted(new_id, new.public_key(), EFFECTIVE)
+
+
 def test_previous_and_new_registry_fingerprints_are_distinct():
     previous, current, old, new = make_rotation()
     assert previous.fingerprint != current.fingerprint
