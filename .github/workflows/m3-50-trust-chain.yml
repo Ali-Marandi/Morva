@@ -1,0 +1,59 @@
+name: M3.50 Independent Trust-Chain Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trust-chain:
+    name: Verify M3.43-M3.49 trust chain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_evidence.py
+          src/morva/runtime/root_trust_rotation.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          src/morva/runtime/trust_chain.py
+          src/morva/runtime/trust_rotation.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_43_release_evidence.py
+          tools/m3_44_evidence_verifier.py
+          tools/m3_46_signed_trusted_registry.py
+          tools/m3_48_trust_rotation.py
+          tools/m3_49_root_trust_rotation.py
+          tools/m3_50_trust_chain_verifier.py
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+          tests/test_trust_rotation_m3_48.py
+          tests/test_root_trust_rotation_m3_49.py
+          tests/test_trust_chain_m3_50.py
+      - run: >
+          pytest -q
+          tests/test_release_evidence_m3_43.py
+          tests/test_evidence_verifier_m3_44.py
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+          tests/test_trust_rotation_m3_48.py
+          tests/test_root_trust_rotation_m3_49.py
+          tests/test_trust_chain_m3_50.py
+      - name: Confirm no private keys are committed by the workflow
+        run: |
+          if git ls-files | grep -E '\.(pem|key)$' >/dev/null; then
+            echo 'committed private-key-looking file detected'
+            exit 1
+          fi
