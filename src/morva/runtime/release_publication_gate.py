@@ -45,8 +45,10 @@ class ReleasePublicationGate:
                 raise ReleasePublicationGateError(
                     f"{name} must be a SHA-256 hex digest"
                 )
-        if not self.artifact_id.strip():
-            raise ReleasePublicationGateError("artifact_id is required")
+        if not self.artifact_id.strip().startswith("morva-trust-evidence-v1-"):
+            raise ReleasePublicationGateError(
+                "artifact_id must use the M3.52 trust-artifact identifier"
+            )
         if self.archive_size_bytes <= 0:
             raise ReleasePublicationGateError("archive_size_bytes must be positive")
         if self.verified_at.tzinfo is None:
