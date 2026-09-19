@@ -34,8 +34,10 @@ def _load_ceremony(path: Path) -> RootRotationCeremony:
         old_root_action=payload["old_root_action"],
         previous_registry_fingerprint=payload["previous_registry_fingerprint"],
         new_registry_fingerprint=payload["new_registry_fingerprint"],
-        old_root_signature_b64=payload["old_root_signature_b64"],
+        old_root_signature_b64=payload.get("old_root_signature_b64"),
         new_root_signature_b64=payload["new_root_signature_b64"],
+        recovery_anchor_key_id=payload.get("recovery_anchor_key_id"),
+        recovery_signature_b64=payload.get("recovery_signature_b64"),
     )
 
 
@@ -44,6 +46,7 @@ def write_ceremony(ceremony: RootRotationCeremony, path: Path) -> None:
         **ceremony._payload(),
         "old_root_signature_b64": ceremony.old_root_signature_b64,
         "new_root_signature_b64": ceremony.new_root_signature_b64,
+        "recovery_signature_b64": ceremony.recovery_signature_b64,
         "fingerprint": ceremony.fingerprint,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -56,29 +59,39 @@ def write_ceremony(ceremony: RootRotationCeremony, path: Path) -> None:
 def build_ceremony(
     previous_file: Path,
     current_file: Path,
-    old_root_private_key_file: Path,
     new_root_private_key_file: Path,
     ceremony_id: str,
     effective_at: datetime,
     transition_kind: str,
     old_root_action: str,
+    old_root_private_key_file: Path | None = None,
+    recovery_anchor_private_key_file: Path | None = None,
 ) -> RootRotationCeremony:
     previous = load_signed_registry(previous_file)
     current = load_signed_registry(current_file)
-    old_root = load_private_key(old_root_private_key_file)
     new_root = load_private_key(new_root_private_key_file)
-    ceremony = RootRotationCeremony.create(
+    old_root = (
+        load_private_key(old_root_private_key_file)
+        if old_root_private_key_file is not None
+        else None
+    )
+    recovery_anchor = (
+        load_private_key(recovery_anchor_private_key_file)
+        if recovery_anchor_private_key_file is not None
+        else None
+    )
+    return RootRotationCeremony.create(
         ceremony_id=ceremony_id,
         registry_id=previous.registry.registry_id,
         previous=previous,
         current=current,
         old_root_private_key=old_root,
         new_root_private_key=new_root,
+        recovery_anchor_private_key=recovery_anchor,
         effective_at=effective_at,
         transition_kind=transition_kind,
         old_root_action=old_root_action,
     )
-    return ceremony
 
 
 def verify_ceremony(
@@ -87,16 +100,27 @@ def verify_ceremony(
     current_file: Path,
     old_root_public_key_file: Path,
     new_root_public_key_file: Path,
+    recovery_anchor_public_key_file: Path | None = None,
 ) -> RootRotationCeremony:
     ceremony = _load_ceremony(ceremony_file)
     previous = load_signed_registry(previous_file)
     current = load_signed_registry(current_file)
     old_root = load_public_key(old_root_public_key_file)
     new_root = load_public_key(new_root_public_key_file)
+    recovery_anchor = (
+        load_public_key(recovery_anchor_public_key_file)
+        if recovery_anchor_public_key_file is not None
+        else None
+    )
     previous.verify_signature(old_root)
     current.verify_signature(new_root)
-    ceremony.assert_source_bindings(previous, current, old_root, new_root)
-    ceremony.assert_recovery_policy()
+    ceremony.assert_source_bindings(
+        previous,
+        current,
+        old_root,
+        new_root,
+        recovery_anchor,
+    )
 
     payload = json.loads(ceremony_file.read_text(encoding="utf-8"))
     if payload.get("fingerprint") != ceremony.fingerprint:
@@ -115,8 +139,9 @@ def main() -> int:
     build = subparsers.add_parser("build")
     build.add_argument("previous_registry", type=Path)
     build.add_argument("new_registry", type=Path)
-    build.add_argument("--old-root-private-key", type=Path, required=True)
     build.add_argument("--new-root-private-key", type=Path, required=True)
+    build.add_argument("--old-root-private-key", type=Path)
+    build.add_argument("--recovery-anchor-private-key", type=Path)
     build.add_argument("--ceremony-id", required=True)
     build.add_argument("--effective-at", required=True)
     build.add_argument(
@@ -137,18 +162,20 @@ def main() -> int:
     verify.add_argument("new_registry", type=Path)
     verify.add_argument("--old-root-public-key", type=Path, required=True)
     verify.add_argument("--new-root-public-key", type=Path, required=True)
+    verify.add_argument("--recovery-anchor-public-key", type=Path)
 
     args = parser.parse_args()
     if args.command == "build":
         ceremony = build_ceremony(
             args.previous_registry,
             args.new_registry,
-            args.old_root_private_key,
             args.new_root_private_key,
             args.ceremony_id,
             _load_datetime(args.effective_at),
             args.transition_kind,
             args.old_root_action,
+            args.old_root_private_key,
+            args.recovery_anchor_private_key,
         )
         write_ceremony(ceremony, args.output)
         print("M3.49 root trust-anchor rotation ceremony built")
@@ -168,6 +195,7 @@ def main() -> int:
         args.new_registry,
         args.old_root_public_key,
         args.new_root_public_key,
+        args.recovery_anchor_public_key,
     )
     print("M3.49 root trust-anchor rotation ceremony verified")
     print(f"ceremony_id={ceremony.ceremony_id}")
