@@ -1,0 +1,156 @@
+name: M3.49 Root Trust-Anchor Rotation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  root-rotation:
+    name: Verify root trust-anchor transition
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/root_trust_rotation.py
+          src/morva/runtime/signed_trusted_key_registry.py
+          src/morva/runtime/trusted_key_registry.py
+          tools/m3_46_signed_trusted_registry.py
+          tools/m3_49_root_trust_rotation.py
+          tests/test_root_trust_rotation_m3_49.py
+      - run: >
+          pytest -q
+          tests/test_signed_trusted_key_registry_m3_46.py
+          tests/test_signed_trusted_registry_serialization_m3_46.py
+          tests/test_root_trust_rotation_m3_49.py
+      - name: Create scheduled-rotation rehearsal
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+          from morva.runtime.signed_trusted_key_registry import SignedTrustedKeyRegistry
+          from morva.runtime.trusted_key_registry import TrustedKeyRegistry, TrustedSigningKey
+          from tools.m3_46_signed_trusted_registry import write_signed_registry
+
+          out = Path("m3_49_rehearsal")
+          out.mkdir()
+          old_root = Ed25519PrivateKey.generate()
+          new_root = Ed25519PrivateKey.generate()
+          signing = Ed25519PrivateKey.generate()
+          record = TrustedSigningKey(
+              key_id=TrustedKeyRegistry.key_id_for(signing.public_key()),
+              public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(signing.public_key()),
+              status="active",
+              valid_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+          )
+          previous = TrustedKeyRegistry("morva-signing", 1, (record,))
+          current = TrustedKeyRegistry("morva-signing", 2, (record,))
+          write_signed_registry(
+              SignedTrustedKeyRegistry(previous).sign(
+                  old_root, datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc)
+              ),
+              out / "previous.json",
+          )
+          write_signed_registry(
+              SignedTrustedKeyRegistry(current).sign(
+                  new_root, datetime(2026, 9, 19, 12, 5, tzinfo=timezone.utc)
+              ),
+              out / "current.json",
+          )
+          for name, key in (("old-root", old_root), ("new-root", new_root)):
+              (out / f"{name}-private.pem").write_bytes(
+                  key.private_bytes(
+                      serialization.Encoding.PEM,
+                      serialization.PrivateFormat.PKCS8,
+                      serialization.NoEncryption(),
+                  )
+              )
+              (out / f"{name}-public.pem").write_bytes(
+                  key.public_key().public_bytes(
+                      serialization.Encoding.PEM,
+                      serialization.PublicFormat.SubjectPublicKeyInfo,
+                  )
+              )
+          (out / "effective-at").write_text(
+              "2026-09-20T12:00:00+00:00", encoding="utf-8"
+          )
+          PY
+      - name: Build scheduled rotation ceremony
+        run: |
+          python tools/m3_49_root_trust_rotation.py build \
+            m3_49_rehearsal/previous.json \
+            m3_49_rehearsal/current.json \
+            --old-root-private-key m3_49_rehearsal/old-root-private.pem \
+            --new-root-private-key m3_49_rehearsal/new-root-private.pem \
+            --ceremony-id root-rotation-001-002 \
+            --effective-at "$(cat m3_49_rehearsal/effective-at)" \
+            --transition-kind scheduled_rotation \
+            --old-root-action retire \
+            --output m3_49_rehearsal/ceremony.json
+      - name: Verify scheduled rotation ceremony
+        run: |
+          python tools/m3_49_root_trust_rotation.py verify \
+            m3_49_rehearsal/ceremony.json \
+            m3_49_rehearsal/previous.json \
+            m3_49_rehearsal/current.json \
+            --old-root-public-key m3_49_rehearsal/old-root-public.pem \
+            --new-root-public-key m3_49_rehearsal/new-root-public.pem
+      - name: Create emergency-recovery rehearsal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+          base = Path("m3_49_rehearsal")
+          recovery = Ed25519PrivateKey.generate()
+          (base / "recovery-private.pem").write_bytes(
+              recovery.private_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PrivateFormat.PKCS8,
+                  serialization.NoEncryption(),
+              )
+          )
+          (base / "recovery-public.pem").write_bytes(
+              recovery.public_key().public_bytes(
+                  serialization.Encoding.PEM,
+                  serialization.PublicFormat.SubjectPublicKeyInfo,
+              )
+          )
+          PY
+          python tools/m3_49_root_trust_rotation.py build \
+            m3_49_rehearsal/previous.json \
+            m3_49_rehearsal/current.json \
+            --new-root-private-key m3_49_rehearsal/new-root-private.pem \
+            --recovery-anchor-private-key m3_49_rehearsal/recovery-private.pem \
+            --ceremony-id root-recovery-001-002 \
+            --effective-at "$(cat m3_49_rehearsal/effective-at)" \
+            --transition-kind emergency_recovery \
+            --old-root-action revoke \
+            --output m3_49_rehearsal/recovery-ceremony.json
+          python tools/m3_49_root_trust_rotation.py verify \
+            m3_49_rehearsal/recovery-ceremony.json \
+            m3_49_rehearsal/previous.json \
+            m3_49_rehearsal/current.json \
+            --old-root-public-key m3_49_rehearsal/old-root-public.pem \
+            --new-root-public-key m3_49_rehearsal/new-root-public.pem \
+            --recovery-anchor-public-key m3_49_rehearsal/recovery-public.pem
+      - name: Remove rehearsal private material
+        if: always()
+        run: rm -rf m3_49_rehearsal
