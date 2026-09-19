@@ -1,0 +1,77 @@
+name: M3.55 Release Post-Publication Integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Verify read-only release integrity contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/release_post_publication.py
+          src/morva/runtime/release_publication_executor.py
+          src/morva/runtime/release_publication_gate.py
+          src/morva/runtime/release_trust_artifact.py
+          src/morva/runtime/release_trust_pack.py
+          tools/m3_55_release_post_publication_verifier.py
+          tools/m3_54_release_publication_executor.py
+          tools/m3_53_release_publication_gate.py
+          tools/m3_52_release_trust_artifact.py
+          tests/test_release_post_publication_verifier_m3_55.py
+          tests/test_release_publication_executor_m3_54.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_release_post_publication_verifier_m3_55.py
+          tests/test_release_publication_executor_m3_54.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+      - name: Confirm CI is read-only
+        shell: bash
+        run: |
+          patterns=(
+            "gh release create"
+            "gh release edit"
+            "gh release delete"
+            "gh release upload"
+            "git push"
+            "git tag "
+          )
+          for pattern in "${patterns[@]}"; do
+            for file in .github/workflows/*; do
+              if [ "$file" =                 ".github/workflows/m3-55-release-post-publication-integrity.yml" ]; then
+                continue
+              fi
+              [ -f "$file" ] || continue
+              if grep -Il -- "$pattern" "$file"; then
+                echo "forbidden mutation command found"
+                exit 1
+              fi
+            done
+          done
+      - name: Record production boundary
+        run: |
+          echo "M3.55 is read-only." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release/tag/asset mutation is forbidden." >> "$GITHUB_STEP_SUMMARY"
+          echo "M3.54 authorization remains required for publication." >> "$GITHUB_STEP_SUMMARY"
