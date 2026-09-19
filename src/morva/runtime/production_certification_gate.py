@@ -160,6 +160,18 @@ def build_production_certification_gate(
         raise ProductionCertificationGateError(
             "certification time precedes final readiness verification"
         )
+    for item in external_registry.items:
+        verified_at = datetime.fromisoformat(item.verified_at)
+        if verified_at > certified_at:
+            raise ProductionCertificationGateError(
+                f"external evidence is future-dated for role {item.role}"
+            )
+        if item.expires_at is not None:
+            expires_at = datetime.fromisoformat(item.expires_at)
+            if expires_at <= certified_at:
+                raise ProductionCertificationGateError(
+                    f"external evidence is expired for role {item.role}"
+                )
 
     return ProductionCertificationGate(
         gate_version=1,
