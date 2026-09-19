@@ -126,4 +126,5 @@ jobs:
           echo "### M3.52 immutable trust artifact" >> "$GITHUB_STEP_SUMMARY"
           echo "artifact_id=$ARTIFACT_ID" >> "$GITHUB_STEP_SUMMARY"
           echo "github_artifact_digest=$ARTIFACT_DIGEST" >> "$GITHUB_STEP_SUMMARY"
-          echo "The repository artifact is rehearsal-only and does not authorize production payroll/payment." >> "$GITHUB_STEP_SUMMARY"
+          echo "The repository artifact is rehearsal-only." >> "$GITHUB_STEP_SUMMARY"
+          echo "It does not authorize production payroll/payment." >> "$GITHUB_STEP_SUMMARY"
