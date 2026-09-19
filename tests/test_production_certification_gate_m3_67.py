@@ -11,9 +11,6 @@ from morva.runtime.external_certification_evidence import (
     ExternalCertificationEvidenceRegistry,
     build_evidence_registry,
 )
-from morva.runtime.final_production_readiness import (
-    FinalProductionReadinessGate,
-)
 from morva.runtime.production_certification_gate import (
     ProductionCertificationGateError,
     build_production_certification_gate,
