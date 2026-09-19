@@ -1,0 +1,98 @@
+name: M3.53 Release Publication Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publication-gate:
+    name: Verify release publication boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_publication_gate.py
+          src/morva/runtime/release_trust_artifact.py
+          src/morva/runtime/release_trust_pack.py
+          tools/m3_53_release_publication_gate.py
+          tools/m3_52_release_trust_artifact.py
+          tools/m3_51_release_trust_pack.py
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+      - run: >
+          pytest -q
+          tests/test_release_publication_gate_m3_53.py
+          tests/test_release_trust_artifact_m3_52.py
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+      - name: Rehearse publication gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+
+          from tests.test_release_trust_artifact_m3_52 import build_test_pack
+          from tools.m3_52_release_trust_artifact import build_artifact
+          from tools.m3_53_release_publication_gate import build_gate, verify_gate
+
+          with TemporaryDirectory(prefix="morva-m3-53-fixture-") as temp:
+              root = Path(temp)
+              _, _, pack_dir = build_test_pack(root, "pack")
+              artifact_dir = root / "artifact"
+              artifact_dir.mkdir()
+              archive = artifact_dir / "morva-trust-evidence.tar.gz"
+              metadata = artifact_dir / "artifact.json"
+              gate_file = Path("rehearsal-publication-gate.json")
+              artifact = build_artifact(
+                  pack_directory=pack_dir,
+                  output_archive=archive,
+                  metadata_file=metadata,
+                  expected_sha="a" * 40,
+              )
+              gate = build_gate(
+                  repository="Ali-Marandi/Morva",
+                  archive_path=archive,
+                  artifact_metadata=metadata,
+                  output_gate=gate_file,
+                  expected_sha="a" * 40,
+                  expected_tag=artifact.tag,
+                  verified_at=artifact_to_datetime(artifact),
+              )
+              verify_gate(
+                  gate_file=gate_file,
+                  archive_path=archive,
+                  artifact_metadata=metadata,
+                  expected_repository="Ali-Marandi/Morva",
+                  expected_tag=artifact.tag,
+                  expected_sha="a" * 40,
+              )
+          print("M3.53 rehearsal publication gate verified")
+
+          def artifact_to_datetime(_artifact):
+              from datetime import datetime
+              return datetime(2026, 9, 19, 22, 0, tzinfo=__import__("datetime").timezone.utc)
+          PY
+      - name: Rehearsal-only boundary
+        run: |
+          echo "M3.53 validates publication inputs only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No GitHub Release or production deployment is created." >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload publication gate evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: m3-53-publication-gate
+          path: rehearsal-publication-gate.json
+          if-no-files-found: error
+          retention-days: 7
