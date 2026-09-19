@@ -1,0 +1,54 @@
+name: M3.63 Evidence Freshness Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    name: Verify evidence freshness contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/evidence_freshness_gate.py
+          src/morva/runtime/production_promotion_verifier.py
+          src/morva/runtime/production_promotion_gate.py
+          tools/m3_63_evidence_freshness_gate.py
+          tests/test_evidence_freshness_gate_m3_63.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_evidence_freshness_gate_m3_63.py
+          tests/test_production_promotion_verifier_m3_60.py
+          tests/test_production_promotion_gate_m3_59.py
+      - name: Confirm no production mutation
+        shell: bash
+        run: |
+          pattern='^[[:space:]]*(kubectl (apply|delete)|'
+          pattern+='helm (install|upgrade|rollback)|terraform (apply|destroy)|'
+          pattern+='gh release (create|edit|delete|upload)|git (push|tag) )'
+          for file in .github/workflows/*; do
+            [ -f "$file" ] || continue
+            if grep -InE -- "$pattern" "$file"; then
+              echo "forbidden production mutation found"
+              exit 1
+            fi
+          done
+      - name: Record production boundary
+        run: |
+          echo "M3.63 validates freshness only." >> "$GITHUB_STEP_SUMMARY"
+          echo "It does not deploy or promote production." >> "$GITHUB_STEP_SUMMARY"
