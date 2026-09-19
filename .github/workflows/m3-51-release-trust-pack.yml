@@ -45,4 +45,6 @@ jobs:
             exit 1
           fi
       - name: Rehearsal boundary
-        run: echo "M3.51 is evidence packaging only; no production authorization is implied."
+        run: |
+          echo "M3.51 is evidence packaging only."
+          echo "No production authorization is implied."
