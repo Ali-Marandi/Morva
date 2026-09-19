@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import shutil
 
@@ -228,7 +229,6 @@ def build_pack(
 def verify_pack(
     *,
     pack_directory: Path,
-    root: Path,
     expected_sha: str = "",
 ) -> ReleaseTrustEvidencePack:
     pack = _load_pack(pack_directory / "pack.json")
@@ -325,7 +325,7 @@ def main() -> int:
     ):
         build.add_argument(f"--{name}", type=Path, required=True)
     build.add_argument("--root", type=Path, default=Path("."))
-    build.add_argument("--expected-sha", default="")
+    build.add_argument("--expected-sha", default=os.getenv("GITHUB_SHA", ""))
     build.add_argument("--verified-at", default="")
     build.add_argument("--pack-id", default="morva-release-trust-pack")
 
@@ -364,7 +364,6 @@ def main() -> int:
 
     pack = verify_pack(
         pack_directory=args.pack_directory,
-        root=args.pack_directory / "sources",
         expected_sha=args.expected_sha,
     )
     print("M3.51 release trust evidence pack verified")
