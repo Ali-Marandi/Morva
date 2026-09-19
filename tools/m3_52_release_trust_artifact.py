@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
-import shutil
+import tarfile
 import tempfile
 
 from morva.runtime.release_trust_artifact import (
@@ -56,8 +55,6 @@ def _write_metadata(artifact: ReleaseTrustArtifact, path: Path) -> None:
 
 
 def _extract_safely(archive_path: Path, destination: Path) -> None:
-    import tarfile
-
     destination.mkdir(parents=True, exist_ok=True)
     with tarfile.open(archive_path, mode="r:gz") as archive:
         names: set[str] = set()
