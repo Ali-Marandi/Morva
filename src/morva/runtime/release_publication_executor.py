@@ -5,15 +5,8 @@ import json
 from pathlib import Path
 import subprocess
 
-from morva.runtime.release_publication_gate import (
-    ReleasePublicationGate,
-    ReleasePublicationGateError,
-)
-from morva.runtime.release_trust_artifact import ReleaseTrustArtifactError
-from tools.m3_53_release_publication_gate import (
-    _load_gate,
-    verify_gate,
-)
+from morva.runtime.release_publication_gate import ReleasePublicationGate
+from tools.m3_53_release_publication_gate import verify_gate
 
 
 class ReleasePublicationExecutorError(ValueError):
@@ -78,8 +71,11 @@ class ReleasePublicationPlan:
             self.release_id,
             "--notes",
             (
-                f"Morva release {self.release_id}\\n\\n"
-                f"candidate_sha={self.candidate_sha}\\n"
+                f"Morva release {self.release_id}
+
+"
+                f"candidate_sha={self.candidate_sha}
+"
                 f"trust_gate={self.gate_fingerprint}\\n"
                 f"trust_artifact_sha256={self.archive_sha256}"
             ),
@@ -105,22 +101,34 @@ def _remote_tag_sha(repository: str, tag: str) -> str | None:
         (
             "git",
             "ls-remote",
-            "--refs",
             repository_to_remote(repository),
             f"refs/tags/{tag}",
+            f"refs/tags/{tag}^{{}}",
         )
     )
     if result.returncode != 0:
         raise ReleasePublicationExecutorError(
             f"unable to inspect remote tag: {result.stderr.strip()}"
         )
-    line = result.stdout.strip().splitlines()
-    if not line:
+    lines = result.stdout.strip().splitlines()
+    if not lines:
         return None
-    fields = line[0].split()
-    if len(fields) != 2:
-        raise ReleasePublicationExecutorError("unexpected git ls-remote output")
-    return fields[0]
+    candidates: list[str] = []
+    for line in lines:
+        fields = line.split()
+        if len(fields) != 2:
+            raise ReleasePublicationExecutorError(
+                "unexpected git ls-remote output"
+            )
+        if fields[1] == f"refs/tags/{tag}^{{}}":
+            candidates.insert(0, fields[0])
+        elif fields[1] == f"refs/tags/{tag}":
+            candidates.append(fields[0])
+        else:
+            raise ReleasePublicationExecutorError(
+                "unexpected git ls-remote tag reference"
+            )
+    return candidates[0] if candidates else None
 
 
 def repository_to_remote(repository: str) -> str:
@@ -144,7 +152,13 @@ def _assert_no_existing_release(repository: str, tag: str) -> None:
 def load_authorization(path: Path) -> PublicationAuthorization:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if int(payload.get("authorization_version", 0)) != 1:
-        raise ReleasePublicationExecutorError("unsupported publication authorization version")
+        raise ReleasePublicationExecutorError(
+            "unsupported publication authorization version"
+        )
+    if not isinstance(payload.get("approved"), bool):
+        raise ReleasePublicationExecutorError(
+            "publication authorization approved must be a Boolean"
+        )
     return PublicationAuthorization(
         authorization_id=payload["authorization_id"],
         gate_fingerprint=payload["gate_fingerprint"],
