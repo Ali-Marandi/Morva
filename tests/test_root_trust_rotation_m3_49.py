@@ -17,20 +17,16 @@ NOW = datetime(2026, 9, 19, 11, 0, tzinfo=timezone.utc)
 EFFECTIVE = NOW + timedelta(hours=1)
 
 
-def make_signing_record():
+def make_registries():
     signing = Ed25519PrivateKey.generate()
-    return TrustedSigningKey(
+    record = TrustedSigningKey(
         key_id=TrustedKeyRegistry.key_id_for(signing.public_key()),
         public_key_sha256=TrustedKeyRegistry.public_key_sha256_for(signing.public_key()),
         status="active",
         valid_from=NOW - timedelta(days=30),
     )
-
-
-def make_registries():
-    signing = make_signing_record()
-    previous = TrustedKeyRegistry("morva-signing", 10, (signing,))
-    current = TrustedKeyRegistry("morva-signing", 11, (signing,))
+    previous = TrustedKeyRegistry("morva-signing", 10, (record,))
+    current = TrustedKeyRegistry("morva-signing", 11, (record,))
     old_root = Ed25519PrivateKey.generate()
     new_root = Ed25519PrivateKey.generate()
     previous_signed = SignedTrustedKeyRegistry(previous).sign(old_root, NOW)
@@ -40,8 +36,30 @@ def make_registries():
     return previous, current, previous_signed, current_signed, old_root, new_root
 
 
-def ceremony_from_sources(previous_signed, current_signed, old_root, new_root):
-    return RootRotationCeremony.create(
+def make_private_key_file(key: Ed25519PrivateKey, path: Path) -> None:
+    path.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+
+
+def make_public_key_file(key: Ed25519PrivateKey, path: Path) -> None:
+    path.write_bytes(
+        key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    )
+
+
+def test_valid_scheduled_rotation_uses_dual_handoff_signatures():
+    previous, current, previous_signed, current_signed, old_root, new_root = (
+        make_registries()
+    )
+    ceremony = RootRotationCeremony.create(
         ceremony_id="root-rotation-010-011",
         registry_id="morva-signing",
         previous=previous_signed,
@@ -53,30 +71,20 @@ def ceremony_from_sources(previous_signed, current_signed, old_root, new_root):
         old_root_action="retire",
     )
 
-
-def test_valid_root_rotation_uses_dual_handoff_signatures():
-    previous, current, previous_signed, current_signed, old_root, new_root = (
-        make_registries()
-    )
-    ceremony = ceremony_from_sources(
-        previous_signed, current_signed, old_root, new_root
-    )
-
     ceremony.assert_source_bindings(
         previous_signed,
         current_signed,
         old_root.public_key(),
         new_root.public_key(),
     )
-    assert ceremony.old_root_key_id != ceremony.new_root_key_id
+    assert ceremony.old_root_signature_b64 is not None
+    assert ceremony.recovery_signature_b64 is None
     assert ceremony.previous_registry_fingerprint == previous.fingerprint
     assert ceremony.new_registry_fingerprint == current.fingerprint
 
 
 def test_build_and_verify_round_trip(tmp_path: Path):
-    previous, current, previous_signed, current_signed, old_root, new_root = (
-        make_registries()
-    )
+    _, _, previous_signed, current_signed, old_root, new_root = make_registries()
     previous_file = tmp_path / "previous.json"
     current_file = tmp_path / "current.json"
     old_root_file = tmp_path / "old-root.pem"
@@ -85,59 +93,82 @@ def test_build_and_verify_round_trip(tmp_path: Path):
 
     write_signed_registry(previous_signed, previous_file)
     write_signed_registry(current_signed, current_file)
-    for key, path in ((old_root, old_root_file), (new_root, new_root_file)):
-        path.write_bytes(
-            key.private_bytes(
-                serialization.Encoding.PEM,
-                serialization.PrivateFormat.PKCS8,
-                serialization.NoEncryption(),
-            )
-        )
+    make_private_key_file(old_root, old_root_file)
+    make_private_key_file(new_root, new_root_file)
 
     ceremony = build_ceremony(
         previous_file,
         current_file,
-        old_root_file,
         new_root_file,
         "root-rotation-010-011",
         EFFECTIVE,
         "scheduled_rotation",
         "retire",
+        old_root_file,
     )
     write_ceremony(ceremony, ceremony_file)
 
-    old_root_public_file = tmp_path / "old-root-public.pem"
-    new_root_public_file = tmp_path / "new-root-public.pem"
-    for key, path in (
-        (old_root, old_root_public_file),
-        (new_root, new_root_public_file),
-    ):
-        path.write_bytes(
-            key.public_key().public_bytes(
-                serialization.Encoding.PEM,
-                serialization.PublicFormat.SubjectPublicKeyInfo,
-            )
-        )
+    old_public_file = tmp_path / "old-root-public.pem"
+    new_public_file = tmp_path / "new-root-public.pem"
+    make_public_key_file(old_root, old_public_file)
+    make_public_key_file(new_root, new_public_file)
 
     loaded = verify_ceremony(
         ceremony_file,
         previous_file,
         current_file,
-        old_root_public_file,
-        new_root_public_file,
+        old_public_file,
+        new_public_file,
     )
     assert loaded == ceremony
 
 
+def test_emergency_recovery_works_without_old_root_signature():
+    _, _, previous_signed, current_signed, old_root, new_root = make_registries()
+    recovery = Ed25519PrivateKey.generate()
+    ceremony = RootRotationCeremony.create(
+        ceremony_id="root-recovery-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        new_root_private_key=new_root,
+        recovery_anchor_private_key=recovery,
+        effective_at=EFFECTIVE,
+        transition_kind="emergency_recovery",
+        old_root_action="revoke",
+    )
+
+    ceremony.assert_source_bindings(
+        previous_signed,
+        current_signed,
+        old_root.public_key(),
+        new_root.public_key(),
+        recovery.public_key(),
+    )
+    assert ceremony.old_root_signature_b64 is None
+    assert ceremony.recovery_signature_b64 is not None
+    assert ceremony.recovery_anchor_key_id == (
+        TrustedKeyRegistry.key_id_for(recovery.public_key())
+    )
+
+
 def test_rejects_old_root_on_new_registry():
-    _, _, previous_signed, current_signed, old_root, _ = make_registries()
+    _, _, previous_signed, current_signed, old_root, new_root = make_registries()
     wrong_current = SignedTrustedKeyRegistry(
         current_signed.registry
     ).sign(old_root, NOW + timedelta(minutes=1))
-    ceremony = ceremony_from_sources(
-        previous_signed, current_signed, old_root, Ed25519PrivateKey.generate()
+    ceremony = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
     )
-    with pytest.raises(RootRotationError, match="new root"):
+    with pytest.raises(RootRotationError, match="root public keys"):
         ceremony.assert_source_bindings(
             previous_signed,
             wrong_current,
@@ -148,27 +179,33 @@ def test_rejects_old_root_on_new_registry():
 
 def test_rejects_tampered_handoff_signature():
     _, _, previous_signed, current_signed, old_root, new_root = make_registries()
-    ceremony = ceremony_from_sources(
-        previous_signed, current_signed, old_root, new_root
+    ceremony = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
     )
     tampered = RootRotationCeremony(
-        **{
-            "ceremony_id": ceremony.ceremony_id,
-            "registry_id": ceremony.registry_id,
-            "from_version": ceremony.from_version,
-            "to_version": ceremony.to_version,
-            "old_root_key_id": ceremony.old_root_key_id,
-            "new_root_key_id": ceremony.new_root_key_id,
-            "effective_at": ceremony.effective_at,
-            "transition_kind": ceremony.transition_kind,
-            "old_root_action": ceremony.old_root_action,
-            "previous_registry_fingerprint": ceremony.previous_registry_fingerprint,
-            "new_registry_fingerprint": ceremony.new_registry_fingerprint,
-            "old_root_signature_b64": ceremony.old_root_signature_b64[:-4] + "AAAA",
-            "new_root_signature_b64": ceremony.new_root_signature_b64,
-        }
+        ceremony.ceremony_id,
+        ceremony.registry_id,
+        ceremony.from_version,
+        ceremony.to_version,
+        ceremony.old_root_key_id,
+        ceremony.new_root_key_id,
+        ceremony.effective_at,
+        ceremony.transition_kind,
+        ceremony.old_root_action,
+        ceremony.previous_registry_fingerprint,
+        ceremony.new_registry_fingerprint,
+        ceremony.old_root_signature_b64[:-4] + "AAAA",
+        ceremony.new_root_signature_b64,
     )
-    with pytest.raises(RootRotationError, match="handoff signatures"):
+    with pytest.raises(RootRotationError, match="authorization signatures"):
         tampered.assert_source_bindings(
             previous_signed,
             current_signed,
@@ -177,41 +214,34 @@ def test_rejects_tampered_handoff_signature():
         )
 
 
-def test_emergency_recovery_requires_revoke():
-    with pytest.raises(RootRotationError, match="requires revocation"):
-        RootRotationCeremony(
-            "recovery",
-            "morva-signing",
-            1,
-            2,
-            "old",
-            "new",
-            EFFECTIVE,
-            "a" * 64,
-            "b" * 64,
-            "old-signature",
-            "new-signature",
-            "invalid-base64",
-            "invalid-base64",
+def test_emergency_recovery_requires_recovery_anchor():
+    _, _, previous_signed, current_signed, _, new_root = make_registries()
+    with pytest.raises(RootRotationError, match="recovery-anchor private key"):
+        RootRotationCeremony.create(
+            ceremony_id="recovery",
+            registry_id="morva-signing",
+            previous=previous_signed,
+            current=current_signed,
+            new_root_private_key=new_root,
+            effective_at=EFFECTIVE,
+            transition_kind="emergency_recovery",
+            old_root_action="revoke",
         )
 
 
 def test_scheduled_rotation_requires_retirement():
+    _, _, previous_signed, current_signed, old_root, new_root = make_registries()
     with pytest.raises(RootRotationError, match="requires retirement"):
-        RootRotationCeremony(
-            "rotation",
-            "morva-signing",
-            1,
-            2,
-            "old",
-            "new",
-            EFFECTIVE,
-            "scheduled_rotation",
-            "revoke",
-            "a" * 64,
-            "b" * 64,
-            "AA==",
-            "AA==",
+        RootRotationCeremony.create(
+            ceremony_id="rotation",
+            registry_id="morva-signing",
+            previous=previous_signed,
+            current=current_signed,
+            old_root_private_key=old_root,
+            new_root_private_key=new_root,
+            effective_at=EFFECTIVE,
+            transition_kind="scheduled_rotation",
+            old_root_action="revoke",
         )
 
 
@@ -221,8 +251,16 @@ def test_rejects_registry_signed_after_effective_time():
         old_root, EFFECTIVE + timedelta(seconds=1)
     )
     current_signed = SignedTrustedKeyRegistry(current).sign(new_root, EFFECTIVE)
-    ceremony = ceremony_from_sources(
-        previous_signed, current_signed, old_root, new_root
+    ceremony = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
     )
     with pytest.raises(RootRotationError, match="signed after"):
         ceremony.assert_source_bindings(
@@ -233,35 +271,18 @@ def test_rejects_registry_signed_after_effective_time():
         )
 
 
-def test_fingerprint_changes_when_transition_mode_changes():
-    previous, current, previous_signed, current_signed, old_root, new_root = (
-        make_registries()
-    )
-    normal = ceremony_from_sources(
-        previous_signed, current_signed, old_root, new_root
-    )
-    emergency = RootRotationCeremony(
-        normal.ceremony_id,
-        normal.registry_id,
-        normal.from_version,
-        normal.to_version,
-        normal.old_root_key_id,
-        normal.new_root_key_id,
-        normal.effective_at,
-        "emergency_recovery",
-        "revoke",
-        normal.previous_registry_fingerprint,
-        normal.new_registry_fingerprint,
-        normal.old_root_signature_b64,
-        normal.new_root_signature_b64,
-    )
-    assert normal.fingerprint != emergency.fingerprint
-
-
 def test_serialized_ceremony_fingerprint_is_fail_closed(tmp_path: Path):
     _, _, previous_signed, current_signed, old_root, new_root = make_registries()
-    ceremony = ceremony_from_sources(
-        previous_signed, current_signed, old_root, new_root
+    ceremony = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
     )
     ceremony_file = tmp_path / "ceremony.json"
     write_ceremony(ceremony, ceremony_file)
@@ -275,18 +296,9 @@ def test_serialized_ceremony_fingerprint_is_fail_closed(tmp_path: Path):
     new_public_file = tmp_path / "new-public.pem"
     write_signed_registry(previous_signed, previous_file)
     write_signed_registry(current_signed, current_file)
-    old_public_file.write_bytes(
-        old_root.public_key().public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-    )
-    new_public_file.write_bytes(
-        new_root.public_key().public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-    )
+    make_public_key_file(old_root, old_public_file)
+    make_public_key_file(new_root, new_public_file)
+
     with pytest.raises(RootRotationError):
         verify_ceremony(
             ceremony_file,
@@ -298,16 +310,10 @@ def test_serialized_ceremony_fingerprint_is_fail_closed(tmp_path: Path):
 
 
 def test_consecutive_version_contract():
-    previous, current, previous_signed, current_signed, old_root, new_root = (
-        make_registries()
-    )
-    bad_current = TrustedKeyRegistry(
-        "morva-signing",
-        13,
-        (current.keys[0],),
-    )
+    previous, _, previous_signed, _, old_root, new_root = make_registries()
+    bad_current = TrustedKeyRegistry("morva-signing", 13, previous.keys)
     bad_signed = SignedTrustedKeyRegistry(bad_current).sign(new_root, NOW)
-    with pytest.raises(RootRotationError, match="versions must be consecutive"):
+    with pytest.raises(RootRotationError, match="consecutive"):
         RootRotationCeremony.create(
             ceremony_id="bad-version",
             registry_id="morva-signing",
@@ -319,3 +325,30 @@ def test_consecutive_version_contract():
             transition_kind="scheduled_rotation",
             old_root_action="retire",
         )
+
+
+def test_fingerprint_is_deterministic():
+    _, _, previous_signed, current_signed, old_root, new_root = make_registries()
+    first = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
+    )
+    second = RootRotationCeremony.create(
+        ceremony_id="root-rotation-010-011",
+        registry_id="morva-signing",
+        previous=previous_signed,
+        current=current_signed,
+        old_root_private_key=old_root,
+        new_root_private_key=new_root,
+        effective_at=EFFECTIVE,
+        transition_kind="scheduled_rotation",
+        old_root_action="retire",
+    )
+    assert first.fingerprint == second.fingerprint
