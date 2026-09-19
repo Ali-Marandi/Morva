@@ -39,7 +39,10 @@ class ReleaseTrustArtifact:
             raise ReleaseTrustArtifactError(
                 "pack_fingerprint must be a SHA-256 hex digest"
             )
-        if not self.archive_filename.strip() or Path(self.archive_filename).name != self.archive_filename:
+        if (
+            not self.archive_filename.strip()
+            or Path(self.archive_filename).name != self.archive_filename
+        ):
             raise ReleaseTrustArtifactError(
                 "archive_filename must be a plain file name"
             )
