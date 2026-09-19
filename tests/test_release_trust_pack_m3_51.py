@@ -48,7 +48,6 @@ def test_build_and_verify_release_trust_pack(tmp_path: Path):
 
     verified = verify_pack(
         pack_directory=output,
-        root=output / "sources",
         expected_sha=SHA,
     )
 
@@ -96,7 +95,7 @@ def test_pack_rejects_missing_source_file(tmp_path: Path):
     source.unlink()
 
     with pytest.raises(ReleaseTrustPackError, match="file set mismatch"):
-        verify_pack(pack_directory=output, root=output / "sources", expected_sha=SHA)
+        verify_pack(pack_directory=output, expected_sha=SHA)
 
 
 def test_pack_rejects_unexpected_source_file(tmp_path: Path):
@@ -105,7 +104,7 @@ def test_pack_rejects_unexpected_source_file(tmp_path: Path):
     extra.write_text("unexpected", encoding="utf-8")
 
     with pytest.raises(ReleaseTrustPackError, match="file set mismatch"):
-        verify_pack(pack_directory=output, root=output / "sources", expected_sha=SHA)
+        verify_pack(pack_directory=output, expected_sha=SHA)
 
 
 def test_pack_rejects_tampered_source_hash(tmp_path: Path):
@@ -114,7 +113,7 @@ def test_pack_rejects_tampered_source_hash(tmp_path: Path):
     source.write_text(source.read_text(encoding="utf-8") + "tamper", encoding="utf-8")
 
     with pytest.raises(ReleaseTrustPackError, match="sha256 mismatch"):
-        verify_pack(pack_directory=output, root=output / "sources", expected_sha=SHA)
+        verify_pack(pack_directory=output, expected_sha=SHA)
 
 
 def test_pack_rejects_wrong_expected_sha(tmp_path: Path):
@@ -123,7 +122,6 @@ def test_pack_rejects_wrong_expected_sha(tmp_path: Path):
     with pytest.raises(Exception, match="candidate_sha"):
         verify_pack(
             pack_directory=output,
-            root=output / "sources",
             expected_sha="b" * 40,
         )
 
@@ -139,7 +137,7 @@ def test_pack_rejects_tampered_chain_fingerprint(tmp_path: Path):
     )
 
     with pytest.raises(ReleaseTrustPackError, match="fingerprint"):
-        verify_pack(pack_directory=output, root=output / "sources", expected_sha=SHA)
+        verify_pack(pack_directory=output, expected_sha=SHA)
 
 
 def test_duplicate_roles_are_rejected():
@@ -180,3 +178,28 @@ def test_duplicate_roles_are_rejected():
             sources=tuple(sources),
             **common,
         )
+
+
+def test_pack_rejects_private_key_material(tmp_path: Path):
+    _, _, output = build_test_pack(tmp_path)
+    private_key = output / "sources" / "private.key"
+    private_key.write_text(
+        "-----BEGIN PRIVATE KEY-----\\nforbidden\\n-----END PRIVATE KEY-----\\n",
+        encoding="utf-8",
+    )
+    pack_file = output / "pack.json"
+    payload = json.loads(pack_file.read_text(encoding="utf-8"))
+    payload["sources"].append(
+        {
+            "role": "forbidden_private_material",
+            "path": "sources/private.key",
+            "sha256": "0" * 64,
+            "size_bytes": private_key.stat().st_size,
+        }
+    )
+    pack_file.write_text(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True, indent=2) + "\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ReleaseTrustPackError):
+        verify_pack(pack_directory=output, expected_sha=SHA)
