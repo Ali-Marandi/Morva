@@ -112,42 +112,12 @@ def test_gate_rejects_mismatched_binding(
         )
 
 
-def test_gate_rejects_unverified_rollback():
-    attestation = DeploymentEvidenceAttestation(
-        attestation_version=1,
-        evidence_id="DEP-002",
-        release_receipt_fingerprint="0" * 64,
-        environment="production",
-        deployment_id="deploy-002",
-        deployment_status="succeeded",
-        deployed_sha=SHA,
-        deployed_at="2026-09-19T23:10:00+00:00",
-        operator="operator",
-        healthcheck_sha256="c" * 64,
-        rollback_target_sha="b" * 40,
-        rollback_verified=False,
-    )
+def test_gate_rejects_unverified_rollback(monkeypatch, tmp_path: Path):
+    receipt = _receipt(monkeypatch, tmp_path / "receipt")
+    attestation = _attestation(receipt, rollback_verified=False)
     with pytest.raises(DeploymentEvidenceGateError, match="rollback verification"):
         build_deployment_evidence_gate(
-            receipt=ReleasePostPublicationReceipt(
-                verifier_version=1,
-                repository=REPOSITORY,
-                release_id="release",
-                tag=TAG,
-                candidate_sha=SHA,
-                artifact_id="morva-trust-evidence-v1-" + "0" * 64,
-                artifact_fingerprint="0" * 64,
-                archive_sha256="0" * 64,
-                archive_size_bytes=1,
-                gate_fingerprint="0" * 64,
-                github_release_id=1,
-                github_release_url="https://example.invalid",
-                github_release_name="release",
-                github_target_commitish=SHA,
-                published_at="2026-09-19T23:00:00Z",
-                assets=(),
-                verified_at=datetime.now(timezone.utc),
-            ),
+            receipt=receipt,
             attestation=attestation,
             repository=REPOSITORY,
             tag=TAG,
