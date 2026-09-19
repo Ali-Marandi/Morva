@@ -1,0 +1,48 @@
+name: M3.51 Release Trust Evidence Pack
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trust-pack:
+    name: Build and verify release trust evidence pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/release_trust_pack.py
+          tools/m3_51_release_trust_pack.py
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+          src/morva/runtime/trust_chain.py
+          src/morva/runtime/trust_rotation.py
+          src/morva/runtime/root_trust_rotation.py
+      - run: >
+          pytest -q
+          tests/test_release_trust_pack_m3_51.py
+          tests/test_trust_chain_m3_50.py
+      - name: Confirm no private keys are committed
+        run: |
+          if git ls-files | grep -E '\.(pem|key)$' >/dev/null; then
+            echo 'private-key-looking file detected in repository'
+            exit 1
+          fi
+          if git ls-files -z | xargs -0 grep -Il -- 'BEGIN .*PRIVATE KEY' | head -n 1 | grep -q .; then
+            echo 'private-key material detected in tracked text'
+            exit 1
+          fi
+      - name: Rehearsal boundary
+        run: echo "M3.51 is evidence packaging only; no production authorization is implied."
