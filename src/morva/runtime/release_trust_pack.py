@@ -186,7 +186,7 @@ def reject_private_key_material(root: Path) -> None:
     for path in base.rglob("*"):
         if not path.is_file():
             continue
-        if path.name == "pack.json":
+        if path.resolve() == (base / "pack.json").resolve():
             continue
         data = path.read_bytes()
         if _is_private_key_bytes(data):
