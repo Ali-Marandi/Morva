@@ -64,6 +64,7 @@
 - M3.51 deterministic release trust evidence pack that records the full M3.50 trust chain, exact public verification sources, SHA-256/size manifest and fail-closed pack verification without private-key material
 - M3.52 deterministic immutable release-trust archive artifact with write-once output, normalized USTAR/GZIP representation, archive digest/size metadata, safe extraction verification and rehearsal-only GitHub Actions publication attestation
 - M3.53 fail-closed release publication gate binding repository, release ID, tag, exact candidate SHA and M3.52 artifact identity into a deterministic publication-input fingerprint
+- M3.54 safe release publication executor requiring an externally supplied authorization attestation, exact remote tag-to-SHA binding, existing-release rejection and non-shell GitHub CLI execution
 
 ## Current execution queue
 
