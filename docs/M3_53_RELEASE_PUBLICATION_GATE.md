@@ -24,4 +24,4 @@ A future release workflow may require this gate before publication, but the publ
 
 The M3.53 workflow builds and verifies the gate from the existing M3.51/M3.52 fixture chain, uploads the gate as short-retention evidence and explicitly records that the run is rehearsal-only.
 
-GitHub's current `actions/upload-artifact` release line is v7.0.1, and the action documents immutable artifact behavior for v4+; M3.53 uses v7 for its rehearsal evidence upload. citeturn231776search0turn231776search1
+GitHub's current `actions/upload-artifact` release line is v7.0.1, and the action documents immutable artifact behavior for v4+; M3.53 uses v7 for its rehearsal evidence upload.
