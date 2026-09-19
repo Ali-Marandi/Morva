@@ -53,12 +53,11 @@ def _copy_source(
     return (Path("sources") / relative).as_posix()
 
 
-def _build_sources(
+def _copy_sources(
     *,
     root: Path,
     output: Path,
     inputs: dict[str, Path],
-    verification_result: object,
 ) -> tuple[TrustPackSource, ...]:
     sources_root = output / "sources"
     sources_root.mkdir(parents=True, exist_ok=True)
@@ -68,18 +67,6 @@ def _build_sources(
         digest, size = _hash_file(output / target_path)
         entries.append(TrustPackSource(role, target_path, digest, size))
 
-    receipt_path = sources_root / "__m3_50__" / "chain_verification.json"
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    write_verification(verification_result, receipt_path)
-    digest, size = _hash_file(receipt_path)
-    entries.append(
-        TrustPackSource(
-            "chain_verification_receipt",
-            receipt_path.relative_to(output).as_posix(),
-            digest,
-            size,
-        )
-    )
     return tuple(sorted(entries, key=lambda item: item.role))
 
 
@@ -183,28 +170,54 @@ def build_pack(
     for path in inputs.values():
         if not path.is_file():
             raise ReleaseTrustPackError(f"missing source file: {path}")
-    result = verify_chain(
-        bundle_file=bundle_file,
-        manifest_file=manifest_file,
-        gate_file=gate_file,
-        rehearsal_file=rehearsal_file,
-        public_key_file=public_key_file,
-        previous_registry_file=previous_registry_file,
-        intermediate_registry_file=intermediate_registry_file,
-        current_registry_file=current_registry_file,
-        signing_key_rotation_file=signing_key_rotation_file,
-        root_rotation_file=root_rotation_file,
-        old_root_public_key_file=old_root_public_key_file,
-        new_root_public_key_file=new_root_public_key_file,
-        root=root,
-        expected_sha=expected_sha,
-        verified_at=verified_at,
-    )
-    sources = _build_sources(
+    sources = _copy_sources(
         root=root,
         output=output,
         inputs=inputs,
-        verification_result=result,
+    )
+    source_map = {item.role: item.path for item in sources}
+
+    def source(role: str) -> Path:
+        return output / source_map[role]
+
+    source_root = output / "sources"
+    result = verify_chain(
+        bundle_file=source("release_bundle"),
+        manifest_file=source_root
+        / Path(source_map["manifest"].removeprefix("sources/")),
+        gate_file=source_root
+        / Path(source_map["gate"].removeprefix("sources/")),
+        rehearsal_file=source_root
+        / Path(source_map["rehearsal"].removeprefix("sources/")),
+        public_key_file=source("release_signing_public_key"),
+        previous_registry_file=source("previous_registry"),
+        intermediate_registry_file=source("intermediate_registry"),
+        current_registry_file=source("current_registry"),
+        signing_key_rotation_file=source("signing_key_rotation"),
+        root_rotation_file=source("root_rotation"),
+        old_root_public_key_file=source("old_root_public_key"),
+        new_root_public_key_file=source("new_root_public_key"),
+        root=source_root,
+        expected_sha=expected_sha,
+        verified_at=verified_at,
+    )
+    receipt_path = source_root / "__m3_50__" / "chain_verification.json"
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    write_verification(result, receipt_path)
+    digest, size = _hash_file(receipt_path)
+    sources = tuple(
+        sorted(
+            (
+                *sources,
+                TrustPackSource(
+                    "chain_verification_receipt",
+                    receipt_path.relative_to(output).as_posix(),
+                    digest,
+                    size,
+                ),
+            ),
+            key=lambda item: item.role,
+        )
     )
     reject_private_key_material(output)
     pack = ReleaseTrustEvidencePack(
