@@ -18,6 +18,7 @@ WORKFLOW_PATHS = (
     ".github/workflows/m3-58-deployment-evidence-bundle.yml",
     ".github/workflows/m3-59-production-promotion-gate.yml",
     ".github/workflows/m3-60-independent-production-promotion-verifier.yml",
+    ".github/workflows/m3-61-production-boundary-policy.yml",
 )
 
 
