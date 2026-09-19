@@ -269,10 +269,16 @@ def _bundle_json(archive: Path) -> dict[str, object]:
             raise ProductionPromotionGateError(
                 "required bundle evidence source is missing"
             )
+        attestation = tar.extractfile("deployment_attestation.json")
+        if attestation is None:
+            raise ProductionPromotionGateError(
+                "deployment attestation is missing from bundle"
+            )
         return {
             "gate": json.load(gate),
             "receipt": json.load(receipt),
             "verification": json.load(verification),
+            "attestation": json.load(attestation),
         }
 
 
@@ -346,6 +352,42 @@ def build_production_promotion_gate(
         )
 
     attestation = load_attestation(deployment_attestation)
+    payload = _bundle_json(bundle_archive)
+    embedded = payload["attestation"]
+    embedded_values = {
+        "attestation_version": embedded.get("attestation_version"),
+        "evidence_id": embedded.get("evidence_id"),
+        "release_receipt_fingerprint": embedded.get(
+            "release_receipt_fingerprint"
+        ),
+        "environment": embedded.get("environment"),
+        "deployment_id": embedded.get("deployment_id"),
+        "deployment_status": embedded.get("deployment_status"),
+        "deployed_sha": embedded.get("deployed_sha"),
+        "deployed_at": embedded.get("deployed_at"),
+        "operator": embedded.get("operator"),
+        "healthcheck_sha256": embedded.get("healthcheck_sha256"),
+        "rollback_target_sha": embedded.get("rollback_target_sha"),
+        "rollback_verified": embedded.get("rollback_verified"),
+    }
+    attestation_values = {
+        "attestation_version": attestation.attestation_version,
+        "evidence_id": attestation.evidence_id,
+        "release_receipt_fingerprint": attestation.release_receipt_fingerprint,
+        "environment": attestation.environment,
+        "deployment_id": attestation.deployment_id,
+        "deployment_status": attestation.deployment_status,
+        "deployed_sha": attestation.deployed_sha,
+        "deployed_at": attestation.deployed_at,
+        "operator": attestation.operator,
+        "healthcheck_sha256": attestation.healthcheck_sha256,
+        "rollback_target_sha": attestation.rollback_target_sha,
+        "rollback_verified": attestation.rollback_verified,
+    }
+    if embedded_values != attestation_values:
+        raise ProductionPromotionGateError(
+            "external deployment attestation does not match bundle attestation"
+        )
     if attestation.environment != bundle.environment:
         raise ProductionPromotionGateError(
             "deployment attestation environment does not match bundle"
@@ -358,8 +400,6 @@ def build_production_promotion_gate(
         raise ProductionPromotionGateError(
             "promotion approver and deployment operator must be distinct"
         )
-
-    payload = _bundle_json(bundle_archive)
     if payload["receipt"].get("fingerprint") is None:
         raise ProductionPromotionGateError("release receipt fingerprint missing")
     if payload["gate"].get("fingerprint") is None:
