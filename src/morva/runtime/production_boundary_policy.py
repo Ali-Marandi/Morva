@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
 
 
 class ProductionBoundaryPolicyError(ValueError):
@@ -25,6 +26,33 @@ FORBIDDEN_COMMANDS = (
     "helm rollback",
     "terraform apply",
     "terraform destroy",
+)
+_WORKFLOW_COMMAND_RE = re.compile(
+    r"(?:^|[;&|]\s*|\b(?:if|then|do)\s+)"
+    r"(?P<command>(?:gh release (?:create|edit|delete|upload)"
+    r"|git (?:push|tag)"
+    r"|kubectl (?:apply|delete)"
+    r"|helm (?:install|upgrade|rollback)"
+    r"|terraform (?:apply|destroy))(?:\s|$)"
+)
+
+
+def _unquoted_shell(line: str) -> str:
+    """Remove quoted string contents before looking for executable commands."""
+    return re.sub(r"'[^']*'|"[^"]*"", " ", line)
+
+
+def _workflow_mutations(text: str) -> set[str]:
+    findings: set[str] = set()
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        candidate = _unquoted_shell(stripped)
+        match = _WORKFLOW_COMMAND_RE.search(candidate)
+        if match:
+            findings.add(match.group("command"))
+    return findings
 )
 PRIVATE_MARKERS = (
     b"BEGIN PRIVATE KEY",
@@ -165,17 +193,14 @@ def scan_repository(
 
         text = data.decode("utf-8", errors="replace")
         if relative.startswith(".github/workflows/"):
-            for command in FORBIDDEN_COMMANDS:
-                for line in text.splitlines():
-                    if command in line:
-                        findings.append(
-                            PolicyFinding(
-                                path=relative,
-                                rule="workflow-mutation",
-                                detail=command,
-                            )
-                        )
-                        break
+            for command in sorted(_workflow_mutations(text)):
+                findings.append(
+                    PolicyFinding(
+                        path=relative,
+                        rule="workflow-mutation",
+                        detail=command,
+                    )
+                )
             if "permissions:\n  contents: write" in text:
                 findings.append(
                     PolicyFinding(
