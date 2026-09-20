@@ -2,6 +2,12 @@ name: M3.23 Authoritative Master-Data Attestation Gate
 
 on:
   push:
+    paths:
+      - src/morva/masterdata/**
+      - src/morva/runtime/**
+      - tests/**authoritative**
+      - tests/**masterdata**
+      - .github/workflows/m3-23-authoritative-masterdata-attestation.yml
   pull_request:
 
 permissions:
