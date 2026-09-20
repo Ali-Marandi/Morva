@@ -282,6 +282,17 @@ def test_independent_verifier_rejects_unsigned_registry(tmp_path: Path):
     bundle, public, registry, root_public = write_bundle(tmp_path, rehearsal_obj)
     payload = json.loads(registry.read_text(encoding="utf-8"))
     payload["signature"] = None
+    payload["fingerprint"] = sha256(
+        json.dumps(
+            {
+                "registry_fingerprint": payload["registry"]["fingerprint"],
+                "signature": None,
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
     registry.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
 
     with pytest.raises(ValueError, match="unsigned"):
