@@ -145,6 +145,7 @@ def _shell_code_without_literals(line: str) -> str:
         output.append(char)
     return "".join(output)
 
+
 def scan_repository(
     *,
     root: Path,
@@ -199,7 +200,8 @@ def scan_repository(
                     continue
                 candidate = _shell_code_without_literals(stripped)
                 for command in FORBIDDEN_DYNAMIC_EXECUTION:
-                    if re.search(rf"(?<![\w-]){re.escape(command)}(?![\w-])", candidate):
+                    pattern = rf"(?<![\w-]){re.escape(command)}(?![\w-])"
+                    if re.search(pattern, candidate):
                         findings.append(
                             PolicyFinding(
                                 path=relative,
