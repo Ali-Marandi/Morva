@@ -11,9 +11,10 @@
 **Public repository:** `Ali-Marandi/Morva`  
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
-**Latest `main` activity (2026-09-15):**
-- Latest main commit: `2a387a1` — `feat(web): make module workspace interactive in demo mode`
-- Recent merged work includes the local backend end-to-end regression gate and web/authentication hardening.
+**Latest `main` activity (2026-09-20):**
+- Latest main commit: `7cda45f` — `docs: record M3.88 verifier`
+- Main now includes the M3.73–M3.88 readiness/handoff/evidence chain, including CI workflow integrity and independent integration-execution readiness verification.
+- The current development branch adds M3.89 receipt-contract hardening and deeper evidence-chain tamper coverage.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -99,7 +100,7 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through the M3.17–M3.88 governance tranches, extending from master-data and Rule-Pack evidence governance through release trust, deployment evidence, official-adapter evidence, integration readiness, execution evidence and independent verification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
 The next execution queue remains focused on closing the evidence boundary: authoritative master-data confirmation, formal legal Rule Pack approval, approved population-specific ledger treatments, certified historical replay corpus, official external adapters and staging/pilot evidence, full three-way reconciliation, payment return/reversal workflows, production key management and retention, DR/PITR drills, target-scale testing, independent security assessment, and formal finance/legal/operations certification.
 
