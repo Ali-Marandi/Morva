@@ -364,7 +364,10 @@ def build_release_lineage(
     if policy.repository != repository or not policy.passed:
         raise ReleaseLineageError("production-boundary policy did not pass")
 
-    if final.technical_gate_fingerprint.lower() != technical.fingerprint.lower():
+    if (
+        final.technical_gate_fingerprint.lower()
+        != technical.fingerprint.lower()
+    ):
         raise ReleaseLineageError(
             "final receipt does not bind technical readiness gate"
         )
@@ -400,8 +403,6 @@ def build_release_lineage(
         raise ReleaseLineageError(
             "source environment mismatch"
         )
-    if final.source_environment != certification.source_environment if hasattr(certification, "source_environment") else False:
-        raise ReleaseLineageError("certification source environment mismatch")
     if final.target_environment != "production":
         raise ReleaseLineageError(
             "lineage target environment must be production"
