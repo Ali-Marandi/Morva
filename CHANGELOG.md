@@ -2,6 +2,17 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — CI Baseline Repairs
+
+### Validation
+- Remove repository-wide Ruff blockers introduced in recent readiness tranches.
+- Repair production release-lineage payload loading and fingerprint binding.
+- Correct Ed25519 signature fixture context to the required 64-byte shape.
+- Clean unused regression-test assignments/imports.
+
+### Safety
+- No production gate is weakened and no external integration or payment authority is introduced.
+
 ## Unreleased — M3.33 Managed Key Hardening
 
 ### Production security
