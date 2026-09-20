@@ -248,7 +248,7 @@ def build_final_readiness_gate(
         )
     if technical.bundle_fingerprint.lower() != freshness.bundle_fingerprint.lower():
         raise FinalProductionReadinessError(
-            "technical and freshness bundle fingerprints differ"
+            "technical and freshness bundle fingerprint mismatch"
         )
     if (
         technical.promotion_verification_fingerprint.lower()
