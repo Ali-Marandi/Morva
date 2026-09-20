@@ -35,6 +35,16 @@ def scan_full_production_boundary(
     root,
     repository: str,
 ) -> ProductionBoundaryPolicyReceipt:
+    missing = tuple(
+        path
+        for path in M3_54_TO_M3_68_WORKFLOWS
+        if not (root / path).is_file()
+    )
+    if missing:
+        raise ProductionBoundaryPolicyError(
+            "full production-boundary workflow coverage is incomplete: "
+            + ",".join(missing)
+        )
     receipt = scan_repository(
         root=root,
         repository=repository,
