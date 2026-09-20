@@ -13,7 +13,6 @@ from morva.runtime.independent_integration_readiness_verifier import (
 )
 from morva.runtime.integration_execution_evidence import (
     IntegrationExecutionEvidenceError,
-    IntegrationExecutionEvidenceReceipt,
     load_execution_evidence,
 )
 from morva.runtime.integration_readiness_gate import (
