@@ -89,3 +89,6 @@ M3.33 provides an application-side `ManagedKeyRing` that carries a single active
 ## Release position
 
 Morva is an **enterprise validation candidate**, not yet a production-certified payment system. The application deliberately remains fail-closed until legal approval, authoritative data reconciliation, official integrations, security/DR/load evidence and final finance/legal sign-off are complete.
+
+
+| 44 | Production Readiness Convergence | **M3.72 creates a deterministic write-once handoff object that re-verifies M3.71 lineage, binds the complete M3.66 external evidence registry and M3.69 full boundary policy, and preserves exact repository/tag/candidate-SHA identity; evidence-only, no certification/promotion/deployment** |
