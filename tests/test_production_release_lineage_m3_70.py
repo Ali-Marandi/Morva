@@ -187,14 +187,18 @@ def _inputs(tmp_path: Path):
     registry_file = tmp_path / "registry.json"
     policy_file = tmp_path / "policy.json"
 
-    _write(technical_file, {        "gate_version": technical.gate_version,
+    _write(
+        technical_file,
+        {
         "repository": technical.repository,
         "release_id": technical.release_id,
         "tag": technical.tag,
         "candidate_sha": technical.candidate_sha,
         "bundle_fingerprint": technical.bundle_fingerprint,
         "promotion_gate_fingerprint": technical.promotion_gate_fingerprint,
-        "promotion_verification_fingerprint": technical.promotion_verification_fingerprint,
+        "promotion_verification_fingerprint": (
+            technical.promotion_verification_fingerprint
+        ),
         "policy_fingerprint": technical.policy_fingerprint,
         "policy_passed": technical.policy_passed,
         "source_environment": technical.source_environment,
@@ -207,7 +211,15 @@ def _inputs(tmp_path: Path):
     _write(certification_file, certification_receipt.to_payload())
     _write(registry_file, registry.to_payload())
     _write(policy_file, policy.to_payload())
-    return technical_file, final_file, certification_file, registry_file, policy_file, final_receipt, registry
+    return (
+        technical_file,
+        final_file,
+        certification_file,
+        registry_file,
+        policy_file,
+        final_receipt,
+        registry,
+    )
 
 
 def test_lineage_roundtrip(tmp_path: Path):
@@ -252,7 +264,9 @@ def test_mismatched_certification_is_rejected(tmp_path: Path):
             repository=REPOSITORY,
             tag=TAG,
             candidate_sha=SHA,
-            verified_at=datetime.now(),
+            verified_at=datetime.fromisoformat(
+                "2026-09-20T01:10:00+00:00"
+            ),
         )
 
 
