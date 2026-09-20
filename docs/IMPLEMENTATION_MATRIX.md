@@ -98,3 +98,7 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 46 | Independent Official Adapter Evidence Verification | **M3.76 independently reloads and verifies the six-adapter M3.75 evidence registry; verification-only** |
 
 | 47 | Official Adapter Activation Gate | **M3.77 binds M3.75/M3.76 evidence to explicit external authorization for staging/pilot activation; no endpoint or credential activation is performed** |
+
+| 48 | Integration Contract Manifest | **M3.80 records the canonical internal operations, correlation/idempotency requirements and payload schema shape for the six integration boundaries; not an external provider contract** |
+
+| 49 | Independent Integration Contract Verification | **M3.81 compares M3.80 with the actual SINA/accounting/treasury/bank/tax/insurance Protocol interfaces and fails on operation drift; verification-only** |
