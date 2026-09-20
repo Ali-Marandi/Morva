@@ -101,6 +101,20 @@ def test_unreadable_path_is_a_finding(tmp_path: Path):
     assert receipt.findings[0].rule == "readable"
 
 
+
+def test_quoted_dynamic_execution_text_is_not_a_finding(tmp_path: Path):
+    _write(
+        tmp_path,
+        "steps:\n  - run: grep -R -- \"eval\" .github/workflows\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 def test_receipt_is_write_once(tmp_path: Path):
     _write(
         tmp_path,
