@@ -135,3 +135,20 @@ jobs:
     write_receipt(receipt, output)
     with pytest.raises(CIWorkflowIntegrityError, match="write-once"):
         write_receipt(receipt, output)
+
+def test_quoted_mutation_text_is_not_a_command(tmp_path: Path):
+    _write(
+        tmp_path,
+        ".github/workflows/guard.yml",
+        """name: Guard
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: grep -R -- 'gh release create' .github/workflows
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert receipt.passed
