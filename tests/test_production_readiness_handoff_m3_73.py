@@ -103,9 +103,8 @@ def test_source_path_rejects_traversal():
 
 @pytest.mark.skipif(not hasattr(Path, "symlink_to"), reason="symlinks unavailable")
 def test_symlink_is_rejected(tmp_path: Path):
-    _sources(tmp_path)
+    handoff = _handoff(tmp_path)
     link = tmp_path / "link.json"
     link.symlink_to(tmp_path / "a.json")
-    handoff = _handoff(tmp_path)
     with pytest.raises(ProductionReadinessHandoffError, match="symlink"):
         verify_handoff_sources(handoff=handoff, root=tmp_path)
