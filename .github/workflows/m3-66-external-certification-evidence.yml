@@ -3,8 +3,18 @@ name: M3.66 External Certification Evidence Contract
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-66-external-certification-evidence.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tools/m3_66_external_certification_evidence.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-66-external-certification-evidence.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tools/m3_66_external_certification_evidence.py"
   workflow_dispatch:
 
 concurrency:
