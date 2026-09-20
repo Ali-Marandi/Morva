@@ -27,6 +27,12 @@ FORBIDDEN_COMMANDS = (
     "terraform apply",
     "terraform destroy",
 )
+
+FORBIDDEN_DYNAMIC_EXECUTION = (
+    "eval",
+    "bash -c",
+    "sh -c",
+)
 PRIVATE_MARKERS = (
     b"BEGIN PRIVATE KEY",
     b"BEGIN OPENSSH PRIVATE KEY",
@@ -166,6 +172,17 @@ def scan_repository(
 
         text = data.decode("utf-8", errors="replace")
         if relative.startswith(".github/workflows/"):
+            sanitized = re.sub(r"'[^']*'|\"[^\"]*\"", " ", text)
+            for command in FORBIDDEN_DYNAMIC_EXECUTION:
+                pattern = rf"(?m)(?<![\w-]){re.escape(command)}(?![\w-])"
+                if re.search(pattern, sanitized):
+                    findings.append(
+                        PolicyFinding(
+                            path=relative,
+                            rule="workflow-dynamic-execution",
+                            detail=command,
+                        )
+                    )
             for command in FORBIDDEN_COMMANDS:
                 pattern = f"(^|[;&|]|\\brun:\\s*){command}"
                 if any(
