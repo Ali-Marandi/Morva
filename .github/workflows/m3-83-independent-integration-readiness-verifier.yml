@@ -1,0 +1,38 @@
+name: M3.83 Independent Integration Readiness Verifier
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Independently verify integration readiness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/independent_integration_readiness_verifier.py
+          src/morva/runtime/integration_readiness_gate.py
+          src/morva/runtime/independent_adapter_activation_verifier.py
+          src/morva/runtime/independent_integration_contract_verifier.py
+          tests/test_independent_integration_readiness_verifier_m3_83.py
+      - run: pytest -q tests/test_independent_integration_readiness_verifier_m3_83.py
+      - name: Record production boundary
+        run: |
+          echo "M3.83 is verification-only and limited to staging/pilot integration readiness." >> "$GITHUB_STEP_SUMMARY"
