@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 import inspect
 import json
@@ -90,6 +90,7 @@ def verify_integration_contract(
     manifest_file: Path,
     repository: str,
     candidate_sha: str,
+    checked_at: datetime,
 ) -> IndependentIntegrationContractVerificationReceipt:
     try:
         manifest = load_manifest(manifest_file)
@@ -105,6 +106,10 @@ def verify_integration_contract(
     if manifest.candidate_sha.lower() != candidate_sha.lower():
         raise IndependentIntegrationContractVerificationError(
             "integration manifest candidate SHA mismatch"
+        )
+    if checked_at.tzinfo is None:
+        raise IndependentIntegrationContractVerificationError(
+            "checked_at must be timezone-aware"
         )
 
     for adapter in manifest.adapters:
@@ -122,7 +127,7 @@ def verify_integration_contract(
         candidate_sha=candidate_sha,
         manifest_fingerprint=manifest.fingerprint,
         adapters=manifest.adapters,
-        verified_at=datetime.now(timezone.utc),
+        verified_at=checked_at,
     )
 
 
