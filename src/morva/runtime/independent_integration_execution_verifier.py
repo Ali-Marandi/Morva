@@ -198,10 +198,10 @@ def verify_integration_execution(
         ValueError,
     ) as exc:
         raise IndependentIntegrationExecutionVerificationError(
-            "underlying execution or readiness evidence failed verification"
+            f"underlying execution or readiness evidence failed verification: {exc}"
         ) from exc
 
-    if stored_readiness != current_readiness:
+    if stored_readiness.fingerprint != current_readiness.fingerprint:
         raise IndependentIntegrationExecutionVerificationError(
             "stored M3.83 receipt does not match current verification"
         )
