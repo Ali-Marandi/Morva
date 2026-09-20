@@ -8,7 +8,6 @@ import pytest
 
 from morva.runtime.production_readiness_handoff import (
     HandoffSource,
-    ProductionReadinessHandoff,
     ProductionReadinessHandoffError,
     build_handoff,
     load_handoff,
