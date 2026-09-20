@@ -3,8 +3,28 @@ name: M3.67 Production Certification Gate
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-67-production-certification-gate.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "src/morva/runtime/final_production_readiness.py"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tests/test_final_readiness_verifier_m3_65.py"
+      - "tests/test_production_certification_gate_m3_67.py"
+      - "tools/m3_67_production_certification_gate.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-67-production-certification-gate.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "src/morva/runtime/final_production_readiness.py"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tests/test_final_readiness_verifier_m3_65.py"
+      - "tests/test_production_certification_gate_m3_67.py"
+      - "tools/m3_67_production_certification_gate.py"
   workflow_dispatch:
 
 concurrency:
