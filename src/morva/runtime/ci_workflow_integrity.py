@@ -34,6 +34,12 @@ FORBIDDEN_MUTATIONS = (
     "terraform destroy",
 )
 
+FORBIDDEN_DYNAMIC_EXECUTION = (
+    "eval ",
+    "bash -c",
+    "sh -c",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class WorkflowIntegrityFinding:
@@ -156,6 +162,25 @@ def _has_main_branch(push_block: str) -> bool:
     return False
 
 
+def _dynamic_execution_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
+    findings: list[WorkflowIntegrityFinding] = []
+    for number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        candidate = re.sub(r"'[^']*|" + r'"[^"]*"', " ", stripped)
+        for command in FORBIDDEN_DYNAMIC_EXECUTION:
+            if re.search(rf"(?<![\w-]){re.escape(command.strip())}(?:\s|$)", candidate):
+                findings.append(
+                    WorkflowIntegrityFinding(
+                        path=path,
+                        rule="workflow-dynamic-execution",
+                        detail=f"{command.strip()} at line {number}",
+                    )
+                )
+    return findings
+
+
 def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
     findings: list[WorkflowIntegrityFinding] = []
     for number, line in enumerate(text.splitlines(), start=1):
@@ -241,6 +266,7 @@ def scan_workflows(root: Path, repository: str) -> CIWorkflowIntegrityReceipt:
                 )
             )
 
+        findings.extend(_dynamic_execution_findings(relative, text))
         findings.extend(_mutation_findings(relative, text))
 
     return CIWorkflowIntegrityReceipt(
