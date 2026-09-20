@@ -273,7 +273,7 @@ def build_convergence(
         raise ProductionReadinessConvergenceError(
             "lineage verification fingerprint mismatch"
         )
-    if stored_verification != lineage_verification:
+    if stored_verification.fingerprint != lineage_verification.fingerprint:
         raise ProductionReadinessConvergenceError(
             "stored M3.71 verification receipt does not match live verification"
         )
