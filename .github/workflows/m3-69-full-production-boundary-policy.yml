@@ -3,8 +3,20 @@ name: M3.69 Full Production Boundary Policy
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-69-full-production-boundary-policy.yml"
+      - "src/morva/runtime/production_boundary_policy.py"
+      - "src/morva/runtime/production_boundary_policy_v2.py"
+      - "tests/test_full_production_boundary_policy_m3_69.py"
+      - "tools/m3_69_full_production_boundary_policy.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-69-full-production-boundary-policy.yml"
+      - "src/morva/runtime/production_boundary_policy.py"
+      - "src/morva/runtime/production_boundary_policy_v2.py"
+      - "tests/test_full_production_boundary_policy_m3_69.py"
+      - "tools/m3_69_full_production_boundary_policy.py"
   workflow_dispatch:
 
 concurrency:
