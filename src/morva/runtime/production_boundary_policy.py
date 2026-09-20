@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
 
 
 class ProductionBoundaryPolicyError(ValueError):
@@ -168,7 +169,7 @@ def scan_repository(
             for command in FORBIDDEN_COMMANDS:
                 pattern = f"(^|[;&|]|\\brun:\\s*){command}"
                 if any(
-                    __import__("re").search(pattern, line)
+                    re.search(pattern, line)
                     for line in text.splitlines()
                 ):
                     findings.append(
