@@ -1,0 +1,64 @@
+name: M3.85 Independent Integration Execution Verifier
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-85-independent-integration-execution-verifier.yml"
+      - "src/morva/runtime/independent_integration_execution_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence.py"
+      - "src/morva/runtime/independent_integration_readiness_verifier.py"
+      - "src/morva/runtime/integration_readiness_gate.py"
+      - "tests/test_independent_integration_execution_verifier_m3_85.py"
+      - "tests/test_independent_integration_readiness_verifier_m3_83.py"
+      - "tests/test_integration_execution_evidence_m3_84.py"
+      - "tools/m3_85_independent_integration_execution_verifier.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-85-independent-integration-execution-verifier.yml"
+      - "src/morva/runtime/independent_integration_execution_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence.py"
+      - "src/morva/runtime/independent_integration_readiness_verifier.py"
+      - "src/morva/runtime/integration_readiness_gate.py"
+      - "tests/test_independent_integration_execution_verifier_m3_85.py"
+      - "tests/test_independent_integration_readiness_verifier_m3_83.py"
+      - "tests/test_integration_execution_evidence_m3_84.py"
+      - "tools/m3_85_independent_integration_execution_verifier.py"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Independently verify integration execution evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/independent_integration_execution_verifier.py
+          src/morva/runtime/integration_execution_evidence.py
+          src/morva/runtime/independent_integration_readiness_verifier.py
+          src/morva/runtime/integration_readiness_gate.py
+          tools/m3_85_independent_integration_execution_verifier.py
+          tests/test_independent_integration_execution_verifier_m3_85.py
+      - run: >
+          pytest -q
+          tests/test_independent_integration_execution_verifier_m3_85.py
+          tests/test_integration_execution_evidence_m3_84.py
+          tests/test_independent_integration_readiness_verifier_m3_83.py
+      - name: Record production boundary
+        run: |
+          echo "M3.85 is verification-only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No adapter endpoint, credential or production deployment is activated." >> "$GITHUB_STEP_SUMMARY"
