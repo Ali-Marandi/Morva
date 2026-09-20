@@ -58,6 +58,7 @@ def _freshness(path: Path) -> None:
         candidate_sha=SHA,
         bundle_fingerprint=BUNDLE,
         promotion_verification_fingerprint=PROMO,
+        source_environment="staging",
         published_at="2026-09-19T23:00:00+00:00",
         approved_at="2026-09-19T23:30:00+00:00",
         deployed_at="2026-09-19T23:45:00+00:00",
