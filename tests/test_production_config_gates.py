@@ -14,6 +14,8 @@ def _production_settings(**overrides) -> Settings:
         "require_migrated_schema": True,
         "field_encryption_key": "field-key",
         "field_lookup_hmac_key": "lookup-key",
+        "field_encryption_keys": "v2:field-key",
+        "field_lookup_hmac_keys": "v2:lookup-key",
         "key_version": "v2",
     }
     values.update(overrides)
@@ -43,7 +45,7 @@ def test_production_rejects_disabled_mfa_integrations_demo_and_missing_oidc(monk
         (dict(integrations_enabled=False), "integrations"),
         (dict(allow_demo_policies=True), "Demo"),
         (dict(oidc_jwks_url=""), "OIDC"),
-        (dict(field_encryption_key=""), "encryption"),
+        (dict(field_encryption_keys="", field_lookup_hmac_keys=""), "encryption"),
     ]
     for overrides, expected in cases:
         settings = _production_settings(**overrides)
