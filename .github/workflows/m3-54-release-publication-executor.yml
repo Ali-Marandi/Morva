@@ -1,8 +1,6 @@
 name: M3.54 Release Publication Executor
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
