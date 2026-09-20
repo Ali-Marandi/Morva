@@ -199,7 +199,10 @@ def build_integration_execution_readiness_gate(
         raise IntegrationExecutionReadinessGateError(
             "execution adapter set is not canonical"
         )
-    if verification.execution_evidence_fingerprint.lower() != execution.evidence_fingerprint.lower():
+    if (
+        verification.execution_evidence_fingerprint.lower()
+        != execution.evidence_fingerprint.lower()
+    ):
         raise IntegrationExecutionReadinessGateError(
             "execution fingerprint differs from independent verification"
         )
