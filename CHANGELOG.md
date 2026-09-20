@@ -2,6 +2,18 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.89 Readiness Verifier Hardening
+
+### Integration readiness
+- Harden the M3.88 independent execution-readiness receipt contract.
+- Require canonical adapter identity, valid candidate SHA, SHA-256 evidence fingerprints and timezone-aware verification time.
+- Add regression coverage for tampered M3.83 readiness-verification evidence.
+- Add regression coverage for non-canonical adapter sets.
+
+### Safety
+- Verification-only hardening; no external adapter activation, credentials or production deployment behavior is introduced.
+- The M3.84 → M3.85 → M3.86 evidence chain remains fail-closed.
+
 ## Unreleased — M3.33 Managed Key Hardening
 
 ### Production security
