@@ -66,6 +66,7 @@ def _fixtures(tmp_path: Path):
         manifest_file=manifest_file,
         repository=REPOSITORY,
         candidate_sha=SHA,
+        checked_at=datetime.fromisoformat("2026-09-20T02:30:00+00:00"),
     )
     contract_receipt_file = tmp_path / "contract-receipt.json"
     write_contract_receipt(contract_receipt, contract_receipt_file)
