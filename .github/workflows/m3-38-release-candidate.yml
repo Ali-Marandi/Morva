@@ -3,9 +3,21 @@ name: M3.38 release candidate verifier
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-38-release-candidate.yml"
+      - "tests/test_release_candidate_check_m3_38.py"
+      - "tools/m3_38_release_candidate_check.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-38-release-candidate.yml"
+      - "tests/test_release_candidate_check_m3_38.py"
+      - "tools/m3_38_release_candidate_check.py"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
