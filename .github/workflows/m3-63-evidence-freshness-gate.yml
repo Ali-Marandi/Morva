@@ -3,8 +3,26 @@ name: M3.63 Evidence Freshness Gate
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-63-evidence-freshness-gate.yml"
+      - "src/morva/runtime/evidence_freshness_gate.py"
+      - "src/morva/runtime/production_promotion_gate.py"
+      - "src/morva/runtime/production_promotion_verifier.py"
+      - "tests/test_evidence_freshness_gate_m3_63.py"
+      - "tests/test_production_promotion_gate_m3_59.py"
+      - "tests/test_production_promotion_verifier_m3_60.py"
+      - "tools/m3_63_evidence_freshness_gate.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-63-evidence-freshness-gate.yml"
+      - "src/morva/runtime/evidence_freshness_gate.py"
+      - "src/morva/runtime/production_promotion_gate.py"
+      - "src/morva/runtime/production_promotion_verifier.py"
+      - "tests/test_evidence_freshness_gate_m3_63.py"
+      - "tests/test_production_promotion_gate_m3_59.py"
+      - "tests/test_production_promotion_verifier_m3_60.py"
+      - "tools/m3_63_evidence_freshness_gate.py"
   workflow_dispatch:
 
 concurrency:
