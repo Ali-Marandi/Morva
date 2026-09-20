@@ -30,6 +30,7 @@ def test_roundtrip(tmp_path: Path):
         manifest_file=path,
         repository=REPOSITORY,
         candidate_sha=SHA,
+        checked_at=datetime.fromisoformat("2026-09-20T05:00:00+00:00"),
     )
     assert receipt.adapters == tuple(
         ("sina", "accounting", "treasury", "bank", "tax", "insurance")
@@ -94,6 +95,7 @@ def test_receipt_write_once(tmp_path: Path):
         manifest_file=path,
         repository=REPOSITORY,
         candidate_sha=SHA,
+        checked_at=datetime.fromisoformat("2026-09-20T05:00:00+00:00"),
     )
     output = tmp_path / "receipt.json"
     write_receipt(receipt, output)
