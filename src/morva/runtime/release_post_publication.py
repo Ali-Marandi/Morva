@@ -418,7 +418,7 @@ def verify_published_release(
     release_name = release.get("name")
     if release_name != gate.release_id:
         raise ReleasePostPublicationError(
-            "GitHub Release name does not match release_id"
+            "GitHub Release name does not match release_id (release name)"
         )
     target_commitish = release.get("target_commitish")
     if not isinstance(target_commitish, str):
