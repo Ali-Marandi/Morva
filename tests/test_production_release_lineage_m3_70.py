@@ -187,6 +187,7 @@ def _inputs(tmp_path: Path):
     _write(
         technical_file,
         {
+        "gate_version": technical.gate_version,
         "repository": technical.repository,
         "release_id": technical.release_id,
         "tag": technical.tag,
