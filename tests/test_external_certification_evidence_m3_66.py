@@ -23,6 +23,7 @@ CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
 
 
 def _write_evidence(root: Path, role: str, **overrides) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
     payload = {
         "evidence_version": 1,
         "role": role,
