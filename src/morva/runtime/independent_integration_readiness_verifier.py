@@ -155,6 +155,7 @@ def verify_integration_readiness(
             manifest_file=contract_manifest,
             repository=repository,
             candidate_sha=candidate_sha,
+            checked_at=gate.checked_at,
         )
         registry = load_registry(registry_file)
         manifest = load_manifest(contract_manifest)
