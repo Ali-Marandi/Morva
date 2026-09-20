@@ -49,6 +49,7 @@ def _workflow_mutations(text: str) -> set[str]:
         if not stripped or stripped.startswith("#"):
             continue
         candidate = _unquoted_shell(stripped)
+        candidate = re.sub(r"^-\s*run:\s*|^run:\s*", "", candidate)
         match = _WORKFLOW_COMMAND_RE.search(candidate)
         if match:
             findings.add(match.group("command"))
