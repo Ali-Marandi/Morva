@@ -103,10 +103,8 @@ def test_promotion_rejects_bad_authorization(
     from morva.runtime.deployment_evidence_bundle import _load_metadata
 
     bundle_object = _load_metadata(metadata)
-    payload = _authorization(
-        bundle_object.bundle_fingerprint,
-        **{field: value},
-    )
+    payload = _authorization(bundle_object.bundle_fingerprint)
+    payload[field] = value
     authorization = tmp_path / "authorization.json"
     authorization.write_text(
         json.dumps(payload),
