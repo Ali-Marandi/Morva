@@ -2,6 +2,9 @@ name: M3.16 Self-Service Production Hardening Gate
 
 on:
   push:
+    paths:
+      - .github/workflows/m3-16-self-service-hardening.yml
+      - web/package-lock.json
   pull_request:
 
 permissions:
