@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 
 from morva.runtime.independent_integration_contract_verifier import (
@@ -17,14 +18,21 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--repository", required=True)
     parser.add_argument("--candidate-sha", required=True)
+    parser.add_argument("--checked-at", default=None)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
     try:
+        checked_at = (
+            datetime.fromisoformat(args.checked_at)
+            if args.checked_at
+            else datetime.now(timezone.utc)
+        )
         receipt = verify_integration_contract(
             manifest_file=args.manifest,
             repository=args.repository,
             candidate_sha=args.candidate_sha,
+            checked_at=checked_at,
         )
         write_receipt(receipt, args.output)
     except (
