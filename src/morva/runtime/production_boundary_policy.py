@@ -53,7 +53,8 @@ def _workflow_mutations(text: str) -> set[str]:
         if match:
             findings.add(match.group("command"))
     return findings
-)
+
+
 PRIVATE_MARKERS = (
     b"BEGIN PRIVATE KEY",
     b"BEGIN OPENSSH PRIVATE KEY",
