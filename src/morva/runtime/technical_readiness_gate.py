@@ -188,6 +188,7 @@ def load_policy_receipt(path: Path) -> TechnicalReadinessPolicyReceipt:
         "policy_version": version,
         "repository": repository,
         "scanned_paths": list(scanned_paths),
+        "passed": passed,
         "findings": findings,
     }
     expected = sha256(
