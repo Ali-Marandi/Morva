@@ -183,7 +183,7 @@ def build_pack(
         return output / source_map[role]
 
     source_root = output / "sources"
-    result = verify_chain(
+    verify_chain(
         bundle_file=source("release_bundle"),
         manifest_file=source_root
         / Path(source_map["manifest"].removeprefix("sources/")),
