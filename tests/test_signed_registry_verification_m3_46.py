@@ -138,7 +138,7 @@ def write_source_files(root: Path) -> tuple[Path, Path, Path, str, str, str]:
     )
 
 
-def write_signed_registry(root: Path, public_key) -> Path:
+def write_signed_registry(root: Path, public_key) -> tuple[Path, Path]:
     registry = TrustedKeyRegistry(
         "morva-signing",
         1,
@@ -277,10 +277,11 @@ def test_independent_verifier_rejects_tampered_rehearsal(tmp_path: Path):
     with pytest.raises(ValueError):
         verify_bundle(
             bundle,
-            public,
-            registry,
+            manifest,
             gate,
             rehearsal,
+            public,
+            registry,
             tmp_path,
             SHA,
             NOW,
@@ -315,10 +316,11 @@ def test_independent_verifier_rejects_unsigned_registry(tmp_path: Path):
     with pytest.raises(ValueError, match="unsigned"):
         verify_bundle(
             bundle,
-            public,
             manifest,
             gate,
             rehearsal,
+            public,
+            registry,
             tmp_path,
             SHA,
             NOW,
