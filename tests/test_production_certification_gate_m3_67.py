@@ -53,6 +53,7 @@ def _readiness_files(tmp_path: Path):
         candidate_sha=sha,
         bundle_fingerprint="b" * 64,
         promotion_verification_fingerprint="d" * 64,
+        source_environment="staging",
         published_at="2026-09-19T23:00:00+00:00",
         approved_at="2026-09-19T23:30:00+00:00",
         deployed_at="2026-09-19T23:45:00+00:00",
