@@ -2,6 +2,12 @@ name: M3.22 Identity Directory Reconciliation Gate
 
 on:
   push:
+    paths:
+      - src/morva/identity/**
+      - src/morva/masterdata/**
+      - tests/**identity**
+      - tests/**reconciliation**
+      - .github/workflows/m3-22-identity-directory-reconciliation.yml
   pull_request:
 
 permissions:
