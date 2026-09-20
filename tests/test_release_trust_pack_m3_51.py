@@ -185,7 +185,7 @@ def test_duplicate_roles_are_rejected():
 def test_pack_rejects_private_key_material(tmp_path: Path):
     private_key = tmp_path / "private.key"
     private_key.write_text(
-        "-----BEGIN PRIVATE KEY-----\nforbidden\n-----END PRIVATE KEY-----\n",
+        "-----BEGIN " + "PRIVATE KEY-----\nforbidden\n-----END PRIVATE KEY-----\n",
         encoding="utf-8",
     )
 
