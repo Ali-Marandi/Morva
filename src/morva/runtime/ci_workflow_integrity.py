@@ -168,7 +168,7 @@ def _dynamic_execution_findings(path: str, text: str) -> list[WorkflowIntegrityF
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
-        candidate = re.sub(r"'[^']*|" + r'"[^"]*"', " ", stripped)
+        candidate = _shell_code_without_literals(stripped)
         for command in FORBIDDEN_DYNAMIC_EXECUTION:
             if re.search(rf"(?<![\w-]){re.escape(command.strip())}(?:\s|$)", candidate):
                 findings.append(
@@ -210,7 +210,7 @@ def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
         if not stripped or stripped.startswith("#"):
             continue
         candidate = re.sub(r"^-\s*run:\s*", "", stripped)
-        candidate = re.sub(r"'[^']*'|" + r'"[^"]*"', " ", candidate)
+        candidate = _shell_code_without_literals(candidate)
         for command in FORBIDDEN_MUTATIONS:
             if re.search(rf"(?<![\w-]){re.escape(command)}(?![\w-])", candidate):
                 findings.append(
