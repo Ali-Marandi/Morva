@@ -9,9 +9,8 @@ from pathlib import Path
 from morva.runtime.official_adapter_evidence import (
     REQUIRED_ADAPTERS,
     OfficialAdapterEvidenceError,
-    OfficialAdapterEvidenceRegistry,
-    load_registry,
     assert_activation_ready,
+    load_registry,
 )
 
 
