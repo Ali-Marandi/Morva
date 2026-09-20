@@ -181,6 +181,28 @@ def _dynamic_execution_findings(path: str, text: str) -> list[WorkflowIntegrityF
     return findings
 
 
+def _shell_code_without_literals(line: str) -> str:
+    output: list[str] = []
+    quote: str | None = None
+    escaped = False
+    for char in line:
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in {"'", "\""}:
+            quote = char
+            continue
+        if char == "#":
+            break
+        output.append(char)
+    return "".join(output)
+
+
 def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
     findings: list[WorkflowIntegrityFinding] = []
     for number, line in enumerate(text.splitlines(), start=1):
