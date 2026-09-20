@@ -3,8 +3,20 @@ name: M3.72 Production Readiness Convergence
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-72-production-readiness-convergence.yml"
+      - "src/morva/runtime/independent_release_lineage_verifier.py"
+      - "src/morva/runtime/production_readiness_convergence.py"
+      - "tests/test_production_readiness_convergence_m3_72.py"
+      - "tools/m3_72_production_readiness_convergence.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-72-production-readiness-convergence.yml"
+      - "src/morva/runtime/independent_release_lineage_verifier.py"
+      - "src/morva/runtime/production_readiness_convergence.py"
+      - "tests/test_production_readiness_convergence_m3_72.py"
+      - "tools/m3_72_production_readiness_convergence.py"
   workflow_dispatch:
 
 concurrency:
