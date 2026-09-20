@@ -2,6 +2,11 @@ name: M3.24 1405 Rule-Pack Evidence Gate
 
 on:
   push:
+    paths:
+      - src/morva/rules/**
+      - tests/**rule_pack**
+      - tests/**1405**
+      - .github/workflows/m3-24-1405-rule-pack-evidence.yml
   pull_request:
 
 permissions:
