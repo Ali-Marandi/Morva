@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from morva.api.app import app
@@ -13,14 +14,17 @@ app.dependency_overrides[get_current_principal] = lambda: Principal(
     scope_id="ministry",
     mfa_verified=True,
 )
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def _new_exception() -> tuple[str, str]:
     return f"EX-{uuid4().hex}", f"ITEM-{uuid4().hex}"
 
 
-def test_payment_exception_workflow_is_provider_neutral_and_idempotent():
+def test_payment_exception_workflow_is_provider_neutral_and_idempotent(client):
     exception_id, payment_item_id = _new_exception()
     create = client.post(
         "/api/v1/payment-exceptions",
@@ -75,7 +79,7 @@ def test_payment_exception_workflow_is_provider_neutral_and_idempotent():
     assert events.json()[0]["idempotency_key"] == key
 
 
-def test_payment_exception_resolution_rejects_second_non_idempotent_resolution():
+def test_payment_exception_resolution_rejects_second_non_idempotent_resolution(client):
     exception_id, _ = _new_exception()
     create = client.post(
         "/api/v1/payment-exceptions",
