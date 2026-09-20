@@ -166,16 +166,18 @@ def scan_repository(
         text = data.decode("utf-8", errors="replace")
         if relative.startswith(".github/workflows/"):
             for command in FORBIDDEN_COMMANDS:
-                for line in text.splitlines():
-                    if line.lstrip().startswith(command):
-                        findings.append(
-                            PolicyFinding(
-                                path=relative,
-                                rule="workflow-mutation",
-                                detail=command,
-                            )
+                pattern = f"(^|[;&|]|\\brun:\\s*){command}"
+                if any(
+                    __import__("re").search(pattern, line)
+                    for line in text.splitlines()
+                ):
+                    findings.append(
+                        PolicyFinding(
+                            path=relative,
+                            rule="workflow-mutation",
+                            detail=command,
                         )
-                        break
+                    )
             if "permissions:\n  contents: write" in text:
                 findings.append(
                     PolicyFinding(
