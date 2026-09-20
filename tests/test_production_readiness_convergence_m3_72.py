@@ -100,13 +100,16 @@ def test_policy_fingerprint_mismatch_is_rejected(tmp_path: Path):
     payload["full_policy_fingerprint"] = "0" * 64
     from morva.runtime.production_release_lineage import ProductionReleaseLineage
 
-    tampered = ProductionReleaseLineage(
-        **{
-            **payload,
-            "verified_at": datetime.fromisoformat(payload["verified_at"]),
-            "full_policy_fingerprint": "0" * 64,
-        }
+    lineage_fields = {
+        key: value
+        for key, value in payload.items()
+        if key != "fingerprint"
+    }
+    lineage_fields["verified_at"] = datetime.fromisoformat(
+        payload["verified_at"]
     )
+    lineage_fields["full_policy_fingerprint"] = "0" * 64
+    tampered = ProductionReleaseLineage(**lineage_fields)
     payload["fingerprint"] = tampered.fingerprint
     path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
