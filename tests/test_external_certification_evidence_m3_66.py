@@ -17,6 +17,7 @@ from morva.runtime.external_certification_evidence import (
 
 REPOSITORY = "Ali-Marandi/Morva"
 SHA = "a" * 40
+CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
 
 CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
 
