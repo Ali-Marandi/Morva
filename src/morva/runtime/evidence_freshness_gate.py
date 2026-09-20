@@ -30,6 +30,7 @@ class EvidenceFreshnessGate:
     candidate_sha: str
     bundle_fingerprint: str
     promotion_verification_fingerprint: str
+    source_environment: str
     published_at: str
     approved_at: str
     deployed_at: str
@@ -70,6 +71,10 @@ class EvidenceFreshnessGate:
                 raise EvidenceFreshnessGateError(
                     f"{name} must be SHA-256"
                 )
+        if self.source_environment not in {"staging", "pilot"}:
+            raise EvidenceFreshnessGateError(
+                "source environment must be staging or pilot"
+            )
         for name, value in (
             ("published_at", self.published_at),
             ("approved_at", self.approved_at),
@@ -111,6 +116,7 @@ class EvidenceFreshnessGate:
             "promotion_verification_fingerprint": (
                 self.promotion_verification_fingerprint.lower()
             ),
+            "source_environment": self.source_environment,
             "published_at": self.published_at,
             "approved_at": self.approved_at,
             "deployed_at": self.deployed_at,
@@ -138,6 +144,7 @@ class EvidenceFreshnessGate:
             "promotion_verification_fingerprint": (
                 self.promotion_verification_fingerprint
             ),
+            "source_environment": self.source_environment,
             "published_at": self.published_at,
             "approved_at": self.approved_at,
             "deployed_at": self.deployed_at,
@@ -238,6 +245,7 @@ def build_evidence_freshness_gate(
         candidate_sha=candidate_sha,
         bundle_fingerprint=verification.bundle_fingerprint,
         promotion_verification_fingerprint=verification.fingerprint,
+        source_environment=verification.source_environment,
         published_at=release.published_at,
         approved_at=verification.approved_at,
         deployed_at=attestation.deployed_at,
