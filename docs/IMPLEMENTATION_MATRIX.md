@@ -125,3 +125,5 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 53 | Independent Integration Execution Verification | **M3.85 independently re-verifies M3.84 execution evidence against M3.82 readiness and the M3.83 independent verifier, with exact SHA/environment/adapter binding and write-once receipt; verification-only** |
 
 | 54 | Integration Execution Readiness | **M3.86 creates a freshness-bounded staging/pilot execution-readiness gate binding M3.84 execution evidence and M3.85 independent verification to the M3.82/M3.83 readiness chain; exact SHA/environment/adapter set; evidence-only** |
+
+| 55 | CI Workflow Integrity | **M3.87 statically verifies workflow name/jobs, main-push path scope, repository write permissions and direct release/deployment mutation commands; read-only guard** |
