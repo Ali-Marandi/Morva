@@ -39,7 +39,7 @@ _WORKFLOW_COMMAND_RE = re.compile(
 
 def _unquoted_shell(line: str) -> str:
     """Remove quoted string contents before looking for executable commands."""
-    return re.sub(r"'[^']*'|"[^"]*"", " ", line)
+    return re.sub(r"'[^']*'|\"[^\"]*\"", " ", line)
 
 
 def _workflow_mutations(text: str) -> set[str]:
