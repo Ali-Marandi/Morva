@@ -11,7 +11,8 @@ fail closed on indirect shell execution patterns that can hide mutation commands
 
 The scanner remains conservative: these patterns are treated as integrity findings in
 GitHub Actions workflow files and therefore cannot silently bypass the existing direct
-mutation-command policy.
+mutation-command policy. Quoted literals and shell comments are removed before command
+matching so documentation strings and inline comments do not create false positives.
 
 ## Safety
 
