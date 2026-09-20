@@ -15,9 +15,6 @@ from morva.runtime.independent_certification_verifier import (
 from morva.runtime.production_boundary_policy import (
     ProductionBoundaryPolicyReceipt,
 )
-from morva.runtime.production_certification_gate import (
-    build_production_certification_gate,
-)
 from morva.runtime.production_release_lineage import (
     ReleaseLineageError,
     build_release_lineage,
