@@ -1,0 +1,40 @@
+name: M3.73 Production Readiness Handoff
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  handoff:
+    name: Verify handoff contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/production_readiness_handoff.py
+          tools/m3_73_production_readiness_handoff.py
+          tests/test_production_readiness_handoff_m3_73.py
+      - name: Pytest
+        run: >
+          pytest -q tests/test_production_readiness_handoff_m3_73.py
+      - name: Record production boundary
+        run: |
+          echo "M3.73 is a write-once evidence handoff manifest only." >> "$GITHUB_STEP_SUMMARY"
+          echo "It does not certify, approve, publish, promote or deploy production." >> "$GITHUB_STEP_SUMMARY"
