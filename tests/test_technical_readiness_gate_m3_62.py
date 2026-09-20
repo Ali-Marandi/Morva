@@ -66,7 +66,7 @@ def test_readiness_gate_roundtrip(monkeypatch, tmp_path: Path):
 def test_policy_receipt_tamper_is_rejected(monkeypatch, tmp_path: Path):
     inputs = _ready_inputs(monkeypatch, tmp_path)
     payload = json.loads(inputs[5].read_text(encoding="utf-8"))
-    payload["passed"] = False
+    payload["findings"] = [{"path": "tampered", "rule": "tamper", "detail": "tampered"}]
     inputs[5].write_text(
         json.dumps(payload, sort_keys=True) + "\n",
         encoding="utf-8",
