@@ -40,6 +40,8 @@
 
 | 42 | Full Production Boundary Policy | **M3.69 versions the production-boundary policy to cover all M3.54–M3.68 workflows, with exact coverage, direct mutation detection, write-permission detection and sensitive-material scanning; verification-only** |\n\n| 43 | Production Release Lineage | **M3.70 consolidates the real final-readiness receipt, technical Gate, M3.68 certification receipt, M3.66 external evidence registry and M3.69 full policy receipt into a deterministic write-once lineage manifest with exact repository/tag/SHA and cross-fingerprint binding** |
 
+| 44 | Independent Release Lineage Verification | **M3.71 independently reconstructs the M3.70 production lineage manifest from its underlying readiness, certification, external-evidence and policy sources and emits a write-once verification receipt; no production action is performed** |
+
 ## Canonical payroll lifecycle
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
