@@ -173,6 +173,20 @@ class RootRotationCeremony:
         new_root = new_root_private_key.public_key()
         if current.signature.root_key_id != cls.root_key_id_for(new_root):
             raise RootRotationError("new registry is not signed by the new root")
+        if (
+            transition_kind == "scheduled_rotation"
+            and old_root_private_key is None
+        ):
+            raise RootRotationError(
+                "scheduled rotation requires the old-root private key"
+            )
+        if (
+            transition_kind == "emergency_recovery"
+            and recovery_anchor_private_key is None
+        ):
+            raise RootRotationError(
+                "emergency recovery requires the recovery-anchor private key"
+            )
 
         old_root_key_id = previous.signature.root_key_id
         old_root_signature = None
@@ -219,14 +233,6 @@ class RootRotationCeremony:
         )
         payload = draft.signing_bytes()
 
-        if transition_kind == "scheduled_rotation" and old_root_private_key is None:
-            raise RootRotationError(
-                "scheduled rotation requires the old-root private key"
-            )
-        if transition_kind == "emergency_recovery" and recovery_anchor_private_key is None:
-            raise RootRotationError(
-                "emergency recovery requires the recovery-anchor private key"
-            )
         if transition_kind == "scheduled_rotation" and recovery_anchor_private_key:
             raise RootRotationError(
                 "scheduled rotation must not use recovery-anchor authorization"
