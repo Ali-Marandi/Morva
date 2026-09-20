@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from morva.integrations.ports import BankPort
 from morva.runtime.independent_integration_contract_verifier import (
     IndependentIntegrationContractVerificationError,
     verify_integration_contract,
