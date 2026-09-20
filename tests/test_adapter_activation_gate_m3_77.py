@@ -143,3 +143,16 @@ def test_write_once(tmp_path: Path):
     write_gate(gate, output)
     with pytest.raises(AdapterActivationGateError, match="write-once"):
         write_gate(gate, output)
+
+
+def test_non_boolean_approval_is_rejected(tmp_path: Path):
+    registry, fingerprint = _registry_file(tmp_path)
+    with pytest.raises(AdapterActivationGateError, match="approved must be Boolean"):
+        AdapterActivationAuthorization(
+            authorization_id="AUTH-001",
+            registry_fingerprint=fingerprint,
+            approved="true",
+            approved_at="2026-09-20T02:00:00+00:00",
+            approver="external-operator",
+            target_environment="staging",
+        )
