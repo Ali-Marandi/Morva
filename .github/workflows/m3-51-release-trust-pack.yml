@@ -44,7 +44,7 @@ jobs:
             echo 'private-key-looking file detected in repository'
             exit 1
           fi
-          if git ls-files -z | xargs -0 grep -Il -- 'BEGIN .*PRIVATE KEY' \
+          if git ls-files -z | xargs -0 grep -Il -E -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----' \
           | head -n 1 | grep -q .; then
             echo 'private-key material detected in tracked text'
             exit 1
