@@ -137,7 +137,7 @@ def _load_technical_gate(path: Path) -> TechnicalReadinessGate:
             "technical readiness gate is invalid"
         ) from exc
     try:
-        return TechnicalReadinessGate(
+        gate = TechnicalReadinessGate(
             gate_version=int(payload["gate_version"]),
             repository=payload["repository"],
             release_id=payload["release_id"],
@@ -173,7 +173,7 @@ def _load_freshness_gate(path: Path) -> EvidenceFreshnessGate:
             "freshness gate is invalid"
         ) from exc
     try:
-        return EvidenceFreshnessGate(
+        gate = EvidenceFreshnessGate(
             gate_version=int(payload["gate_version"]),
             repository=payload["repository"],
             release_id=payload["release_id"],
@@ -221,9 +221,7 @@ def build_final_readiness_gate(
         TechnicalReadinessGateError,
         EvidenceFreshnessGateError,
     ) as exc:
-        raise FinalProductionReadinessError(
-            "preceding technical gates could not be loaded"
-        ) from exc
+        raise FinalProductionReadinessError(str(exc)) from exc
 
     if not technical.policy_passed:
         raise FinalProductionReadinessError(
