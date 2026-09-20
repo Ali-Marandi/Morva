@@ -115,6 +115,21 @@ def test_quoted_dynamic_execution_text_is_not_a_finding(tmp_path: Path):
     assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
 
 
+
+
+def test_inline_comment_is_not_dynamic_execution(tmp_path: Path):
+    _write(
+        tmp_path,
+        "steps:\n  - run: echo ok # eval\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 def test_receipt_is_write_once(tmp_path: Path):
     _write(
         tmp_path,
