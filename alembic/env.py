@@ -4,7 +4,16 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import Column, MetaData, PrimaryKeyConstraint, String, Table, engine_from_config, inspect, pool
+from sqlalchemy import (
+    Column,
+    MetaData,
+    PrimaryKeyConstraint,
+    String,
+    Table,
+    engine_from_config,
+    inspect,
+    pool,
+)
 
 from morva.persistence.models import Base
 from morva.persistence import acceptance_records  # noqa: F401
