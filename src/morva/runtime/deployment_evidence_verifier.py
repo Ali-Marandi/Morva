@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 from morva.runtime.release_deployment_evidence import (
-    DeploymentEvidenceAttestation,
     DeploymentEvidenceGate,
     DeploymentEvidenceGateError,
     load_attestation,
