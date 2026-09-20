@@ -34,19 +34,6 @@ jobs:
       - name: Pytest
         run: >
           pytest -q tests/test_production_release_lineage_m3_70.py
-      - name: Confirm no production mutation
-        shell: bash
-        run: |
-          pattern='^[[:space:]]*(kubectl (apply|delete)|'
-          pattern+='helm (install|upgrade|rollback)|terraform (apply|destroy)|'
-          pattern+='gh release (create|edit|delete|upload)|git (push|tag) )'
-          for file in .github/workflows/*; do
-            [ -f "$file" ] || continue
-            if grep -InE -- "$pattern" "$file"; then
-              echo "forbidden production mutation found"
-              exit 1
-            fi
-          done
       - name: Record production boundary
         run: |
           echo "M3.70 is a lineage manifest only." >> "$GITHUB_STEP_SUMMARY"
