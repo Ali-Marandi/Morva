@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from morva.runtime.external_certification_evidence import REQUIRED_ROLES
 from morva.runtime.independent_handoff_verifier import (
     IndependentHandoffVerificationError,
     verify_handoff,
@@ -16,7 +17,9 @@ from morva.runtime.production_readiness_handoff import build_handoff
 
 
 def _fixtures(tmp_path: Path):
-    convergence_file = tmp_path / "convergence.json"
+    source_root = tmp_path / "sources"
+    source_root.mkdir()
+    convergence_file = source_root / "convergence.json"
     convergence_file.write_text(
         json.dumps(
             {
@@ -29,20 +32,7 @@ def _fixtures(tmp_path: Path):
                 "lineage_verification_fingerprint": "c" * 64,
                 "full_policy_fingerprint": "d" * 64,
                 "certification_verification_fingerprint": "e" * 64,
-                "verified_roles": [
-                    "authoritative_master_data",
-                    "dr_exercise",
-                    "finance_approval",
-                    "legal_approval",
-                    "load_validation",
-                    "official_adapters",
-                    "operations_approval",
-                    "publication_evidence",
-                    "reconciliation_evidence",
-                    "release_certification",
-                    "security_assessment",
-                    "deployment_validation",
-                ],
+                "verified_roles": list(REQUIRED_ROLES),
                 "source_environment": "staging",
                 "target_environment": "production",
                 "converged_at": "2026-09-20T01:30:00+00:00",
@@ -72,7 +62,7 @@ def _fixtures(tmp_path: Path):
         encoding="utf-8",
     )
     handoff = build_handoff(
-        root=tmp_path,
+        root=source_root,
         source_paths=("convergence.json",),
         repository="Ali-Marandi/Morva",
         release_id="Morva Release",
@@ -93,7 +83,7 @@ def test_roundtrip(tmp_path: Path):
     receipt = verify_handoff(
         convergence_file=convergence,
         handoff_file=handoff,
-        source_root=tmp_path,
+        source_root=tmp_path / "sources",
         repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
@@ -142,7 +132,7 @@ def test_receipt_is_write_once(tmp_path: Path):
     receipt = verify_handoff(
         convergence_file=convergence,
         handoff_file=handoff,
-        source_root=tmp_path,
+        source_root=tmp_path / "sources",
         repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
