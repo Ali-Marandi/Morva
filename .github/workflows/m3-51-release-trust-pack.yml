@@ -1,8 +1,6 @@
 name: M3.51 Release Trust Evidence Pack
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
