@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+from hashlib import sha256
 from pathlib import Path
 
 from morva.runtime.production_release_lineage import (
@@ -36,7 +37,7 @@ class IndependentLineageVerificationReceipt:
             "candidate_sha": self.candidate_sha.lower(),
             "lineage_fingerprint": self.lineage_fingerprint.lower(),
         }
-        return __import__("hashlib").sha256(
+        return sha256(
             json.dumps(
                 payload,
                 ensure_ascii=True,
