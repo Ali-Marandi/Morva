@@ -57,6 +57,21 @@ def test_mutation_policy_fails_closed(tmp_path: Path, payload: str):
     assert receipt.findings
 
 
+@pytest.mark.parametrize("command", ["eval", "bash -c", "sh -c"])
+def test_dynamic_execution_policy_fails_closed(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        f"steps:\n  - run: {command} \"echo safe\"\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not receipt.passed
+    assert any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 @pytest.mark.parametrize(
     "marker",
     (
