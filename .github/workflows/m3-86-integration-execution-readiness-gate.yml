@@ -1,0 +1,59 @@
+name: M3.86 Integration Execution Readiness Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-86-integration-execution-readiness-gate.yml"
+      - "src/morva/runtime/integration_execution_readiness_gate.py"
+      - "src/morva/runtime/independent_integration_execution_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence.py"
+      - "tests/test_integration_execution_readiness_gate_m3_86.py"
+      - "tests/test_independent_integration_execution_verifier_m3_85.py"
+      - "tests/test_integration_execution_evidence_m3_84.py"
+      - "tools/m3_86_integration_execution_readiness_gate.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-86-integration-execution-readiness-gate.yml"
+      - "src/morva/runtime/integration_execution_readiness_gate.py"
+      - "src/morva/runtime/independent_integration_execution_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence.py"
+      - "tests/test_integration_execution_readiness_gate_m3_86.py"
+      - "tests/test_independent_integration_execution_verifier_m3_85.py"
+      - "tests/test_integration_execution_evidence_m3_84.py"
+      - "tools/m3_86_integration_execution_readiness_gate.py"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/integration_execution_readiness_gate.py
+          src/morva/runtime/independent_integration_execution_verifier.py
+          src/morva/runtime/integration_execution_evidence.py
+          tests/test_integration_execution_readiness_gate_m3_86.py
+          tools/m3_86_integration_execution_readiness_gate.py
+      - run: >
+          pytest -q
+          tests/test_integration_execution_readiness_gate_m3_86.py
+          tests/test_independent_integration_execution_verifier_m3_85.py
+          tests/test_integration_execution_evidence_m3_84.py
+      - name: Record boundary
+        run: |
+          echo "M3.86 is staging/pilot evidence only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No provider endpoint, credential or production deployment is activated." >> "$GITHUB_STEP_SUMMARY"
