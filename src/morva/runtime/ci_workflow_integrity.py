@@ -93,7 +93,7 @@ class CIWorkflowIntegrityReceipt:
 
 
 def _top_level_key(text: str, key: str) -> bool:
-    return re.search(rf"(?m)^{re.escape(key)}:\s*$", text) is not None
+    return re.search(rf"(?m)^{re.escape(key)}:\s*(?:.*)?$", text) is not None
 
 
 def _has_jobs(text: str) -> bool:
