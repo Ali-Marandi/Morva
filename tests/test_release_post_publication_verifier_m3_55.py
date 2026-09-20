@@ -128,7 +128,7 @@ def test_verify_published_release_roundtrip(monkeypatch, tmp_path: Path):
     [
         ("tag_name", "wrong-tag", "tag does not match"),
         ("target_commitish", "b" * 40, "target_commitish"),
-        ("name", "Wrong Release", "release name"),
+        ("name", "Wrong Release", "Release name"),
     ],
 )
 def test_release_identity_mismatch(
