@@ -16,9 +16,6 @@ from morva.runtime.final_readiness_verifier import (
 from morva.runtime.production_certification_gate import (
     ProductionCertificationGateError,
 )
-from morva.runtime.production_promotion_gate import (
-    ProductionPromotionGateError,
-)
 from morva.runtime.technical_readiness_gate import (
     TechnicalReadinessGate,
     TechnicalReadinessGateError,
