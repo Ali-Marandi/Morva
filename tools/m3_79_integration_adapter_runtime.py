@@ -7,6 +7,7 @@ from pathlib import Path
 from morva.runtime.independent_adapter_activation_verifier import (
     verify_adapter_activation,
 )
+from morva.integrations.ports import FailClosedAdapter
 from morva.runtime.integration_adapter_runtime import (
     IntegrationAdapterRuntime,
     IntegrationRuntimeActivationError,
@@ -36,7 +37,7 @@ def main() -> int:
         runtime = IntegrationAdapterRuntime(
             verification=VerifiedAdapterRuntime.from_verification(receipt)
         )
-        runtime.assert_configured(args.adapter)
+        resolved = runtime.resolve(args.adapter)
     except (IntegrationRuntimeActivationError, Exception) as exc:
         parser.exit(2, f"M3.79 runtime activation blocked: {exc}\n")
 
@@ -45,6 +46,10 @@ def main() -> int:
     print(f"repository={args.repository}")
     print(f"candidate_sha={args.candidate_sha}")
     print(f"verified_adapters={len(runtime.activated_adapters)}")
+    if isinstance(resolved, FailClosedAdapter):
+        print("runtime_mode=fail_closed_no_provider_configured")
+    else:
+        print("runtime_mode=provider_configured")
     return 0
 
 
