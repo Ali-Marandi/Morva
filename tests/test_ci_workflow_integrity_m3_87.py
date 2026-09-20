@@ -118,6 +118,25 @@ jobs:
     assert any(item.rule == "workflow-mutation" for item in receipt.findings)
 
 
+@pytest.mark.parametrize("command", ["eval", "bash -c", "sh -c"])
+def test_dynamic_shell_execution_is_rejected(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        ".github/workflows/dynamic.yml",
+        f"""name: Dynamic
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: {command} "echo safe"
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 def test_receipt_is_write_once(tmp_path: Path):
     _write(
         tmp_path,
