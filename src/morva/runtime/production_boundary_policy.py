@@ -118,6 +118,7 @@ class ProductionBoundaryPolicyReceipt:
             "policy_version": self.policy_version,
             "repository": self.repository,
             "scanned_paths": list(self.scanned_paths),
+            "passed": self.passed,
             "findings": [
                 finding.to_payload()
                 for finding in self.findings
