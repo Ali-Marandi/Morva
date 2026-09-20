@@ -2,6 +2,16 @@
 
 All notable Morva implementation and distribution changes are recorded here.
 
+## Unreleased — M3.90 Dynamic Workflow Execution Hardening
+
+### Security / CI integrity
+- Reject indirect dynamic shell execution patterns in GitHub Actions workflow scans.
+- Extend the production-boundary scanner with the same fail-closed dynamic execution policy.
+- Add dedicated regression coverage and a focused M3.90 CI gate.
+
+### Safety
+- Static verification only; no external integration activation, credentials or production mutation is introduced.
+
 ## Unreleased — M3.33 Managed Key Hardening
 
 ### Production security
