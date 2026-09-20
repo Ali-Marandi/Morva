@@ -84,6 +84,7 @@
 - M3.71 independent production release lineage verifier reconstructing and rechecking the M3.70 lineage from its source evidence
 - M3.72 production-readiness convergence object binding M3.71 verification, M3.69 full boundary policy and complete external evidence for controlled external handoff
 
+- CI baseline repair tranche: clear repository-wide Ruff blockers, restore production release-lineage payload loading, and correct Ed25519 signature fixture shape
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build.
