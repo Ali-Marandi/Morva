@@ -1,19 +1,22 @@
-name: Morva Main Release
+name: Morva Main Release Validation
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to validate"
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   PYTHON_VERSION: "3.12"
 
 jobs:
-  release:
-    name: Validate and publish current version
+  validate:
+    name: Validate release candidate
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -32,17 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.tag }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Resolve package version
-        id: version
-        run: |
-          version=$(python -c 'import re; from pathlib import Path; text=Path("pyproject.toml").read_text(); print(re.search(r"^version\s*=\s*\"([^\"]+)\"", text, re.M).group(1))')
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Install backend
         run: |
@@ -53,7 +51,7 @@ jobs:
       - name: Verify source version
         run: |
           expected="v$(python -c 'from morva import __version__; print(__version__)')"
-          test "$expected" = "${{ steps.version.outputs.tag }}"
+          test "$expected" = "${{ inputs.tag }}"
 
       - name: Compile
         run: python -m compileall -q src tests
@@ -82,14 +80,10 @@ jobs:
       - name: Build web distribution
         working-directory: web
         run: |
-          npm install
+          npm ci
           npm run build
 
-      - name: Create or update GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+      - name: Record publication boundary
         run: |
-          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || \
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Morva ${RELEASE_TAG#v}" --generate-notes
-          gh release upload "$RELEASE_TAG" dist/* --clobber
+          echo "Release validation completed for ${{ inputs.tag }}." >> "$GITHUB_STEP_SUMMARY"
+          echo "Publication is not performed here; use M3.54 with external authorization." >> "$GITHUB_STEP_SUMMARY"
