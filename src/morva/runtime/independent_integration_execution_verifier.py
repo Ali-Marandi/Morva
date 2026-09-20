@@ -245,9 +245,9 @@ def verify_integration_execution(
         repository=repository,
         candidate_sha=candidate_sha,
         target_environment=execution.target_environment,
-        adapters=execution.evidence_items and tuple(
+        adapters=tuple(
             item.adapter for item in execution.evidence_items
-        ) or readiness.adapters,
+        ),
         execution_evidence_fingerprint=execution.evidence_fingerprint,
         readiness_gate_fingerprint=readiness.fingerprint,
         readiness_verification_fingerprint=current_readiness.fingerprint,
