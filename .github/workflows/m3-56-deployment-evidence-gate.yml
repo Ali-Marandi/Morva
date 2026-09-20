@@ -1,8 +1,6 @@
 name: M3.56 Deployment Evidence Gate
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
