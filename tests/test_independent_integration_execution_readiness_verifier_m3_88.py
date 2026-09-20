@@ -104,7 +104,7 @@ def test_m3_83_readiness_receipt_tamper_is_rejected(tmp_path: Path):
     sources[2].write_text(json.dumps(payload) + "\\n", encoding="utf-8")
     with pytest.raises(
         IndependentIntegrationExecutionReadinessVerificationError,
-        match="M3.83 verification receipt fingerprint mismatch",
+        match="M3.84/M3.85/M3.86 evidence could not be independently rebuilt",
     ):
         verify_execution_readiness(
             execution_evidence=sources[0],
