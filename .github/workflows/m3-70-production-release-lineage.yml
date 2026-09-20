@@ -3,8 +3,18 @@ name: M3.70 Production Release Lineage
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-70-production-release-lineage.yml"
+      - "src/morva/runtime/production_release_lineage.py"
+      - "tests/test_production_release_lineage_m3_70.py"
+      - "tools/m3_70_production_release_lineage.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-70-production-release-lineage.yml"
+      - "src/morva/runtime/production_release_lineage.py"
+      - "tests/test_production_release_lineage_m3_70.py"
+      - "tools/m3_70_production_release_lineage.py"
   workflow_dispatch:
 
 concurrency:
