@@ -163,6 +163,7 @@ def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
         if not stripped or stripped.startswith("#"):
             continue
         candidate = re.sub(r"^-\s*run:\s*", "", stripped)
+        candidate = re.sub(r"'[^']*'|" + r'"[^"]*"', " ", candidate)
         for command in FORBIDDEN_MUTATIONS:
             if re.search(rf"(?<![\w-]){re.escape(command)}(?![\w-])", candidate):
                 findings.append(
