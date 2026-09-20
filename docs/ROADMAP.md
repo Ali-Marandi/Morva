@@ -71,6 +71,7 @@
 - M3.66 external certification evidence contract requiring a complete twelve-role, exact-SHA-bound, timestamped and optionally expiring evidence registry
 - M3.67 production certification evidence gate binding final readiness to the complete M3.66 external evidence registry without executing production promotion
 - M3.68 independent production certification verifier rechecking M3.67, M3.66 and the M3.65 final readiness chain
+- M3.69 full production-boundary policy scan extending coverage across the M3.54–M3.68 release/deployment workflow set
 
 ## Current execution queue
 
