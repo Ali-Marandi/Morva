@@ -235,6 +235,7 @@ def build_integration_readiness_gate(
             manifest_file=contract_manifest,
             repository=repository,
             candidate_sha=candidate_sha,
+            checked_at=checked_at,
         )
         registry = load_registry(registry_file)
         manifest = load_manifest(contract_manifest)
