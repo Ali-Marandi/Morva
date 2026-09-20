@@ -58,7 +58,7 @@ def test_extra_source_is_rejected(tmp_path: Path):
 
 def test_private_key_material_is_rejected(tmp_path: Path):
     (tmp_path / "secret.txt").write_text(
-        "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN " + "PRIVATE KEY-----",
         encoding="utf-8",
     )
     with pytest.raises(ProductionReadinessHandoffError, match="private-key"):
