@@ -22,7 +22,6 @@ from morva.runtime.production_promotion_gate import (
 from morva.runtime.technical_readiness_gate import (
     TechnicalReadinessGate,
     TechnicalReadinessGateError,
-    load_policy_receipt,
 )
 
 
@@ -43,7 +42,8 @@ class ProductionReleaseLineage:
     final_readiness_fingerprint: str
     external_evidence_fingerprint: str
     certification_verification_fingerprint: str
-    policy_fingerprint: str
+    technical_policy_fingerprint: str
+    full_policy_fingerprint: str
     source_environment: str
     target_environment: str
     verified_at: datetime
@@ -85,7 +85,11 @@ class ProductionReleaseLineage:
                 "certification_verification_fingerprint",
                 self.certification_verification_fingerprint,
             ),
-            ("policy_fingerprint", self.policy_fingerprint),
+            (
+                "technical_policy_fingerprint",
+                self.technical_policy_fingerprint,
+            ),
+            ("full_policy_fingerprint", self.full_policy_fingerprint),
         ):
             if len(value) != 64 or any(
                 c not in "0123456789abcdef" for c in value.lower()
@@ -159,7 +163,10 @@ class ProductionReleaseLineage:
             "certification_verification_fingerprint": (
                 self.certification_verification_fingerprint
             ),
-            "policy_fingerprint": self.policy_fingerprint,
+            "technical_policy_fingerprint": (
+                self.technical_policy_fingerprint.lower()
+            ),
+            "full_policy_fingerprint": self.full_policy_fingerprint.lower(),
             "source_environment": self.source_environment,
             "target_environment": self.target_environment,
             "verified_at": self.verified_at.isoformat(),
@@ -323,8 +330,46 @@ def build_release_lineage(
     )
     registry = _load_registry_fingerprint(external_registry)
     try:
-        policy = load_policy_receipt(policy_receipt)
-    except (OSError, ValueError, TechnicalReadinessGateError) as exc:
+        from morva.runtime.production_boundary_policy import (
+            PolicyFinding,
+            ProductionBoundaryPolicyReceipt,
+        )
+        from morva.runtime.production_boundary_policy_v2 import (
+            M3_54_TO_M3_68_WORKFLOWS,
+        )
+
+        policy_payload = _load_payload(policy_receipt, "policy receipt")
+        policy = ProductionBoundaryPolicyReceipt(
+            policy_version=int(policy_payload["policy_version"]),
+            repository=policy_payload["repository"],
+            scanned_paths=tuple(policy_payload["scanned_paths"]),
+            findings=tuple(
+                PolicyFinding(**item)
+                for item in policy_payload["findings"]
+            ),
+            verified_at=datetime.fromisoformat(
+                policy_payload["verified_at"]
+            ),
+        )
+        if policy_payload.get("fingerprint") != policy.fingerprint:
+            raise ReleaseLineageError(
+                "policy receipt fingerprint mismatch"
+            )
+        if tuple(policy.scanned_paths) != M3_54_TO_M3_68_WORKFLOWS:
+            raise ReleaseLineageError(
+                "policy receipt does not cover M3.54-M3.68"
+            )
+        if not policy.passed:
+            raise ReleaseLineageError(
+                "production-boundary policy did not pass"
+            )
+    except (
+        OSError,
+        KeyError,
+        TypeError,
+        ValueError,
+        TechnicalReadinessGateError,
+    ) as exc:
         raise ReleaseLineageError("policy receipt is invalid") from exc
 
     expected_identity = (repository, tag, candidate_sha.lower())
@@ -389,9 +434,9 @@ def build_release_lineage(
         raise ReleaseLineageError(
             "final and technical policy fingerprints differ"
         )
-    if policy.fingerprint.lower() != technical.policy_fingerprint.lower():
+    if final.policy_fingerprint.lower() != technical.policy_fingerprint.lower():
         raise ReleaseLineageError(
-            "policy receipt does not bind technical readiness"
+            "final receipt does not bind technical policy"
         )
     if certification.verified_roles != tuple(
         registry_item.role for registry_item in registry.items
@@ -428,7 +473,8 @@ def build_release_lineage(
         final_readiness_fingerprint=final.fingerprint,
         external_evidence_fingerprint=registry.fingerprint,
         certification_verification_fingerprint=certification.fingerprint,
-        policy_fingerprint=policy.fingerprint,
+        technical_policy_fingerprint=technical.policy_fingerprint,
+        full_policy_fingerprint=policy.fingerprint,
         source_environment=final.source_environment,
         target_environment=final.target_environment,
         verified_at=verified_at,
