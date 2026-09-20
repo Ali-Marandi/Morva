@@ -45,14 +45,14 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('ci-{0}', github.sha) }}
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --release-id "morva-${RELEASE_TAG}"
           --tag "${RELEASE_TAG}"
           --candidate-sha "${GITHUB_SHA}"
           --output release-evidence-manifest.json
       - name: Verify M3.41 manifest
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --candidate-sha "${GITHUB_SHA}"
           --verify release-evidence-manifest.json
       - name: Create rehearsal-only aggregate gate fixture
@@ -160,7 +160,7 @@ jobs:
           PY
       - name: Execute M3.42 rehearsal
         run: >
-          python tools/m3_42_release_rehearsal.py
+          python -m tools.m3_42_release_rehearsal
           release-evidence-manifest.json
           release-gate-rehearsal.json
           --artifact-dir dist

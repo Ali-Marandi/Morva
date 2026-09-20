@@ -95,10 +95,10 @@ jobs:
           PY
       - name: Build rotation ceremony
         run: |
-          python tools/m3_48_trust_rotation.py build             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem             --ceremony-id rotation-001-002             --old-key-id "$(cat m3_48_rehearsal/old-key-id)"             --new-key-id "$(cat m3_48_rehearsal/new-key-id)"             --effective-at "$(cat m3_48_rehearsal/effective-at)"             --output m3_48_rehearsal/ceremony.json
+          python -m tools.m3_48_trust_rotation build             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem             --ceremony-id rotation-001-002             --old-key-id "$(cat m3_48_rehearsal/old-key-id)"             --new-key-id "$(cat m3_48_rehearsal/new-key-id)"             --effective-at "$(cat m3_48_rehearsal/effective-at)"             --output m3_48_rehearsal/ceremony.json
       - name: Verify rotation ceremony
         run: |
-          python tools/m3_48_trust_rotation.py verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem
+          python -m tools.m3_48_trust_rotation verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem
       - name: Verify tamper rejection
         run: |
           python - <<'PY'
@@ -110,7 +110,7 @@ jobs:
           payload["new_key_id"] = "tampered"
           ceremony.write_text(json.dumps(payload), encoding="utf-8")
           PY
-          if python tools/m3_48_trust_rotation.py verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem; then
+          if python -m tools.m3_48_trust_rotation verify             m3_48_rehearsal/ceremony.json             m3_48_rehearsal/previous.json             m3_48_rehearsal/current.json             --registry-root-public-key m3_48_rehearsal/root.pem; then
             echo "tampered ceremony unexpectedly verified"
             exit 1
           fi

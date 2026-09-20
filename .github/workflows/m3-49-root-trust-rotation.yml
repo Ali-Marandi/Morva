@@ -92,7 +92,7 @@ jobs:
           PY
       - name: Build scheduled rotation ceremony
         run: |
-          python tools/m3_49_root_trust_rotation.py build \
+          python -m tools.m3_49_root_trust_rotation build \
             m3_49_rehearsal/previous.json \
             m3_49_rehearsal/current.json \
             --old-root-private-key m3_49_rehearsal/old-root-private.pem \
@@ -104,7 +104,7 @@ jobs:
             --output m3_49_rehearsal/ceremony.json
       - name: Verify scheduled rotation ceremony
         run: |
-          python tools/m3_49_root_trust_rotation.py verify \
+          python -m tools.m3_49_root_trust_rotation verify \
             m3_49_rehearsal/ceremony.json \
             m3_49_rehearsal/previous.json \
             m3_49_rehearsal/current.json \
@@ -134,7 +134,7 @@ jobs:
               )
           )
           PY
-          python tools/m3_49_root_trust_rotation.py build \
+          python -m tools.m3_49_root_trust_rotation build \
             m3_49_rehearsal/previous.json \
             m3_49_rehearsal/current.json \
             --new-root-private-key m3_49_rehearsal/new-root-private.pem \
@@ -144,7 +144,7 @@ jobs:
             --transition-kind emergency_recovery \
             --old-root-action revoke \
             --output m3_49_rehearsal/recovery-ceremony.json
-          python tools/m3_49_root_trust_rotation.py verify \
+          python -m tools.m3_49_root_trust_rotation verify \
             m3_49_rehearsal/recovery-ceremony.json \
             m3_49_rehearsal/previous.json \
             m3_49_rehearsal/current.json \

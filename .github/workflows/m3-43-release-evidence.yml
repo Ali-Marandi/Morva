@@ -57,14 +57,14 @@ jobs:
           fi
       - name: Generate M3.41 manifest
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --release-id "morva-${RELEASE_TAG}"
           --tag "${RELEASE_TAG}"
           --candidate-sha "${GITHUB_SHA}"
           --output release-evidence-manifest.json
       - name: Verify M3.41 manifest
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --candidate-sha "${GITHUB_SHA}"
           --verify release-evidence-manifest.json
       - name: Create M3.42 rehearsal gate
@@ -158,7 +158,7 @@ jobs:
           PY
       - name: Execute M3.42 rehearsal
         run: >
-          python tools/m3_42_release_rehearsal.py
+          python -m tools.m3_42_release_rehearsal
           release-evidence-manifest.json
           release-gate-rehearsal.json
           --artifact-dir dist
@@ -237,7 +237,7 @@ jobs:
           chmod 600 ci-registry-root-private.pem
       - name: Sign M3.43 evidence bundle
         run: >
-          python tools/m3_43_release_evidence.py
+          python -m tools.m3_43_release_evidence
           release-evidence-bundle.json
           --manifest release-evidence-manifest.json
           --gate release-gate-rehearsal.json
@@ -249,7 +249,7 @@ jobs:
           --expected-sha "${GITHUB_SHA}"
       - name: Verify M3.43 signature and evidence files
         run: >
-          python tools/m3_43_release_evidence.py
+          python -m tools.m3_43_release_evidence
           release-evidence-bundle.json
           --root .
           --public-key ci-ed25519-public.pem
