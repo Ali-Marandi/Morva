@@ -101,7 +101,7 @@ def test_m3_83_readiness_receipt_tamper_is_rejected(tmp_path: Path):
     sources = _sources_with_gate(tmp_path)
     payload = json.loads(sources[2].read_text(encoding="utf-8"))
     payload["candidate_sha"] = "f" * 40
-    sources[2].write_text(json.dumps(payload) + "\\n", encoding="utf-8")
+    sources[2].write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         IndependentIntegrationExecutionReadinessVerificationError,
         match="M3.84/M3.85/M3.86 evidence could not be independently rebuilt",
