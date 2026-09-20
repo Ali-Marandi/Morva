@@ -3,9 +3,35 @@ name: M3.46 Signed Trust Registry Gate
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-46-signed-trust-registry.yml"
+      - "src/morva/runtime/signed_trusted_key_registry.py"
+      - "src/morva/runtime/trusted_key_registry.py"
+      - "tests/test_evidence_verifier_m3_44.py"
+      - "tests/test_signed_trusted_key_registry_m3_46.py"
+      - "tests/test_signed_trusted_registry_serialization_m3_46.py"
+      - "tests/test_trusted_key_registry_m3_45.py"
+      - "tools/m3_44_evidence_verifier.py"
+      - "tools/m3_45_trusted_key_registry.py"
+      - "tools/m3_46_signed_trusted_registry.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-46-signed-trust-registry.yml"
+      - "src/morva/runtime/signed_trusted_key_registry.py"
+      - "src/morva/runtime/trusted_key_registry.py"
+      - "tests/test_evidence_verifier_m3_44.py"
+      - "tests/test_signed_trusted_key_registry_m3_46.py"
+      - "tests/test_signed_trusted_registry_serialization_m3_46.py"
+      - "tests/test_trusted_key_registry_m3_45.py"
+      - "tools/m3_44_evidence_verifier.py"
+      - "tools/m3_45_trusted_key_registry.py"
+      - "tools/m3_46_signed_trusted_registry.py"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
