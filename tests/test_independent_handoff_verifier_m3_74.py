@@ -103,7 +103,7 @@ def test_handoff_fingerprint_mismatch_is_rejected(tmp_path: Path):
         verify_handoff(
             convergence_file=convergence,
             handoff_file=handoff,
-            source_root=tmp_path,
+            source_root=tmp_path / "sources",
             repository="Ali-Marandi/Morva",
             tag="v1.0.1",
             candidate_sha="a" * 40,
@@ -120,7 +120,7 @@ def test_convergence_source_tamper_is_rejected(tmp_path: Path):
         verify_handoff(
             convergence_file=convergence,
             handoff_file=handoff,
-            source_root=tmp_path,
+            source_root=tmp_path / "sources",
             repository="Ali-Marandi/Morva",
             tag="v1.0.1",
             candidate_sha="a" * 40,
