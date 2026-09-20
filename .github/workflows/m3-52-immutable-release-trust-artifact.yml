@@ -1,8 +1,6 @@
 name: M3.52 Immutable Release Trust Artifact
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
