@@ -1,0 +1,55 @@
+name: M3.69 Full Production Boundary Policy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: Scan M3.54-M3.68 workflow boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/production_boundary_policy.py
+          src/morva/runtime/production_boundary_policy_v2.py
+          tools/m3_69_full_production_boundary_policy.py
+          tests/test_full_production_boundary_policy_m3_69.py
+      - name: Pytest
+        run: >
+          pytest -q tests/test_full_production_boundary_policy_m3_69.py
+      - name: Full policy scan
+        run: >
+          python tools/m3_69_full_production_boundary_policy.py
+          --repository Ali-Marandi/Morva
+          --output /tmp/m3-69-policy.json
+      - name: Confirm no production mutation
+        shell: bash
+        run: |
+          pattern='^[[:space:]]*(kubectl (apply|delete)|'
+          pattern+='helm (install|upgrade|rollback)|terraform (apply|destroy)|'
+          pattern+='gh release (create|edit|delete|upload)|git (push|tag) )'
+          for file in .github/workflows/*; do
+            [ -f "$file" ] || continue
+            if grep -InE -- "$pattern" "$file"; then
+              echo "forbidden production mutation found"
+              exit 1
+            fi
+          done
