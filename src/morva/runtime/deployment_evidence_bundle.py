@@ -205,7 +205,7 @@ def _write_pack(directory: Path, bundle: DeploymentEvidenceBundle) -> None:
         "candidate_sha": bundle.candidate_sha,
         "environment": bundle.environment,
         "source_manifest": bundle.manifest_payload,
-        "archive_filename": bundle.archive_filename,
+        "archive_filename": "bundle.tar.gz",
         "archive_sha256": "0" * 64,
         "archive_size_bytes": 1,
         "bundle_fingerprint": bundle.bundle_fingerprint,
