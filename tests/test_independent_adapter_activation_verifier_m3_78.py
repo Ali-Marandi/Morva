@@ -8,7 +8,6 @@ from dataclasses import replace
 import pytest
 
 from morva.runtime.adapter_activation_gate import (
-    AdapterActivationAuthorization,
     build_activation_gate,
 )
 from morva.runtime.independent_adapter_activation_verifier import (
