@@ -94,3 +94,7 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 44 | Production Readiness Convergence | **M3.72 creates a deterministic write-once handoff object that re-verifies M3.71 lineage, binds the complete M3.66 external evidence registry and M3.69 full boundary policy, and preserves exact repository/tag/candidate-SHA identity; evidence-only, no certification/promotion/deployment** |
 
 | 45 | Official Adapter Evidence Contract | **M3.75 adds a fail-closed, exact-SHA-bound evidence registry for SINA, accounting, treasury, bank, tax and insurance; real external endpoints remain disabled until authoritative contracts and operational approvals exist** |
+
+| 46 | Independent Official Adapter Evidence Verification | **M3.76 independently reloads and verifies the six-adapter M3.75 evidence registry; verification-only** |
+
+| 47 | Official Adapter Activation Gate | **M3.77 binds M3.75/M3.76 evidence to explicit external authorization for staging/pilot activation; no endpoint or credential activation is performed** |
