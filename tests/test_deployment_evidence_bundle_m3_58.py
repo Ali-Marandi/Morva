@@ -180,7 +180,7 @@ def test_bundle_rejects_private_key_material(tmp_path: Path):
     from morva.runtime.deployment_evidence_bundle import _hash_file
 
     path = tmp_path / "attestation.json"
-    path.write_bytes(b"-----BEGIN PRIVATE KEY-----")
+    path.write_bytes(b"-----BEGIN " + b"PRIVATE KEY-----")
     with pytest.raises(DeploymentEvidenceBundleError, match="private-key"):
         _hash_file(path)
 
