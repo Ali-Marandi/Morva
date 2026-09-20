@@ -67,6 +67,8 @@ def load_signed_registry(path: Path) -> SignedTrustedKeyRegistry:
         else None
     )
     registry = _registry_from_payload(payload["registry"])
+    if signature is None:
+        raise SignedTrustedRegistryError("signed trusted-key registry is unsigned")
     envelope = SignedTrustedKeyRegistry(registry=registry, signature=signature)
     if payload.get("fingerprint") != envelope.fingerprint:
         raise SignedTrustedRegistryError(
