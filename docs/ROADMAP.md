@@ -74,6 +74,7 @@
 - M3.69 full production-boundary policy scan extending coverage across the M3.54–M3.68 release/deployment workflow set
 - M3.70 production release lineage manifest consolidating final readiness, certification, external evidence and full policy fingerprints
 - M3.71 independent production release lineage verifier reconstructing and rechecking the M3.70 lineage from its source evidence
+- M3.72 production-readiness convergence object binding M3.71 verification, M3.69 full boundary policy and complete external evidence for controlled external handoff
 
 ## Current execution queue
 
