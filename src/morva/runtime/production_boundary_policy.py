@@ -33,7 +33,7 @@ _WORKFLOW_COMMAND_RE = re.compile(
     r"|git (?:push|tag)"
     r"|kubectl (?:apply|delete)"
     r"|helm (?:install|upgrade|rollback)"
-    r"|terraform (?:apply|destroy))(?:\s|$)"
+    r"|terraform (?:apply|destroy)))(?:\s|$)"
 )
 
 
