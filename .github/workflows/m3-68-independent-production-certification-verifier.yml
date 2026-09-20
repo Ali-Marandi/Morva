@@ -3,8 +3,28 @@ name: M3.68 Independent Production Certification Verifier
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-68-independent-production-certification-verifier.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/independent_certification_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tests/test_independent_certification_verifier_m3_68.py"
+      - "tests/test_production_certification_gate_m3_67.py"
+      - "tools/m3_68_independent_certification_verifier.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-68-independent-production-certification-verifier.yml"
+      - "src/morva/runtime/external_certification_evidence.py"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/independent_certification_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "tests/test_external_certification_evidence_m3_66.py"
+      - "tests/test_independent_certification_verifier_m3_68.py"
+      - "tests/test_production_certification_gate_m3_67.py"
+      - "tools/m3_68_independent_certification_verifier.py"
   workflow_dispatch:
 
 concurrency:
