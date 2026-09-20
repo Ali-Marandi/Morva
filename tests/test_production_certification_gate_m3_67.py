@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 
@@ -123,7 +123,7 @@ def test_certification_gate_requires_all_external_roles(tmp_path: Path):
         final_readiness_repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
-        certified_at=datetime.fromisoformat("2026-09-20T00:10:00+00:00"),
+        certified_at=datetime.now(timezone.utc) + timedelta(minutes=1),
     )
     assert gate.verified_roles == REQUIRED_ROLES
     assert len(gate.fingerprint) == 64
