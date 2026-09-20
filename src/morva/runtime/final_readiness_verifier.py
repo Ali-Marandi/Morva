@@ -123,7 +123,6 @@ def verify_final_readiness(
         final = _load_final_gate(final_gate)
     except (
         FinalProductionReadinessError,
-        FinalReadinessVerificationError,
         ValueError,
     ) as exc:
         raise FinalReadinessVerificationError(
