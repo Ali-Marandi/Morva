@@ -3,9 +3,33 @@ name: M3.49 Root Trust-Anchor Rotation
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-49-root-trust-rotation.yml"
+      - "src/morva/runtime/root_trust_rotation.py"
+      - "src/morva/runtime/signed_trusted_key_registry.py"
+      - "src/morva/runtime/trusted_key_registry.py"
+      - "tests/test_root_trust_rotation_m3_49.py"
+      - "tests/test_signed_trusted_key_registry_m3_46.py"
+      - "tests/test_signed_trusted_registry_serialization_m3_46.py"
+      - "tools/m3_46_signed_trusted_registry.py"
+      - "tools/m3_49_root_trust_rotation.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-49-root-trust-rotation.yml"
+      - "src/morva/runtime/root_trust_rotation.py"
+      - "src/morva/runtime/signed_trusted_key_registry.py"
+      - "src/morva/runtime/trusted_key_registry.py"
+      - "tests/test_root_trust_rotation_m3_49.py"
+      - "tests/test_signed_trusted_key_registry_m3_46.py"
+      - "tests/test_signed_trusted_registry_serialization_m3_46.py"
+      - "tools/m3_46_signed_trusted_registry.py"
+      - "tools/m3_49_root_trust_rotation.py"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
