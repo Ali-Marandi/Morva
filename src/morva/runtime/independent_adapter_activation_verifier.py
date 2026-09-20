@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -185,7 +185,7 @@ def verify_adapter_activation(
         registry_fingerprint=registry.fingerprint,
         authorization_id=gate.authorization_id,
         approver=gate.approver,
-        verified_at=datetime.now(timezone.utc),
+        verified_at=gate.checked_at,
     )
 
 
