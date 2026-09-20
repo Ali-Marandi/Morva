@@ -126,9 +126,7 @@ def verify_final_readiness(
         FinalReadinessVerificationError,
         ValueError,
     ) as exc:
-        raise FinalReadinessVerificationError(
-            "readiness gate loading failed"
-        ) from exc
+        raise FinalReadinessVerificationError(str(exc)) from exc
 
     if not technical.policy_passed:
         raise FinalReadinessVerificationError(
