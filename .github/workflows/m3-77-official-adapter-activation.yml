@@ -1,0 +1,38 @@
+name: M3.77 Official Adapter Activation Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  activation:
+    name: Verify adapter activation boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/adapter_activation_gate.py
+          src/morva/runtime/official_adapter_evidence.py
+          src/morva/runtime/independent_adapter_evidence_verifier.py
+          tests/test_adapter_activation_gate_m3_77.py
+      - run: pytest -q tests/test_adapter_activation_gate_m3_77.py
+      - name: Record production boundary
+        run: |
+          echo "M3.77 only constructs a fail-closed activation gate." >> "$GITHUB_STEP_SUMMARY"
+          echo "No external adapter endpoint or credential is activated by CI." >> "$GITHUB_STEP_SUMMARY"
