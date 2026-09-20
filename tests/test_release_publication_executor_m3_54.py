@@ -150,7 +150,7 @@ def test_execute_runs_only_after_gate_and_authorization(monkeypatch, tmp_path: P
                 stdout=f"{SHA} refs/tags/{TAG}\n",
                 stderr="",
             )
-        if command[:3] == ("gh", "release", "view", TAG):
+        if command[:4] == ("gh", "release", "view", TAG):
             return subprocess.CompletedProcess(command, 1, stdout="", stderr="not found")
         return subprocess.CompletedProcess(command, 0, stdout="https://example/release", stderr="")
 
