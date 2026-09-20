@@ -184,5 +184,5 @@ def test_candidate_sha_mismatch_is_rejected(tmp_path: Path):
             final_readiness_repository="Ali-Marandi/Morva",
             tag="v1.0.1",
             candidate_sha="f" * 40,
-            certified_at=datetime.fromisoformat("2026-09-20T00:10:00+00:00"),
+            certified_at=datetime.now(timezone.utc) + timedelta(minutes=5),
         )
