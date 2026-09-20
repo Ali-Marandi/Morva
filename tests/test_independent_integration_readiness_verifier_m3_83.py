@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from pathlib import Path
-from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -16,8 +16,14 @@ from morva.runtime.independent_integration_contract_verifier import (
     verify_integration_contract,
     write_receipt as write_contract_receipt,
 )
-from morva.runtime.integration_contract_manifest import build_manifest, write_manifest
-from morva.runtime.integration_readiness_gate import build_integration_readiness_gate, write_gate
+from morva.runtime.integration_contract_manifest import (
+    build_manifest,
+    write_manifest,
+)
+from morva.runtime.integration_readiness_gate import (
+    build_integration_readiness_gate,
+    write_gate,
+)
 from morva.runtime.independent_integration_readiness_verifier import (
     IndependentIntegrationReadinessVerificationError,
     verify_integration_readiness,
