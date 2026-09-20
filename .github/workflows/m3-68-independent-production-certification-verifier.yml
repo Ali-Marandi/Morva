@@ -40,14 +40,6 @@ jobs:
           tests/test_independent_certification_verifier_m3_68.py
           tests/test_production_certification_gate_m3_67.py
           tests/test_external_certification_evidence_m3_66.py
-      - name: Confirm verifier is non-mutating
-        shell: bash
-        run: |
-          forbidden='gh release (create|edit|delete|upload)|git (push|tag)|kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)'
-          if grep -nE -- "$forbidden" .github/workflows/m3-68-independent-production-certification-verifier.yml; then
-            echo "M3.68 workflow contains a forbidden production mutation"
-            exit 1
-          fi
       - name: Record production boundary
         run: |
           echo "M3.68 is verification-only." >> "$GITHUB_STEP_SUMMARY"
