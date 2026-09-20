@@ -72,6 +72,7 @@
 - M3.67 production certification evidence gate binding final readiness to the complete M3.66 external evidence registry without executing production promotion
 - M3.68 independent production certification verifier rechecking M3.67, M3.66 and the M3.65 final readiness chain
 - M3.69 full production-boundary policy scan extending coverage across the M3.54–M3.68 release/deployment workflow set
+- M3.70 production release lineage manifest consolidating final readiness, certification, external evidence and full policy fingerprints
 
 ## Current execution queue
 
