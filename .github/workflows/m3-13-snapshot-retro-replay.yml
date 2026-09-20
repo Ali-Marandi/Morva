@@ -2,6 +2,11 @@ name: M3.13 Snapshot Retro Replay Gate
 
 on:
   push:
+    paths:
+      - .github/workflows/m3-13-snapshot-retro-replay.yml
+      - src/morva/payroll/retro.py
+      - src/morva/payroll/replay.py
+      - tests/test_m3_13_snapshot_retro_replay.py
   pull_request:
 
 permissions:
