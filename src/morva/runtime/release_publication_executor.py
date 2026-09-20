@@ -71,11 +71,8 @@ class ReleasePublicationPlan:
             self.release_id,
             "--notes",
             (
-                f"Morva release {self.release_id}
-
-"
-                f"candidate_sha={self.candidate_sha}
-"
+                f"Morva release {self.release_id}\\n\\n"
+                f"candidate_sha={self.candidate_sha}\\n"
                 f"trust_gate={self.gate_fingerprint}\\n"
                 f"trust_artifact_sha256={self.archive_sha256}"
             ),
