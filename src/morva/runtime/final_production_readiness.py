@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -137,7 +137,7 @@ def _load_technical_gate(path: Path) -> TechnicalReadinessGate:
             "technical readiness gate is invalid"
         ) from exc
     try:
-        return TechnicalReadinessGate(
+        gate = TechnicalReadinessGate(
             gate_version=int(payload["gate_version"]),
             repository=payload["repository"],
             release_id=payload["release_id"],
@@ -173,7 +173,7 @@ def _load_freshness_gate(path: Path) -> EvidenceFreshnessGate:
             "freshness gate is invalid"
         ) from exc
     try:
-        return EvidenceFreshnessGate(
+        gate = EvidenceFreshnessGate(
             gate_version=int(payload["gate_version"]),
             repository=payload["repository"],
             release_id=payload["release_id"],
