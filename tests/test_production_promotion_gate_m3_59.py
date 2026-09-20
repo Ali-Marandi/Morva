@@ -42,11 +42,11 @@ def _promotion_inputs(monkeypatch, tmp_path: Path):
     return bundle_archive, bundle_metadata, attestation
 
 
-def _authorization(bundle_fingerprint: str, **overrides) -> dict[str, object]:
+def _authorization(base_bundle_fingerprint: str, **overrides) -> dict[str, object]:
     payload = {
         "authorization_version": 1,
         "authorization_id": "PROMO-001",
-        "bundle_fingerprint": bundle_fingerprint,
+        "bundle_fingerprint": base_bundle_fingerprint,
         "source_environment": "staging",
         "target_environment": "production",
         "approved": True,
