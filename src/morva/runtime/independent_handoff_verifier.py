@@ -11,7 +11,6 @@ from morva.runtime.production_readiness_convergence import (
     ProductionReadinessConvergenceError,
 )
 from morva.runtime.production_readiness_handoff import (
-    ProductionReadinessHandoff,
     ProductionReadinessHandoffError,
     load_handoff,
     verify_handoff_sources,
