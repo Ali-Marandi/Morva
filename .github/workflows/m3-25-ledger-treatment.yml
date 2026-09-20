@@ -1,12 +1,33 @@
 name: M3.25 Ledger Treatment Activation Gate
 
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
-      - src/morva/ledger/population_treatment.py
-      - src/morva/ledger/treatments.py
-      - tests/test_population_scoped_ledger_treatment.py
-      - .github/workflows/m3-25-ledger-treatment.yml
-      - src/morva/ledger/**
-      - tests/**ledger**
+      - ".github/workflows/m3-25-ledger-treatment.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m3-25-ledger-treatment.yml"
+  workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ledger-treatment-activation:
+    name: M3.25 population-scoped ledger treatment gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check src/morva/ledger/population_treatment.py src/morva/ledger/treatments.py tests/test_population_scoped_ledger_treatment.py
+      - run: pytest -q tests/test_population_scoped_ledger_treatment.py tests/test_ledger_treatment_governance.py
