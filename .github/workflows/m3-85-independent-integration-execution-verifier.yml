@@ -61,4 +61,5 @@ jobs:
       - name: Record production boundary
         run: |
           echo "M3.85 is verification-only." >> "$GITHUB_STEP_SUMMARY"
-          echo "No adapter endpoint, credential or production deployment is activated." >> "$GITHUB_STEP_SUMMARY"
+          echo "No adapter endpoint, credential or production deployment is activated." \
+            >> "$GITHUB_STEP_SUMMARY"
