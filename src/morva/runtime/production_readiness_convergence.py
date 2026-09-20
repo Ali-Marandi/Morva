@@ -252,7 +252,7 @@ def build_convergence(
         ValueError,
     ) as exc:
         raise ProductionReadinessConvergenceError(
-            "independent lineage/certification evidence verification failed"
+            f"independent lineage/certification evidence verification failed: {exc}"
         ) from exc
 
     lineage = load_lineage(lineage_manifest)
