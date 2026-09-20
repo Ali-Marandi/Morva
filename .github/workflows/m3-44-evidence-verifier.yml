@@ -60,14 +60,14 @@ jobs:
           fi
       - name: Generate manifest
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --release-id "morva-${RELEASE_TAG}"
           --tag "${RELEASE_TAG}"
           --candidate-sha "${GITHUB_SHA}"
           --output release-evidence-manifest.json
       - name: Verify manifest
         run: >
-          python tools/m3_41_release_manifest.py dist
+          python -m tools.m3_41_release_manifest dist
           --candidate-sha "${GITHUB_SHA}"
           --verify release-evidence-manifest.json
       - name: Create blocked rehearsal gate fixture
@@ -170,7 +170,7 @@ jobs:
           PY
       - name: Create rehearsal summary
         run: >
-          python tools/m3_42_release_rehearsal.py
+          python -m tools.m3_42_release_rehearsal
           release-evidence-manifest.json
           release-gate-rehearsal.json
           --artifact-dir dist
@@ -250,7 +250,7 @@ jobs:
 
       - name: Sign evidence bundle
         run: >
-          python tools/m3_43_release_evidence.py
+          python -m tools.m3_43_release_evidence
           release-evidence-bundle.json
           --manifest release-evidence-manifest.json
           --gate release-gate-rehearsal.json
@@ -262,7 +262,7 @@ jobs:
           --expected-sha "${GITHUB_SHA}"
       - name: Independently verify evidence chain
         run: >
-          python tools/m3_44_evidence_verifier.py
+          python -m tools.m3_44_evidence_verifier
           release-evidence-bundle.json
           --manifest release-evidence-manifest.json
           --gate release-gate-rehearsal.json
