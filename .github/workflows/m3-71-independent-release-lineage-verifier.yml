@@ -3,8 +3,24 @@ name: M3.71 Independent Production Release Lineage Verifier
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-71-independent-release-lineage-verifier.yml"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/independent_release_lineage_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "src/morva/runtime/production_release_lineage.py"
+      - "tests/test_independent_release_lineage_verifier_m3_71.py"
+      - "tools/m3_71_independent_release_lineage_verifier.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-71-independent-release-lineage-verifier.yml"
+      - "src/morva/runtime/final_readiness_verifier.py"
+      - "src/morva/runtime/independent_release_lineage_verifier.py"
+      - "src/morva/runtime/production_certification_gate.py"
+      - "src/morva/runtime/production_release_lineage.py"
+      - "tests/test_independent_release_lineage_verifier_m3_71.py"
+      - "tools/m3_71_independent_release_lineage_verifier.py"
   workflow_dispatch:
 
 concurrency:
