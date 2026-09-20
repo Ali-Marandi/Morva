@@ -6,9 +6,28 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
+from morva.runtime.external_certification_evidence import (
+    ExternalCertificationEvidenceError,
+)
+from morva.runtime.final_readiness_verifier import (
+    FinalReadinessVerificationError,
+    FinalReadinessVerificationReceipt,
+)
+from morva.runtime.production_certification_gate import (
+    ProductionCertificationGateError,
+)
+from morva.runtime.production_promotion_gate import (
+    ProductionPromotionGateError,
+)
+from morva.runtime.technical_readiness_gate import (
+    TechnicalReadinessGate,
+    TechnicalReadinessGateError,
+    load_policy_receipt,
+)
+
 
 class ReleaseLineageError(ValueError):
-    """Raised when the production release evidence lineage is inconsistent."""
+    """Raised when production release evidence lineage is inconsistent."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,7 +38,8 @@ class ProductionReleaseLineage:
     tag: str
     candidate_sha: str
     bundle_fingerprint: str
-    promotion_verification_fingerprint: str
+    technical_readiness_fingerprint: str
+    freshness_gate_fingerprint: str
     final_readiness_fingerprint: str
     external_evidence_fingerprint: str
     certification_verification_fingerprint: str
@@ -29,7 +49,7 @@ class ProductionReleaseLineage:
     verified_at: datetime
 
     def __post_init__(self) -> None:
-        if self.lineage_version != 1:
+        if self.lineage_version != 2:
             raise ReleaseLineageError("unsupported lineage version")
         if not self.repository.strip() or not self.release_id.strip():
             raise ReleaseLineageError(
@@ -46,10 +66,17 @@ class ProductionReleaseLineage:
         for name, value in (
             ("bundle_fingerprint", self.bundle_fingerprint),
             (
-                "promotion_verification_fingerprint",
-                self.promotion_verification_fingerprint,
+                "technical_readiness_fingerprint",
+                self.technical_readiness_fingerprint,
             ),
-            ("final_readiness_fingerprint", self.final_readiness_fingerprint),
+            (
+                "freshness_gate_fingerprint",
+                self.freshness_gate_fingerprint,
+            ),
+            (
+                "final_readiness_fingerprint",
+                self.final_readiness_fingerprint,
+            ),
             (
                 "external_evidence_fingerprint",
                 self.external_evidence_fingerprint,
@@ -86,8 +113,11 @@ class ProductionReleaseLineage:
             "tag": self.tag,
             "candidate_sha": self.candidate_sha.lower(),
             "bundle_fingerprint": self.bundle_fingerprint.lower(),
-            "promotion_verification_fingerprint": (
-                self.promotion_verification_fingerprint.lower()
+            "technical_readiness_fingerprint": (
+                self.technical_readiness_fingerprint.lower()
+            ),
+            "freshness_gate_fingerprint": (
+                self.freshness_gate_fingerprint.lower()
             ),
             "final_readiness_fingerprint": (
                 self.final_readiness_fingerprint.lower()
@@ -118,11 +148,14 @@ class ProductionReleaseLineage:
             "tag": self.tag,
             "candidate_sha": self.candidate_sha,
             "bundle_fingerprint": self.bundle_fingerprint,
-            "promotion_verification_fingerprint": (
-                self.promotion_verification_fingerprint
+            "technical_readiness_fingerprint": (
+                self.technical_readiness_fingerprint
             ),
+            "freshness_gate_fingerprint": self.freshness_gate_fingerprint,
             "final_readiness_fingerprint": self.final_readiness_fingerprint,
-            "external_evidence_fingerprint": self.external_evidence_fingerprint,
+            "external_evidence_fingerprint": (
+                self.external_evidence_fingerprint
+            ),
             "certification_verification_fingerprint": (
                 self.certification_verification_fingerprint
             ),
@@ -134,18 +167,146 @@ class ProductionReleaseLineage:
         }
 
 
-def _load_payload(path: Path, label: str) -> dict[str, object]:
+def _load_technical_gate(path: Path) -> TechnicalReadinessGate:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ReleaseLineageError(f"{label} is invalid") from exc
-    if not isinstance(payload, dict):
-        raise ReleaseLineageError(f"{label} must be an object")
-    return payload
+        gate = TechnicalReadinessGate(
+            gate_version=int(payload["gate_version"]),
+            repository=payload["repository"],
+            release_id=payload["release_id"],
+            tag=payload["tag"],
+            candidate_sha=payload["candidate_sha"],
+            bundle_fingerprint=payload["bundle_fingerprint"],
+            promotion_gate_fingerprint=payload["promotion_gate_fingerprint"],
+            promotion_verification_fingerprint=(
+                payload["promotion_verification_fingerprint"]
+            ),
+            policy_fingerprint=payload["policy_fingerprint"],
+            policy_passed=payload["policy_passed"],
+            source_environment=payload["source_environment"],
+            target_environment=payload["target_environment"],
+            checked_at=datetime.fromisoformat(payload["checked_at"]),
+        )
+    except (
+        OSError,
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        TechnicalReadinessGateError,
+    ) as exc:
+        raise ReleaseLineageError(
+            "technical readiness gate is invalid"
+        ) from exc
+    if payload.get("fingerprint") != gate.fingerprint:
+        raise ReleaseLineageError(
+            "technical readiness gate fingerprint mismatch"
+        )
+    return gate
+
+
+def _load_final_receipt(path: Path) -> FinalReadinessVerificationReceipt:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        receipt = FinalReadinessVerificationReceipt(
+            verifier_version=int(payload["verifier_version"]),
+            repository=payload["repository"],
+            release_id=payload["release_id"],
+            tag=payload["tag"],
+            candidate_sha=payload["candidate_sha"],
+            technical_gate_fingerprint=payload[
+                "technical_gate_fingerprint"
+            ],
+            freshness_gate_fingerprint=payload[
+                "freshness_gate_fingerprint"
+            ],
+            final_gate_fingerprint=payload["final_gate_fingerprint"],
+            policy_fingerprint=payload["policy_fingerprint"],
+            source_environment=payload["source_environment"],
+            target_environment=payload["target_environment"],
+            verified_at=datetime.fromisoformat(payload["verified_at"]),
+        )
+    except (
+        OSError,
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        FinalReadinessVerificationError,
+    ) as exc:
+        raise ReleaseLineageError(
+            "final readiness receipt is invalid"
+        ) from exc
+    if payload.get("fingerprint") != receipt.fingerprint:
+        raise ReleaseLineageError(
+            "final readiness receipt fingerprint mismatch"
+        )
+    return receipt
+
+
+def _load_certification_receipt(path: Path):
+    try:
+        from morva.runtime.independent_certification_verifier import (
+            IndependentCertificationVerificationReceipt,
+        )
+
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        receipt = IndependentCertificationVerificationReceipt(
+            verifier_version=int(payload["verifier_version"]),
+            repository=payload["repository"],
+            release_id=payload["release_id"],
+            tag=payload["tag"],
+            candidate_sha=payload["candidate_sha"],
+            final_readiness_fingerprint=payload[
+                "final_readiness_fingerprint"
+            ],
+            external_evidence_fingerprint=payload[
+                "external_evidence_fingerprint"
+            ],
+            certification_gate_fingerprint=payload[
+                "certification_gate_fingerprint"
+            ],
+            verified_roles=tuple(payload["verified_roles"]),
+            verified_at=datetime.fromisoformat(payload["verified_at"]),
+        )
+    except (
+        OSError,
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        ProductionCertificationGateError,
+    ) as exc:
+        raise ReleaseLineageError(
+            "production certification receipt is invalid"
+        ) from exc
+    if payload.get("fingerprint") != receipt.fingerprint:
+        raise ReleaseLineageError(
+            "production certification receipt fingerprint mismatch"
+        )
+    return receipt
+
+
+def _load_registry_fingerprint(path: Path):
+    try:
+        from morva.runtime.production_certification_gate import load_registry
+
+        registry = load_registry(path)
+    except (
+        OSError,
+        ValueError,
+        ExternalCertificationEvidenceError,
+        ProductionCertificationGateError,
+    ) as exc:
+        raise ReleaseLineageError(
+            "external evidence registry is invalid"
+        ) from exc
+    return registry
 
 
 def build_release_lineage(
     *,
+    technical_readiness_gate: Path,
     final_readiness_receipt: Path,
     production_certification_receipt: Path,
     external_registry: Path,
@@ -155,90 +316,93 @@ def build_release_lineage(
     candidate_sha: str,
     verified_at: datetime,
 ) -> ProductionReleaseLineage:
-    final_payload = _load_payload(
-        final_readiness_receipt,
-        "final readiness receipt",
+    technical = _load_technical_gate(technical_readiness_gate)
+    final = _load_final_receipt(final_readiness_receipt)
+    certification = _load_certification_receipt(
+        production_certification_receipt
     )
-    certification_payload = _load_payload(
-        production_certification_receipt,
-        "production certification receipt",
-    )
-    registry_payload = _load_payload(
-        external_registry,
-        "external evidence registry",
-    )
-    policy_payload = _load_payload(
-        policy_receipt,
-        "policy receipt",
-    )
+    registry = _load_registry_fingerprint(external_registry)
+    try:
+        policy = load_policy_receipt(policy_receipt)
+    except (OSError, ValueError, TechnicalReadinessGateError) as exc:
+        raise ReleaseLineageError("policy receipt is invalid") from exc
 
-    if final_payload.get("repository") != repository:
-        raise ReleaseLineageError(
-            "final readiness repository mismatch"
-        )
-    if final_payload.get("tag") != tag:
-        raise ReleaseLineageError("final readiness tag mismatch")
-    if str(final_payload.get("candidate_sha", "")).lower() != candidate_sha.lower():
-        raise ReleaseLineageError(
-            "final readiness candidate SHA mismatch"
-        )
-    if certification_payload.get("repository") != repository:
-        raise ReleaseLineageError(
-            "certification repository mismatch"
-        )
-    if certification_payload.get("tag") != tag:
-        raise ReleaseLineageError("certification tag mismatch")
-    if (
-        str(certification_payload.get("candidate_sha", "")).lower()
-        != candidate_sha.lower()
-    ):
-        raise ReleaseLineageError(
-            "certification candidate SHA mismatch"
-        )
-    if registry_payload.get("repository") != repository:
+    expected_identity = (repository, tag, candidate_sha.lower())
+    actual_identities = {
+        "technical": (
+            technical.repository,
+            technical.tag,
+            technical.candidate_sha.lower(),
+        ),
+        "final": (
+            final.repository,
+            final.tag,
+            final.candidate_sha.lower(),
+        ),
+        "certification": (
+            certification.repository,
+            certification.tag,
+            certification.candidate_sha.lower(),
+        ),
+        "registry": (
+            registry.repository,
+            None,
+            registry.candidate_sha.lower(),
+        ),
+        "policy": (policy.repository, None, None),
+    }
+    if actual_identities["technical"] != expected_identity:
+        raise ReleaseLineageError("technical readiness identity mismatch")
+    if actual_identities["final"] != expected_identity:
+        raise ReleaseLineageError("final readiness identity mismatch")
+    if actual_identities["certification"] != expected_identity:
+        raise ReleaseLineageError("certification identity mismatch")
+    if actual_identities["registry"][0] != repository:
         raise ReleaseLineageError("registry repository mismatch")
-    if str(registry_payload.get("candidate_sha", "")).lower() != candidate_sha.lower():
-        raise ReleaseLineageError(
-            "registry candidate SHA mismatch"
-        )
-    if policy_payload.get("repository") != repository:
-        raise ReleaseLineageError("policy repository mismatch")
-    if policy_payload.get("passed") is not True:
-        raise ReleaseLineageError(
-            "production-boundary policy did not pass"
-        )
+    if actual_identities["registry"][2] != candidate_sha.lower():
+        raise ReleaseLineageError("registry candidate SHA mismatch")
+    if policy.repository != repository or not policy.passed:
+        raise ReleaseLineageError("production-boundary policy did not pass")
 
-    final_fp = final_payload.get("fingerprint")
-    certification_fp = certification_payload.get("fingerprint")
-    bundle_fp = final_payload.get("bundle_fingerprint")
-    external_fp = certification_payload.get("external_evidence_fingerprint")
-    policy_fp = policy_payload.get("fingerprint")
-    promotion_fp = final_payload.get("freshness_gate_fingerprint")
-
-    for name, value in (
-        ("final readiness fingerprint", final_fp),
-        (
-            "certification verification fingerprint",
-            certification_fp,
-        ),
-        ("bundle fingerprint", bundle_fp),
-        ("external evidence fingerprint", external_fp),
-        ("policy fingerprint", policy_fp),
-        (
-            "promotion verification fingerprint",
-            promotion_fp,
-        ),
+    if final.technical_gate_fingerprint.lower() != technical.fingerprint.lower():
+        raise ReleaseLineageError(
+            "final receipt does not bind technical readiness gate"
+        )
+    if (
+        certification.final_readiness_fingerprint.lower()
+        != final.fingerprint.lower()
     ):
-        if not isinstance(value, str):
-            raise ReleaseLineageError(f"{name} is missing")
-
-    source_environment = final_payload.get("source_environment")
-    target_environment = final_payload.get("target_environment")
-    if source_environment not in {"staging", "pilot"}:
         raise ReleaseLineageError(
-            "invalid lineage source environment"
+            "certification receipt does not bind final readiness"
         )
-    if target_environment != "production":
+    if (
+        certification.external_evidence_fingerprint.lower()
+        != registry.fingerprint.lower()
+    ):
+        raise ReleaseLineageError(
+            "certification receipt does not bind external registry"
+        )
+    if final.policy_fingerprint.lower() != technical.policy_fingerprint.lower():
+        raise ReleaseLineageError(
+            "final and technical policy fingerprints differ"
+        )
+    if policy.fingerprint.lower() != technical.policy_fingerprint.lower():
+        raise ReleaseLineageError(
+            "policy receipt does not bind technical readiness"
+        )
+    if certification.verified_roles != tuple(
+        registry_item.role for registry_item in registry.items
+    ):
+        raise ReleaseLineageError(
+            "certification roles do not match external registry"
+        )
+    if technical.source_environment != final.source_environment:
+        raise ReleaseLineageError(
+            "source environment mismatch"
+        )
+    if final.source_environment != certification.source_environment if hasattr(certification, "source_environment") else False:
+        raise ReleaseLineageError("certification source environment mismatch")
+    if final.target_environment != "production":
         raise ReleaseLineageError(
             "lineage target environment must be production"
         )
@@ -246,21 +410,26 @@ def build_release_lineage(
         raise ReleaseLineageError(
             "verified_at must be timezone-aware"
         )
+    if verified_at < final.verified_at:
+        raise ReleaseLineageError(
+            "lineage verification precedes final readiness verification"
+        )
 
     return ProductionReleaseLineage(
-        lineage_version=1,
+        lineage_version=2,
         repository=repository,
-        release_id=str(final_payload.get("release_id", "")),
+        release_id=final.release_id,
         tag=tag,
         candidate_sha=candidate_sha,
-        bundle_fingerprint=bundle_fp,
-        promotion_verification_fingerprint=promotion_fp,
-        final_readiness_fingerprint=final_fp,
-        external_evidence_fingerprint=external_fp,
-        certification_verification_fingerprint=certification_fp,
-        policy_fingerprint=policy_fp,
-        source_environment=source_environment,
-        target_environment=target_environment,
+        bundle_fingerprint=technical.bundle_fingerprint,
+        technical_readiness_fingerprint=technical.fingerprint,
+        freshness_gate_fingerprint=final.freshness_gate_fingerprint,
+        final_readiness_fingerprint=final.fingerprint,
+        external_evidence_fingerprint=registry.fingerprint,
+        certification_verification_fingerprint=certification.fingerprint,
+        policy_fingerprint=policy.fingerprint,
+        source_environment=final.source_environment,
+        target_environment=final.target_environment,
         verified_at=verified_at,
     )
 
@@ -281,7 +450,6 @@ def write_lineage(
             sort_keys=True,
             indent=2,
         )
-        + "
-",
+        + "\n",
         encoding="utf-8",
     )
