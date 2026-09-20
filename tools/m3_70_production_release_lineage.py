@@ -15,6 +15,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Build a Morva production release lineage manifest"
     )
+    parser.add_argument(
+        "--technical-readiness-gate",
+        type=Path,
+        required=True,
+    )
     parser.add_argument("--final-readiness-receipt", type=Path, required=True)
     parser.add_argument(
         "--production-certification-receipt",
@@ -37,6 +42,7 @@ def main() -> int:
             else datetime.now(timezone.utc)
         )
         lineage = build_release_lineage(
+            technical_readiness_gate=args.technical_readiness_gate,
             final_readiness_receipt=args.final_readiness_receipt,
             production_certification_receipt=args.production_certification_receipt,
             external_registry=args.external_registry,
