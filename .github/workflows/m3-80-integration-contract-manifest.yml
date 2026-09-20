@@ -1,0 +1,36 @@
+name: M3.80 Integration Contract Manifest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Verify integration contract manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - run: >
+          ruff check
+          src/morva/runtime/integration_contract_manifest.py
+          src/morva/integrations/ports.py
+          tests/test_integration_contract_manifest_m3_80.py
+      - run: pytest -q tests/test_integration_contract_manifest_m3_80.py
+      - name: Record production boundary
+        run: |
+          echo "M3.80 locks the internal adapter contract shape without activating external providers." >> "$GITHUB_STEP_SUMMARY"
