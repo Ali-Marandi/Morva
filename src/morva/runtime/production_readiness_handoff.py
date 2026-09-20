@@ -164,6 +164,10 @@ def build_handoff(
     sources: list[HandoffSource] = []
     for relative in sorted(set(source_paths)):
         path = root / relative
+        if path.is_symlink():
+            raise ProductionReadinessHandoffError(
+                f"handoff source cannot be a symlink: {relative}"
+            )
         try:
             data = path.read_bytes()
         except OSError as exc:
@@ -207,11 +211,14 @@ def verify_handoff_sources(
         raise ProductionReadinessHandoffError(
             f"handoff source root does not exist: {root}"
         )
-    discovered = {
-        str(path.relative_to(root))
-        for path in root.rglob("*")
-        if path.is_file()
-    }
+    discovered = set()
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise ProductionReadinessHandoffError(
+                f"handoff source tree contains a symlink: {path.relative_to(root)}"
+            )
+        if path.is_file():
+            discovered.add(str(path.relative_to(root)))
     if discovered != expected_paths:
         raise ProductionReadinessHandoffError(
             "handoff source set differs from recorded manifest"
