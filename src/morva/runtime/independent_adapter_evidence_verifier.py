@@ -77,7 +77,7 @@ def verify_official_adapter_evidence(
         ValueError,
     ) as exc:
         raise IndependentAdapterEvidenceVerificationError(
-            "official adapter evidence verification failed"
+            f"official adapter evidence verification failed: {exc}"
         ) from exc
 
     if registry.registry_version != 1:
