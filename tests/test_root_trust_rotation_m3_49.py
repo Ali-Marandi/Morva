@@ -1,3 +1,4 @@
+from base64 import b64decode, b64encode
 from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
@@ -190,6 +191,9 @@ def test_rejects_tampered_handoff_signature():
         transition_kind="scheduled_rotation",
         old_root_action="retire",
     )
+    tampered_signature = bytearray(b64decode(ceremony.old_root_signature_b64))
+    tampered_signature[0] ^= 0x01
+    tampered_signature_b64 = b64encode(bytes(tampered_signature)).decode("ascii")
     tampered = RootRotationCeremony(
         ceremony.ceremony_id,
         ceremony.registry_id,
@@ -202,7 +206,7 @@ def test_rejects_tampered_handoff_signature():
         ceremony.old_root_action,
         ceremony.previous_registry_fingerprint,
         ceremony.new_registry_fingerprint,
-        ceremony.old_root_signature_b64[:-4] + "AAAA",
+        tampered_signature_b64,
         ceremony.new_root_signature_b64,
     )
     with pytest.raises(RootRotationError, match="authorization signatures"):
