@@ -129,7 +129,8 @@ class ProductionReleaseLineage:
             "certification_verification_fingerprint": (
                 self.certification_verification_fingerprint.lower()
             ),
-            "policy_fingerprint": self.policy_fingerprint.lower(),
+            "technical_policy_fingerprint": self.technical_policy_fingerprint.lower(),
+            "full_policy_fingerprint": self.full_policy_fingerprint.lower(),
             "source_environment": self.source_environment,
             "target_environment": self.target_environment,
         }
@@ -169,6 +170,16 @@ class ProductionReleaseLineage:
             "verified_at": self.verified_at.isoformat(),
             "fingerprint": self.fingerprint,
         }
+
+
+def _load_payload(path: Path, label: str) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError) as exc:
+        raise ReleaseLineageError(f"{label} is invalid") from exc
+    if not isinstance(payload, dict):
+        raise ReleaseLineageError(f"{label} must be a JSON object")
+    return payload
 
 
 def _load_technical_gate(path: Path) -> TechnicalReadinessGate:
