@@ -2,6 +2,12 @@ name: M3.15 Employee Self-Service Case Gate
 
 on:
   push:
+    paths:
+      - .github/workflows/m3-15-self-service-cases.yml
+      - src/morva/api/v1/self_service.py
+      - src/morva/api/v1/cases.py
+      - src/morva/persistence/domain_extensions.py
+      - tests/test_m3_15_self_service_cases.py
   pull_request:
 
 permissions:
