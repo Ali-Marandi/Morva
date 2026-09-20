@@ -3,8 +3,32 @@ name: M3.57 Independent Deployment Evidence Verifier
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-57-independent-deployment-evidence-verifier.yml"
+      - "src/morva/runtime/deployment_evidence_verifier.py"
+      - "src/morva/runtime/release_deployment_evidence.py"
+      - "src/morva/runtime/release_post_publication.py"
+      - "tests/test_deployment_evidence_verifier_m3_57.py"
+      - "tests/test_release_deployment_evidence_m3_56.py"
+      - "tests/test_release_post_publication_verifier_m3_55.py"
+      - "tests/test_release_publication_gate_m3_53.py"
+      - "tests/test_release_trust_artifact_m3_52.py"
+      - "tools/m3_56_deployment_evidence_gate.py"
+      - "tools/m3_57_deployment_evidence_verifier.py"
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/m3-57-independent-deployment-evidence-verifier.yml"
+      - "src/morva/runtime/deployment_evidence_verifier.py"
+      - "src/morva/runtime/release_deployment_evidence.py"
+      - "src/morva/runtime/release_post_publication.py"
+      - "tests/test_deployment_evidence_verifier_m3_57.py"
+      - "tests/test_release_deployment_evidence_m3_56.py"
+      - "tests/test_release_post_publication_verifier_m3_55.py"
+      - "tests/test_release_publication_gate_m3_53.py"
+      - "tests/test_release_trust_artifact_m3_52.py"
+      - "tools/m3_56_deployment_evidence_gate.py"
+      - "tools/m3_57_deployment_evidence_verifier.py"
   workflow_dispatch:
 
 concurrency:
