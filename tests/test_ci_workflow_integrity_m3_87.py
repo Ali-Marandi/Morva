@@ -156,6 +156,26 @@ jobs:
     assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
 
 
+
+
+def test_inline_comment_is_not_dynamic_execution(tmp_path: Path):
+    _write(
+        tmp_path,
+        ".github/workflows/commented.yml",
+        """name: Commented
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok # eval
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 def test_receipt_is_write_once(tmp_path: Path):
     _write(
         tmp_path,
