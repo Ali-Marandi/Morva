@@ -8,7 +8,6 @@ from morva.runtime.production_boundary_policy_v2 import (
     ProductionBoundaryPolicyError,
     scan_full_production_boundary,
 )
-from morva.runtime.production_boundary_policy import ProductionBoundaryPolicyError
 
 
 def _write(root: Path, relative: str, content: str = "permissions:\n  contents: read\n"):
