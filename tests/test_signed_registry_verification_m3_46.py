@@ -195,11 +195,28 @@ def make_bundle(root: Path):
     signer = Ed25519PrivateKey.generate()
     public = signer.public_key()
     files = tuple(
-        EvidenceFile(name.name, __import__("hashlib").sha256(name.read_bytes()).hexdigest(), name.stat().st_size)
+        EvidenceFile(
+            name.name,
+            __import__("hashlib").sha256(name.read_bytes()).hexdigest(),
+            name.stat().st_size,
+        )
         for name in (manifest, gate, rehearsal)
     )
+    registry_file, root_public_file = write_signed_registry(root, public)
+    registry_payload = json.loads(
+        registry_file.read_text(encoding="utf-8")
+    )["registry"]
     signed = ReleaseEvidenceBundle(
-        RELEASE_ID, TAG, SHA, mf, gf, rf, files
+        release_id=RELEASE_ID,
+        tag=TAG,
+        candidate_sha=SHA,
+        manifest_fingerprint=mf,
+        gate_fingerprint=gf,
+        rehearsal_fingerprint=rf,
+        registry_id=registry_payload["registry_id"],
+        registry_version=int(registry_payload["version"]),
+        registry_fingerprint=registry_payload["fingerprint"],
+        evidence_files=files,
     ).sign(signer, NOW)
     bundle_payload = {
         "release_id": signed.release_id,
@@ -208,6 +225,9 @@ def make_bundle(root: Path):
         "manifest_fingerprint": signed.manifest_fingerprint,
         "gate_fingerprint": signed.gate_fingerprint,
         "rehearsal_fingerprint": signed.rehearsal_fingerprint,
+        "registry_id": signed.registry_id,
+        "registry_version": signed.registry_version,
+        "registry_fingerprint": signed.registry_fingerprint,
         "evidence_files": [
             {"path": item.path, "sha256": item.sha256, "size_bytes": item.size_bytes}
             for item in signed.evidence_files
@@ -229,7 +249,6 @@ def make_bundle(root: Path):
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
     )
-    registry_file, root_public_file = write_signed_registry(root, public)
     return bundle_file, public_file, registry_file, root_public_file, manifest, gate, rehearsal
 
 
@@ -257,7 +276,15 @@ def test_independent_verifier_rejects_tampered_rehearsal(tmp_path: Path):
 
     with pytest.raises(ValueError):
         verify_bundle(
-            bundle, public, registry, gate, tmp_path, SHA, NOW, root_public
+            bundle,
+            public,
+            registry,
+            gate,
+            rehearsal,
+            tmp_path,
+            SHA,
+            NOW,
+            root_public,
         )
 
 
@@ -287,5 +314,13 @@ def test_independent_verifier_rejects_unsigned_registry(tmp_path: Path):
 
     with pytest.raises(ValueError, match="unsigned"):
         verify_bundle(
-            bundle, public, manifest, gate, rehearsal, root_public, tmp_path, SHA, NOW, root_public
+            bundle,
+            public,
+            manifest,
+            gate,
+            rehearsal,
+            tmp_path,
+            SHA,
+            NOW,
+            root_public,
         )
