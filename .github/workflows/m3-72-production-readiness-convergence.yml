@@ -1,0 +1,49 @@
+name: M3.72 Production Readiness Convergence
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  convergence:
+    name: Verify production-readiness convergence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/production_readiness_convergence.py
+          src/morva/runtime/independent_release_lineage_verifier.py
+          tools/m3_72_production_readiness_convergence.py
+          tests/test_production_readiness_convergence_m3_72.py
+      - name: Pytest
+        run: >
+          pytest -q tests/test_production_readiness_convergence_m3_72.py
+      - name: Confirm workflow is non-mutating
+        shell: bash
+        run: |
+          forbidden='gh release (create|edit|delete|upload)|git (push|tag)|kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)'
+          if grep -nE -- "$forbidden" .github/workflows/m3-72-production-readiness-convergence.yml; then
+            echo "M3.72 workflow contains a production mutation"
+            exit 1
+          fi
+      - name: Record production boundary
+        run: |
+          echo "M3.72 is evidence convergence only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No production certification, promotion or deployment is performed." >> "$GITHUB_STEP_SUMMARY"
