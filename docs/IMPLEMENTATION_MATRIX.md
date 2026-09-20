@@ -102,3 +102,7 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 48 | Integration Contract Manifest | **M3.80 records the canonical internal operations, correlation/idempotency requirements and payload schema shape for the six integration boundaries; not an external provider contract** |
 
 | 49 | Independent Integration Contract Verification | **M3.81 compares M3.80 with the actual SINA/accounting/treasury/bank/tax/insurance Protocol interfaces and fails on operation drift; verification-only** |
+
+| 50 | Integration Readiness Gate | **M3.82 composes independently verified adapter activation and contract evidence for an explicit staging/pilot target; evidence-only, no production endpoint activation** |
+
+| 51 | Independent Integration Readiness Verification | **M3.83 independently re-runs adapter activation and contract verification and rechecks the persisted M3.82 gate** |
