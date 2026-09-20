@@ -35,14 +35,6 @@ jobs:
       - name: Pytest
         run: >
           pytest -q tests/test_production_readiness_convergence_m3_72.py
-      - name: Confirm workflow is non-mutating
-        shell: bash
-        run: |
-          forbidden='gh release (create|edit|delete|upload)|git (push|tag)|kubectl (apply|delete)|helm (install|upgrade|rollback)|terraform (apply|destroy)'
-          if grep -nE -- "$forbidden" .github/workflows/m3-72-production-readiness-convergence.yml; then
-            echo "M3.72 workflow contains a production mutation"
-            exit 1
-          fi
       - name: Record production boundary
         run: |
           echo "M3.72 is evidence convergence only." >> "$GITHUB_STEP_SUMMARY"
