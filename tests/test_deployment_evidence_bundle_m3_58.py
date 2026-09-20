@@ -117,10 +117,12 @@ def test_bundle_roundtrip(monkeypatch, tmp_path: Path):
 def test_bundle_archive_is_deterministic(monkeypatch, tmp_path: Path):
     first = _inputs(monkeypatch, tmp_path / "first")
     second = first
-    first_archive = tmp_path / "first.tar.gz"
-    first_meta = tmp_path / "first.json"
-    second_archive = tmp_path / "second.tar.gz"
-    second_meta = tmp_path / "second.json"
+    first_archive = tmp_path / "first" / "bundle.tar.gz"
+    first_meta = tmp_path / "first" / "bundle.json"
+    second_dir = tmp_path / "second"
+    second_dir.mkdir()
+    second_archive = second_dir / "bundle.tar.gz"
+    second_meta = second_dir / "bundle.json"
     first_bundle = build_deployment_evidence_bundle(
         release_receipt_file=first[0],
         deployment_gate_file=first[1],
