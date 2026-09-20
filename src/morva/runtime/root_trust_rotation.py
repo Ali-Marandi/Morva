@@ -219,14 +219,6 @@ class RootRotationCeremony:
         )
         payload = draft.signing_bytes()
 
-        if transition_kind == "scheduled_rotation" and old_root_private_key is None:
-            raise RootRotationError(
-                "scheduled rotation requires the old-root private key"
-            )
-        if transition_kind == "emergency_recovery" and recovery_anchor_private_key is None:
-            raise RootRotationError(
-                "emergency recovery requires the recovery-anchor private key"
-            )
         if transition_kind == "scheduled_rotation" and recovery_anchor_private_key:
             raise RootRotationError(
                 "scheduled rotation must not use recovery-anchor authorization"
