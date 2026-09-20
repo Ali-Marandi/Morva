@@ -4,7 +4,16 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import (
+    Column,
+    MetaData,
+    PrimaryKeyConstraint,
+    String,
+    Table,
+    engine_from_config,
+    inspect,
+    pool,
+)
 
 from morva.persistence.models import Base
 from morva.persistence import acceptance_records  # noqa: F401
@@ -39,6 +48,31 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def _ensure_version_table_capacity(connection) -> None:
+    """Keep Alembic revision storage wide enough for long revision identifiers."""
+    inspector = inspect(connection)
+    if not inspector.has_table("alembic_version"):
+        table = Table(
+            "alembic_version",
+            MetaData(),
+            Column("version_num", String(length=128), nullable=False),
+            PrimaryKeyConstraint("version_num", name="alembic_version_pkc"),
+        )
+        table.create(connection)
+        return
+
+    if connection.dialect.name == "postgresql":
+        for column in inspector.get_columns("alembic_version"):
+            if column["name"] == "version_num":
+                length = getattr(column.get("type"), "length", None)
+                if length is not None and length < 128:
+                    connection.exec_driver_sql(
+                        "ALTER TABLE alembic_version "
+                        "ALTER COLUMN version_num TYPE VARCHAR(128)"
+                    )
+                break
+
+
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = get_url()
@@ -48,6 +82,7 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        _ensure_version_table_capacity(connection)
         context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
