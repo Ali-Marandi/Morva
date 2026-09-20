@@ -167,7 +167,7 @@ def scan_repository(
         if relative.startswith(".github/workflows/"):
             for command in FORBIDDEN_COMMANDS:
                 for line in text.splitlines():
-                    if line.lstrip().startswith(command):
+                    if command in line:
                         findings.append(
                             PolicyFinding(
                                 path=relative,
