@@ -6,16 +6,31 @@ from pathlib import Path
 
 import pytest
 
-from morva.runtime.adapter_activation_gate import AdapterActivationAuthorization, build_activation_gate
-from morva.runtime.independent_adapter_activation_verifier import verify_adapter_activation, write_receipt
-from morva.runtime.independent_integration_contract_verifier import verify_integration_contract, write_receipt as write_contract_receipt
-from morva.runtime.integration_contract_manifest import build_manifest, write_manifest
+from morva.runtime.adapter_activation_gate import build_activation_gate
+from morva.runtime.independent_adapter_activation_verifier import (
+    verify_adapter_activation,
+    write_receipt,
+)
+from morva.runtime.independent_integration_contract_verifier import (
+    verify_integration_contract,
+    write_receipt as write_contract_receipt,
+)
+from morva.runtime.integration_contract_manifest import (
+    build_manifest,
+    write_manifest,
+)
 from morva.runtime.integration_readiness_gate import (
     IntegrationReadinessGateError,
     build_integration_readiness_gate,
     write_gate,
 )
-from tests.test_adapter_activation_gate_m3_77 import REPOSITORY, SHA, CHECKED_AT, _auth, _registry_file
+from tests.test_adapter_activation_gate_m3_77 import (
+    CHECKED_AT,
+    REPOSITORY,
+    SHA,
+    _auth,
+    _registry_file,
+)
 
 
 def _fixtures(tmp_path: Path):
