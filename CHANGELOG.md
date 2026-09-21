@@ -1,3 +1,15 @@
+## Unreleased — M4.9 Disaster-Recovery Evidence Bridge
+
+### Recovery evidence closure
+- Bind a recorded `RecoveryDrillEvidence` object to an accepted M4.1 `dr_report` evidence item.
+- Require RPO/RTO compliance, WAL replay, PITR verification and encrypted-backup verification before release readiness.
+- Bind the exact drill fingerprint and evidence URI to authoritative evidence.
+- Fail closed on missing, unaccepted, future, expired or not-yet-effective authority evidence.
+
+### Safety
+- No production restore, infrastructure mutation, backup access or production DR certification is performed.
+- CI fixtures represent contract behavior only; actual DR evidence remains an external operational prerequisite.
+
 ## Unreleased — M4.8 Three-Way Reconciliation Evidence
 
 ### Reconciliation evidence closure
