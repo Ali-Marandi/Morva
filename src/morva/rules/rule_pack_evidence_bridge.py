@@ -173,10 +173,6 @@ def build_rule_pack_evidence_binding(
         )
     if not evidence.source_id.strip():
         raise RulePackEvidenceBridgeError("source_id is required")
-    if evidence.source_id.strip() != authoritative.evidence_id.strip():
-        raise RulePackEvidenceBridgeError(
-            "rule evidence source_id must equal authoritative evidence_id"
-        )
     if evidence.document_hash.lower() != authoritative.source_sha256.lower():
         raise RulePackEvidenceBridgeError(
             "rule evidence document hash does not match authoritative evidence SHA-256"
