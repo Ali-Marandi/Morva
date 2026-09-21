@@ -165,6 +165,31 @@ def test_future_receipt_is_rejected():
         )
 
 
+def test_receipt_population_scope_mismatch_is_rejected():
+    registry = build_registry(
+        (_authority("security_assessment"),),
+        registered_at=NOW,
+    )
+    receipt = _receipt("security_assessment", "E-security_assessment")
+    receipt = EvidenceBindingReceipt(
+        receipt_version=1,
+        certification_role=receipt.certification_role,
+        binding_kind=receipt.binding_kind,
+        authoritative_evidence_id=receipt.authoritative_evidence_id,
+        binding_fingerprint=receipt.binding_fingerprint,
+        registry_fingerprint=registry.fingerprint,
+        population_scope="teachers",
+        bound_at=receipt.bound_at,
+    )
+    with pytest.raises(EvidenceConvergenceError, match="population scope"):
+        build_convergence_assessment(
+            registry,
+            repository=REPO,
+            checked_at=NOW,
+            receipts=(receipt,),
+        )
+
+
 def test_supporting_evidence_must_be_current():
     registry = build_registry(
         (_authority("security_assessment"),),
