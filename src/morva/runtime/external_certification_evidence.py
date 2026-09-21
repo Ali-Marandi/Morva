@@ -185,7 +185,8 @@ def build_evidence_registry(
                 raise ExternalCertificationEvidenceError(
                     f"external evidence is expired for role {item.role}"
                 )
-    return tuple(sorted(items, key=lambda item: item.role))
+    by_role = {item.role: item for item in items}
+    return tuple(by_role[role] for role in REQUIRED_ROLES)
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,6 +209,10 @@ class ExternalCertificationEvidenceRegistry:
         if len(self.items) != len(REQUIRED_ROLES):
             raise ExternalCertificationEvidenceError(
                 "complete external evidence registry is required"
+            )
+        if tuple(item.role for item in self.items) != REQUIRED_ROLES:
+            raise ExternalCertificationEvidenceError(
+                "external evidence registry role order is not canonical"
             )
         if self.registered_at.tzinfo is None:
             raise ExternalCertificationEvidenceError(

@@ -60,7 +60,6 @@ jobs:
               exit 1
             fi
           done
-          done
       - name: Record production boundary
         run: |
           echo "M3.55 is read-only." >> "$GITHUB_STEP_SUMMARY"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -261,11 +261,11 @@ def build_integration_readiness_gate(
         raise IntegrationReadinessGateError(
             "activation target environment mismatch"
         )
-    if stored_activation != activation:
+    if stored_activation.fingerprint != activation.fingerprint:
         raise IntegrationReadinessGateError(
             "stored M3.78 receipt does not match current verification"
         )
-    if stored_contract != contract:
+    if stored_contract.fingerprint != contract.fingerprint:
         raise IntegrationReadinessGateError(
             "stored M3.81 receipt does not match current verification"
         )

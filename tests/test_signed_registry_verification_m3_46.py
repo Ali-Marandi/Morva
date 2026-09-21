@@ -203,6 +203,13 @@ def make_bundle(root: Path):
         for name in (manifest, gate, rehearsal)
     )
     registry_file, root_public_file = write_signed_registry(root, public)
+    files = files + (
+        EvidenceFile(
+            registry_file.name,
+            __import__("hashlib").sha256(registry_file.read_bytes()).hexdigest(),
+            registry_file.stat().st_size,
+        ),
+    )
     registry_payload = json.loads(
         registry_file.read_text(encoding="utf-8")
     )["registry"]
@@ -310,7 +317,29 @@ def test_independent_verifier_rejects_wrong_expected_sha(tmp_path: Path):
 def test_independent_verifier_rejects_unsigned_registry(tmp_path: Path):
     bundle, public, registry, root_public, manifest, gate, rehearsal = make_bundle(tmp_path)
     payload = json.loads(registry.read_text(encoding="utf-8"))
+    signed_registry = SignedTrustedKeyRegistry(
+        registry=TrustedKeyRegistry(
+            registry_id=payload["registry"]["registry_id"],
+            version=int(payload["registry"]["version"]),
+            keys=tuple(
+                TrustedSigningKey(
+                    key_id=item["key_id"],
+                    public_key_sha256=item["public_key_sha256"],
+                    status=item["status"],
+                    valid_from=datetime.fromisoformat(item["valid_from"]),
+                    valid_until=(
+                        datetime.fromisoformat(item["valid_until"])
+                        if item.get("valid_until")
+                        else None
+                    ),
+                    replacement_key_id=item.get("replacement_key_id"),
+                )
+                for item in payload["registry"]["keys"]
+            ),
+        )
+    )
     payload["signature"] = None
+    payload["fingerprint"] = signed_registry.fingerprint
     registry.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
 
     with pytest.raises(ValueError, match="unsigned"):

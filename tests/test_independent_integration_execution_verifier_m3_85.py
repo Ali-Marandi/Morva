@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime
+import json
 from pathlib import Path
 
 import pytest
@@ -12,6 +12,8 @@ from morva.runtime.independent_integration_execution_verifier import (
     write_receipt,
 )
 from morva.runtime.integration_execution_evidence import (
+    AdapterExecutionEvidence,
+    IntegrationExecutionEvidenceReceipt,
     load_execution_evidence,
     write_execution_evidence,
 )
@@ -114,8 +116,30 @@ def test_readiness_tamper_is_rejected(tmp_path: Path):
 
 def test_execution_before_readiness_is_rejected(tmp_path: Path):
     execution, readiness, verification, registry, activation, manifest = _sources(tmp_path)
-    payload = json.loads(execution.read_text(encoding="utf-8"))
-    payload["checked_at"] = "2026-09-20T02:30:00+00:00"
+    receipt = load_execution_evidence(execution)
+    pre_readiness_items = tuple(
+        AdapterExecutionEvidence(
+            adapter=item.adapter,
+            environment=item.environment,
+            status=item.status,
+            evidence_id=item.evidence_id,
+            evidence_sha256=item.evidence_sha256,
+            started_at="2026-09-20T02:00:00+00:00",
+            finished_at="2026-09-20T02:15:00+00:00",
+            operator=item.operator,
+        )
+        for item in receipt.evidence_items
+    )
+    pre_readiness = IntegrationExecutionEvidenceReceipt(
+        evidence_version=receipt.evidence_version,
+        repository=receipt.repository,
+        candidate_sha=receipt.candidate_sha,
+        target_environment=receipt.target_environment,
+        execution_id=receipt.execution_id,
+        evidence_items=pre_readiness_items,
+        checked_at=datetime.fromisoformat("2026-09-20T02:30:00+00:00"),
+    )
+    payload = pre_readiness.to_payload()
     execution.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         IndependentIntegrationExecutionVerificationError,

@@ -53,6 +53,7 @@ def _readiness_files(tmp_path: Path):
         candidate_sha=sha,
         bundle_fingerprint="b" * 64,
         promotion_verification_fingerprint="d" * 64,
+        source_environment="staging",
         published_at="2026-09-19T23:00:00+00:00",
         approved_at="2026-09-19T23:30:00+00:00",
         deployed_at="2026-09-19T23:45:00+00:00",
@@ -123,7 +124,7 @@ def test_certification_gate_requires_all_external_roles(tmp_path: Path):
         final_readiness_repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
-        certified_at=datetime.now(timezone.utc) + timedelta(minutes=1),
+        certified_at=datetime.now(timezone.utc) + timedelta(minutes=5),
     )
     assert gate.verified_roles == REQUIRED_ROLES
     assert len(gate.fingerprint) == 64
@@ -160,7 +161,7 @@ def test_gate_is_write_once(tmp_path: Path):
         final_readiness_repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
-        certified_at=datetime.fromisoformat("2026-09-20T00:10:00+00:00"),
+        certified_at=datetime.now(timezone.utc) + timedelta(minutes=5),
     )
     output = tmp_path / "certification.json"
     write_gate(gate, output)
@@ -183,5 +184,5 @@ def test_candidate_sha_mismatch_is_rejected(tmp_path: Path):
             final_readiness_repository="Ali-Marandi/Morva",
             tag="v1.0.1",
             candidate_sha="f" * 40,
-            certified_at=datetime.fromisoformat("2026-09-20T00:10:00+00:00"),
+            certified_at=datetime.now(timezone.utc) + timedelta(minutes=5),
         )

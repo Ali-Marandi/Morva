@@ -70,7 +70,6 @@ class ReleasePublicationGate:
             "artifact_fingerprint": self.artifact_fingerprint.lower(),
             "archive_sha256": self.archive_sha256.lower(),
             "archive_size_bytes": self.archive_size_bytes,
-            "verified_at": self.verified_at.isoformat(),
             "publication_target": self.publication_target,
         }
         canonical = json.dumps(

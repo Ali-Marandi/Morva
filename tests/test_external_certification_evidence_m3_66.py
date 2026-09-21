@@ -19,10 +19,9 @@ REPOSITORY = "Ali-Marandi/Morva"
 SHA = "a" * 40
 CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
 
-CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
-
 
 def _write_evidence(root: Path, role: str, **overrides) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
     payload = {
         "evidence_version": 1,
         "role": role,
@@ -73,6 +72,7 @@ def test_missing_role_is_rejected(tmp_path: Path):
             paths,
             repository=REPOSITORY,
             candidate_sha=SHA,
+            checked_at=CHECKED_AT,
         )
 
 
@@ -89,6 +89,7 @@ def test_duplicate_role_is_rejected(tmp_path: Path):
             paths,
             repository=REPOSITORY,
             candidate_sha=SHA,
+            checked_at=CHECKED_AT,
         )
 
 
@@ -104,6 +105,7 @@ def test_expired_evidence_is_rejected(tmp_path: Path):
             (path, *paths),
             repository=REPOSITORY,
             candidate_sha=SHA,
+            checked_at=CHECKED_AT,
         )
 
 
@@ -120,6 +122,7 @@ def test_wrong_sha_is_rejected(tmp_path: Path):
             tuple(paths),
             repository=REPOSITORY,
             candidate_sha=SHA,
+            checked_at=CHECKED_AT,
         )
 
 

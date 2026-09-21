@@ -15,9 +15,6 @@ from morva.runtime.independent_certification_verifier import (
 from morva.runtime.production_boundary_policy import (
     ProductionBoundaryPolicyReceipt,
 )
-from morva.runtime.production_certification_gate import (
-    build_production_certification_gate,
-)
 from morva.runtime.production_release_lineage import (
     ReleaseLineageError,
     build_release_lineage,
@@ -190,6 +187,7 @@ def _inputs(tmp_path: Path):
     _write(
         technical_file,
         {
+        "gate_version": technical.gate_version,
         "repository": technical.repository,
         "release_id": technical.release_id,
         "tag": technical.tag,
@@ -245,10 +243,21 @@ def test_lineage_roundtrip(tmp_path: Path):
 
 def test_mismatched_certification_is_rejected(tmp_path: Path):
     technical, final, certification, registry, policy, *_ = _inputs(tmp_path)
-    payload = json.loads(certification.read_text(encoding="utf-8"))
-    payload["candidate_sha"] = "f" * 40
+    original = json.loads(certification.read_text(encoding="utf-8"))
+    tampered = IndependentCertificationVerificationReceipt(
+        verifier_version=int(original["verifier_version"]),
+        repository=original["repository"],
+        release_id=original["release_id"],
+        tag=original["tag"],
+        candidate_sha="f" * 40,
+        final_readiness_fingerprint=original["final_readiness_fingerprint"],
+        external_evidence_fingerprint=original["external_evidence_fingerprint"],
+        certification_gate_fingerprint=original["certification_gate_fingerprint"],
+        verified_roles=tuple(original["verified_roles"]),
+        verified_at=datetime.fromisoformat(original["verified_at"]),
+    )
     certification.write_text(
-        json.dumps(payload, sort_keys=True) + "\n",
+        json.dumps(tampered.to_payload(), sort_keys=True) + "\n",
         encoding="utf-8",
     )
     with pytest.raises(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -183,6 +183,7 @@ def _load_freshness_gate(path: Path) -> EvidenceFreshnessGate:
             promotion_verification_fingerprint=(
                 payload["promotion_verification_fingerprint"]
             ),
+            source_environment=payload["source_environment"],
             published_at=payload["published_at"],
             approved_at=payload["approved_at"],
             deployed_at=payload["deployed_at"],

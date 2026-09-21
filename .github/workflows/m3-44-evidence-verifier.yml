@@ -15,6 +15,8 @@ jobs:
   independent-verifier:
     name: Rebuild evidence chain and verify signature
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
         with:

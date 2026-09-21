@@ -56,12 +56,17 @@ def test_publication_gate_round_trip(tmp_path: Path):
 
 
 def test_publication_gate_fingerprint_is_deterministic(tmp_path: Path):
-    first_root = tmp_path / "one"
-    second_root = tmp_path / "two"
-    first_root.mkdir()
-    second_root.mkdir()
-    first = build_test_gate(first_root)[1]
-    second = build_test_gate(second_root)[1]
+    artifact, first, _, archive, metadata = build_test_gate(tmp_path)
+    second_file = tmp_path / "second-publication-gate.json"
+    second = build_gate(
+        repository=REPOSITORY,
+        archive_path=archive,
+        artifact_metadata=metadata,
+        output_gate=second_file,
+        expected_sha=SHA,
+        expected_tag=artifact.tag,
+        verified_at=NOW,
+    )
     assert first.fingerprint == second.fingerprint
 
 

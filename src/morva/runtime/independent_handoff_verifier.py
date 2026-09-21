@@ -11,7 +11,6 @@ from morva.runtime.production_readiness_convergence import (
     ProductionReadinessConvergenceError,
 )
 from morva.runtime.production_readiness_handoff import (
-    ProductionReadinessHandoff,
     ProductionReadinessHandoffError,
     load_handoff,
     verify_handoff_sources,
@@ -126,7 +125,7 @@ def verify_handoff(
         ValueError,
     ) as exc:
         raise IndependentHandoffVerificationError(
-            "convergence or handoff verification failed"
+            f"convergence or handoff verification failed: {exc}"
         ) from exc
 
     if (

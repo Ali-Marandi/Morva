@@ -137,7 +137,7 @@ def build_production_certification_gate(
         )
     except (FinalReadinessVerificationError, ValueError) as exc:
         raise ProductionCertificationGateError(
-            "M3.65 final readiness verification failed"
+            f"M3.65 final readiness verification failed: {exc}"
         ) from exc
 
     if external_registry.repository != final_readiness_repository:

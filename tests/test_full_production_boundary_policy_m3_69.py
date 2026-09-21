@@ -2,11 +2,12 @@ from pathlib import Path
 
 import pytest
 
+from morva.runtime.production_boundary_policy import scan_repository
 from morva.runtime.production_boundary_policy_v2 import (
     M3_54_TO_M3_68_WORKFLOWS,
+    ProductionBoundaryPolicyError,
     scan_full_production_boundary,
 )
-from morva.runtime.production_boundary_policy import ProductionBoundaryPolicyError
 
 
 def _write(root: Path, relative: str, content: str = "permissions:\n  contents: read\n"):
@@ -29,7 +30,7 @@ def test_complete_m354_m368_coverage(tmp_path: Path):
 def test_missing_workflow_is_rejected(tmp_path: Path):
     for relative in M3_54_TO_M3_68_WORKFLOWS[:-1]:
         _write(tmp_path, relative)
-    with pytest.raises(ProductionBoundaryPolicyError, match="findings|coverage"):
+    with pytest.raises(ProductionBoundaryPolicyError, match="coverage|missing"):
         scan_full_production_boundary(
             root=tmp_path,
             repository="Ali-Marandi/Morva",
@@ -44,9 +45,10 @@ def test_mutation_in_latest_workflow_is_detected(tmp_path: Path):
         M3_54_TO_M3_68_WORKFLOWS[-1],
         "steps:\n  - run: gh release upload v1.0.0 artifact.tgz\n",
     )
-    receipt = scan_full_production_boundary(
+    receipt = scan_repository(
         root=tmp_path,
         repository="Ali-Marandi/Morva",
+        relative_paths=M3_54_TO_M3_68_WORKFLOWS,
     )
     assert not receipt.passed
     assert any(f.rule == "workflow-mutation" for f in receipt.findings)

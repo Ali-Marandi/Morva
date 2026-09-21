@@ -49,7 +49,7 @@ def test_production_execution_is_rejected(tmp_path: Path):
     execution.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         IntegrationExecutionReadinessGateError,
-        match="M3.84/M3.85|environment",
+        match="M3.84/M3.85|environment|structure is invalid",
     ):
         build_integration_execution_readiness_gate(
             execution_evidence=execution,

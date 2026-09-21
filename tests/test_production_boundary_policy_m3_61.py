@@ -57,10 +57,25 @@ def test_mutation_policy_fails_closed(tmp_path: Path, payload: str):
     assert receipt.findings
 
 
+@pytest.mark.parametrize("command", ["eval", "bash -c", "sh -c"])
+def test_dynamic_execution_policy_fails_closed(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        f"steps:\n  - run: {command} \"echo safe\"\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not receipt.passed
+    assert any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 @pytest.mark.parametrize(
     "marker",
     (
-        "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN " + "PRIVATE " + "KEY-----",
         "ghp_test_token",
         "github_pat_test_token",
     ),
@@ -84,6 +99,35 @@ def test_unreadable_path_is_a_finding(tmp_path: Path):
     )
     assert not receipt.passed
     assert receipt.findings[0].rule == "readable"
+
+
+
+def test_quoted_dynamic_execution_text_is_not_a_finding(tmp_path: Path):
+    _write(
+        tmp_path,
+        "steps:\n  - run: grep -R -- \"eval\" .github/workflows\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
+
+
+def test_inline_comment_is_not_dynamic_execution(tmp_path: Path):
+    _write(
+        tmp_path,
+        "steps:\n  - run: echo ok # eval\n",
+    )
+    receipt = scan_repository(
+        root=tmp_path,
+        repository=REPOSITORY,
+        relative_paths=(WORKFLOW,),
+    )
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
 
 
 def test_receipt_is_write_once(tmp_path: Path):

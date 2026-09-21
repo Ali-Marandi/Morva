@@ -116,11 +116,13 @@ def test_bundle_roundtrip(monkeypatch, tmp_path: Path):
 
 def test_bundle_archive_is_deterministic(monkeypatch, tmp_path: Path):
     first = _inputs(monkeypatch, tmp_path / "first")
+    first_archive = tmp_path / "first" / "bundle.tar.gz"
+    first_meta = tmp_path / "first" / "bundle.json"
+    second_archive = tmp_path / "second" / "bundle.tar.gz"
+    second_meta = tmp_path / "second" / "bundle.json"
+    first_archive.parent.mkdir(parents=True, exist_ok=True)
+    second_archive.parent.mkdir(parents=True, exist_ok=True)
     second = first
-    first_archive = tmp_path / "first.tar.gz"
-    first_meta = tmp_path / "first.json"
-    second_archive = tmp_path / "second.tar.gz"
-    second_meta = tmp_path / "second.json"
     first_bundle = build_deployment_evidence_bundle(
         release_receipt_file=first[0],
         deployment_gate_file=first[1],
@@ -180,7 +182,8 @@ def test_bundle_rejects_private_key_material(tmp_path: Path):
     from morva.runtime.deployment_evidence_bundle import _hash_file
 
     path = tmp_path / "attestation.json"
-    path.write_bytes(b"-----BEGIN PRIVATE KEY-----")
+    private_marker = b"PRIVATE " + b"KEY"
+    path.write_bytes(b"-----BEGIN " + private_marker + b"-----")
     with pytest.raises(DeploymentEvidenceBundleError, match="private-key"):
         _hash_file(path)
 

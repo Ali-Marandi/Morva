@@ -167,7 +167,7 @@ def verify_integration_readiness(
         ValueError,
     ) as exc:
         raise IndependentIntegrationReadinessVerificationError(
-            "underlying adapter readiness evidence failed verification"
+            f"underlying adapter readiness evidence failed verification: {exc}"
         ) from exc
 
     if gate.repository != repository:

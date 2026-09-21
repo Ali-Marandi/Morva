@@ -118,6 +118,85 @@ jobs:
     assert any(item.rule == "workflow-mutation" for item in receipt.findings)
 
 
+@pytest.mark.parametrize("command", ["eval", "bash -c", "sh -c"])
+def test_dynamic_shell_execution_is_rejected(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        ".github/workflows/dynamic.yml",
+        f"""name: Dynamic
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: {command} "echo safe"
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
+
+@pytest.mark.parametrize("command", ["bash    -c", "sh\t-c", "eval\t"])
+def test_dynamic_shell_execution_with_whitespace_is_rejected(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        ".github/workflows/dynamic-whitespace.yml",
+        f"""name: Dynamic Whitespace
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: {command} "echo unsafe"
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert any(
+        item.rule == "workflow-dynamic-execution" for item in receipt.findings
+    )
+
+
+def test_quoted_dynamic_execution_text_is_not_a_command(tmp_path: Path):
+    _write(
+        tmp_path,
+        ".github/workflows/quoted-dynamic.yml",
+        """name: Quoted Dynamic
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: grep -R -- "eval" .github/workflows
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
+
+
+def test_inline_comment_is_not_dynamic_execution(tmp_path: Path):
+    _write(
+        tmp_path,
+        ".github/workflows/commented.yml",
+        """name: Commented
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ok # eval
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert not any(item.rule == "workflow-dynamic-execution" for item in receipt.findings)
+
+
 def test_receipt_is_write_once(tmp_path: Path):
     _write(
         tmp_path,

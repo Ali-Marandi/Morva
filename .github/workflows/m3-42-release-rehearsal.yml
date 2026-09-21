@@ -164,6 +164,7 @@ jobs:
           PY
       - name: Execute M3.42 rehearsal
         run: >
+          PYTHONPATH=.
           python tools/m3_42_release_rehearsal.py
           release-evidence-manifest.json
           release-gate-rehearsal.json

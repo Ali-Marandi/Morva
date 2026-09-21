@@ -34,6 +34,12 @@ FORBIDDEN_MUTATIONS = (
     "terraform destroy",
 )
 
+FORBIDDEN_DYNAMIC_EXECUTION = (
+    ("eval", r"(?<![\w-])eval(?=\s|$)"),
+    ("bash -c", r"(?<![\w-])bash\s+-c(?=\s|$)"),
+    ("sh -c", r"(?<![\w-])sh\s+-c(?=\s|$)"),
+)
+
 
 @dataclass(frozen=True, slots=True)
 class WorkflowIntegrityFinding:
@@ -93,7 +99,7 @@ class CIWorkflowIntegrityReceipt:
 
 
 def _top_level_key(text: str, key: str) -> bool:
-    return re.search(rf"(?m)^{re.escape(key)}:\s*$", text) is not None
+    return re.search(rf"(?m)^{re.escape(key)}:\s*(?:.*)?$", text) is not None
 
 
 def _has_jobs(text: str) -> bool:
@@ -156,6 +162,47 @@ def _has_main_branch(push_block: str) -> bool:
     return False
 
 
+def _dynamic_execution_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
+    findings: list[WorkflowIntegrityFinding] = []
+    for number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        candidate = _shell_code_without_literals(stripped)
+        for label, pattern in FORBIDDEN_DYNAMIC_EXECUTION:
+            if re.search(pattern, candidate):
+                findings.append(
+                    WorkflowIntegrityFinding(
+                        path=path,
+                        rule="workflow-dynamic-execution",
+                        detail=f"{label} at line {number}",
+                    )
+                )
+    return findings
+
+
+def _shell_code_without_literals(line: str) -> str:
+    output: list[str] = []
+    quote: str | None = None
+    escaped = False
+    for char in line:
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in {"'", "\""}:
+            quote = char
+            continue
+        if char == "#":
+            break
+        output.append(char)
+    return "".join(output)
+
+
 def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
     findings: list[WorkflowIntegrityFinding] = []
     for number, line in enumerate(text.splitlines(), start=1):
@@ -163,7 +210,7 @@ def _mutation_findings(path: str, text: str) -> list[WorkflowIntegrityFinding]:
         if not stripped or stripped.startswith("#"):
             continue
         candidate = re.sub(r"^-\s*run:\s*", "", stripped)
-        candidate = re.sub(r"'[^']*'|" + r'"[^"]*"', " ", candidate)
+        candidate = _shell_code_without_literals(candidate)
         for command in FORBIDDEN_MUTATIONS:
             if re.search(rf"(?<![\w-]){re.escape(command)}(?![\w-])", candidate):
                 findings.append(
@@ -241,6 +288,7 @@ def scan_workflows(root: Path, repository: str) -> CIWorkflowIntegrityReceipt:
                 )
             )
 
+        findings.extend(_dynamic_execution_findings(relative, text))
         findings.extend(_mutation_findings(relative, text))
 
     return CIWorkflowIntegrityReceipt(

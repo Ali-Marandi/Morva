@@ -4,9 +4,6 @@ import argparse
 import json
 from pathlib import Path
 
-from morva.runtime.production_boundary_policy import (
-    ProductionBoundaryPolicyError,
-)
 from morva.runtime.production_boundary_policy_v2 import scan_full_production_boundary
 
 
@@ -26,7 +23,7 @@ def main() -> int:
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
-            __import__("json").dumps(
+            json.dumps(
                 receipt.to_payload(),
                 ensure_ascii=True,
                 sort_keys=True,

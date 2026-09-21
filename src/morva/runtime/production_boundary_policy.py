@@ -27,6 +27,12 @@ FORBIDDEN_COMMANDS = (
     "terraform apply",
     "terraform destroy",
 )
+
+FORBIDDEN_DYNAMIC_EXECUTION = (
+    "eval",
+    "bash -c",
+    "sh -c",
+)
 PRIVATE_MARKERS = (
     b"BEGIN PRIVATE KEY",
     b"BEGIN OPENSSH PRIVATE KEY",
@@ -118,6 +124,28 @@ class ProductionBoundaryPolicyReceipt:
         }
 
 
+def _shell_code_without_literals(line: str) -> str:
+    output: list[str] = []
+    quote: str | None = None
+    escaped = False
+    for char in line:
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char == "#":
+            break
+        output.append(char)
+    return "".join(output)
+
+
 def scan_repository(
     *,
     root: Path,
@@ -166,19 +194,31 @@ def scan_repository(
 
         text = data.decode("utf-8", errors="replace")
         if relative.startswith(".github/workflows/"):
-            for command in FORBIDDEN_COMMANDS:
-                pattern = f"(^|[;&|]|\\brun:\\s*){command}"
-                if any(
-                    re.search(pattern, line)
-                    for line in text.splitlines()
-                ):
-                    findings.append(
-                        PolicyFinding(
-                            path=relative,
-                            rule="workflow-mutation",
-                            detail=command,
+            for line in text.splitlines():
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                candidate = _shell_code_without_literals(stripped)
+                for command in FORBIDDEN_DYNAMIC_EXECUTION:
+                    pattern = rf"(?<![\w-]){re.escape(command)}(?![\w-])"
+                    if re.search(pattern, candidate):
+                        findings.append(
+                            PolicyFinding(
+                                path=relative,
+                                rule="workflow-dynamic-execution",
+                                detail=command,
+                            )
                         )
-                    )
+                for command in FORBIDDEN_COMMANDS:
+                    pattern = f"(^|[;&|]|\\brun:\\s*){command}"
+                    if re.search(pattern, candidate):
+                        findings.append(
+                            PolicyFinding(
+                                path=relative,
+                                rule="workflow-mutation",
+                                detail=command,
+                            )
+                        )
             if "permissions:\n  contents: write" in text:
                 findings.append(
                     PolicyFinding(
@@ -187,7 +227,6 @@ def scan_repository(
                         detail="contents: write",
                     )
                 )
-
     return ProductionBoundaryPolicyReceipt(
         policy_version=1,
         repository=repository,

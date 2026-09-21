@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -53,6 +53,7 @@ def test_wrong_repository_is_rejected(tmp_path: Path):
             manifest_file=path,
             repository="Other/Morva",
             candidate_sha=SHA,
+            checked_at=datetime.fromisoformat("2026-09-20T05:00:00+00:00"),
         )
 
 
@@ -80,6 +81,7 @@ def test_port_drift_is_rejected(monkeypatch, tmp_path: Path):
             manifest_file=path,
             repository=REPOSITORY,
             candidate_sha=SHA,
+            checked_at=datetime.fromisoformat("2026-09-20T05:00:00+00:00"),
         )
 
 
