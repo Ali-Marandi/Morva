@@ -7,7 +7,6 @@ import json
 
 from morva.runtime.authoritative_evidence_intake import (
     ALLOWED_SOURCE_TYPES,
-    AuthoritativeEvidenceIntakeError,
     AuthoritativeEvidenceRegistry,
 )
 
