@@ -137,7 +137,7 @@ def test_write_once(tmp_path: Path):
         contract_verification_receipt=sources[4],
         repository=REPOSITORY,
         candidate_sha=SHA,
-        target_environment="pilot",
+        target_environment="staging",
         checked_at=datetime.fromisoformat("2026-09-20T03:00:00+00:00"),
     )
     out = tmp_path / "gate.json"
