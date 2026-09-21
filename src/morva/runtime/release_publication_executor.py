@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import json
 from pathlib import Path
 import subprocess
@@ -38,7 +39,21 @@ class PublicationAuthorization:
                 "publication authorization identity is required"
             )
         if not self.approved_at.strip():
-            raise ReleasePublicationExecutorError("publication authorization timestamp is required")
+            raise ReleasePublicationExecutorError(
+                "publication authorization timestamp is required"
+            )
+        try:
+            approved_at = datetime.fromisoformat(
+                self.approved_at.replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise ReleasePublicationExecutorError(
+                "publication authorization timestamp must be ISO-8601"
+            ) from exc
+        if approved_at.tzinfo is None:
+            raise ReleasePublicationExecutorError(
+                "publication authorization timestamp must include a timezone"
+            )
 
 
 @dataclass(frozen=True, slots=True)
