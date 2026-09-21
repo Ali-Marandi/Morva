@@ -15,7 +15,7 @@ class PayrollSampleEvidenceError(ValueError):
     """Raised when authoritative payroll-sample evidence is unsafe."""
 
 
-PERIOD_PATTERN = re.compile(r"^14\d{2}-0[1-9]|14\d{2}-1[0-2]$")
+PERIOD_PATTERN = re.compile(r"^14\d{2}-(?:0[1-9]|1[0-2])$")
 
 
 def _timestamp(name: str, value: str) -> datetime:
@@ -89,7 +89,6 @@ class PayrollSampleEvidence:
             raise PayrollSampleEvidenceError(
                 "approved_at cannot precede reviewed_at"
             )
-        _timestamp("reviewed_at", self.reviewed_at)
 
     @property
     def fingerprint(self) -> str:
