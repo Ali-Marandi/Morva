@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from cryptography.hazmat.primitives import serialization  # noqa: E402
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey  # noqa: E402
 
 from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle, load_evidence_bundle  # noqa: E402
 from morva.runtime.release_rehearsal import ReleaseRehearsal  # noqa: E402
