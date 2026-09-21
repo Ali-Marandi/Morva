@@ -112,6 +112,7 @@
 - M4.6 adapter-contract evidence bridge binding official adapter evidence to accepted authoritative adapter-contract evidence with exact source URI/SHA-256 identity and fail-closed temporal validation
 - M4.7 authoritative payroll sample evidence contract binding approved reference-sample input/output identities, comparison fingerprints and population/period scope to M4.1 evidence
 - M4.8 three-way reconciliation evidence contract binding Morva entitlement, Treasury/PFM instruction and bank settlement artifacts with independent hashes and fail-closed reconciled status
+- M4.9 disaster-recovery evidence bridge binding recorded backup/PITR/RPO/RTO drill evidence to accepted authoritative DR evidence with fail-closed readiness
 
 ## Current execution queue
 
