@@ -6,8 +6,6 @@ from hashlib import sha256
 import json
 
 from morva.runtime.authoritative_evidence_intake import (
-    ALLOWED_SOURCE_TYPES,
-    AuthoritativeEvidenceIntakeError,
     AuthoritativeEvidenceRegistry,
 )
 from morva.runtime.evidence_closure_matrix import CLOSURE_ROLE_SOURCE_TYPES
@@ -255,6 +253,10 @@ def build_convergence_assessment(
         if receipt.bound_at > now:
             raise EvidenceConvergenceError(
                 f"receipt is future-dated for role {receipt.certification_role}"
+            )
+        if receipt.population_scope.strip() != authority.population_scope.strip():
+            raise EvidenceConvergenceError(
+                f"receipt population scope mismatch for role {receipt.certification_role}"
             )
         role_receipts[receipt.certification_role] = receipt
         receipt_fingerprints.append(receipt.fingerprint)
