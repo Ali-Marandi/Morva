@@ -1,0 +1,52 @@
+name: M4.7 Authoritative Payroll Sample Evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-7-payroll-sample-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/payroll_sample_evidence.py"
+      - "tests/test_payroll_sample_evidence_m4_7.py"
+      - "tests/golden/**"
+      - "docs/M4_7_PAYROLL_SAMPLE_EVIDENCE.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-7-payroll-sample-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/payroll_sample_evidence.py"
+      - "tests/test_payroll_sample_evidence_m4_7.py"
+      - "tests/golden/**"
+      - "docs/M4_7_PAYROLL_SAMPLE_EVIDENCE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/payroll_sample_evidence.py
+          tests/test_payroll_sample_evidence_m4_7.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_payroll_sample_evidence_m4_7.py
+      - name: Boundary
+        run: |
+          echo "M4.7 binds approved reference-sample identities only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No real payroll sample, amount or employee record is introduced." >> "$GITHUB_STEP_SUMMARY"
