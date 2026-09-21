@@ -138,7 +138,7 @@ jobs:
 
 
 
-@pytest.mark.parametrize("command", ["bash    -c", "sh\\t-c", "eval\\t"])
+@pytest.mark.parametrize("command", ["bash    -c", "sh\t-c", "eval\t"])
 def test_dynamic_shell_execution_with_whitespace_is_rejected(tmp_path: Path, command: str):
     _write(
         tmp_path,
