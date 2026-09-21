@@ -184,6 +184,11 @@ def load_policy_receipt(path: Path) -> TechnicalReadinessPolicyReceipt:
         raise TechnicalReadinessGateError(
             "policy receipt fields are invalid"
         )
+    expected_passed = not bool(findings)
+    if passed != expected_passed:
+        raise TechnicalReadinessGateError(
+            "policy receipt passed flag does not match findings"
+        )
     canonical = {
         "policy_version": version,
         "repository": repository,
