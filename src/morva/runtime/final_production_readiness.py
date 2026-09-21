@@ -180,6 +180,7 @@ def _load_freshness_gate(path: Path) -> EvidenceFreshnessGate:
             tag=payload["tag"],
             candidate_sha=payload["candidate_sha"],
             bundle_fingerprint=payload["bundle_fingerprint"],
+            source_environment=payload["source_environment"],
             promotion_verification_fingerprint=(
                 payload["promotion_verification_fingerprint"]
             ),
@@ -228,13 +229,13 @@ def build_final_readiness_gate(
         raise FinalProductionReadinessError(
             "technical policy gate did not pass"
         )
-    if (
-        technical.repository != repository
-        or technical.tag != tag
-        or technical.candidate_sha.lower() != candidate_sha.lower()
-    ):
+    if technical.repository != repository or technical.tag != tag:
         raise FinalProductionReadinessError(
-            "technical readiness identity mismatch"
+            "technical readiness repository/tag mismatch"
+        )
+    if technical.candidate_sha.lower() != candidate_sha.lower():
+        raise FinalProductionReadinessError(
+            "technical readiness candidate SHA mismatch"
         )
     if (
         freshness.repository != repository
