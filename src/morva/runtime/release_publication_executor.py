@@ -138,11 +138,16 @@ def repository_to_remote(repository: str) -> str:
 def _assert_no_existing_release(repository: str, tag: str) -> None:
     result = _run(("gh", "release", "view", tag, "--repo", repository))
     if result.returncode == 0:
-        raise ReleasePublicationExecutorError("a GitHub Release already exists for the tag")
-    if result.returncode != 1:
         raise ReleasePublicationExecutorError(
-            f"unable to inspect existing GitHub Release: {result.stderr.strip()}"
+            "a GitHub Release already exists for the tag"
         )
+    if result.returncode == 1:
+        stderr = result.stderr.strip().lower()
+        if "not found" in stderr or "404" in stderr:
+            return
+    raise ReleasePublicationExecutorError(
+        f"unable to inspect existing GitHub Release: {result.stderr.strip()}"
+    )
 
 
 def load_authorization(path: Path) -> PublicationAuthorization:
