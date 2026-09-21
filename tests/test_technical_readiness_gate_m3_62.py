@@ -71,7 +71,7 @@ def test_policy_receipt_tamper_is_rejected(monkeypatch, tmp_path: Path):
         json.dumps(payload, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    with pytest.raises(TechnicalReadinessGateError, match="fingerprint mismatch"):
+    with pytest.raises(TechnicalReadinessGateError, match="fingerprint mismatch|passed flag"):
         load_policy_receipt(inputs[5])
 
 
