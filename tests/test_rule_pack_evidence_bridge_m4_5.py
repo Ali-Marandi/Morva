@@ -42,7 +42,7 @@ def _authority(**overrides):
 def _rule(**overrides):
     payload = {
         "component_code": "TAX",
-        "source_id": "LEGAL-TAX-001",
+        "source_id": "RULE-SOURCE-TAX-001",
         "citation": "official-source-section",
         "issuer": "authority",
         "source_uri": "https://authority.example/legal/1405/tax",
