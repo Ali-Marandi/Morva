@@ -1,3 +1,14 @@
+## Unreleased — M4.8 Three-Way Reconciliation Evidence
+
+### Reconciliation evidence closure
+- Bind Morva entitlement, Treasury/PFM instruction and bank settlement artifacts with three independent SHA-256 identities.
+- Bind a separate SHA-256 for the authoritative reconciliation-evidence document.
+- Require explicit reconciled status, comparison fingerprint and exact population/period scope.
+- Keep live payment, Treasury and bank execution outside the bridge.
+
+### Safety
+- No production payment, Treasury call, bank call, financial record or employee record is introduced.
+
 ## Unreleased — M4.7 Authoritative Payroll Sample Evidence
 
 ### Payroll validation evidence
