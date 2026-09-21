@@ -169,13 +169,13 @@ def _dynamic_execution_findings(path: str, text: str) -> list[WorkflowIntegrityF
         if not stripped or stripped.startswith("#"):
             continue
         candidate = _shell_code_without_literals(stripped)
-        for command in FORBIDDEN_DYNAMIC_EXECUTION:
-            if re.search(rf"(?<![\w-]){re.escape(command.strip())}(?:\s|$)", candidate):
+        for label, pattern in FORBIDDEN_DYNAMIC_EXECUTION:
+            if re.search(pattern, candidate):
                 findings.append(
                     WorkflowIntegrityFinding(
                         path=path,
                         rule="workflow-dynamic-execution",
-                        detail=f"{command.strip()} at line {number}",
+                        detail=f"{label} at line {number}",
                     )
                 )
     return findings
