@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 from pathlib import Path
 
@@ -67,9 +67,7 @@ def _build(tmp_path: Path):
         repository="Ali-Marandi/Morva",
         tag="v1.0.1",
         candidate_sha="a" * 40,
-        converged_at=datetime.fromisoformat(
-            "2026-09-20T01:15:00+00:00"
-        ),
+        converged_at=datetime.now(timezone.utc) + timedelta(minutes=1),
     )
 
 
