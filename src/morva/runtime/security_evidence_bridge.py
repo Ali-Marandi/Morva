@@ -157,6 +157,14 @@ def build_security_evidence_binding(
         )
 
     bound_at_utc = bound_at.astimezone(timezone.utc)
+    if assessment.assessed_at > bound_at_utc:
+        raise SecurityEvidenceBridgeError(
+            "security assessment is future-dated"
+        )
+    if assessment.independent_signed_at > bound_at_utc:
+        raise SecurityEvidenceBridgeError(
+            "security report signature is future-dated"
+        )
     approved_at = (
         datetime.fromisoformat(authoritative.approved_at)
         if authoritative.approved_at
