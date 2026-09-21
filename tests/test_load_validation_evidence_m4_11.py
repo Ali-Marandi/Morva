@@ -74,6 +74,16 @@ def test_matching_load_evidence_binds():
     assert len(binding.fingerprint) == 64
 
 
+def test_non_staging_environment_is_rejected():
+    with pytest.raises(LoadValidationEvidenceError, match="staging or pilot"):
+        _evidence(environment="production")
+
+
+def test_inconsistent_throughput_is_rejected():
+    with pytest.raises(LoadValidationEvidenceError, match="inconsistent"):
+        _evidence(throughput_per_second=10.0)
+
+
 def test_short_target_is_rejected():
     with pytest.raises(LoadValidationEvidenceError, match="10000"):
         _evidence(target_employees=9999, processed_employees=9999)
