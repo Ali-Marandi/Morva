@@ -8,6 +8,7 @@ import json
 from morva.runtime.authoritative_evidence_intake import (
     AuthoritativeEvidenceRegistry,
 )
+from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS
 
 
 class PopulationTreatmentEvidenceError(ValueError):
@@ -15,22 +16,6 @@ class PopulationTreatmentEvidenceError(ValueError):
 
 
 ALLOWED_TREATMENTS = ("earning", "deduction")
-REQUIRED_1405_COMPONENTS = (
-    "JOB_RIGHT",
-    "INCUMBENT_RIGHT",
-    "JOB_ALLOWANCE",
-    "RANK_ALLOWANCE",
-    "FAMILY_ALLOWANCE",
-    "CHILD_ALLOWANCE",
-    "OVERTIME",
-    "TEACHING_FEE",
-    "REGION_WEATHER",
-    "TAX",
-    "PENSION",
-    "INSURANCE",
-    "LOAN",
-    "COURT_ORDER",
-)
 
 
 def _timestamp(name: str, value: str) -> datetime:
@@ -47,11 +32,6 @@ def _timestamp(name: str, value: str) -> datetime:
     return parsed
 
 
-def _hash64(name: str, value: str) -> None:
-    if len(value) != 64 or any(char not in "0123456789abcdef" for char in value.lower()):
-        raise PopulationTreatmentEvidenceError(
-            f"{name} must be a SHA-256 digest"
-        )
 
 
 @dataclass(frozen=True, slots=True)
