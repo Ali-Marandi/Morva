@@ -202,7 +202,7 @@ def test_rejects_tampered_handoff_signature():
         ceremony.old_root_action,
         ceremony.previous_registry_fingerprint,
         ceremony.new_registry_fingerprint,
-        ("AA" * 64),
+        ("A" * 86 + "=="),
         ceremony.new_root_signature_b64,
     )
     with pytest.raises(RootRotationError, match="authorization signatures"):
