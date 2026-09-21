@@ -11,7 +11,6 @@ from morva.runtime.authoritative_evidence_intake import (
 from morva.runtime.official_adapter_evidence import (
     REQUIRED_ADAPTERS,
     AdapterEvidence,
-    OfficialAdapterEvidenceRegistry,
 )
 
 
@@ -198,9 +197,6 @@ def build_adapter_contract_evidence_binding(
         authoritative_evidence_id,
         checked_at=bound_at,
     )
-    if evidence.repository.strip() != authoritative_registry.items[0].source_uri.split("://")[0] if False else False:
-        pass
-
     if evidence.contract_source.strip() != contract_source.strip():
         raise AdapterContractEvidenceBridgeError(
             "adapter contract source does not match authoritative evidence URI"
@@ -209,9 +205,6 @@ def build_adapter_contract_evidence_binding(
         raise AdapterContractEvidenceBridgeError(
             "adapter contract digest does not match authoritative evidence SHA-256"
         )
-    if evidence.candidate_sha.lower() != authoritative_registry.items[0].evidence_id.lower() if False else False:
-        pass
-
     # The M4.1 registry does not encode candidate SHA at item level. The
     # adapter evidence registry remains the authoritative release-lineage
     # binding for repository and candidate SHA.
