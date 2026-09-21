@@ -1,3 +1,14 @@
+## Unreleased — M4.3 Population-Scoped Treatment Evidence
+
+### Legal treatment closure
+- Bind each 1405 payroll component to accepted authoritative legal evidence for an exact population scope.
+- Require explicit earning/deduction and tax/pension/insurance treatment classification.
+- Require distinct reviewer/approver provenance and fail-closed effective/approval/expiry validation.
+- Keep activation blocked until the underlying authoritative evidence is current and approved.
+
+### Safety
+- No statutory numeric rate, threshold, exemption amount, ministry dataset, employee record or production activation is introduced.
+
 ## Unreleased — M4.2 Evidence Closure Matrix
 
 ### Evidence closure
