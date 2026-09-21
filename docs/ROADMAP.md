@@ -108,11 +108,12 @@
 - M4.2 evidence closure matrix binding the twelve certification roles to canonical evidence source types with deterministic, fail-closed closure assessment
 - M4.3 population-scoped treatment evidence binding approved legal evidence to every 1405 component without embedding statutory rates or thresholds
 - M4.4 master-data evidence bridge binding an M4.1 master-data evidence item to an internally accepted master-data assessment, exact population scope and integrity fingerprints
+- M4.5 Rule Pack evidence bridge binding 1405 component evidence to accepted authoritative legal evidence with exact source identity, population scope and fail-closed activation status
 
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the M3.89 merge is now the current main baseline.
-2. Deliver M4.1 authoritative evidence intake, M4.2 evidence closure assessment, M4.3 population-scoped treatment evidence and M4.4 master-data evidence binding as the evidence-closure implementation line; real authoritative artifacts remain external to the codebase and must be independently supplied and approved.
+2. Deliver M4.1 authoritative evidence intake, M4.2 evidence closure assessment, M4.3 population-scoped treatment evidence, M4.4 master-data evidence binding and M4.5 Rule Pack evidence binding as the evidence-closure implementation line; real authoritative artifacts remain external to the codebase and must be independently supplied and approved.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
 5. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
