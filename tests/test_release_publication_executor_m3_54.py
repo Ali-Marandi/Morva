@@ -103,7 +103,7 @@ def test_prepare_fails_closed_on_release_lookup_error(monkeypatch, tmp_path: Pat
             return subprocess.CompletedProcess(
                 command,
                 0,
-                stdout=f"{SHA} refs/tags/{TAG}\\n",
+                stdout=f"{SHA} refs/tags/{TAG}\n{SHA} refs/tags/{TAG}^{{}}\n",
                 stderr="",
             )
         return subprocess.CompletedProcess(
