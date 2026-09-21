@@ -1,3 +1,15 @@
+## Unreleased — M4.10 Security Evidence Bridge
+
+### Security evidence closure
+- Bind a release-ready `SecurityAssessment` to accepted M4.1 `security_assessment` evidence.
+- Require complete verified controls, no open critical/high findings and independent assessor/report/signature metadata.
+- Require exact report URI and canonical assessment fingerprint binding.
+- Fail closed on future-dated signatures, expired/unaccepted authority and identity mismatches.
+
+### Safety
+- No external security assessment is executed and no findings are invented.
+- No credentials, production access or security secrets are introduced.
+
 ## Unreleased — M4.9 Disaster-Recovery Evidence Bridge
 
 ### Recovery evidence closure
