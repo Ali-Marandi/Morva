@@ -180,6 +180,7 @@ def _load_freshness_gate(path: Path) -> EvidenceFreshnessGate:
             tag=payload["tag"],
             candidate_sha=payload["candidate_sha"],
             bundle_fingerprint=payload["bundle_fingerprint"],
+            source_environment=payload["source_environment"],
             promotion_verification_fingerprint=(
                 payload["promotion_verification_fingerprint"]
             ),
