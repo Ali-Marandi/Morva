@@ -1,3 +1,15 @@
+## Unreleased — M4.2 Evidence Closure Matrix
+
+### Evidence closure
+- Map all twelve production-certification roles to canonical provider-neutral evidence source types.
+- Evaluate only accepted, currently effective, approved and non-expired evidence from the M4.1 registry.
+- Produce deterministic closure assessments bound to the exact registry fingerprint.
+- Add regression coverage and a dedicated CI gate.
+
+### Safety
+- No real external authority, ministry dataset, employee record, statutory rate, credential or production activation is introduced.
+- A complete closure assessment is not itself production certification; underlying authoritative evidence and approvals remain external prerequisites.
+
 ## Unreleased — M4.1 Authoritative Evidence Intake
 
 ### Evidence closure
