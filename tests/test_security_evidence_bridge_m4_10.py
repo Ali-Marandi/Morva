@@ -85,9 +85,10 @@ def test_not_release_ready_is_rejected():
 def test_report_uri_mismatch_is_rejected():
     assessment = _assessment()
     authority = _authority(assessment)
-    authority = AuthoritativeEvidenceItem(
-        **{**authority.to_payload(), "source_uri": "https://other.example/report"}
-    )
+    authority_payload = authority.to_payload()
+    authority_payload.pop("fingerprint", None)
+    authority_payload["source_uri"] = "https://other.example/report"
+    authority = AuthoritativeEvidenceItem(**authority_payload)
     with pytest.raises(SecurityEvidenceBridgeError, match="URI"):
         build_security_evidence_binding(
             assessment,
@@ -121,6 +122,20 @@ def test_expired_authority_is_rejected():
         build_security_evidence_binding(
             assessment,
             build_registry((authority,), registered_at=NOW),
+            authoritative_evidence_id="SEC-EVID-001",
+            bound_by="security-binder",
+            bound_at=NOW,
+        )
+
+
+def test_future_signed_report_is_rejected():
+    assessment = _assessment(
+        independent_signed_at=datetime(2026, 9, 23, 10, 0, tzinfo=timezone.utc),
+    )
+    with pytest.raises(SecurityEvidenceBridgeError, match="future-dated"):
+        build_security_evidence_binding(
+            assessment,
+            build_registry((_authority(assessment),), registered_at=NOW),
             authoritative_evidence_id="SEC-EVID-001",
             bound_by="security-binder",
             bound_at=NOW,
