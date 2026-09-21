@@ -15,11 +15,11 @@ if str(ROOT) not in sys.path:
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
-from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle, load_evidence_bundle
-from morva.runtime.release_rehearsal import ReleaseRehearsal
-from tools.m3_40_release_gate import load_release_gate
-from tools.m3_41_release_manifest import load_manifest
-from tools.m3_46_signed_trusted_registry import load_signed_registry
+from morva.runtime.release_evidence import EvidenceFile, ReleaseEvidenceBundle, load_evidence_bundle  # noqa: E402
+from morva.runtime.release_rehearsal import ReleaseRehearsal  # noqa: E402
+from tools.m3_40_release_gate import load_release_gate  # noqa: E402
+from tools.m3_41_release_manifest import load_manifest  # noqa: E402
+from tools.m3_46_signed_trusted_registry import load_signed_registry  # noqa: E402
 
 
 def _hash_file(path: Path, root: Path) -> EvidenceFile:
