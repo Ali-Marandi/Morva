@@ -1,0 +1,52 @@
+name: M4.12 Evidence Convergence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-12-evidence-convergence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/evidence_closure_matrix.py"
+      - "src/morva/runtime/evidence_convergence.py"
+      - "tests/test_evidence_convergence_m4_12.py"
+      - "docs/M4_12_EVIDENCE_CONVERGENCE.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-12-evidence-convergence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/evidence_closure_matrix.py"
+      - "src/morva/runtime/evidence_convergence.py"
+      - "tests/test_evidence_convergence_m4_12.py"
+      - "docs/M4_12_EVIDENCE_CONVERGENCE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  convergence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/evidence_convergence.py
+          tests/test_evidence_convergence_m4_12.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_evidence_convergence_m4_12.py
+      - name: Boundary
+        run: |
+          echo "M4.12 composes evidence identities only." >> "$GITHUB_STEP_SUMMARY"
+          echo "Missing external certification evidence remains explicitly blocked." >> "$GITHUB_STEP_SUMMARY"
