@@ -120,7 +120,7 @@ def test_unaccepted_authority_is_fail_closed():
 def test_population_scope_mismatch_is_fail_closed():
     registry = _registry(_authority(population_scope="teachers"))
     treatment_set = build_treatment_set(
-        (
+        tuple(
             _treatment(
                 code,
                 population_scope="school_support",
