@@ -1,3 +1,16 @@
+## Unreleased — M4.3 Population-Scoped Treatment Evidence
+
+### Legal treatment closure
+- Bind each 1405 payroll component and exact population scope to an accepted M4.1 legal-rule evidence item.
+- Require explicit earning/deduction treatment and tax/pension/insurance boolean classification.
+- Require distinct reviewer/approver identities and timezone-aware approval timestamps.
+- Keep activation fail-closed when legal evidence is missing, future-dated, expired, unaccepted or scoped to another population.
+- Add focused regression coverage and a dedicated CI gate.
+
+### Safety
+- No statutory rate, threshold, exemption amount, ministry dataset, employee record, credential, provider endpoint or production payment behavior is introduced.
+- The treatment contract records classification only; authoritative numeric legal values remain external evidence prerequisites.
+
 ## Unreleased — M4.2 Evidence Closure Matrix
 
 ### Evidence closure
