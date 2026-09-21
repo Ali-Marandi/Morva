@@ -196,6 +196,20 @@ class AuthoritativeEvidenceRegistry:
         for item in self.items:
             if item.status != "accepted":
                 return False
+            effective_from = _parse_timestamp(
+                "effective_from", item.effective_from
+            )
+            if effective_from > now:
+                return False
+            if item.effective_to is not None:
+                effective_to = _parse_timestamp("effective_to", item.effective_to)
+                if effective_to <= now:
+                    return False
+            if item.approved_at is None:
+                return False
+            approved_at = _parse_timestamp("approved_at", item.approved_at)
+            if approved_at > now:
+                return False
             if item.expires_at is not None:
                 expires_at = _parse_timestamp("expires_at", item.expires_at)
                 if expires_at <= now:
