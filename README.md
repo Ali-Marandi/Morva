@@ -11,9 +11,9 @@
 **Public repository:** `Ali-Marandi/Morva`  
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
-**Latest `main` activity (2026-09-21):**
-- Latest main commit: `0516b96` — `security: harden against indirect workflow execution (#64)`
-- Main now includes M3.90 dynamic workflow-execution hardening; M3.89 readiness-verifier contract hardening is being forward-ported on a fresh branch after the M3.90 squash merge.
+**Latest `main` activity (2026-09-22):**
+- Latest main commit: `0e6b8ef` — `feat: M3.89 readiness verifier hardening (#66)`
+- Main now includes both M3.90 dynamic workflow-execution hardening and the M3.89 readiness-verifier contract hardening.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -99,11 +99,11 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through M3.90, including the M3.73–M3.90 readiness, release, deployment, integration and CI-integrity chain. M3.89 is being forward-ported as a clean delta on top of the current main head. These controls do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through M3.90, including the M3.73–M3.90 readiness, release, deployment, integration and CI-integrity chain. M3.89 is now merged into `main`; M4.1 starts the evidence-closure implementation boundary. These controls do not constitute legal, organizational or production certification on their own.
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
-The next execution queue remains focused on closing the evidence boundary: authoritative master-data confirmation, formal legal Rule Pack approval, approved population-specific ledger treatments, certified historical replay corpus, official external adapters and staging/pilot evidence, full three-way reconciliation, payment return/reversal workflows, production key management and retention, DR/PITR drills, target-scale testing, independent security assessment, and formal finance/legal/operations certification.
+The next execution queue remains focused on closing the evidence boundary, beginning with the M4.1 authoritative evidence intake contract: authoritative master-data confirmation, formal legal Rule Pack approval, approved population-specific ledger treatments, certified historical replay corpus, official external adapters and staging/pilot evidence, full three-way reconciliation, payment return/reversal workflows, production key management and retention, DR/PITR drills, target-scale testing, independent security assessment, and formal finance/legal/operations certification.
 
 > **Important:** The roadmap is a target sequence, not a claim that every stage is already completed. Morva must remain fail-closed for real payroll and real payment until the applicable evidence and approvals are complete.
 

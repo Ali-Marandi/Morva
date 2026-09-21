@@ -1,0 +1,48 @@
+name: M4.1 Authoritative Evidence Intake
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-1-authoritative-evidence-intake.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "tests/test_authoritative_evidence_intake_m4_1.py"
+      - "docs/M4_1_AUTHORITATIVE_EVIDENCE_INTAKE.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-1-authoritative-evidence-intake.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "tests/test_authoritative_evidence_intake_m4_1.py"
+      - "docs/M4_1_AUTHORITATIVE_EVIDENCE_INTAKE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/authoritative_evidence_intake.py
+          tests/test_authoritative_evidence_intake_m4_1.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_authoritative_evidence_intake_m4_1.py
+      - name: Boundary
+        run: |
+          echo "M4.1 is evidence-intake only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No external authority, credential, payroll record or production mutation is introduced." >> "$GITHUB_STEP_SUMMARY"
