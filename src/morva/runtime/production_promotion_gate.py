@@ -250,6 +250,8 @@ def load_authorization(path: Path) -> ProductionPromotionAuthorization:
             approver=payload["approver"],
             scope=payload.get("scope", "github_production_promotion"),
         )
+    except ProductionPromotionGateError:
+        raise
     except (KeyError, TypeError, ValueError) as exc:
         raise ProductionPromotionGateError(
             "promotion authorization structure is invalid"
