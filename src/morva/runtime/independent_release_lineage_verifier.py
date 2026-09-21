@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime, timezone
 import json
 from hashlib import sha256
@@ -139,8 +139,14 @@ def verify_release_lineage(
         ) from exc
 
     if stored != rebuilt:
+        differing_fields = [
+            field.name
+            for field in fields(ProductionReleaseLineage)
+            if getattr(stored, field.name) != getattr(rebuilt, field.name)
+        ]
+        detail = ", ".join(differing_fields) or "unknown fields"
         raise IndependentLineageVerificationError(
-            "stored lineage does not match independently rebuilt lineage"
+            f"stored lineage does not match independently rebuilt lineage: {detail}"
         )
 
     return IndependentLineageVerificationReceipt(
