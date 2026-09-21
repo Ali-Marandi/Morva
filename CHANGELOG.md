@@ -1,3 +1,15 @@
+## Unreleased — M4.1 Authoritative Evidence Intake
+
+### Evidence closure
+- Add a provider-neutral authoritative evidence intake contract with stable evidence IDs, source URI, SHA-256 source identity and exact population scope.
+- Record effective validity windows, issuer, approval actor/time, status and optional expiry without embedding real external evidence.
+- Add deterministic item/registry fingerprints, duplicate-ID protection, write-once registry output and explicit fail-closed activation-readiness evaluation.
+- Add focused regression coverage and a dedicated CI gate.
+
+### Safety
+- No ministry datasets, employee records, statutory rates, credentials, external provider activation or production payment mutation is introduced.
+- Activation readiness only reflects the software contract; authoritative evidence still requires real external artifacts and independent approval.
+
 ## Unreleased — M3.89 Readiness Verifier Contract Hardening
 
 ### Integration readiness
