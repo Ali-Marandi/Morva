@@ -1,3 +1,15 @@
+## Unreleased — M4.6 Adapter-Contract Evidence Bridge
+
+### Integration evidence closure
+- Bind official adapter evidence to accepted authoritative adapter-contract evidence.
+- Require exact contract-source URI and SHA-256 artifact identity.
+- Validate authority approval, effective window and expiry at binding time.
+- Preserve provider, schema version, repository and candidate SHA from the existing adapter-evidence contract.
+- Keep provider activation and credential use outside the bridge.
+
+### Safety
+- No endpoint activation, live integration call, credential or production mutation is introduced.
+
 ## Unreleased — M4.5 Rule-Pack Evidence Bridge
 
 ### Legal evidence closure
