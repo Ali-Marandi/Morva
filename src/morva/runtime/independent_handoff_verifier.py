@@ -125,7 +125,7 @@ def verify_handoff(
         ValueError,
     ) as exc:
         raise IndependentHandoffVerificationError(
-            "convergence or handoff verification failed"
+            f"convergence or handoff verification failed: {exc}"
         ) from exc
 
     if (
