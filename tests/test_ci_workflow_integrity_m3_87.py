@@ -138,6 +138,27 @@ jobs:
 
 
 
+@pytest.mark.parametrize("command", ["bash    -c", "sh\\t-c", "eval\\t"])
+def test_dynamic_shell_execution_with_whitespace_is_rejected(tmp_path: Path, command: str):
+    _write(
+        tmp_path,
+        ".github/workflows/dynamic-whitespace.yml",
+        f"""name: Dynamic Whitespace
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: {command} "echo unsafe"
+""",
+    )
+    receipt = scan_workflows(tmp_path, "Ali-Marandi/Morva")
+    assert any(
+        item.rule == "workflow-dynamic-execution" for item in receipt.findings
+    )
+
+
 def test_quoted_dynamic_execution_text_is_not_a_command(tmp_path: Path):
     _write(
         tmp_path,
