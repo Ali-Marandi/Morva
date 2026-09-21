@@ -1,0 +1,52 @@
+name: M4.11 Load Validation Evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-11-load-validation-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/load_validation_evidence.py"
+      - "tests/test_load_validation_evidence_m4_11.py"
+      - "tests/performance/**"
+      - "docs/M4_11_LOAD_VALIDATION_EVIDENCE.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-11-load-validation-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/load_validation_evidence.py"
+      - "tests/test_load_validation_evidence_m4_11.py"
+      - "tests/performance/**"
+      - "docs/M4_11_LOAD_VALIDATION_EVIDENCE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/load_validation_evidence.py
+          tests/test_load_validation_evidence_m4_11.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_load_validation_evidence_m4_11.py
+      - name: Boundary
+        run: |
+          echo "M4.11 records load-validation evidence only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No production capacity certification is claimed." >> "$GITHUB_STEP_SUMMARY"
