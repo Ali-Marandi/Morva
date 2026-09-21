@@ -232,6 +232,23 @@ def test_authorization_rejects_unapproved_gate(tmp_path: Path):
         authorization.assert_matches(gate)
 
 
+def test_authorization_requires_timezone_aware_timestamp(tmp_path: Path):
+    _, gate, *_ = build_test_gate(tmp_path)
+    for value, expected in [
+        ("not-a-timestamp", "ISO-8601"),
+        ("2026-09-19T22:00:00", "timezone"),
+    ]:
+        authorization = PublicationAuthorization(
+            authorization_id="AUTH-005",
+            gate_fingerprint=gate.fingerprint,
+            approved=True,
+            approved_at=value,
+            approver="operator",
+        )
+        with pytest.raises(ReleasePublicationExecutorError, match=expected):
+            authorization.assert_matches(gate)
+
+
 def test_authorization_requires_boolean_value(tmp_path: Path):
     _, _, _, _, metadata = build_test_gate(tmp_path)
     del metadata
