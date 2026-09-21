@@ -65,7 +65,7 @@ def test_publication_gate_fingerprint_is_deterministic(tmp_path: Path):
     _, _, pack_dir = build_test_pack(source_root, "pack")
 
     def build(root: Path):
-        archive = root / "morva-trust-evidence.tar.gz"
+        archive = root / "bundle.tar.gz"
         metadata = root / "artifact.json"
         artifact = build_artifact(
             pack_directory=pack_dir,
