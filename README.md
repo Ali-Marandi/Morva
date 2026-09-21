@@ -11,9 +11,10 @@
 **Public repository:** `Ali-Marandi/Morva`  
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
-**Latest `main` activity (2026-09-15):**
-- Latest main commit: `2a387a1` — `feat(web): make module workspace interactive in demo mode`
-- Recent merged work includes the local backend end-to-end regression gate and web/authentication hardening.
+**Latest `main` activity (2026-09-20):**
+- Latest main commit: `7cda45f` — `docs: record M3.88 verifier`
+- Main includes the M3.73–M3.88 readiness, handoff and integration-execution evidence chain.
+- The current development branch adds M3.90 dynamic workflow execution hardening.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
