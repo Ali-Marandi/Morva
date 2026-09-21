@@ -63,6 +63,21 @@ def test_accepted_nonexpired_evidence_is_activation_ready():
     assert registry.is_activation_ready(NOW)
 
 
+def test_future_effective_evidence_is_not_activation_ready():
+    item = _item(
+        effective_from="2026-09-23T00:00:00+00:00",
+        effective_to="2027-01-01T00:00:00+00:00",
+    )
+    registry = build_registry((item,), registered_at=NOW)
+    assert not registry.is_activation_ready(NOW)
+
+
+def test_future_approval_is_not_activation_ready():
+    item = _item(approved_at="2026-09-23T10:00:00+00:00")
+    registry = build_registry((item,), registered_at=NOW)
+    assert not registry.is_activation_ready(NOW)
+
+
 def test_duplicate_evidence_ids_are_rejected():
     first = _item(evidence_id="E-001")
     second = _item(evidence_id="E-001")
@@ -89,14 +104,12 @@ def test_invalid_effective_window_is_rejected():
         )
 
 
-def test_write_once_registry():
+def test_write_once_registry(tmp_path: Path):
     registry = build_registry((_item(),), registered_at=NOW)
-    path = Path("/tmp/morva-authoritative-evidence-test.json")
-    path.unlink(missing_ok=True)
+    path = tmp_path / "registry.json"
     write_registry(registry, path)
     with pytest.raises(AuthoritativeEvidenceIntakeError, match="write-once"):
         write_registry(registry, path)
-    path.unlink(missing_ok=True)
 
 
 def test_payload_roundtrip_is_json_safe():
