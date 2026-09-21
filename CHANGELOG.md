@@ -1,3 +1,14 @@
+## Unreleased — M4.9 Disaster-Recovery Evidence Bridge
+
+### Recovery evidence closure
+- Bind a recorded DR drill to accepted M4.1 `dr_report` evidence.
+- Require RPO/RTO compliance, WAL replay, point-in-time verification and encrypted-backup verification.
+- Bind the canonical drill fingerprint and evidence URI to the authoritative evidence item.
+- Preserve fail-closed approval, effective-window and expiry checks.
+
+### Safety
+- No production restore, infrastructure mutation, backup access or real DR certification is performed.
+
 ## Unreleased — M4.8 Three-Way Reconciliation Evidence
 
 ### Reconciliation evidence closure
