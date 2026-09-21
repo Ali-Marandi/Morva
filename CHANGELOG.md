@@ -1,3 +1,14 @@
+## Unreleased — M4.4 Master-Data Evidence Bridge
+
+### Authoritative master-data closure
+- Bind accepted M4.1 `master_data` evidence to the internal master-data acceptance assessment.
+- Require exact population-scope and SHA-256 equality, authority confirmation and preserved integrity fingerprints.
+- Require a distinct binding actor and current approval/effective/expiry validation.
+- Fail closed on missing, unaccepted, future, expired, out-of-scope or hash-inconsistent evidence.
+
+### Safety
+- No employee records, national identifiers, ministry datasets, credentials or production mutation is introduced.
+
 ## Unreleased — M4.3 Population-Scoped Treatment Evidence
 
 ### Legal treatment closure
