@@ -1,3 +1,12 @@
+## Unreleased — M3.89 Readiness Verifier Contract Hardening
+
+### Integration readiness
+- Harden the M3.88 receipt boundary with canonical adapter identity, candidate-SHA validation, SHA-256 fingerprint checks and timezone-aware verification time.
+- Add regression coverage for tampered readiness evidence and non-canonical adapter sets.
+
+### Safety
+- Verification-only; no provider activation, production credentials or deployment mutation is introduced.
+
 # Changelog
 
 All notable Morva implementation and distribution changes are recorded here.
