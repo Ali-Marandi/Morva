@@ -88,7 +88,6 @@ def test_publication_gate_fingerprint_is_deterministic(tmp_path: Path):
     second = build(second_root)
     assert first.fingerprint == second.fingerprint
 
-
 def test_gate_rejects_repository_mismatch(tmp_path: Path):
     artifact, _, gate_file, archive, metadata = build_test_gate(tmp_path)
     with pytest.raises(ReleasePublicationGateError, match="repository mismatch"):
