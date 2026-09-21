@@ -19,6 +19,8 @@ from morva.runtime.integration_execution_readiness_gate import (
     build_integration_execution_readiness_gate,
 )
 
+from morva.runtime.official_adapter_evidence import REQUIRED_ADAPTERS
+
 
 class IndependentIntegrationExecutionReadinessVerificationError(ValueError):
     """Raised when M3.86 execution readiness fails independent verification."""
@@ -37,6 +39,47 @@ class IndependentIntegrationExecutionReadinessVerificationReceipt:
     readiness_gate_fingerprint: str
     readiness_verification_fingerprint: str
     verified_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.verifier_version != 1:
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "unsupported M3.88 verifier version"
+            )
+        if not self.repository.strip():
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "repository is required"
+            )
+        if len(self.candidate_sha) != 40 or any(
+            char not in "0123456789abcdef" for char in self.candidate_sha.lower()
+        ):
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "candidate_sha must be a Git commit SHA-1"
+            )
+        if self.target_environment not in {"staging", "pilot"}:
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "target_environment must be staging or pilot"
+            )
+        if self.adapters != REQUIRED_ADAPTERS:
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "M3.88 receipt must cover the canonical adapter set"
+            )
+        for name, value in (
+            ("execution_readiness_gate_fingerprint", self.execution_readiness_gate_fingerprint),
+            ("execution_verification_fingerprint", self.execution_verification_fingerprint),
+            ("execution_evidence_fingerprint", self.execution_evidence_fingerprint),
+            ("readiness_gate_fingerprint", self.readiness_gate_fingerprint),
+            ("readiness_verification_fingerprint", self.readiness_verification_fingerprint),
+        ):
+            if len(value) != 64 or any(
+                char not in "0123456789abcdef" for char in value.lower()
+            ):
+                raise IndependentIntegrationExecutionReadinessVerificationError(
+                    f"{name} must be SHA-256"
+                )
+        if self.verified_at.tzinfo is None:
+            raise IndependentIntegrationExecutionReadinessVerificationError(
+                "verified_at must be timezone-aware"
+            )
 
     @property
     def fingerprint(self) -> str:
