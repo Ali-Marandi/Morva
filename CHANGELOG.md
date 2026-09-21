@@ -1,3 +1,16 @@
+## Unreleased — M4.5 Rule-Pack Evidence Bridge
+
+### Legal evidence closure
+- Bind each 1405 Rule Pack component evidence record to an accepted M4.1 `legal_rule` evidence item.
+- Require exact evidence ID, source URI, issuer and SHA-256 identity.
+- Require exact population scope, explicit treatment classification and existing reviewer/approver provenance.
+- Preserve `review_required` activation status until formal activation evidence is available.
+- Add focused regression coverage and a dedicated CI gate.
+
+### Safety
+- No statutory numeric rate, threshold, exemption amount, ministry dataset, employee record, credential or production activation is introduced.
+- The bridge connects evidence identities only; authoritative legal content remains externally supplied and independently approved.
+
 ## Unreleased — M4.4 Master-Data Evidence Bridge
 
 ### Authoritative master-data closure
