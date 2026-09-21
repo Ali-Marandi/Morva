@@ -1,0 +1,50 @@
+name: M4.8 Three-Way Reconciliation Evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-8-reconciliation-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/reconciliation_evidence.py"
+      - "tests/test_reconciliation_evidence_m4_8.py"
+      - "docs/M4_8_RECONCILIATION_EVIDENCE.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-8-reconciliation-evidence.yml"
+      - "src/morva/runtime/authoritative_evidence_intake.py"
+      - "src/morva/runtime/reconciliation_evidence.py"
+      - "tests/test_reconciliation_evidence_m4_8.py"
+      - "docs/M4_8_RECONCILIATION_EVIDENCE.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  reconciliation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/reconciliation_evidence.py
+          tests/test_reconciliation_evidence_m4_8.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_reconciliation_evidence_m4_8.py
+      - name: Boundary
+        run: |
+          echo "M4.8 binds three-way reconciliation evidence identities only." >> "$GITHUB_STEP_SUMMARY"
+          echo "No payment execution, Treasury call or bank call is performed." >> "$GITHUB_STEP_SUMMARY"
