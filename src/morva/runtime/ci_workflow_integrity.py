@@ -35,9 +35,9 @@ FORBIDDEN_MUTATIONS = (
 )
 
 FORBIDDEN_DYNAMIC_EXECUTION = (
-    ("eval", r"(?<![\\w-])eval(?=\\s|$)"),
-    ("bash -c", r"(?<![\\w-])bash\\s+-c(?=\\s|$)"),
-    ("sh -c", r"(?<![\\w-])sh\\s+-c(?=\\s|$)"),
+    ("eval", r"(?<![\w-])eval(?=\s|$)"),
+    ("bash -c", r"(?<![\w-])bash\s+-c(?=\s|$)"),
+    ("sh -c", r"(?<![\w-])sh\s+-c(?=\s|$)"),
 )
 
 
