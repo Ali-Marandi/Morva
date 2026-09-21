@@ -18,7 +18,7 @@ from morva.runtime.production_readiness_handoff import (
 
 def _sources(tmp_path: Path):
     (tmp_path / "a.json").write_text('{"a":1}\n', encoding="utf-8")
-    (tmp_path / "nested").mkdir()
+    (tmp_path / "nested").mkdir(exist_ok=True)
     (tmp_path / "nested" / "b.json").write_text('{"b":2}\n', encoding="utf-8")
     return ("a.json", "nested/b.json")
 
