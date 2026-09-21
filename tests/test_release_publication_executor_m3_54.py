@@ -95,6 +95,39 @@ def test_prepare_rejects_existing_release(monkeypatch, tmp_path: Path):
         )
 
 
+def test_prepare_fails_closed_on_release_lookup_error(monkeypatch, tmp_path: Path):
+    _, _, gate_file, archive, metadata = build_test_gate(tmp_path)
+
+    def run(command):
+        if command[0] == "git":
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=f"{SHA} refs/tags/{TAG}\\n",
+                stderr="",
+            )
+        return subprocess.CompletedProcess(
+            command,
+            1,
+            stdout="",
+            stderr="authentication failed",
+        )
+
+    monkeypatch.setattr("morva.runtime.release_publication_executor._run", run)
+    with pytest.raises(
+        ReleasePublicationExecutorError,
+        match="unable to inspect existing GitHub Release",
+    ):
+        prepare_publication(
+            gate_file=gate_file,
+            archive_path=archive,
+            artifact_metadata=metadata,
+            repository=REPOSITORY,
+            tag=TAG,
+            candidate_sha=SHA,
+        )
+
+
 def test_execute_requires_matching_authorization(monkeypatch, tmp_path: Path):
     artifact, gate, gate_file, archive, metadata = build_test_gate(tmp_path)
 
