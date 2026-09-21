@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 
@@ -48,9 +48,7 @@ def _inputs(tmp_path: Path):
         external_evidence_fingerprint=registry.fingerprint,
         required_roles=REQUIRED_ROLES,
         verified_roles=REQUIRED_ROLES,
-        certified_at=datetime.fromisoformat(
-            "2026-09-20T00:10:00+00:00"
-        ),
+        certified_at=datetime.now(timezone.utc) + timedelta(minutes=1),
     )
     certification_file = tmp_path / "certification.json"
     certification_file.write_text(
