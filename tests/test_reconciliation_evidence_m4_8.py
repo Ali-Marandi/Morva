@@ -134,3 +134,13 @@ def test_future_authority_is_rejected():
 def test_review_and_approval_actors_must_differ():
     with pytest.raises(ReconciliationEvidenceError, match="distinct"):
         _evidence(approver_id="reviewer")
+
+
+def test_duplicate_artifact_hashes_are_rejected():
+    with pytest.raises(ReconciliationEvidenceError, match="independently"):
+        _evidence(treasury_instruction_sha256=ENTITLEMENT)
+
+
+def test_invalid_jalali_period_is_rejected():
+    with pytest.raises(ReconciliationEvidenceError, match="Jalali"):
+        _evidence(payroll_period="2026-01")
