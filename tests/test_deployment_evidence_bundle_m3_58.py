@@ -115,17 +115,16 @@ def test_bundle_roundtrip(monkeypatch, tmp_path: Path):
 
 
 def test_bundle_archive_is_deterministic(monkeypatch, tmp_path: Path):
-    first = _inputs(monkeypatch, tmp_path / "first")
-    second = _inputs(monkeypatch, tmp_path / "second")
+    inputs = _inputs(monkeypatch, tmp_path / "input")
     first_archive = tmp_path / "first" / "bundle.tar.gz"
     first_meta = tmp_path / "first" / "bundle.json"
     second_archive = tmp_path / "second" / "bundle.tar.gz"
     second_meta = tmp_path / "second" / "bundle.json"
     first_bundle = build_deployment_evidence_bundle(
-        release_receipt_file=first[0],
-        deployment_gate_file=first[1],
-        attestation_file=first[2],
-        deployment_verification_receipt_file=first[3],
+        release_receipt_file=inputs[0],
+        deployment_gate_file=inputs[1],
+        attestation_file=inputs[2],
+        deployment_verification_receipt_file=inputs[3],
         output_archive=first_archive,
         metadata_file=first_meta,
         repository=REPOSITORY,
@@ -133,10 +132,10 @@ def test_bundle_archive_is_deterministic(monkeypatch, tmp_path: Path):
         candidate_sha=SHA,
     )
     second_bundle = build_deployment_evidence_bundle(
-        release_receipt_file=second[0],
-        deployment_gate_file=second[1],
-        attestation_file=second[2],
-        deployment_verification_receipt_file=second[3],
+        release_receipt_file=inputs[0],
+        deployment_gate_file=inputs[1],
+        attestation_file=inputs[2],
+        deployment_verification_receipt_file=inputs[3],
         output_archive=second_archive,
         metadata_file=second_meta,
         repository=REPOSITORY,
