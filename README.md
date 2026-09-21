@@ -99,7 +99,7 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through M3.90, including the M3.73–M3.90 readiness, release, deployment, integration and CI-integrity chain. M3.89, M4.1, M4.2 and M4.3 are now represented on the active delivery line; M4.3 binds approved legal evidence to population-scoped component treatment without fabricating statutory values. These controls do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through M3.90, including the M3.73–M3.90 readiness, release, deployment, integration and CI-integrity chain. M3.89, M4.1, M4.2, M4.3 and M4.4 are now represented on the active delivery line; M4.4 binds external master-data evidence to internally accepted master-data state without committing real records. These controls do not constitute legal, organizational or production certification on their own.
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
