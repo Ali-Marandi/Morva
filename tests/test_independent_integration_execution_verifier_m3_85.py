@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+from datetime import datetime
 import json
 from pathlib import Path
 
@@ -115,6 +117,11 @@ def test_execution_before_readiness_is_rejected(tmp_path: Path):
     execution, readiness, verification, registry, activation, manifest = _sources(tmp_path)
     payload = json.loads(execution.read_text(encoding="utf-8"))
     payload["checked_at"] = "2026-09-20T02:30:00+00:00"
+    updated = replace(
+        load_execution_evidence(execution),
+        checked_at=datetime.fromisoformat(payload["checked_at"]),
+    )
+    payload["evidence_fingerprint"] = updated.evidence_fingerprint
     execution.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         IndependentIntegrationExecutionVerificationError,
