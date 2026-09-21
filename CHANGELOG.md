@@ -1,3 +1,15 @@
+## Unreleased — M4.7 Authoritative Payroll Sample Evidence
+
+### Payroll validation evidence
+- Bind an approved reference sample to an exact population scope and Jalali payroll period.
+- Bind the sample input manifest, expected output artifact and comparison result using SHA-256 fingerprints.
+- Require distinct reviewer/approver provenance and current accepted M4.1 `payroll_sample` authority evidence.
+- Keep real payroll records and amounts outside the repository.
+
+### Safety
+- No employee record, national identifier, payroll amount, statutory rate or production payment authority is introduced.
+- The binding identifies and verifies evidence artifacts; it does not synthesize a sample or certify production correctness.
+
 ## Unreleased — M4.6 Adapter-Contract Evidence Bridge
 
 ### Integration evidence closure
