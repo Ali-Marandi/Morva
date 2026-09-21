@@ -22,6 +22,12 @@ ALLOWED_SOURCE_TYPES = (
     "security_assessment",
     "dr_report",
     "reconciliation",
+    "finance_approval",
+    "operations_approval",
+    "load_validation",
+    "release_certification",
+    "publication",
+    "deployment_validation",
 )
 
 
