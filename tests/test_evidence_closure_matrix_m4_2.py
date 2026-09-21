@@ -4,7 +4,9 @@ from datetime import datetime
 import pytest
 
 from morva.runtime.authoritative_evidence_intake import (
+    AuthoritativeEvidenceIntakeError,
     AuthoritativeEvidenceItem,
+    AuthoritativeEvidenceRegistry,
     build_registry,
 )
 from morva.runtime.evidence_closure_matrix import (
@@ -48,19 +50,11 @@ def test_canonical_requirements_cover_all_roles():
 
 
 def test_empty_registry_cannot_be_evaluated():
-    with pytest.raises(EvidenceClosureMatrixError):
-        from morva.runtime.authoritative_evidence_intake import (
-            AuthoritativeEvidenceRegistry,
-        )
-
-        evaluate_closure(
-            AuthoritativeEvidenceRegistry(
-                registry_version=1,
-                items=(),
-                registered_at=NOW,
-            ),
-            repository=REPOSITORY,
-            checked_at=NOW,
+    with pytest.raises(AuthoritativeEvidenceIntakeError):
+        AuthoritativeEvidenceRegistry(
+            registry_version=1,
+            items=(),
+            registered_at=NOW,
         )
 
 
