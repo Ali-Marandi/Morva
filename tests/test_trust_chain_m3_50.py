@@ -387,7 +387,8 @@ def test_chain_rejects_release_bundle_bound_to_wrong_registry(tmp_path: Path):
     fixture = make_fixture(tmp_path)
     result_bundle_payload = json.loads((tmp_path / "bundle.json").read_text(encoding="utf-8"))
     original = result_bundle_payload["registry_fingerprint"]
-    result_bundle_payload["registry_fingerprint"] = ("0" if original[-1] != "0" else "1") + original[1:]
+    replacement = "0" if original[-1] != "0" else "1"
+    result_bundle_payload["registry_fingerprint"] = original[:-1] + replacement
     (tmp_path / "bundle.json").write_text(
         json.dumps(result_bundle_payload, sort_keys=True),
         encoding="utf-8",
