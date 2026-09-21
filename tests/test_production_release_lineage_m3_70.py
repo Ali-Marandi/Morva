@@ -245,6 +245,19 @@ def test_mismatched_certification_is_rejected(tmp_path: Path):
     technical, final, certification, registry, policy, *_ = _inputs(tmp_path)
     payload = json.loads(certification.read_text(encoding="utf-8"))
     payload["candidate_sha"] = "f" * 40
+    changed = IndependentCertificationVerificationReceipt(
+        verifier_version=int(payload["verifier_version"]),
+        repository=payload["repository"],
+        release_id=payload["release_id"],
+        tag=payload["tag"],
+        candidate_sha=payload["candidate_sha"],
+        final_readiness_fingerprint=payload["final_readiness_fingerprint"],
+        external_evidence_fingerprint=payload["external_evidence_fingerprint"],
+        certification_gate_fingerprint=payload["certification_gate_fingerprint"],
+        verified_roles=tuple(payload["verified_roles"]),
+        verified_at=datetime.fromisoformat(payload["verified_at"]),
+    )
+    payload["fingerprint"] = changed.fingerprint
     certification.write_text(
         json.dumps(payload, sort_keys=True) + "\n",
         encoding="utf-8",
