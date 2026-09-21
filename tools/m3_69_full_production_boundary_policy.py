@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+
+from morva.runtime.production_boundary_policy import ProductionBoundaryPolicyError
 from morva.runtime.production_boundary_policy_v2 import scan_full_production_boundary
 
 
@@ -20,6 +22,10 @@ def main() -> int:
             repository=args.repository,
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
+        if not receipt.passed:
+            raise ProductionBoundaryPolicyError(
+                "full production-boundary policy failed"
+            )
         args.output.write_text(
             __import__("json").dumps(
                 receipt.to_payload(),
