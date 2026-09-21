@@ -115,13 +115,21 @@ def test_readiness_tamper_is_rejected(tmp_path: Path):
 
 def test_execution_before_readiness_is_rejected(tmp_path: Path):
     execution, readiness, verification, registry, activation, manifest = _sources(tmp_path)
-    payload = json.loads(execution.read_text(encoding="utf-8"))
-    payload["checked_at"] = "2026-09-20T02:30:00+00:00"
-    updated = replace(
-        load_execution_evidence(execution),
-        checked_at=datetime.fromisoformat(payload["checked_at"]),
+    receipt = load_execution_evidence(execution)
+    receipt = replace(
+        receipt,
+        checked_at=datetime.fromisoformat("2026-09-20T02:30:00+00:00"),
+        evidence_items=tuple(
+            replace(
+                item,
+                started_at="2026-09-20T02:00:00+00:00",
+                finished_at="2026-09-20T02:10:00+00:00",
+            )
+            for item in receipt.evidence_items
+        ),
     )
-    payload["evidence_fingerprint"] = updated.evidence_fingerprint
+    payload = receipt.to_payload()
+    execution.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     execution.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         IndependentIntegrationExecutionVerificationError,
