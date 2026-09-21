@@ -156,14 +156,6 @@ def evaluate_closure(
         )
     if not repository.strip():
         raise EvidenceClosureMatrixError("repository is required")
-    if any(
-        item.repository != repository
-        for item in registry.items
-    ):
-        raise EvidenceClosureMatrixError(
-            "registry contains evidence from another repository"
-        )
-
     now = checked_at.astimezone(timezone.utc)
     by_type = {
         source_type: []
