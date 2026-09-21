@@ -177,7 +177,6 @@ def evaluate_closure(
     blocked: list[str] = []
 
     for requirement in CANONICAL_REQUIREMENTS:
-        matches = by_type[requirement.role] if requirement.role in by_type else []
         candidates = [
             item
             for source_type in requirement.allowed_source_types
