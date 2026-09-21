@@ -228,13 +228,13 @@ def build_final_readiness_gate(
         raise FinalProductionReadinessError(
             "technical policy gate did not pass"
         )
-    if (
-        technical.repository != repository
-        or technical.tag != tag
-        or technical.candidate_sha.lower() != candidate_sha.lower()
-    ):
+    if technical.repository != repository or technical.tag != tag:
         raise FinalProductionReadinessError(
-            "technical readiness identity mismatch"
+            "technical readiness repository/tag mismatch"
+        )
+    if technical.candidate_sha.lower() != candidate_sha.lower():
+        raise FinalProductionReadinessError(
+            "technical readiness candidate SHA mismatch"
         )
     if (
         freshness.repository != repository
