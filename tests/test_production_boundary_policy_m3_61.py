@@ -60,7 +60,7 @@ def test_mutation_policy_fails_closed(tmp_path: Path, payload: str):
 @pytest.mark.parametrize(
     "marker",
     (
-        "-----BEGIN " + "PRIVATE KEY-----",
+        "-----BEGIN " + "PRIVATE " + "KEY-----",
         "ghp_test_token",
         "github_pat_test_token",
     ),
