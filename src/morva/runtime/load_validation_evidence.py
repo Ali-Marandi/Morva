@@ -51,6 +51,10 @@ class LoadValidationEvidence:
             raise LoadValidationEvidenceError(
                 "unsupported load-validation evidence version"
             )
+        if self.environment not in {"staging", "pilot"}:
+            raise LoadValidationEvidenceError(
+                "environment must be staging or pilot"
+            )
         for name, value in (
             ("validation_id", self.validation_id),
             ("environment", self.environment),
@@ -77,6 +81,12 @@ class LoadValidationEvidence:
         if self.throughput_per_second <= 0:
             raise LoadValidationEvidenceError(
                 "throughput_per_second must be positive"
+            )
+        expected_throughput = self.target_employees / self.elapsed_seconds
+        tolerance = max(0.01, expected_throughput * 0.001)
+        if abs(self.throughput_per_second - expected_throughput) > tolerance:
+            raise LoadValidationEvidenceError(
+                "throughput_per_second is inconsistent with target and elapsed time"
             )
         if self.status != "passed":
             raise LoadValidationEvidenceError(
