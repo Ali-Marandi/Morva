@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
+import re
 
 from morva.runtime.authoritative_evidence_intake import (
     AuthoritativeEvidenceRegistry,
@@ -12,6 +13,9 @@ from morva.runtime.authoritative_evidence_intake import (
 
 class ReconciliationEvidenceError(ValueError):
     """Raised when three-way reconciliation evidence is unsafe."""
+
+
+_PERIOD_PATTERN = re.compile(r"^14\d{2}-(?:0[1-9]|1[0-2])$")
 
 
 def _timestamp(name: str, value: str) -> datetime:
@@ -61,9 +65,22 @@ class ThreeWayReconciliationEvidence:
         ):
             if not value.strip():
                 raise ReconciliationEvidenceError(f"{name} is required")
+        if not _PERIOD_PATTERN.fullmatch(self.payroll_period):
+            raise ReconciliationEvidenceError(
+                "payroll_period must use Jalali YYYY-MM format"
+            )
         if self.reconciliation_status != "reconciled":
             raise ReconciliationEvidenceError(
                 "reconciliation status must be reconciled"
+            )
+        artifact_hashes = (
+            self.morva_entitlement_sha256.lower(),
+            self.treasury_instruction_sha256.lower(),
+            self.bank_settlement_sha256.lower(),
+        )
+        if len(set(artifact_hashes)) != 3:
+            raise ReconciliationEvidenceError(
+                "three-way artifact hashes must be independently identified"
             )
         for name, value in (
             ("morva_entitlement_sha256", self.morva_entitlement_sha256),
