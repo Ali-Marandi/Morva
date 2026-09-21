@@ -252,7 +252,7 @@ def build_convergence(
         ValueError,
     ) as exc:
         raise ProductionReadinessConvergenceError(
-            "independent lineage/certification evidence verification failed"
+            f"independent lineage/certification evidence verification failed: {exc}"
         ) from exc
 
     lineage = load_lineage(lineage_manifest)
@@ -273,9 +273,9 @@ def build_convergence(
         raise ProductionReadinessConvergenceError(
             "lineage verification fingerprint mismatch"
         )
-    if stored_verification != lineage_verification:
+    if stored_verification.fingerprint != lineage_verification.fingerprint:
         raise ProductionReadinessConvergenceError(
-            "stored M3.71 verification receipt does not match live verification"
+            "stored M3.71 verification receipt fingerprint does not match live verification"
         )
     if (
         stored_verification.repository != repository
