@@ -185,7 +185,8 @@ def build_evidence_registry(
                 raise ExternalCertificationEvidenceError(
                     f"external evidence is expired for role {item.role}"
                 )
-    return tuple(sorted(items, key=lambda item: item.role))
+    by_role = {item.role: item for item in items}
+    return tuple(by_role[role] for role in REQUIRED_ROLES)
 
 
 @dataclass(frozen=True, slots=True)
