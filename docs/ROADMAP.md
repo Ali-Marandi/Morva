@@ -83,6 +83,25 @@
 - M3.70 production release lineage manifest consolidating final readiness, certification, external evidence and full policy fingerprints
 - M3.71 independent production release lineage verifier reconstructing and rechecking the M3.70 lineage from its source evidence
 - M3.72 production-readiness convergence object binding M3.71 verification, M3.69 full boundary policy and complete external evidence for controlled external handoff
+- M3.73 readiness handoff manifest and fail-closed handoff gate
+- M3.74 independent readiness-handoff verifier
+- M3.75 official adapter evidence contract
+- M3.76 independent adapter-evidence verifier
+- M3.77 adapter activation gate
+- M3.78 independent adapter activation verifier
+- M3.79 fail-closed integration adapter runtime boundary
+- M3.80 integration contract manifest
+- M3.81 independent integration-contract verifier
+- M3.82 integration readiness gate
+- M3.83 independent integration-readiness verifier
+- M3.84 staging/pilot integration execution evidence contract
+- M3.85 independent integration execution verifier
+- M3.86 integration execution readiness gate
+- M3.87 CI workflow integrity gate
+- M3.88 independent integration-execution readiness verifier
+- M3.89 readiness-verifier receipt-contract hardening
+- M3.90 dynamic workflow execution hardening for CI integrity and production-boundary scanners
+
 
 - M3.90 dynamic workflow execution hardening for CI integrity and production-boundary scanners (`eval`, `bash -c`, `sh -c`) with dedicated regression coverage
 ## Current execution queue
