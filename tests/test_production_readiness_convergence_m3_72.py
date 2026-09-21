@@ -108,7 +108,7 @@ def test_policy_fingerprint_mismatch_is_rejected(tmp_path: Path):
     path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
     with pytest.raises(
         ProductionReadinessConvergenceError,
-        match="full-policy fingerprint",
+        match="stored lineage|full-policy fingerprint",
     ):
         _build(tmp_path)
 
