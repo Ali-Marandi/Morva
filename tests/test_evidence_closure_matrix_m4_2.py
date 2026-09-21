@@ -12,7 +12,6 @@ from morva.runtime.authoritative_evidence_intake import (
 from morva.runtime.evidence_closure_matrix import (
     CANONICAL_REQUIREMENTS,
     CLOSURE_ROLE_SOURCE_TYPES,
-    EvidenceClosureMatrixError,
     evaluate_closure,
 )
 
