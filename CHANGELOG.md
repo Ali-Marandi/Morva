@@ -1,3 +1,14 @@
+## Unreleased — M4.11 Load Validation Evidence
+
+### Performance evidence closure
+- Bind target-scale load results to exact workload profile and population scope.
+- Require processed population to equal target population and enforce a minimum 10,000-employee validation target.
+- Require throughput to be numerically consistent with target population and measured elapsed time.
+- Require distinct reviewer/approver provenance and accepted authoritative `load_validation` evidence.
+
+### Safety
+- No production capacity certification, live workload data or employee records are introduced.
+
 ## Unreleased — M4.10 Security Evidence Bridge
 
 ### Security evidence closure
