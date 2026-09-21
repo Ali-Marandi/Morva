@@ -6,7 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from morva.runtime.external_certification_evidence import REQUIRED_ROLES
+from morva.runtime.external_certification_evidence import (
+    REQUIRED_ROLES,
+    ExternalCertificationEvidence,
+    ExternalCertificationEvidenceRegistry,
+)
 from morva.runtime.final_readiness_verifier import verify_final_readiness
 from morva.runtime.independent_certification_verifier import (
     IndependentCertificationVerificationError,
@@ -138,8 +142,30 @@ def test_expired_evidence_is_rejected(tmp_path: Path):
     technical, freshness, final, registry, certification = _inputs(tmp_path)
     payload = json.loads(registry.read_text(encoding="utf-8"))
     payload["items"][0]["expires_at"] = "2026-09-20T00:00:00+00:00"
+    items = tuple(
+        ExternalCertificationEvidence(
+            evidence_version=int(item["evidence_version"]),
+            role=item["role"],
+            evidence_id=item["evidence_id"],
+            repository=item["repository"],
+            candidate_sha=item["candidate_sha"],
+            issuer=item["issuer"],
+            status=item["status"],
+            digest_sha256=item["digest_sha256"],
+            verified_at=item["verified_at"],
+            expires_at=item.get("expires_at"),
+        )
+        for item in payload["items"]
+    )
+    tampered = ExternalCertificationEvidenceRegistry(
+        registry_version=int(payload["registry_version"]),
+        repository=payload["repository"],
+        candidate_sha=payload["candidate_sha"],
+        items=items,
+        registered_at=datetime.fromisoformat(payload["registered_at"]),
+    )
     registry.write_text(
-        json.dumps(payload) + "\n",
+        json.dumps(tampered.to_payload()) + "\n",
         encoding="utf-8",
     )
     with pytest.raises(
