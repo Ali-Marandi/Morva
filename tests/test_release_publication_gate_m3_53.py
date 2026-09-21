@@ -56,12 +56,36 @@ def test_publication_gate_round_trip(tmp_path: Path):
 
 
 def test_publication_gate_fingerprint_is_deterministic(tmp_path: Path):
+    source_root = tmp_path / "source"
     first_root = tmp_path / "one"
     second_root = tmp_path / "two"
+    source_root.mkdir()
     first_root.mkdir()
     second_root.mkdir()
-    first = build_test_gate(first_root)[1]
-    second = build_test_gate(second_root)[1]
+    _, _, pack_dir = build_test_pack(source_root, "pack")
+
+    def build(root: Path):
+        archive = root / "morva-trust-evidence.tar.gz"
+        metadata = root / "artifact.json"
+        artifact = build_artifact(
+            pack_directory=pack_dir,
+            output_archive=archive,
+            metadata_file=metadata,
+            expected_sha=SHA,
+        )
+        gate_file = root / "publication-gate.json"
+        return build_gate(
+            repository=REPOSITORY,
+            archive_path=archive,
+            artifact_metadata=metadata,
+            output_gate=gate_file,
+            expected_sha=SHA,
+            expected_tag=artifact.tag,
+            verified_at=NOW,
+        )
+
+    first = build(first_root)
+    second = build(second_root)
     assert first.fingerprint == second.fingerprint
 
 
