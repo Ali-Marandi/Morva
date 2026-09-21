@@ -1,3 +1,15 @@
+## Unreleased — M4.12 Evidence Convergence
+
+### Evidence convergence
+- Converge certification-role receipts against the exact M4.1 registry fingerprint.
+- Require canonical binding kinds, correct authoritative source types, current accepted evidence and matching population scope.
+- Preserve explicitly blocked roles when real external evidence has not yet been supplied.
+- Produce a deterministic convergence fingerprint for the current evidence state.
+
+### Safety
+- No approval, legal evidence, payroll sample, adapter execution, security assessment or DR drill is synthesized.
+- Convergence is a readiness artifact, not production certification.
+
 ## Unreleased — M4.11 Load Validation Evidence
 
 ### Performance evidence closure
