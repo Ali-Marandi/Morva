@@ -116,7 +116,7 @@ def test_prepare_fails_closed_on_release_lookup_error(monkeypatch, tmp_path: Pat
     monkeypatch.setattr("morva.runtime.release_publication_executor._run", run)
     with pytest.raises(
         ReleasePublicationExecutorError,
-        match="unable to inspect existing GitHub Release",
+        match="unable to inspect existing GitHub release",
     ):
         prepare_publication(
             gate_file=gate_file,
