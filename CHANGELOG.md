@@ -1,3 +1,15 @@
+## Unreleased — M4.8 Three-Way Reconciliation Evidence
+
+### Reconciliation evidence closure
+- Bind Morva entitlement, Treasury/PFM instruction and bank settlement artifacts with three independent SHA-256 identities.
+- Require an explicit reconciled status, comparison fingerprint and exact population/period scope.
+- Require distinct reviewer/approver provenance and current accepted M4.1 reconciliation evidence.
+- Fail closed on missing, unaccepted, future, expired, out-of-scope or hash-inconsistent authority evidence.
+
+### Safety
+- No payment execution, Treasury API call, bank API call, financial record or employee record is introduced.
+- The contract records evidence identity and reconciliation state only.
+
 ## Unreleased — M4.7 Authoritative Payroll Sample Evidence
 
 ### Payroll validation evidence
