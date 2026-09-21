@@ -124,6 +124,8 @@ def test_expired_authority_is_rejected():
 def test_invalid_period_is_rejected():
     with pytest.raises(PayrollSampleEvidenceError, match="Jalali"):
         _sample(payroll_period="2026-01")
+    with pytest.raises(PayrollSampleEvidenceError, match="Jalali"):
+        _sample(payroll_period="1405-01-extra")
 
 
 def test_distinct_review_and_approval_is_required():
