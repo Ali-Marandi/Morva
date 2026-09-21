@@ -42,7 +42,6 @@ def _readiness_files(tmp_path: Path):
         source_environment="staging",
         policy_fingerprint="e" * 64,
         policy_passed=True,
-        source_environment="staging",
         target_environment="production",
         checked_at=datetime.fromisoformat("2026-09-20T00:00:00+00:00"),
     )
