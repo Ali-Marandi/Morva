@@ -44,4 +44,8 @@ def scan_full_production_boundary(
         raise ProductionBoundaryPolicyError(
             "full production-boundary workflow coverage is incomplete"
         )
+    if any(finding.rule == "readable" for finding in receipt.findings):
+        raise ProductionBoundaryPolicyError(
+            "full production-boundary workflow coverage is incomplete"
+        )
     return receipt
