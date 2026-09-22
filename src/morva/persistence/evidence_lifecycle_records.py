@@ -225,6 +225,13 @@ class EvidenceLifecycleRepository:
         )
         return list(self.session.scalars(query).all())
 
+    def list_all(self) -> list[AuthoritativeEvidenceLifecycleEventRecord]:
+        query = select(AuthoritativeEvidenceLifecycleEventRecord).order_by(
+            AuthoritativeEvidenceLifecycleEventRecord.linked_at.asc(),
+            AuthoritativeEvidenceLifecycleEventRecord.predecessor_evidence_id.asc(),
+        )
+        return list(self.session.scalars(query).all())
+
 
 def _ensure_timezone(value: datetime, name: str) -> datetime:
     if value.tzinfo is None:
