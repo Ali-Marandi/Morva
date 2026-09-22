@@ -187,6 +187,27 @@ def test_scope_isolation_is_enforced(session):
         )
 
 
+def test_tampered_persisted_binding_is_rejected(session):
+    _submission(session, evidence_id="E-LEGAL")
+    repository = EvidenceRoleBindingRepository(session)
+    record = repository.create_binding(
+        certification_role="legal_approval",
+        authoritative_evidence_id="E-LEGAL",
+        bound_by="manager-one",
+        bound_at=NOW,
+        reason="initial",
+        principal_scope=Scope.PROVINCE,
+        principal_scope_id="province-1",
+    )
+    record.binding_fingerprint = "f" * 64
+    with pytest.raises(Exception, match="fingerprint mismatch"):
+        repository.list_current(
+            principal_scope=Scope.PROVINCE,
+            principal_scope_id="province-1",
+            checked_at=NOW,
+        )
+
+
 def test_duplicate_current_role_binding_is_rejected(session):
     _submission(session, evidence_id="E-LEGAL")
     repository = EvidenceRoleBindingRepository(session)
