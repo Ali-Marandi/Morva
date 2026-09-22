@@ -101,6 +101,16 @@ class IntegrationExecutionReadinessVerificationRepository:
                 "integration readiness persistence requires the canonical repository"
             )
 
+        assessment = verification.assessment
+        assessment_checked_at = _ensure_timezone(
+            assessment.checked_at, "assessment_checked_at"
+        )
+        verified_at = _ensure_timezone(verification.verified_at, "verified_at")
+        if assessment_checked_at > verified_at:
+            raise IntegrationExecutionReadinessPersistenceError(
+                "verification timestamp precedes assessment check time"
+            )
+
         verification_fingerprint = verification.fingerprint.lower()
         existing = self.session.scalar(
             select(IntegrationExecutionReadinessVerificationRecord).where(
@@ -109,18 +119,19 @@ class IntegrationExecutionReadinessVerificationRepository:
             )
         )
         if existing is not None:
+            try:
+                existing.to_verification()
+            except IntegrationExecutionReadinessPersistenceError:
+                raise
             return existing
 
-        assessment = verification.assessment
         record = IntegrationExecutionReadinessVerificationRecord(
             assessment_version=assessment.assessment_version,
             repository=assessment.repository,
             candidate_sha=assessment.candidate_sha.lower(),
             target_environment=assessment.target_environment,
-            assessment_checked_at=_ensure_timezone(
-                assessment.checked_at, "assessment_checked_at"
-            ),
-            verified_at=_ensure_timezone(verification.verified_at, "verified_at"),
+            assessment_checked_at=assessment_checked_at,
+            verified_at=verified_at,
             evidence_readiness_fingerprint=assessment.evidence_readiness_fingerprint.lower(),
             binding_fingerprint=assessment.binding_fingerprint.lower(),
             binding_verification_fingerprint=assessment.binding_verification_fingerprint.lower(),
