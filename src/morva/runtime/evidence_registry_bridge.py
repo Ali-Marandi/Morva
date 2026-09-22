@@ -85,21 +85,21 @@ def submission_to_authoritative_item(
     try:
         item = AuthoritativeEvidenceItem(
             intake_version=1,
-        evidence_id=record.evidence_id.strip(),
-        source_type=record.source_type.strip(),
-        source_uri=record.source_uri.strip(),
-        source_sha256=record.source_sha256.strip().lower(),
-        issuer=record.issuer.strip(),
-        population_scope=record.population_scope.strip(),
-        effective_from=_as_iso(record.effective_from, "effective_from"),
-        effective_to=(
-            _as_iso(record.effective_to, "effective_to")
-            if record.effective_to
-            else None
-        ),
-        status="accepted",
-        approved_by=record.decided_by.strip(),
-        approved_at=_as_iso(record.decided_at, "decided_at"),
+            evidence_id=record.evidence_id.strip(),
+            source_type=record.source_type.strip(),
+            source_uri=record.source_uri.strip(),
+            source_sha256=record.source_sha256.strip().lower(),
+            issuer=record.issuer.strip(),
+            population_scope=record.population_scope.strip(),
+            effective_from=_as_iso(record.effective_from, "effective_from"),
+            effective_to=(
+                _as_iso(record.effective_to, "effective_to")
+                if record.effective_to
+                else None
+            ),
+            status="accepted",
+            approved_by=record.decided_by.strip(),
+            approved_at=_as_iso(record.decided_at, "decided_at"),
             expires_at=(
                 _as_iso(record.expires_at, "expires_at")
                 if record.expires_at
