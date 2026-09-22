@@ -87,6 +87,20 @@ class EvidenceReadinessAssessment:
                 "each blocked role must have exactly one remediation item"
             )
         _sha256("fingerprint", self.fingerprint)
+        expected_fingerprint = _readiness_fingerprint(
+            repository=self.repository,
+            checked_at=self.checked_at,
+            registry_fingerprint=self.registry_fingerprint,
+            convergence_fingerprint=self.convergence_fingerprint,
+            lifecycle_fingerprint=self.lifecycle_fingerprint,
+            ready_roles=self.ready_roles,
+            blocked_roles=self.blocked_roles,
+            remediation=self.remediation,
+        )
+        if self.fingerprint.lower() != expected_fingerprint:
+            raise EvidenceReadinessError(
+                "evidence readiness assessment fingerprint mismatch"
+            )
 
     @property
     def complete(self) -> bool:
