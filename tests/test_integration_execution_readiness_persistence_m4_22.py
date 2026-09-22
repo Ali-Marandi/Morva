@@ -159,3 +159,17 @@ def test_tampered_persisted_verification_fails_closed(session):
         match="verification fingerprint mismatch",
     ):
         repository.latest(candidate_sha=SHA, target_environment="staging")
+
+def test_malformed_blocker_payload_fails_closed(session):
+    verification = _verified()
+    repository = IntegrationExecutionReadinessVerificationRepository(session)
+    record = repository.record(verification)
+    session.flush()
+    record.blockers = None
+
+    with pytest.raises(
+        IntegrationExecutionReadinessPersistenceError,
+        match="structurally invalid",
+    ):
+        repository.latest(candidate_sha=SHA, target_environment="staging")
+\n
