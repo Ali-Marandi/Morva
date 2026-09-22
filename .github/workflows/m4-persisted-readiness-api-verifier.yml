@@ -1,0 +1,63 @@
+name: M4 Persisted Readiness API Verifier
+
+on:
+  push:
+    paths:
+      - "src/morva/runtime/independent_persisted_integration_execution_readiness_verifier_m4_23.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "tests/test_persisted_integration_execution_readiness_verifier_m4_23.py"
+      - "tests/test_persisted_integration_execution_readiness_api_m4_23.py"
+      - ".github/workflows/m4-persisted-readiness-api-verifier.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "src/morva/runtime/independent_persisted_integration_execution_readiness_verifier_m4_23.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "tests/test_persisted_integration_execution_readiness_verifier_m4_23.py"
+      - "tests/test_persisted_integration_execution_readiness_api_m4_23.py"
+      - ".github/workflows/m4-persisted-readiness-api-verifier.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-verifier:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/independent_persisted_integration_execution_readiness_verifier_m4_23.py
+          src/morva/api/v1/integration_execution_readiness.py
+          tests/test_persisted_integration_execution_readiness_verifier_m4_23.py
+          tests/test_persisted_integration_execution_readiness_api_m4_23.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_persisted_integration_execution_readiness_verifier_m4_23.py
+          tests/test_persisted_integration_execution_readiness_api_m4_23.py
+      - name: Boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          text = Path(
+              "src/morva/runtime/independent_persisted_integration_execution_readiness_verifier_m4_23.py"
+          ).read_text(encoding="utf-8")
+          assert "requests." not in text
+          assert "httpx." not in text
+          assert "subprocess" not in text
+          assert "POST " not in text
+          assert "PUT " not in text
+          assert "DELETE " not in text
+          PY
