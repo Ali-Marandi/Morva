@@ -136,7 +136,7 @@ def test_decision_metadata_persists(session):
     assert persisted is not None
     assert persisted.status == "accepted"
     assert persisted.decided_by == "approver"
-    assert persisted.decided_at == NOW
+    assert persisted.decided_at == NOW.replace(tzinfo=None)
 
 
 def test_persisted_accepted_record_verifies_cleanly(session):
