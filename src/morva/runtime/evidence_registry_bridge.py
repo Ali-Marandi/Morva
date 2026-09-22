@@ -185,7 +185,6 @@ def _projection_fingerprint(
 ) -> str:
     payload = {
         "projection_version": 1,
-        "projected_at": projected_at.astimezone(timezone.utc).isoformat(),
         "registry_fingerprint": registry.fingerprint,
         "accepted_evidence_ids": list(accepted_evidence_ids),
     }
