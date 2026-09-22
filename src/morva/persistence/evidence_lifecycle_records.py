@@ -125,8 +125,13 @@ class EvidenceLifecycleRepository:
         if successor is None:
             raise KeyError(f"successor evidence not found: {successor_id}")
 
-        verify_submission_record(predecessor)
-        verify_submission_record(successor)
+        try:
+            verify_submission_record(predecessor)
+            verify_submission_record(successor)
+        except ValueError as exc:
+            raise EvidenceLifecycleError(
+                f"linked evidence submission verification failed: {exc}"
+            ) from exc
         if predecessor.status != "accepted" or successor.status != "accepted":
             raise EvidenceLifecycleError(
                 "lifecycle links require accepted predecessor and successor evidence"
