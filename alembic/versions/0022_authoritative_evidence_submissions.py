@@ -22,6 +22,8 @@ def upgrade() -> None:
         sa.Column("source_sha256", sa.String(64), nullable=False),
         sa.Column("issuer", sa.String(200), nullable=False),
         sa.Column("population_scope", sa.String(300), nullable=False),
+        sa.Column("submission_scope", sa.String(30), nullable=False),
+        sa.Column("submission_scope_id", sa.String(100), nullable=False),
         sa.Column("effective_from", sa.DateTime(timezone=True), nullable=False),
         sa.Column("effective_to", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
@@ -61,6 +63,16 @@ def upgrade() -> None:
         "ix_authoritative_evidence_submissions_population_scope",
         "authoritative_evidence_submissions",
         ["population_scope"],
+    )
+    op.create_index(
+        "ix_authoritative_evidence_submissions_submission_scope",
+        "authoritative_evidence_submissions",
+        ["submission_scope"],
+    )
+    op.create_index(
+        "ix_authoritative_evidence_submissions_submission_scope_id",
+        "authoritative_evidence_submissions",
+        ["submission_scope_id"],
     )
     op.create_index(
         "ix_authoritative_evidence_submissions_effective_from",
