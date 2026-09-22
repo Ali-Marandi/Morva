@@ -77,7 +77,7 @@ class AuthoritativeEvidenceLifecycleEventRecord(Base):
 
 
 class EvidenceLifecycleRepository:
-    """Transactional persistence boundary for M4.15 evidence lineage."""
+    """Transactional persistence boundary for M4.15/M4.16 evidence lineage."""
 
     def __init__(self, session: Session) -> None:
         self.session = session
