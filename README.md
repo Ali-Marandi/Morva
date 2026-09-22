@@ -12,8 +12,8 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-22):**
-- Latest main commit: `3bb6d16` — `feat: M4.1 authoritative evidence intake (#67)`
-- Main now includes M3.90 dynamic workflow-execution hardening, M3.89 readiness-verifier hardening, and the M4.1 authoritative evidence-intake boundary.
+- Latest main commit: `6d14141` — `feat: M4.15 evidence lifecycle contract`
+- Main now includes the complete M4.1–M4.15 evidence line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission and evidence lifecycle lineage.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -103,7 +103,7 @@ The current implementation has established major software-side foundations throu
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
-The next execution queue remains focused on closing the evidence boundary, beginning with the M4.1 intake contract and the M4.2 closure matrix and M4.3 population-treatment evidence boundary, M4.5 Rule Pack evidence binding and M4.6 adapter-contract evidence binding: authoritative master-data confirmation, formal legal Rule Pack approval, approved population-specific ledger treatments, certified historical replay corpus, official external adapters and staging/pilot evidence, full three-way reconciliation, payment return/reversal workflows, production key management and retention, DR/PITR drills, target-scale testing, independent security assessment, and formal finance/legal/operations certification.
+The next execution queue remains focused on operationalizing the evidence lifecycle: persistent lifecycle event storage and authenticated lifecycle APIs, renewal/supersession workflow integration with registry projection and M4.12 convergence, evidence-remediation visibility, then authorized staging/pilot integration and the still-pending real-world legal, payroll-sample, reconciliation, DR, load, security and production-certification evidence.
 
 > **Important:** The roadmap is a target sequence, not a claim that every stage is already completed. Morva must remain fail-closed for real payroll and real payment until the applicable evidence and approvals are complete.
 
