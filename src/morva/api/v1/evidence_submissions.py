@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
@@ -112,7 +113,11 @@ def create_submission(
             reason="authoritative evidence submitted for controlled approval",
             session=session,
         )
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail="evidence_id already submitted") from exc
         return EvidenceSubmissionResponse.from_record(record)
 
 
