@@ -261,3 +261,30 @@ def test_tampered_submission_is_fail_closed(session):
             principal_scope=Scope.PROVINCE,
             principal_scope_id="province-1",
         )
+
+
+def test_list_all_returns_persisted_lineage_in_order(session):
+    _submission(
+        session,
+        evidence_id="E-OLD",
+        effective_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    )
+    _submission(
+        session,
+        evidence_id="E-NEW",
+        effective_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
+        submitted_by="new-submitter",
+    )
+    repository = EvidenceLifecycleRepository(session)
+    repository.create_link(
+        predecessor_evidence_id="E-OLD",
+        successor_evidence_id="E-NEW",
+        linked_by="lifecycle-admin",
+        linked_at=NOW,
+        reason="renewed",
+        principal_scope=Scope.PROVINCE,
+        principal_scope_id="province-1",
+    )
+    events = repository.list_all()
+    assert len(events) == 1
+    assert events[0].predecessor_evidence_id == "E-OLD"
