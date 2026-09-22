@@ -41,6 +41,7 @@ app.include_router(rules_router, prefix="/api/v1", dependencies=protected_depend
 app.include_router(calculation_matrix_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(validation_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(enterprise_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(evidence_submissions_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_validation_router, prefix="/api/v1", dependencies=protected_dependencies)
