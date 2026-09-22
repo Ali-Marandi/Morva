@@ -234,3 +234,21 @@ def test_gate_tampering_is_rejected_during_reconstruction(tmp_path):
             authoritative_evidence_ids=_mapping(),
             verified_at=NOW,
         )
+
+
+def test_verification_before_binding_timestamp_is_rejected(tmp_path):
+    gate_path, binding_path, binding = _write_binding(tmp_path)
+
+    with pytest.raises(
+        IntegrationExecutionEvidenceBindingVerificationError,
+        match="precedes binding timestamp",
+    ):
+        verify_integration_execution_evidence_binding(
+            binding_path,
+            gate_path,
+            _registry(),
+            repository="Ali-Marandi/Morva",
+            candidate_sha=CANDIDATE_SHA,
+            authoritative_evidence_ids=_mapping(),
+            verified_at=binding.bound_at - timedelta(seconds=1),
+        )
