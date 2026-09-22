@@ -118,6 +118,10 @@ def get_integration_execution_readiness(
 @router.get(
     "/readiness/verify",
     response_model=IndependentPersistedIntegrationExecutionReadinessResponse,
+    responses={
+        404: {"description": "No persisted readiness verification found"},
+        409: {"description": "Persisted readiness failed independent verification"},
+    },
 )
 def verify_persisted_readiness(
     candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
