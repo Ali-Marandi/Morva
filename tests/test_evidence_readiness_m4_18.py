@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime, timezone
 
+import pytest
+
 from morva.runtime.authoritative_evidence_intake import (
     AuthoritativeEvidenceItem,
     build_registry,
@@ -172,18 +174,11 @@ def test_assessment_fingerprint_tampering_is_rejected():
         receipts=(),
     )
     tampered = replace(assessment, fingerprint="f" * 64)
-    try:
-        EvidenceReadinessError(
-            "unreachable"
-        )
-    except EvidenceReadinessError:
-        pass
-    try:
+    with pytest.raises(
+        EvidenceReadinessError,
+        match="fingerprint mismatch",
+    ):
         tampered.__post_init__()
-    except EvidenceReadinessError as exc:
-        assert "fingerprint mismatch" in str(exc)
-    else:
-        raise AssertionError("expected tampered assessment fingerprint rejection")
 
 
 def test_registry_mismatch_is_rejected():
