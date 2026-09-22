@@ -206,6 +206,12 @@ def verify_submission_record(record: AuthoritativeEvidenceSubmissionRecord) -> N
     _validate_sha256(record.source_sha256)
     if not record.submission_scope or not record.submission_scope_id:
         raise EvidenceSubmissionError("persisted submission scope is incomplete")
+    try:
+        submission_scope = Scope(record.submission_scope)
+    except ValueError as exc:
+        raise EvidenceSubmissionError(
+            "persisted submission has invalid scope"
+        ) from exc
     expected = _fingerprint(
         evidence_id=record.evidence_id,
         source_type=record.source_type,
@@ -213,8 +219,8 @@ def verify_submission_record(record: AuthoritativeEvidenceSubmissionRecord) -> N
         source_sha256=record.source_sha256,
         issuer=record.issuer,
         population_scope=record.population_scope,
-        submission_scope=Scope(record.submission_scope),
-        submission_scope_id=record.submission_scope_id,
+        submission_scope=submission_scope,
+        submission_scope_id=record.submission_scope_id.strip(),
         effective_from=_validate_datetime("effective_from", record.effective_from),
         effective_to=(
             _validate_datetime("effective_to", record.effective_to)
