@@ -111,12 +111,10 @@ class EvidenceRoleBindingRepository:
         if principal_scope_id is None or not principal_scope_id.strip():
             raise EvidenceRoleBindingError("principal_scope_id is required")
 
-        record = self.session.scalar(
-            select(AuthoritativeEvidenceSubmissionRecord)
-            .where(
+        record = self._scalar_locked(
+            select(AuthoritativeEvidenceSubmissionRecord).where(
                 AuthoritativeEvidenceSubmissionRecord.evidence_id == evidence_id
             )
-            .with_for_update()
         )
         if record is None:
             raise KeyError(f"evidence submission not found: {evidence_id}")
@@ -224,6 +222,12 @@ class EvidenceRoleBindingRepository:
         self.session.add(new_record)
         self.session.flush()
         return new_record
+
+    def _scalar_locked(self, statement):
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            return self.session.scalar(statement)
+        return self.session.scalar(statement.with_for_update())
 
     def list_current(
         self,
