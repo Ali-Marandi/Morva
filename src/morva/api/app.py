@@ -6,6 +6,7 @@ from morva.api.v1.assignment_attendance import router as assignment_attendance_r
 from morva.api.v1.calculation_matrix import router as calculation_matrix_router
 from morva.api.v1.core_hr import router as core_hr_router
 from morva.api.v1.enterprise import router as enterprise_router
+from morva.api.v1.evidence_submissions import router as evidence_submissions_router
 from morva.api.v1.imports import router as imports_router
 from morva.api.v1.masterdata import router as masterdata_router
 from morva.api.v1.masterdata_acceptance import router as masterdata_acceptance_router
