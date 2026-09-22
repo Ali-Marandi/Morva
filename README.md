@@ -12,9 +12,9 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-22):**
-- Latest main commit: `aa3be2b` — `feat: M4.16 evidence lifecycle API (#90)`
-- Main now includes the complete M4.1–M4.16 evidence line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission, registry projection, lifecycle lineage and persisted lifecycle API.
-- M4.17 role bindings is the active review tranche in PR #93; M4.18 readiness/remediation is prepared as the next stacked tranche in PR #95.
+- Latest main commit: `8475635` — `feat: M4.18 evidence readiness remediation view (#95)`
+- Main now includes the complete M4.1–M4.18 evidence line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission, registry projection, lifecycle lineage, persisted lifecycle API, role bindings and readiness/remediation assessment.
+- M4.17 role bindings and M4.18 evidence readiness/remediation are now merged into `main`. The readiness layer provides deterministic remediation visibility across current evidence, convergence, lifecycle and role-binding identities.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -100,11 +100,11 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through M3.90, including the M3.73–M3.90 readiness, release, deployment, integration and CI-integrity chain. M3.89, M4.1 and M4.2 are now represented on the active delivery line; M4.2 turns supplied evidence into an explicit closure assessment without fabricating authoritative data. These controls do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.18 evidence-closure line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings and deterministic readiness/remediation visibility. These controls do not constitute legal, organizational or production certification on their own.
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
-The next execution queue remains focused on operationalizing the evidence lifecycle: persistent lifecycle event storage and authenticated lifecycle APIs, renewal/supersession workflow integration with registry projection and M4.12 convergence, evidence-remediation visibility, then authorized staging/pilot integration and the still-pending real-world legal, payroll-sample, reconciliation, DR, load, security and production-certification evidence.
+The next execution queue is now focused on authorized staging/pilot integration and completion of the still-pending real-world legal, payroll-sample, reconciliation, DR, load, security and production-certification evidence, while keeping `main` continuously green and all external execution boundaries fail-closed.
 
 > **Important:** The roadmap is a target sequence, not a claim that every stage is already completed. Morva must remain fail-closed for real payroll and real payment until the applicable evidence and approvals are complete.
 
