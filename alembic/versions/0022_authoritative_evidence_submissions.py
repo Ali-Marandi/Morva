@@ -28,8 +28,8 @@ def upgrade() -> None:
         sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
         sa.Column("submitted_by", sa.String(100), nullable=False),
         sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("approved_by", sa.String(100), nullable=True),
-        sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("decided_by", sa.String(100), nullable=True),
+        sa.Column("decided_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("rejection_reason", sa.Text(), nullable=True),
         sa.Column("fingerprint", sa.String(64), nullable=False),
         sa.UniqueConstraint(
