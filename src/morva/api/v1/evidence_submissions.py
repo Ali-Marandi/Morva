@@ -47,8 +47,8 @@ class EvidenceSubmissionResponse(BaseModel):
     status: str
     submitted_by: str
     submitted_at: datetime
-    approved_by: str | None
-    approved_at: datetime | None
+    decided_by: str | None
+    decided_at: datetime | None
     rejection_reason: str | None
     fingerprint: str
 
@@ -67,8 +67,8 @@ class EvidenceSubmissionResponse(BaseModel):
             status=record.status,
             submitted_by=record.submitted_by,
             submitted_at=record.submitted_at,
-            approved_by=record.approved_by,
-            approved_at=record.approved_at,
+            decided_by=record.decided_by,
+            decided_at=record.decided_at,
             rejection_reason=record.rejection_reason,
             fingerprint=record.fingerprint,
         )
