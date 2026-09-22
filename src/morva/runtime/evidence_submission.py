@@ -195,3 +195,67 @@ def decide_evidence(
     record.approved_at = decided_at_utc
     session.flush()
     return record
+
+
+def verify_submission_record(record: AuthoritativeEvidenceSubmissionRecord) -> None:
+    """Verify one persisted submission without mutating it."""
+    if record.status not in {"pending", "accepted", "rejected"}:
+        raise EvidenceSubmissionError("invalid persisted evidence status")
+    if record.source_type not in ALLOWED_SOURCE_TYPES:
+        raise EvidenceSubmissionError("persisted evidence has unsupported source_type")
+    _validate_sha256(record.source_sha256)
+    if not record.submission_scope or not record.submission_scope_id:
+        raise EvidenceSubmissionError("persisted submission scope is incomplete")
+    expected = _fingerprint(
+        evidence_id=record.evidence_id,
+        source_type=record.source_type,
+        source_uri=record.source_uri,
+        source_sha256=record.source_sha256,
+        issuer=record.issuer,
+        population_scope=record.population_scope,
+        submission_scope=Scope(record.submission_scope),
+        submission_scope_id=record.submission_scope_id,
+        effective_from=_validate_datetime("effective_from", record.effective_from),
+        effective_to=(
+            _validate_datetime("effective_to", record.effective_to)
+            if record.effective_to
+            else None
+        ),
+        expires_at=(
+            _validate_datetime("expires_at", record.expires_at)
+            if record.expires_at
+            else None
+        ),
+        submitted_by=record.submitted_by,
+        submitted_at=_validate_datetime("submitted_at", record.submitted_at),
+    )
+    if record.fingerprint != expected:
+        raise EvidenceSubmissionError("persisted evidence fingerprint mismatch")
+    submitted_at = _validate_datetime("submitted_at", record.submitted_at)
+    if record.status == "pending":
+        if record.decided_by is not None or record.decided_at is not None:
+            raise EvidenceSubmissionError(
+                "pending evidence cannot have decision metadata"
+            )
+    else:
+        if not record.decided_by or not record.decided_at:
+            raise EvidenceSubmissionError(
+                "decided evidence is missing decision metadata"
+            )
+        decided_at = _validate_datetime("decided_at", record.decided_at)
+        if decided_at < submitted_at:
+            raise EvidenceSubmissionError(
+                "decision cannot precede submission"
+            )
+        if record.decided_by == record.submitted_by:
+            raise EvidenceSubmissionError(
+                "persisted evidence violates separation of duties"
+            )
+        if record.status == "rejected" and not record.rejection_reason:
+            raise EvidenceSubmissionError(
+                "rejected evidence requires rejection_reason"
+            )
+        if record.status == "accepted" and record.rejection_reason:
+            raise EvidenceSubmissionError(
+                "accepted evidence cannot contain rejection_reason"
+            )
