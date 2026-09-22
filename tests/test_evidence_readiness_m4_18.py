@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from morva.runtime.authoritative_evidence_intake import (
@@ -150,6 +151,39 @@ def test_superseded_evidence_is_blocked_even_when_binding_exists():
         if item.role == "legal_approval"
     )
     assert remediation.reason_code == "EVIDENCE_SUPERSEDED"
+
+
+def test_assessment_fingerprint_tampering_is_rejected():
+    registry = build_registry(
+        (_item("E-LEGAL", source_type="legal_rule"),),
+        registered_at=NOW,
+    )
+    convergence = build_convergence_assessment(
+        registry,
+        repository="repo",
+        checked_at=NOW,
+        receipts=(),
+    )
+    assessment = build_readiness_assessment(
+        registry,
+        convergence,
+        repository="repo",
+        checked_at=NOW,
+        receipts=(),
+    )
+    tampered = replace(assessment, fingerprint="f" * 64)
+    try:
+        EvidenceReadinessError(
+            "unreachable"
+        )
+    except EvidenceReadinessError:
+        pass
+    try:
+        tampered.__post_init__()
+    except EvidenceReadinessError as exc:
+        assert "fingerprint mismatch" in str(exc)
+    else:
+        raise AssertionError("expected tampered assessment fingerprint rejection")
 
 
 def test_registry_mismatch_is_rejected():
