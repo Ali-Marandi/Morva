@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import hashlib
 from datetime import datetime, timedelta, timezone
 import json
 
@@ -20,7 +20,6 @@ FP = "a" * 64
 BINDING = "1" * 64
 VERIFICATION = "2" * 64
 READINESS = "3" * 64
-ASSESSMENT = "4" * 64
 
 
 def _assessment(*, checked_at: datetime = NOW, blockers: tuple[str, ...] = ()) -> IntegrationExecutionReadinessAssessment:
@@ -37,11 +36,30 @@ def _assessment(*, checked_at: datetime = NOW, blockers: tuple[str, ...] = ()) -
         "state": state,
         "blockers": blockers,
     }
-    assessment = IntegrationExecutionReadinessAssessment(
-        fingerprint=ASSESSMENT,
+    fingerprint_payload = {
+        "assessment_version": 1,
+        "repository": "Ali-Marandi/Morva",
+        "candidate_sha": SHA.lower(),
+        "target_environment": "staging",
+        "checked_at": checked_at.astimezone(timezone.utc).isoformat(),
+        "evidence_readiness_fingerprint": READINESS.lower(),
+        "binding_fingerprint": BINDING.lower(),
+        "binding_verification_fingerprint": VERIFICATION.lower(),
+        "state": state,
+        "blockers": list(blockers),
+    }
+    fingerprint = hashlib.sha256(
+        json.dumps(
+            fingerprint_payload,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return IntegrationExecutionReadinessAssessment(
+        fingerprint=fingerprint,
         **payload,
     )
-    return assessment
 
 
 def _write(path, assessment, *, ready_override=None, fingerprint_override=None):
