@@ -78,6 +78,7 @@ class AuthoritativeEvidenceLifecycleEventRecord(Base):
 
 class EvidenceLifecycleRepository:
     """Transactional persistence boundary for M4.15/M4.16 evidence lineage."""
+    # Lifecycle records are immutable historical evidence references.
 
     def __init__(self, session: Session) -> None:
         self.session = session
