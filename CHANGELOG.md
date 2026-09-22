@@ -1,3 +1,16 @@
+## Unreleased — M4.13 Evidence Submission API
+
+### Controlled evidence intake
+- Persist authoritative evidence submissions in a dedicated table with explicit `pending/accepted/rejected` state.
+- Require least-privilege `evidence.submit` and `evidence.approve` permissions.
+- Require MFA for privileged evidence actions and enforce submitter/approver separation of duties.
+- Bind every submission to the authenticated organization scope and prevent cross-scope reads/decisions.
+- Record deterministic fingerprints and append all state transitions to the immutable audit chain.
+- Keep evidence activation separate from submission/approval; this API does not create production certification.
+
+### Safety
+- No authoritative document bytes, employee records, credentials or external authority data are fabricated or committed.
+
 ## Unreleased — M4.12 Evidence Convergence
 
 ### Evidence convergence
