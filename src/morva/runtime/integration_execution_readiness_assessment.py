@@ -78,6 +78,21 @@ class IntegrationExecutionReadinessAssessment:
             raise IntegrationExecutionReadinessAssessmentError(
                 "blocked assessment must contain blockers"
             )
+        expected_fingerprint = _assessment_fingerprint(
+            repository=self.repository,
+            candidate_sha=self.candidate_sha,
+            target_environment=self.target_environment,
+            checked_at=self.checked_at,
+            evidence_readiness_fingerprint=self.evidence_readiness_fingerprint,
+            binding_fingerprint=self.binding_fingerprint,
+            binding_verification_fingerprint=self.binding_verification_fingerprint,
+            state=self.state,
+            blockers=self.blockers,
+        )
+        if self.fingerprint.lower() != expected_fingerprint:
+            raise IntegrationExecutionReadinessAssessmentError(
+                "integration execution readiness assessment fingerprint mismatch"
+            )
 
     @property
     def ready(self) -> bool:
