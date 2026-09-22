@@ -12,8 +12,9 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-22):**
-- Latest main commit: `6d14141` — `feat: M4.15 evidence lifecycle contract`
-- Main now includes the complete M4.1–M4.15 evidence line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission and evidence lifecycle lineage.
+- Latest main commit: `aa3be2b` — `feat: M4.16 evidence lifecycle API (#90)`
+- Main now includes the complete M4.1–M4.16 evidence line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission, registry projection, lifecycle lineage and persisted lifecycle API.
+- M4.17 role bindings is the active review tranche in PR #93; M4.18 readiness/remediation is prepared as the next stacked tranche in PR #95.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
