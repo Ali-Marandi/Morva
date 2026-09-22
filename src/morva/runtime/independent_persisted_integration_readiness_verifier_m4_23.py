@@ -54,9 +54,9 @@ class IndependentPersistedIntegrationExecutionReadinessVerification:
             ("verified_at", self.verified_at),
             ("created_at", self.created_at),
         ):
-            if value.tzinfo is None:
+            if not isinstance(value, datetime) or value.tzinfo is None:
                 raise IndependentPersistedIntegrationReadinessVerificationError(
-                    f"{name} must be timezone-aware"
+                    f"{name} must be a timezone-aware datetime"
                 )
         if self.assessment_checked_at > self.verified_at:
             raise IndependentPersistedIntegrationReadinessVerificationError(
@@ -86,7 +86,10 @@ class IndependentPersistedIntegrationExecutionReadinessVerification:
             raise IndependentPersistedIntegrationReadinessVerificationError(
                 "state must be ready or blocked"
             )
-        if any(not isinstance(blocker, str) or not blocker.strip() for blocker in self.blockers):
+        if any(
+            not isinstance(blocker, str) or not blocker.strip()
+            for blocker in self.blockers
+        ):
             raise IndependentPersistedIntegrationReadinessVerificationError(
                 "blockers must be non-empty strings"
             )
@@ -197,6 +200,16 @@ def verify_persisted_integration_execution_readiness(
     assessment_fingerprint: str,
     verification_fingerprint: str,
 ) -> IndependentPersistedIntegrationExecutionReadinessVerification:
+    for name, value in (
+        ("assessment_checked_at", assessment_checked_at),
+        ("verified_at", verified_at),
+        ("created_at", created_at),
+    ):
+        if not isinstance(value, datetime) or value.tzinfo is None:
+            raise IndependentPersistedIntegrationReadinessVerificationError(
+                f"{name} must be a timezone-aware datetime"
+            )
+
     verification = IndependentPersistedIntegrationExecutionReadinessVerification(
         repository=repository,
         candidate_sha=candidate_sha.lower(),
@@ -213,7 +226,10 @@ def verify_persisted_integration_execution_readiness(
         assessment_fingerprint=assessment_fingerprint.lower(),
         verification_fingerprint=verification_fingerprint.lower(),
     )
-    if verification.assessment_fingerprint != verification.independent_assessment_fingerprint:
+    if (
+        verification.assessment_fingerprint
+        != verification.independent_assessment_fingerprint
+    ):
         raise IndependentPersistedIntegrationReadinessVerificationError(
             "persisted assessment fingerprint mismatch"
         )
