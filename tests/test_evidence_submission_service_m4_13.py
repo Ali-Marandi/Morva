@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.persistence.models import Base
 from morva.runtime.evidence_submission import EvidenceSubmissionError, decide_evidence, submit_evidence
+from morva.security.policy import Scope
 
 NOW = datetime(2026, 9, 22, 12, tzinfo=timezone.utc)
 SHA = "a" * 64
@@ -32,6 +33,8 @@ def _submit(session, **overrides):
         "source_sha256": SHA,
         "issuer": "authority",
         "population_scope": "teachers",
+        "submission_scope": Scope.PROVINCE,
+        "submission_scope_id": "province-1",
         "effective_from": NOW,
         "effective_to": datetime(2027, 1, 1, tzinfo=timezone.utc),
         "expires_at": datetime(2026, 12, 31, tzinfo=timezone.utc),
@@ -46,7 +49,9 @@ def test_submission_is_pending_and_fingerprinted(session):
     record = _submit(session)
     assert record.status == "pending"
     assert len(record.fingerprint) == 64
-    assert record.approved_by is None
+    assert record.decided_by is None
+    assert record.submission_scope == Scope.PROVINCE.value
+    assert record.submission_scope_id == "province-1"
 
 
 def test_duplicate_evidence_id_is_rejected(session):
@@ -92,6 +97,8 @@ def test_acceptance_is_one_way_from_pending(session):
         decided_at=NOW,
     )
     assert decided.status == "accepted"
+    assert decided.decided_by == "approver"
+    assert decided.decided_at is not None
     with pytest.raises(EvidenceSubmissionError, match="pending"):
         decide_evidence(
             session,
