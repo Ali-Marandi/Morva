@@ -107,14 +107,18 @@ class EvidenceLifecycleRepository:
         if predecessor_id == successor_id:
             raise EvidenceLifecycleError("evidence cannot supersede itself")
 
-        predecessor = self._scalar_locked(
-            select(AuthoritativeEvidenceSubmissionRecord).where(
-                AuthoritativeEvidenceSubmissionRecord.evidence_id == predecessor_id
+        predecessor = self._normalize_loaded_submission(
+            self._scalar_locked(
+                select(AuthoritativeEvidenceSubmissionRecord).where(
+                    AuthoritativeEvidenceSubmissionRecord.evidence_id == predecessor_id
+                )
             )
         )
-        successor = self._scalar_locked(
-            select(AuthoritativeEvidenceSubmissionRecord).where(
-                AuthoritativeEvidenceSubmissionRecord.evidence_id == successor_id
+        successor = self._normalize_loaded_submission(
+            self._scalar_locked(
+                select(AuthoritativeEvidenceSubmissionRecord).where(
+                    AuthoritativeEvidenceSubmissionRecord.evidence_id == successor_id
+                )
             )
         )
         if predecessor is None:
@@ -208,6 +212,23 @@ class EvidenceLifecycleRepository:
         if bind is not None and bind.dialect.name == "sqlite":
             return self.session.scalar(statement)
         return self.session.scalar(statement.with_for_update())
+
+    def _normalize_loaded_submission(self, record):
+        if record is None:
+            return None
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            for field_name in (
+                "effective_from",
+                "effective_to",
+                "expires_at",
+                "submitted_at",
+                "decided_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
+        return record
 
     def list_for_scope(
         self,
