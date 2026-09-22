@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.runtime.authoritative_evidence_intake import ALLOWED_SOURCE_TYPES
+from morva.security.policy import Scope
 
 
 class EvidenceSubmissionError(ValueError):
@@ -36,6 +37,8 @@ def _fingerprint(
     source_sha256: str,
     issuer: str,
     population_scope: str,
+    submission_scope: Scope,
+    submission_scope_id: str,
     effective_from: datetime,
     effective_to: datetime | None,
     expires_at: datetime | None,
@@ -83,6 +86,8 @@ def submit_evidence(
         "source_uri": source_uri.strip(),
         "issuer": issuer.strip(),
         "population_scope": population_scope.strip(),
+        "submission_scope": submission_scope.value,
+        "submission_scope_id": submission_scope_id.strip(),
         "submitted_by": submitted_by.strip(),
     }
     for name, value in values.items():
@@ -128,6 +133,8 @@ def submit_evidence(
             source_sha256=digest,
             issuer=values["issuer"],
             population_scope=values["population_scope"],
+            submission_scope=submission_scope,
+            submission_scope_id=submission_scope_id.strip(),
             effective_from=effective_from_utc,
             effective_to=effective_to_utc,
             expires_at=expires_at_utc,
