@@ -1,3 +1,16 @@
+## Unreleased — M4.17 Evidence Role Bindings
+
+### Evidence convergence inputs
+- Persist twelve-role certification binding receipts with exact canonical role/source mapping.
+- Bind only current accepted evidence to the exact M4.14 registry fingerprint for the organization scope.
+- Enforce dedicated binding permission, MFA, submitter/approver separation and scope isolation.
+- Expose authenticated binding creation and current-binding/convergence read APIs.
+- Preserve historical bindings and force fresh bindings whenever the registry fingerprint changes.
+- Add PostgreSQL/Alembic migration, focused tests and a dedicated CI gate.
+
+### Safety
+- Role bindings are governance metadata only and do not activate production, execute providers or certify real payroll/payment.
+
 ## Unreleased — M4.16 Evidence Lifecycle API
 
 ### Evidence lifecycle operations
