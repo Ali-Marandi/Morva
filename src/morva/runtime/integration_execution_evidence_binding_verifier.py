@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from hashlib import sha256
 import json
 from pathlib import Path
 
@@ -34,8 +35,6 @@ class IntegrationExecutionEvidenceBindingVerification:
             "binding_fingerprint": self.binding.fingerprint,
             "verified_at": self.verified_at.astimezone(timezone.utc).isoformat(),
         }
-        from hashlib import sha256
-
         return sha256(
             json.dumps(
                 payload,
@@ -114,6 +113,11 @@ def verify_integration_execution_evidence_binding(
         )
 
     binding = _load_binding(binding_path)
+    verified_time = verified_at.astimezone(timezone.utc)
+    if verified_time < binding.bound_at:
+        raise IntegrationExecutionEvidenceBindingVerificationError(
+            "verification timestamp precedes binding timestamp"
+        )
     if binding.registry_fingerprint.lower() != authoritative_registry.fingerprint.lower():
         raise IntegrationExecutionEvidenceBindingVerificationError(
             "integration execution binding registry fingerprint mismatch"
