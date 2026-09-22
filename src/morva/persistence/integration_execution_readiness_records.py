@@ -62,28 +62,41 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
     )
 
     def to_verification(self) -> IndependentIntegrationExecutionReadinessVerification:
-        assessment = IntegrationExecutionReadinessAssessment(
-            assessment_version=self.assessment_version,
-            repository=self.repository,
-            candidate_sha=self.candidate_sha,
-            target_environment=self.target_environment,
-            checked_at=_ensure_timezone(self.assessment_checked_at, "assessment_checked_at"),
-            evidence_readiness_fingerprint=self.evidence_readiness_fingerprint,
-            binding_fingerprint=self.binding_fingerprint,
-            binding_verification_fingerprint=self.binding_verification_fingerprint,
-            state=self.state,
-            blockers=tuple(self.blockers),
-            fingerprint=self.assessment_fingerprint,
-        )
-        verification = IndependentIntegrationExecutionReadinessVerification(
-            assessment=assessment,
-            verified_at=_ensure_timezone(self.verified_at, "verified_at"),
-        )
-        if verification.fingerprint.lower() != self.verification_fingerprint.lower():
-            raise IntegrationExecutionReadinessPersistenceError(
-                "persisted integration readiness verification fingerprint mismatch"
+        try:
+            assessment = IntegrationExecutionReadinessAssessment(
+                assessment_version=self.assessment_version,
+                repository=self.repository,
+                candidate_sha=self.candidate_sha,
+                target_environment=self.target_environment,
+                checked_at=_ensure_timezone(
+                    self.assessment_checked_at, "assessment_checked_at"
+                ),
+                evidence_readiness_fingerprint=self.evidence_readiness_fingerprint,
+                binding_fingerprint=self.binding_fingerprint,
+                binding_verification_fingerprint=self.binding_verification_fingerprint,
+                state=self.state,
+                blockers=tuple(self.blockers),
+                fingerprint=self.assessment_fingerprint,
             )
-        return verification
+            verification = IndependentIntegrationExecutionReadinessVerification(
+                assessment=assessment,
+                verified_at=_ensure_timezone(self.verified_at, "verified_at"),
+            )
+            if verification.fingerprint.lower() != self.verification_fingerprint.lower():
+                raise IntegrationExecutionReadinessPersistenceError(
+                    "persisted integration readiness verification fingerprint mismatch"
+                )
+            if verification.assessment.checked_at > verification.verified_at:
+                raise IntegrationExecutionReadinessPersistenceError(
+                    "persisted verification timestamp precedes assessment check time"
+                )
+            return verification
+        except IntegrationExecutionReadinessPersistenceError:
+            raise
+        except (TypeError, ValueError) as exc:
+            raise IntegrationExecutionReadinessPersistenceError(
+                "persisted integration readiness verification is structurally invalid"
+            ) from exc
 
 
 class IntegrationExecutionReadinessVerificationRepository:
