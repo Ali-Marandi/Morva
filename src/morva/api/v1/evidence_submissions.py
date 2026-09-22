@@ -12,7 +12,15 @@ from morva.persistence.database import SessionLocal
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
-from morva.runtime.evidence_submission import EvidenceSubmissionError, decide_evidence, submit_evidence
+from morva.runtime.evidence_registry_bridge import (
+    EvidenceRegistryBridgeError,
+    build_registry_projection,
+)
+from morva.runtime.evidence_submission import (
+    EvidenceSubmissionError,
+    decide_evidence,
+    submit_evidence,
+)
 
 router = APIRouter(prefix="/evidence-submissions", tags=["evidence"])
 
@@ -32,6 +40,14 @@ class EvidenceSubmissionCreate(BaseModel):
 class EvidenceDecision(BaseModel):
     decision: str = Field(pattern="^(accepted|rejected)$")
     rejection_reason: str | None = Field(default=None, max_length=4000)
+
+
+class EvidenceRegistryResponse(BaseModel):
+    registry_version: int
+    items: list[dict[str, object]]
+    registered_at: datetime
+    fingerprint: str
+    projection: dict[str, object]
 
 
 class EvidenceSubmissionResponse(BaseModel):
@@ -140,6 +156,40 @@ def list_submissions(
             query.order_by(AuthoritativeEvidenceSubmissionRecord.submitted_at.desc())
         ).all()
         return [EvidenceSubmissionResponse.from_record(record) for record in records]
+
+
+@router.get("/registry", response_model=EvidenceRegistryResponse)
+def get_registry(
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceRegistryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        query = select(AuthoritativeEvidenceSubmissionRecord).where(
+            AuthoritativeEvidenceSubmissionRecord.status == "accepted"
+        )
+        if principal.scope is not Scope.MINISTRY:
+            query = query.where(
+                AuthoritativeEvidenceSubmissionRecord.submission_scope == principal.scope.value,
+                AuthoritativeEvidenceSubmissionRecord.submission_scope_id == principal.scope_id,
+            )
+        records = session.scalars(
+            query.order_by(AuthoritativeEvidenceSubmissionRecord.evidence_id.asc())
+        ).all()
+        try:
+            registry, projection = build_registry_projection(
+                records,
+                projected_at=datetime.now().astimezone(),
+            )
+        except EvidenceRegistryBridgeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        payload = registry.to_payload()
+        return EvidenceRegistryResponse(
+            registry_version=registry.registry_version,
+            items=list(payload["items"]),
+            registered_at=registry.registered_at,
+            fingerprint=registry.fingerprint,
+            projection=projection.to_payload(),
+        )
 
 
 @router.get("/{evidence_id}", response_model=EvidenceSubmissionResponse)
