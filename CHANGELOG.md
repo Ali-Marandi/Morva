@@ -1,3 +1,15 @@
+## Unreleased — M4.18 Evidence Readiness
+
+### Operational evidence readiness
+- Connect persisted M4.17 role bindings to current M4.12 convergence.
+- Add a fingerprinted readiness assessment spanning registry, convergence and lifecycle identities.
+- Surface explicit remediation for missing, missing-target, superseded and population-mismatched evidence bindings.
+- Add a read-only readiness API and focused regression coverage.
+- Add a dedicated CI gate for the full M4.15–M4.18 evidence chain.
+
+### Safety
+- Readiness is visibility/verification only and does not activate production, execute integrations or release payments.
+
 ## Unreleased — M4.17 Evidence Role Bindings
 
 ### Evidence convergence inputs
