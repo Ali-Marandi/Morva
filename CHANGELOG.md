@@ -1,3 +1,16 @@
+## Unreleased — M4.14 Evidence Registry Bridge
+
+### Evidence registry
+- Project accepted M4.13 submissions into the canonical M4.1 authoritative evidence item model.
+- Verify the persisted submission fingerprint before registry projection.
+- Preserve source URI, SHA-256 identity, issuer, exact population scope, effective window and approval metadata.
+- Exclude pending/rejected submissions and keep the projection deterministic by evidence ID.
+- Expose a read-only, organization-scope-filtered registry projection for downstream M4.12 convergence.
+- Add fail-closed bridge regression coverage and a dedicated CI gate.
+
+### Safety
+- Registry projection stores no document bytes and performs no external upload, provider call, production activation or production certification.
+
 ## Unreleased — M4.13 Evidence Submission API
 
 ### Controlled evidence intake
