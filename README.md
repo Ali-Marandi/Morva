@@ -12,9 +12,10 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-23):**
-- Latest main commit: `5d10a8a` — `feat: add independent M4.20 readiness verifier (#101)`
-- Main includes the validated M4.1–M4.21 evidence/integration line. M4.22 adds append-only persistence for the independently verified readiness receipt and a read-only readiness API.
-- M4.22 does not rebuild M4.20; persisted receipts revalidate the M4.20 and M4.21 fingerprints on read. No external integration is executed and no production authority is implied.
+- Latest main commit: `06f7fa9` — `feat: persist M4.21 integration readiness verification (#102)`
+- Main includes the validated M4.1–M4.22 evidence/integration line. M4.22 adds append-only persistence for independently verified readiness receipts and a ministry-scoped read-only readiness API.
+- M4.23 adds an independent API-level verifier that reconstructs the persisted M4.20/M4.21 fingerprints and fail-closes on repository, SHA, environment, timestamp or ready/blocked drift.
+- M4.23 remains verification-only: no external integration is executed and no production authority is implied.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -100,7 +101,7 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.22 evidence/integration line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings, deterministic readiness/remediation visibility, a verified M3.84/M3.85/M3.86 staging-or-pilot evidence bridge with independent reconstruction, an integration-execution readiness composition layer, an independent verifier for that readiness assessment, and append-only persistence plus a read-only readiness API. These controls do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.23 evidence/integration line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings, deterministic readiness/remediation visibility, a verified M3.84/M3.85/M3.86 staging-or-pilot evidence bridge with independent reconstruction, an integration-execution readiness composition layer, an independent verifier for that readiness assessment, append-only persistence plus a read-only readiness API, and independent API-level verification of persisted readiness receipts. These controls do not constitute legal, organizational or production certification on their own.
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
