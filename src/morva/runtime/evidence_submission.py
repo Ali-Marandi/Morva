@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.runtime.authoritative_evidence_intake import ALLOWED_SOURCE_TYPES
-from morva.security.policy import require_distinct_actors
 
 
 class EvidenceSubmissionError(ValueError):
@@ -167,7 +166,10 @@ def decide_evidence(
     if record.status != "pending":
         raise EvidenceSubmissionError("only pending evidence can be decided")
 
-    require_distinct_actors((record.submitted_by, approver))
+    if record.submitted_by == approver:
+        raise EvidenceSubmissionError(
+            "separation of duties violation: approver must differ from submitter"
+        )
 
     if decision == "rejected":
         reason = (rejection_reason or "").strip()
