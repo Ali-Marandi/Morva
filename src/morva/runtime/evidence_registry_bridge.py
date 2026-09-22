@@ -67,7 +67,12 @@ class EvidenceRegistryProjection:
 def submission_to_authoritative_item(
     record: AuthoritativeEvidenceSubmissionRecord,
 ) -> AuthoritativeEvidenceItem:
-    verify_submission_record(record)
+    try:
+        verify_submission_record(record)
+    except ValueError as exc:
+        raise EvidenceRegistryBridgeError(
+            f"submission verification failed: {exc}"
+        ) from exc
     if record.status != "accepted":
         raise EvidenceRegistryBridgeError(
             "only accepted evidence submissions can enter the registry"
@@ -129,7 +134,12 @@ def build_registry_projection(
     source_count = 0
 
     for record in records:
-        verify_submission_record(record)
+        try:
+            verify_submission_record(record)
+        except ValueError as exc:
+            raise EvidenceRegistryBridgeError(
+                f"submission verification failed: {exc}"
+            ) from exc
         if record.status != "accepted":
             continue
         source_count += 1
