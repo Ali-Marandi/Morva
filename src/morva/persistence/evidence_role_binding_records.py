@@ -314,6 +314,15 @@ class EvidenceRoleBindingRepository:
             for record in accepted_records
         }
         for binding in records:
+            if (
+                not binding.certification_role.strip()
+                or not binding.population_scope.strip()
+                or not binding.bound_by.strip()
+                or not binding.reason.strip()
+            ):
+                raise EvidenceRoleBindingError(
+                    "persisted role binding contains incomplete governance metadata"
+                )
             evidence = submissions.get(binding.authoritative_evidence_id)
             if evidence is None:
                 raise EvidenceRoleBindingError(
