@@ -12,9 +12,10 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-23):**
-- Latest main commit: `5d10a8a` — `feat: add independent M4.20 readiness verifier (#101)`
-- Main includes the validated M4.1–M4.21 evidence/integration line. M4.22 adds append-only persistence for the independently verified readiness receipt and a read-only readiness API.
-- M4.22 does not rebuild M4.20; persisted receipts revalidate the M4.20 and M4.21 fingerprints on read. No external integration is executed and no production authority is implied.
+- Latest main commit: `06f7fa9` — `feat: persist M4.21 integration readiness verification (#102)`
+- Main includes the validated M4.1–M4.22 evidence/integration line. M4.22 adds append-only persistence for independently verified readiness receipts and a ministry-scoped read-only readiness API.
+- M4.23 adds an independent API-level verifier that reconstructs the persisted M4.20/M4.21 fingerprints and fail-closes on repository, SHA, environment, timestamp or ready/blocked drift.
+- M4.23 remains verification-only: no external integration is executed and no production authority is implied.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
