@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 import json
 
@@ -126,7 +127,7 @@ def test_gate_fingerprint_tampering_is_rejected(tmp_path):
             candidate_sha=CANDIDATE_SHA,
             bound_by="evidence-operator",
             bound_at=NOW,
-            authoritative_evidence_ids=_mapping(),
+            authoritative_evidence_ids=mapping,
         )
 
 
@@ -192,8 +193,14 @@ def test_wrong_source_type_is_rejected(tmp_path):
     gate_path = _write_gate(tmp_path, _gate())
     registry = _registry()
     records = list(registry.items)
-    records[0] = _item("sina", source_type="master_data")
+    records[0] = replace(
+        records[0],
+        source_type="master_data",
+        evidence_id="ADAPTER-SINA-WRONG-001",
+    )
     wrong_registry = build_registry(tuple(records), registered_at=NOW)
+    mapping = _mapping()
+    mapping["sina"] = "ADAPTER-SINA-WRONG-001"
 
     with pytest.raises(
         IntegrationExecutionEvidenceBridgeError,
