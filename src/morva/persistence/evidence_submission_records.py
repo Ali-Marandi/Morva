@@ -25,6 +25,8 @@ class AuthoritativeEvidenceSubmissionRecord(Base):
     source_sha256: Mapped[str] = mapped_column(String(64), index=True)
     issuer: Mapped[str] = mapped_column(String(200))
     population_scope: Mapped[str] = mapped_column(String(300), index=True)
+    submission_scope: Mapped[str] = mapped_column(String(30), index=True)
+    submission_scope_id: Mapped[str] = mapped_column(String(100), index=True)
     effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     effective_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
