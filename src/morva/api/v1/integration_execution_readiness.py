@@ -36,6 +36,20 @@ class IndependentIntegrationExecutionReadinessVerificationResponse(BaseModel):
     verification: dict[str, object]
 
 
+def _normalize_candidate_sha(candidate_sha: str | None) -> str | None:
+    if candidate_sha is None:
+        return None
+    candidate_sha = candidate_sha.strip().lower()
+    if len(candidate_sha) != 40 or any(
+        char not in "0123456789abcdef" for char in candidate_sha
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="candidate_sha must be a Git commit SHA-1",
+        )
+    return candidate_sha
+
+
 @router.get(
     "/readiness",
     response_model=IntegrationExecutionReadinessVerificationResponse,
@@ -48,15 +62,7 @@ def get_integration_execution_readiness(
     principal: Principal = Depends(get_current_principal),
 ) -> IntegrationExecutionReadinessVerificationResponse:
     authorize(principal, "evidence.read", Scope.MINISTRY)
-    if candidate_sha is not None:
-        candidate_sha = candidate_sha.strip().lower()
-        if len(candidate_sha) != 40 or any(
-            char not in "0123456789abcdef" for char in candidate_sha
-        ):
-            raise HTTPException(
-                status_code=422,
-                detail="candidate_sha must be a Git commit SHA-1",
-            )
+    candidate_sha = _normalize_candidate_sha(candidate_sha)
 
     with SessionLocal() as session:
         repository = IntegrationExecutionReadinessVerificationRepository(session)
@@ -102,15 +108,7 @@ def verify_persisted_integration_execution_readiness_api(
     principal: Principal = Depends(get_current_principal),
 ) -> IndependentIntegrationExecutionReadinessVerificationResponse:
     authorize(principal, "evidence.read", Scope.MINISTRY)
-    if candidate_sha is not None:
-        candidate_sha = candidate_sha.strip().lower()
-        if len(candidate_sha) != 40 or any(
-            char not in "0123456789abcdef" for char in candidate_sha
-        ):
-            raise HTTPException(
-                status_code=422,
-                detail="candidate_sha must be a Git commit SHA-1",
-            )
+    candidate_sha = _normalize_candidate_sha(candidate_sha)
 
     with SessionLocal() as session:
         repository = IntegrationExecutionReadinessVerificationRepository(session)
@@ -129,6 +127,11 @@ def verify_persisted_integration_execution_readiness_api(
             )
 
         try:
+            raw_blockers = record.blockers
+            if not isinstance(raw_blockers, list):
+                raise IndependentPersistedIntegrationReadinessVerificationError(
+                    "persisted blockers must be a JSON list"
+                )
             verification = verify_persisted_integration_execution_readiness(
                 repository=record.repository,
                 candidate_sha=record.candidate_sha,
@@ -141,11 +144,12 @@ def verify_persisted_integration_execution_readiness_api(
                 binding_fingerprint=record.binding_fingerprint,
                 binding_verification_fingerprint=record.binding_verification_fingerprint,
                 state=record.state,
-                blockers=tuple(record.blockers),
+                blockers=tuple(raw_blockers),
                 assessment_fingerprint=record.assessment_fingerprint,
                 verification_fingerprint=record.verification_fingerprint,
             )
         except (
+            AttributeError,
             TypeError,
             ValueError,
             IndependentPersistedIntegrationReadinessVerificationError,
