@@ -16,7 +16,7 @@ on:
       - "tests/test_evidence_readiness_api_m4_18.py"
       - "docs/M4_18_EVIDENCE_READINESS.md"
   pull_request:
-    branches: [main, feat/m4-17-evidence-role-bindings-clean]
+    branches: [main]
     paths:
       - ".github/workflows/m4-18-evidence-readiness.yml"
       - "src/morva/api/v1/evidence_submissions.py"
