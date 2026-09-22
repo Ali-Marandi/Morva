@@ -309,6 +309,55 @@ class EvidenceRoleBindingRepository:
                 )
             ).all()
         ]
+        submissions = {
+            record.evidence_id: record
+            for record in accepted_records
+        }
+        for binding in records:
+            evidence = submissions.get(binding.authoritative_evidence_id)
+            if evidence is None:
+                raise EvidenceRoleBindingError(
+                    "role binding references evidence outside the current registry"
+                )
+            try:
+                verify_submission_record(evidence)
+            except ValueError as exc:
+                raise EvidenceRoleBindingError(
+                    f"bound evidence verification failed: {exc}"
+                ) from exc
+            if (
+                binding.submission_scope != evidence.submission_scope
+                or binding.submission_scope_id != evidence.submission_scope_id
+            ):
+                raise EvidenceRoleBindingError(
+                    "persisted role binding organization scope does not match bound evidence"
+                )
+            if binding.binding_kind != CANONICAL_BINDING_KINDS.get(binding.certification_role):
+                raise EvidenceRoleBindingError(
+                    f"persisted role binding has non-canonical binding kind for role {binding.certification_role}"
+                )
+            if binding.certification_role not in IMPLEMENTED_SOURCE_TYPES:
+                raise EvidenceRoleBindingError(
+                    "persisted role binding references an unsupported certification role"
+                )
+            if evidence.source_type != IMPLEMENTED_SOURCE_TYPES[binding.certification_role]:
+                raise EvidenceRoleBindingError(
+                    f"persisted role binding has wrong source_type for role {binding.certification_role}"
+                )
+            expected_binding_fingerprint = _binding_fingerprint(
+                role=binding.certification_role,
+                binding_kind=binding.binding_kind,
+                evidence_id=binding.authoritative_evidence_id,
+                evidence_fingerprint=evidence.fingerprint,
+                registry_fingerprint=binding.registry_fingerprint,
+                population_scope=binding.population_scope,
+                bound_by=binding.bound_by,
+                bound_at=_ensure_timezone(binding.bound_at, "bound_at"),
+            )
+            if binding.binding_fingerprint != expected_binding_fingerprint:
+                raise EvidenceRoleBindingError(
+                    "persisted role binding fingerprint mismatch"
+                )
         try:
             assessment = build_convergence_assessment(
                 registry,
