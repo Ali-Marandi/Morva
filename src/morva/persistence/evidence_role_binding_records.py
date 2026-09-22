@@ -14,8 +14,10 @@ from morva.persistence.evidence_submission_records import (
 from morva.persistence.models import Base
 from morva.runtime.evidence_convergence import (
     CANONICAL_BINDING_KINDS,
+    CLOSURE_ROLE_SOURCE_TYPES,
     IMPLEMENTED_SOURCE_TYPES,
     EvidenceBindingReceipt,
+    EvidenceConvergenceError,
     build_convergence_assessment,
 )
 from morva.runtime.evidence_registry_bridge import build_registry_projection
@@ -268,12 +270,17 @@ class EvidenceRoleBindingRepository:
                 )
             ).all()
         )
-        assessment = build_convergence_assessment(
-            registry,
-            repository="Ali-Marandi/Morva",
-            checked_at=now,
-            receipts=tuple(record.to_receipt() for record in records),
-        )
+        try:
+            assessment = build_convergence_assessment(
+                registry,
+                repository="Ali-Marandi/Morva",
+                checked_at=now,
+                receipts=tuple(record.to_receipt() for record in records),
+            )
+        except EvidenceConvergenceError as exc:
+            raise EvidenceRoleBindingError(
+                f"persisted evidence role binding verification failed: {exc}"
+            ) from exc
         return records, assessment
 
 
