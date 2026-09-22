@@ -58,12 +58,12 @@ def _dr(**overrides):
     return RecoveryDrillEvidence(**payload)
 
 
-def _registry(source_sha256: str | None = None):
+def _registry(source_sha256: str | None = None, **authority_overrides):
     evidence = _dr()
     source_sha = source_sha256 or evidence.fingerprint
     return build_registry(
         (
-            _authority(source_sha256=source_sha),
+            _authority(source_sha256=source_sha, **authority_overrides),
         ),
         registered_at=NOW,
     )
@@ -98,7 +98,10 @@ def test_wrong_source_type_is_rejected():
     with pytest.raises(DisasterRecoveryEvidenceBridgeError, match="dr_report"):
         build_disaster_recovery_evidence_binding(
             _dr(),
-            _registry(_dr().fingerprint),
+            _registry(
+                source_sha256=_dr().fingerprint,
+                source_type="reconciliation",
+            ),
             authoritative_evidence_id="DR-001",
             bound_by="dr-binder",
             bound_at=NOW,
