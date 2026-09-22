@@ -12,9 +12,9 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-22):**
-- Latest main commit: `db5f4ea` — `feat: add independent verifier for M4 integration evidence (#97)`
-- Main includes the M4.1–M4.19 evidence/integration line and its independent integration-binding verifier. M4.20 is now under active implementation as a software-side readiness composition layer.
-- M4.18 remains the canonical evidence closure/remediation layer; M4.19 bridges verified M3.84/M3.85/M3.86 staging-or-pilot execution evidence, while M4.20 composes that verified identity with canonical evidence readiness and exposes deterministic blockers.
+- Latest main commit: `b72b57b` — `docs: record M4.19 and M4.20 in implementation matrix (#99)`
+- Main includes the validated M4.1–M4.20 evidence/integration line: M4.18 evidence closure/remediation, M4.19 verified integration-execution evidence binding plus independent verifier, and M4.20 integration-execution readiness assessment.
+- The implementation matrix is synchronized with the merged M4.19/M4.20 software-side controls. Real authoritative evidence and staging/pilot execution remain external prerequisites; no production authority is implied.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
