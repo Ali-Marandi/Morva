@@ -111,7 +111,6 @@ def test_m4_23_rejects_verification_fingerprint_tampering():
     "overrides, pattern",
     [
         ({"assessment_version": 2}, "unsupported persisted assessment version"),
-        ({"candidate_sha": "c" * 40}, "persisted candidate SHA mismatch"),
         ({"target_environment": "production"}, "persisted target environment"),
         ({"state": "ready", "blockers": ["TAMPERED"]}, "cannot contain blockers"),
         ({"state": "blocked", "blockers": []}, "must contain blockers"),
@@ -167,3 +166,16 @@ def test_m4_23_rejects_naive_persisted_timestamp():
         match="assessment_checked_at must be timezone-aware",
     ):
         verify_persisted_integration_execution_readiness(record)
+
+
+def test_m4_23_rejects_candidate_filter_mismatch():
+    record = _record()
+
+    with pytest.raises(
+        PersistedIntegrationExecutionReadinessVerificationError,
+        match="persisted candidate SHA mismatch",
+    ):
+        verify_persisted_integration_execution_readiness(
+            record,
+            candidate_sha="c" * 40,
+        )
