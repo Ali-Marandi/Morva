@@ -15,6 +15,7 @@ class PersistedIntegrationExecutionReadinessVerificationError(ValueError):
 
 
 class PersistedIntegrationExecutionReadinessRecord(Protocol):
+    assessment_version: int
     repository: str
     candidate_sha: str
     target_environment: str
@@ -70,25 +71,20 @@ class IndependentPersistedIntegrationExecutionReadinessVerification:
             raise PersistedIntegrationExecutionReadinessVerificationError(
                 "blocked persisted receipt must contain blockers"
             )
-        for name, value in (("assessment_fingerprint", self.assessment_fingerprint),
-                            ("verification_fingerprint", self.verification_fingerprint)):
+        for name, value in (
+            ("assessment_fingerprint", self.assessment_fingerprint),
+            ("verification_fingerprint", self.verification_fingerprint),
+        ):
             _validate_sha256(value, name)
         for name, value in (
             ("created_at", self.created_at),
             ("assessment_checked_at", self.assessment_checked_at),
             ("verified_at", self.verified_at),
         ):
-            if value.tzinfo is None:
-                raise PersistedIntegrationExecutionReadinessVerificationError(
-                    f"{name} must be timezone-aware"
-                )
+            _validate_timestamp(value, name)
         if self.assessment_checked_at > self.verified_at:
             raise PersistedIntegrationExecutionReadinessVerificationError(
                 "verification timestamp precedes assessment check time"
-            )
-        if self.created_at > self.verified_at:
-            raise PersistedIntegrationExecutionReadinessVerificationError(
-                "created timestamp postdates verification timestamp"
             )
 
     @property
@@ -108,14 +104,7 @@ class IndependentPersistedIntegrationExecutionReadinessVerification:
             ).isoformat(),
             "verified_at": self.verified_at.astimezone(timezone.utc).isoformat(),
         }
-        return sha256(
-            json.dumps(
-                payload,
-                ensure_ascii=True,
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
+        return _sha256_payload(payload)
 
     @property
     def verified(self) -> bool:
@@ -147,21 +136,21 @@ def verify_persisted_integration_execution_readiness(
     repository: str = CANONICAL_REPOSITORY,
     candidate_sha: str | None = None,
     target_environment: str | None = None,
-    verified_at: datetime | None = None,
 ) -> IndependentPersistedIntegrationExecutionReadinessVerification:
-    effective_verified_at = (
-        record.verified_at if verified_at is None else verified_at
-    )
-    _validate_timestamp(effective_verified_at, "verified_at")
-
     if repository != CANONICAL_REPOSITORY:
         raise PersistedIntegrationExecutionReadinessVerificationError(
             "verification requires the canonical repository"
+        )
+    if record.assessment_version != 1:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "unsupported persisted assessment version"
         )
     if record.repository != repository:
         raise PersistedIntegrationExecutionReadinessVerificationError(
             "persisted repository mismatch"
         )
+
+    _validate_candidate_sha(record.candidate_sha)
     expected_candidate = record.candidate_sha.lower()
     if candidate_sha is not None:
         _validate_candidate_sha(candidate_sha)
@@ -169,6 +158,11 @@ def verify_persisted_integration_execution_readiness(
             raise PersistedIntegrationExecutionReadinessVerificationError(
                 "persisted candidate SHA mismatch"
             )
+
+    if record.target_environment not in {"staging", "pilot"}:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "persisted target environment must be staging or pilot"
+        )
     if target_environment is not None:
         if target_environment not in {"staging", "pilot"}:
             raise PersistedIntegrationExecutionReadinessVerificationError(
@@ -179,12 +173,36 @@ def verify_persisted_integration_execution_readiness(
                 "persisted target environment mismatch"
             )
 
+    for name, value in (
+        ("evidence_readiness_fingerprint", record.evidence_readiness_fingerprint),
+        ("binding_fingerprint", record.binding_fingerprint),
+        ("binding_verification_fingerprint", record.binding_verification_fingerprint),
+    ):
+        _validate_sha256(value, name)
+
     blockers = _normalize_blockers(record.blockers)
+    if record.state not in {"ready", "blocked"}:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "persisted state must be ready or blocked"
+        )
+    if record.state == "ready" and blockers:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "ready persisted receipt cannot contain blockers"
+        )
+    if record.state == "blocked" and not blockers:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "blocked persisted receipt must contain blockers"
+        )
+
     assessment_checked_at = _validate_timestamp(
         record.assessment_checked_at, "assessment_checked_at"
     )
-    verified_timestamp = _validate_timestamp(effective_verified_at, "verified_at")
+    verified_at = _validate_timestamp(record.verified_at, "verified_at")
     created_at = _validate_timestamp(record.created_at, "created_at")
+    if assessment_checked_at > verified_at:
+        raise PersistedIntegrationExecutionReadinessVerificationError(
+            "verification timestamp precedes assessment check time"
+        )
 
     expected_assessment_fingerprint = _assessment_fingerprint(
         repository=record.repository,
@@ -197,6 +215,7 @@ def verify_persisted_integration_execution_readiness(
         state=record.state,
         blockers=blockers,
     )
+    _validate_sha256(record.assessment_fingerprint, "assessment_fingerprint")
     if record.assessment_fingerprint.lower() != expected_assessment_fingerprint:
         raise PersistedIntegrationExecutionReadinessVerificationError(
             "persisted assessment fingerprint mismatch"
@@ -204,8 +223,9 @@ def verify_persisted_integration_execution_readiness(
 
     expected_verification_fingerprint = _verification_fingerprint(
         assessment_fingerprint=expected_assessment_fingerprint,
-        verified_at=verified_timestamp,
+        verified_at=verified_at,
     )
+    _validate_sha256(record.verification_fingerprint, "verification_fingerprint")
     if record.verification_fingerprint.lower() != expected_verification_fingerprint:
         raise PersistedIntegrationExecutionReadinessVerificationError(
             "persisted verification fingerprint mismatch"
@@ -222,7 +242,7 @@ def verify_persisted_integration_execution_readiness(
         verification_fingerprint=expected_verification_fingerprint,
         created_at=created_at,
         assessment_checked_at=assessment_checked_at,
-        verified_at=verified_timestamp,
+        verified_at=verified_at,
     )
 
 
@@ -279,14 +299,18 @@ def _normalize_blockers(value: object) -> tuple[str, ...]:
 
 
 def _validate_candidate_sha(value: str) -> None:
-    if len(value) != 40 or any(char not in "0123456789abcdef" for char in value.lower()):
+    if len(value) != 40 or any(
+        char not in "0123456789abcdef" for char in value.lower()
+    ):
         raise PersistedIntegrationExecutionReadinessVerificationError(
             "candidate_sha must be a Git commit SHA-1"
         )
 
 
 def _validate_sha256(value: str, name: str) -> None:
-    if len(value) != 64 or any(char not in "0123456789abcdef" for char in value.lower()):
+    if len(value) != 64 or any(
+        char not in "0123456789abcdef" for char in value.lower()
+    ):
         raise PersistedIntegrationExecutionReadinessVerificationError(
             f"{name} must be SHA-256"
         )
