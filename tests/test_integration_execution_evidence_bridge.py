@@ -127,7 +127,7 @@ def test_gate_fingerprint_tampering_is_rejected(tmp_path):
             candidate_sha=CANDIDATE_SHA,
             bound_by="evidence-operator",
             bound_at=NOW,
-            authoritative_evidence_ids=mapping,
+            authoritative_evidence_ids=_mapping(),
         )
 
 
@@ -213,7 +213,7 @@ def test_wrong_source_type_is_rejected(tmp_path):
             candidate_sha=CANDIDATE_SHA,
             bound_by="evidence-operator",
             bound_at=NOW,
-            authoritative_evidence_ids=_mapping(),
+            authoritative_evidence_ids=mapping,
         )
 
 
