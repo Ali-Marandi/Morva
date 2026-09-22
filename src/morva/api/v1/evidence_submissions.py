@@ -9,9 +9,11 @@ from sqlalchemy.exc import IntegrityError
 
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
+from morva.persistence.evidence_lifecycle_records import EvidenceLifecycleRepository
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
+from morva.runtime.evidence_lifecycle import EvidenceLifecycleError, build_lifecycle_assessment
 from morva.runtime.evidence_registry_bridge import (
     EvidenceRegistryBridgeError,
     build_registry_projection,
@@ -40,6 +42,36 @@ class EvidenceSubmissionCreate(BaseModel):
 class EvidenceDecision(BaseModel):
     decision: str = Field(pattern="^(accepted|rejected)$")
     rejection_reason: str | None = Field(default=None, max_length=4000)
+
+
+class EvidenceLifecycleSupersedeCreate(BaseModel):
+    successor_evidence_id: str = Field(min_length=1, max_length=120)
+    reason: str = Field(min_length=1, max_length=4000)
+
+
+class EvidenceLifecycleEventResponse(BaseModel):
+    predecessor_evidence_id: str
+    successor_evidence_id: str
+    linked_by: str
+    linked_at: datetime
+    reason: str
+    fingerprint: str
+
+    @classmethod
+    def from_record(cls, record) -> "EvidenceLifecycleEventResponse":
+        return cls(
+            predecessor_evidence_id=record.predecessor_evidence_id,
+            successor_evidence_id=record.successor_evidence_id,
+            linked_by=record.linked_by,
+            linked_at=record.linked_at,
+            reason=record.reason,
+            fingerprint=record.fingerprint,
+        )
+
+
+class EvidenceLifecycleResponse(BaseModel):
+    events: list[EvidenceLifecycleEventResponse]
+    assessment: dict[str, object]
 
 
 class EvidenceRegistryResponse(BaseModel):
@@ -189,6 +221,106 @@ def get_registry(
             registered_at=registry.registered_at,
             fingerprint=registry.fingerprint,
             projection=projection.to_payload(),
+        )
+
+
+@router.post("/{evidence_id}/supersede", response_model=EvidenceLifecycleEventResponse)
+def supersede_evidence(
+    evidence_id: str,
+    payload: EvidenceLifecycleSupersedeCreate,
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceLifecycleEventResponse:
+    authorize(
+        principal,
+        "evidence.lifecycle.write",
+        principal.scope,
+        privileged=True,
+    )
+    with SessionLocal() as session:
+        repository = EvidenceLifecycleRepository(session)
+        try:
+            record = repository.create_link(
+                predecessor_evidence_id=evidence_id,
+                successor_evidence_id=payload.successor_evidence_id,
+                linked_by=principal.user_id,
+                linked_at=datetime.now().astimezone(),
+                reason=payload.reason,
+                principal_scope=principal.scope,
+                principal_scope_id=principal.scope_id,
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except EvidenceLifecycleError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except IntegrityError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail="lifecycle relationship already exists") from exc
+
+        append_audit_event(
+            event_type="evidence.lifecycle.superseded",
+            entity_type="authoritative_evidence_lifecycle_event",
+            entity_id=record.fingerprint,
+            actor_id=principal.user_id,
+            payload={
+                "predecessor_evidence_id": record.predecessor_evidence_id,
+                "successor_evidence_id": record.successor_evidence_id,
+                "fingerprint": record.fingerprint,
+            },
+            reason=record.reason,
+            session=session,
+        )
+        session.commit()
+        return EvidenceLifecycleEventResponse.from_record(record)
+
+
+@router.get("/lifecycle", response_model=EvidenceLifecycleResponse)
+def list_evidence_lifecycle(
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceLifecycleResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        accepted_query = select(AuthoritativeEvidenceSubmissionRecord).where(
+            AuthoritativeEvidenceSubmissionRecord.status == "accepted"
+        )
+        if principal.scope is not Scope.MINISTRY:
+            accepted_query = accepted_query.where(
+                AuthoritativeEvidenceSubmissionRecord.submission_scope == principal.scope.value,
+                AuthoritativeEvidenceSubmissionRecord.submission_scope_id == principal.scope_id,
+            )
+        accepted_records = session.scalars(
+            accepted_query.order_by(AuthoritativeEvidenceSubmissionRecord.evidence_id.asc())
+        ).all()
+        try:
+            registry, _ = build_registry_projection(
+                accepted_records,
+                projected_at=datetime.now().astimezone(),
+            )
+        except EvidenceRegistryBridgeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        lifecycle_repository = EvidenceLifecycleRepository(session)
+        lifecycle_records = (
+            lifecycle_repository.list_all()
+            if principal.scope is Scope.MINISTRY
+            else lifecycle_repository.list_for_scope(
+                scope=principal.scope,
+                scope_id=principal.scope_id,
+            )
+        )
+        checked_at = datetime.now().astimezone()
+        try:
+            assessment = build_lifecycle_assessment(
+                registry,
+                repository="Ali-Marandi/Morva",
+                checked_at=checked_at,
+                links=tuple(record.to_link() for record in lifecycle_records),
+            )
+        except EvidenceLifecycleError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        return EvidenceLifecycleResponse(
+            events=[EvidenceLifecycleEventResponse.from_record(record) for record in lifecycle_records],
+            assessment=assessment.to_payload(),
         )
 
 
