@@ -11,7 +11,6 @@ from morva.persistence.database import SessionLocal
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
-from morva.runtime.authoritative_evidence_intake import ALLOWED_SOURCE_TYPES
 from morva.runtime.evidence_submission import EvidenceSubmissionError, decide_evidence, submit_evidence
 
 router = APIRouter(prefix="/evidence-submissions", tags=["evidence"])
@@ -125,6 +124,11 @@ def list_submissions(
     authorize(principal, "evidence.read", principal.scope)
     with SessionLocal() as session:
         query = select(AuthoritativeEvidenceSubmissionRecord)
+        if principal.scope is not Scope.MINISTRY:
+            query = query.where(
+                AuthoritativeEvidenceSubmissionRecord.submission_scope == principal.scope.value,
+                AuthoritativeEvidenceSubmissionRecord.submission_scope_id == principal.scope_id,
+            )
         if status_filter:
             query = query.where(AuthoritativeEvidenceSubmissionRecord.status == status_filter)
         records = session.scalars(
@@ -147,6 +151,14 @@ def get_submission(
         )
         if record is None:
             raise HTTPException(status_code=404, detail="evidence submission not found")
+        if (
+            principal.scope is not Scope.MINISTRY
+            and (
+                record.submission_scope != principal.scope.value
+                or record.submission_scope_id != principal.scope_id
+            )
+        ):
+            raise HTTPException(status_code=403, detail="organization scope violation")
         return EvidenceSubmissionResponse.from_record(record)
 
 
@@ -158,6 +170,21 @@ def decide_submission(
 ) -> EvidenceSubmissionResponse:
     authorize(principal, "evidence.approve", principal.scope, privileged=True)
     with SessionLocal() as session:
+        existing = session.scalar(
+            select(AuthoritativeEvidenceSubmissionRecord).where(
+                AuthoritativeEvidenceSubmissionRecord.evidence_id == evidence_id.strip()
+            )
+        )
+        if existing is None:
+            raise HTTPException(status_code=404, detail="evidence submission not found")
+        if (
+            principal.scope is not Scope.MINISTRY
+            and (
+                existing.submission_scope != principal.scope.value
+                or existing.submission_scope_id != principal.scope_id
+            )
+        ):
+            raise HTTPException(status_code=403, detail="organization scope violation")
         try:
             record = decide_evidence(
                 session,
