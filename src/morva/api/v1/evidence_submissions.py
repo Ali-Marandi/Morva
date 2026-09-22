@@ -16,6 +16,10 @@ from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
 from morva.runtime.evidence_convergence import CLOSURE_ROLE_SOURCE_TYPES
 from morva.runtime.evidence_lifecycle import EvidenceLifecycleError, build_lifecycle_assessment
+from morva.runtime.evidence_readiness import (
+    EvidenceReadinessError,
+    build_readiness_assessment,
+)
 from morva.runtime.evidence_registry_bridge import (
     EvidenceRegistryBridgeError,
     build_registry_projection,
@@ -114,6 +118,10 @@ class EvidenceRoleBindingResponse(BaseModel):
 
 class EvidenceRoleBindingCollectionResponse(BaseModel):
     bindings: list[EvidenceRoleBindingResponse]
+    assessment: dict[str, object]
+
+
+class EvidenceReadinessResponse(BaseModel):
     assessment: dict[str, object]
 
 
@@ -385,6 +393,80 @@ def list_role_bindings(
         return EvidenceRoleBindingCollectionResponse(
             bindings=[EvidenceRoleBindingResponse.from_record(record) for record in records],
             assessment=assessment.to_payload(),
+        )
+
+
+@router.get("/readiness", response_model=EvidenceReadinessResponse)
+def get_evidence_readiness(
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceReadinessResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        checked_at = datetime.now().astimezone()
+        accepted_query = select(AuthoritativeEvidenceSubmissionRecord).where(
+            AuthoritativeEvidenceSubmissionRecord.status == "accepted"
+        )
+        if principal.scope is not Scope.MINISTRY:
+            accepted_query = accepted_query.where(
+                AuthoritativeEvidenceSubmissionRecord.submission_scope
+                == principal.scope.value,
+                AuthoritativeEvidenceSubmissionRecord.submission_scope_id
+                == principal.scope_id,
+            )
+        accepted_records = session.scalars(
+            accepted_query.order_by(
+                AuthoritativeEvidenceSubmissionRecord.evidence_id.asc()
+            )
+        ).all()
+        try:
+            registry, _ = build_registry_projection(
+                accepted_records,
+                projected_at=checked_at,
+            )
+            binding_repository = EvidenceRoleBindingRepository(session)
+            bindings, convergence = binding_repository.list_current(
+                principal_scope=principal.scope,
+                principal_scope_id=principal.scope_id,
+                checked_at=checked_at,
+            )
+            lifecycle_repository = EvidenceLifecycleRepository(session)
+            lifecycle_records = (
+                lifecycle_repository.list_all()
+                if principal.scope is Scope.MINISTRY
+                else lifecycle_repository.list_for_scope(
+                    scope=principal.scope,
+                    scope_id=principal.scope_id,
+                )
+            )
+            lifecycle = build_lifecycle_assessment(
+                registry,
+                repository="Ali-Marandi/Morva",
+                checked_at=checked_at,
+                links=tuple(
+                    record.to_link() for record in lifecycle_records
+                ),
+            )
+            assessment = build_readiness_assessment(
+                registry,
+                convergence,
+                repository="Ali-Marandi/Morva",
+                checked_at=checked_at,
+                receipts=tuple(
+                    record.to_receipt() for record in bindings
+                ),
+                lifecycle=lifecycle,
+            )
+        except (
+            EvidenceRegistryBridgeError,
+            EvidenceLifecycleError,
+            EvidenceRoleBindingError,
+            EvidenceReadinessError,
+            ValueError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        return EvidenceReadinessResponse(
+            assessment=assessment.to_payload()
         )
 
 

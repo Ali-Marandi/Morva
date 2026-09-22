@@ -1,3 +1,11 @@
+## Unreleased — M4.18 Evidence Readiness
+
+### Evidence readiness
+- Assess readiness across the current accepted-evidence registry, M4.17 role bindings, M4.12 convergence and M4.15/M4.16 lifecycle state.
+- Produce deterministic remediation for missing bindings, missing evidence, superseded evidence and population-scope mismatches.
+- Expose a read-only /api/v1/evidence-submissions/readiness assessment endpoint.
+- Keep verification-only behavior: no external provider execution, payroll execution, payment release or production certification.
+
 ## Unreleased — M4.17 Evidence Role Bindings
 
 ### Evidence convergence inputs
