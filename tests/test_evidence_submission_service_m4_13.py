@@ -138,3 +138,10 @@ def test_persisted_fingerprint_mutation_is_detected(session):
     record.source_uri = "https://attacker.example/changed"
     with pytest.raises(EvidenceSubmissionError, match="fingerprint"):
         verify_submission_record(record)
+
+
+def test_persisted_invalid_scope_is_rejected(session):
+    record = _submit(session)
+    record.submission_scope = "global"
+    with pytest.raises(EvidenceSubmissionError, match="invalid scope"):
+        verify_submission_record(record)
