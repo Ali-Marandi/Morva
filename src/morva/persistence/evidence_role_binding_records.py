@@ -162,6 +162,10 @@ class EvidenceRoleBindingRepository:
             )
             .order_by(AuthoritativeEvidenceSubmissionRecord.evidence_id.asc())
         ).all()
+        accepted_records = [
+            self._normalize_loaded_submission(record)
+            for record in accepted_records
+        ]
         registry, _ = build_registry_projection(
             accepted_records,
             projected_at=now,
@@ -278,6 +282,10 @@ class EvidenceRoleBindingRepository:
                 AuthoritativeEvidenceSubmissionRecord.evidence_id.asc()
             )
         ).all()
+        accepted_records = [
+            self._normalize_loaded_submission(record)
+            for record in accepted_records
+        ]
         registry, _ = build_registry_projection(
             accepted_records,
             projected_at=now,
