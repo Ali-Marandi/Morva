@@ -61,5 +61,6 @@ def test_evidence_api_routes_are_registered():
 
     paths = set(app.openapi()["paths"])
     assert "/api/v1/evidence-submissions" in paths
+    assert "/api/v1/evidence-submissions/registry" in paths
     assert "/api/v1/evidence-submissions/{evidence_id}" in paths
     assert "/api/v1/evidence-submissions/{evidence_id}/decision" in paths
