@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from morva.persistence.evidence_submission_records import (
     AuthoritativeEvidenceSubmissionRecord,
 )
+from morva.persistence.models import Base
 from morva.runtime.evidence_convergence import (
     CANONICAL_BINDING_KINDS,
     IMPLEMENTED_SOURCE_TYPES,
@@ -19,7 +20,6 @@ from morva.runtime.evidence_convergence import (
 )
 from morva.runtime.evidence_registry_bridge import build_registry_projection
 from morva.runtime.evidence_submission import verify_submission_record
-from morva.runtime.evidence_convergence import CLOSURE_ROLE_SOURCE_TYPES
 
 
 class EvidenceRoleBindingError(ValueError):
