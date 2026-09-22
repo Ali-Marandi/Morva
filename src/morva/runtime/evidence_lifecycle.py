@@ -6,10 +6,7 @@ from hashlib import sha256
 import json
 from typing import Iterable
 
-from morva.runtime.authoritative_evidence_intake import (
-    AuthoritativeEvidenceItem,
-    AuthoritativeEvidenceRegistry,
-)
+from morva.runtime.authoritative_evidence_intake import AuthoritativeEvidenceRegistry
 
 
 class EvidenceLifecycleError(ValueError):
