@@ -171,6 +171,16 @@ class IntegrationExecutionReadinessVerificationRepository:
             ).limit(1)
         )
         if record is not None:
+            bind = self.session.get_bind()
+            if bind is not None and bind.dialect.name == "sqlite":
+                for field_name in (
+                    "assessment_checked_at",
+                    "verified_at",
+                    "created_at",
+                ):
+                    value = getattr(record, field_name)
+                    if value is not None and value.tzinfo is None:
+                        setattr(record, field_name, value.replace(tzinfo=timezone.utc))
             record.assessment_checked_at = _ensure_timezone(
                 record.assessment_checked_at, "assessment_checked_at"
             )
