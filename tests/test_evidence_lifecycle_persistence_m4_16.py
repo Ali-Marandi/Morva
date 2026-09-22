@@ -236,3 +236,28 @@ def test_mismatched_source_type_is_rejected(session):
             principal_scope=Scope.PROVINCE,
             principal_scope_id="province-1",
         )
+
+
+def test_tampered_submission_is_fail_closed(session):
+    old = _submission(
+        session,
+        evidence_id="E-OLD",
+        effective_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    )
+    _submission(
+        session,
+        evidence_id="E-NEW",
+        effective_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
+        submitted_by="new-submitter",
+    )
+    old.source_uri = "https://attacker.example/tampered"
+    with pytest.raises(Exception, match="verification failed"):
+        EvidenceLifecycleRepository(session).create_link(
+            predecessor_evidence_id="E-OLD",
+            successor_evidence_id="E-NEW",
+            linked_by="lifecycle-admin",
+            linked_at=NOW,
+            reason="tampered source",
+            principal_scope=Scope.PROVINCE,
+            principal_scope_id="province-1",
+        )
