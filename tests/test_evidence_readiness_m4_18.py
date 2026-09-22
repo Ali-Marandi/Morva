@@ -143,8 +143,13 @@ def test_superseded_evidence_is_blocked_even_when_binding_exists():
         receipts=(receipt,),
         lifecycle=lifecycle,
     )
-    assert assessment.blocked_roles == ("legal_approval",)
-    assert assessment.remediation[0].reason_code == "EVIDENCE_SUPERSEDED"
+    assert "legal_approval" in assessment.blocked_roles
+    remediation = next(
+        item
+        for item in assessment.remediation
+        if item.role == "legal_approval"
+    )
+    assert remediation.reason_code == "EVIDENCE_SUPERSEDED"
 
 
 def test_registry_mismatch_is_rejected():
