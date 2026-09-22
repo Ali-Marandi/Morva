@@ -24,6 +24,10 @@ from morva.persistence import core_hr_records  # noqa: F401
 from morva.persistence import domain_extensions  # noqa: F401
 from morva.persistence import enterprise_models  # noqa: F401
 from morva.persistence import masterdata_records  # noqa: F401
+from morva.persistence import evidence_submission_records  # noqa: F401
+from morva.persistence import evidence_lifecycle_records  # noqa: F401
+from morva.persistence import evidence_role_binding_records  # noqa: F401
+from morva.persistence import integration_execution_readiness_records  # noqa: F401
 from morva.persistence import payment_exception_records  # noqa: F401
 
 config = context.config
