@@ -52,6 +52,7 @@ def test_submission_is_pending_and_fingerprinted(session):
     assert record.decided_by is None
     assert record.submission_scope == Scope.PROVINCE.value
     assert record.submission_scope_id == "province-1"
+    assert len(record.fingerprint) == 64
 
 
 def test_duplicate_evidence_id_is_rejected(session):
