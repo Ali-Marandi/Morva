@@ -3,7 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, JSON, String, UniqueConstraint, select
+from sqlalchemy import (
+    DateTime,
+    Index,
+    JSON,
+    String,
+    UniqueConstraint,
+    select,
+)
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.runtime.independent_integration_execution_readiness_verifier_m4_21 import (
@@ -29,6 +36,10 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
             "verification_fingerprint",
             name="uq_integration_readiness_verification_fingerprint",
         ),
+        Index(
+            "ix_integ_readiness_binding_verification_fp",
+            "binding_verification_fingerprint",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -47,7 +58,7 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
     )
     binding_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
     binding_verification_fingerprint: Mapped[str] = mapped_column(
-        String(64), index=True
+        String(64), index=False
     )
     state: Mapped[str] = mapped_column(String(20), index=True)
     blockers: Mapped[list] = mapped_column(JSON, default=list)
