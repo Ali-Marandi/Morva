@@ -124,6 +124,8 @@ def submit_evidence(
         source_sha256=digest,
         issuer=values["issuer"],
         population_scope=values["population_scope"],
+        submission_scope=submission_scope.value,
+        submission_scope_id=submission_scope_id.strip(),
         effective_from=effective_from_utc,
         effective_to=effective_to_utc,
         expires_at=expires_at_utc,
@@ -191,8 +193,8 @@ def decide_evidence(
         record.rejection_reason = None
 
     record.status = decision
-    record.approved_by = approver
-    record.approved_at = decided_at_utc
+    record.decided_by = approver
+    record.decided_at = decided_at_utc
     session.flush()
     return record
 
