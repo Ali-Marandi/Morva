@@ -12,9 +12,9 @@
 **Public web:** `https://ali-marandi.github.io/Morva/`
 
 **Latest `main` activity (2026-09-22):**
-- Latest main commit: `2008ccb` — `feat: bridge M3.86 integration execution evidence into M4 (#96)`
-- Main now includes the complete M4.1–M4.19 evidence/integration line: intake, closure, population treatment, master-data/rule/adapters/payroll/reconciliation/DR/security/load bridges, convergence, controlled submission, registry projection, lifecycle lineage, persisted lifecycle API, role bindings, readiness/remediation assessment, integration-execution evidence binding and its independent verifier.
-- M4.18 readiness/remediation remains the canonical closure layer; M4.19 adds a fail-closed bridge and independent reconstruction path for verified M3.84/M3.85/M3.86 staging-or-pilot integration evidence.
+- Latest main commit: `db5f4ea` — `feat: add independent verifier for M4 integration evidence (#97)`
+- Main includes the M4.1–M4.19 evidence/integration line and its independent integration-binding verifier. M4.20 is now under active implementation as a software-side readiness composition layer.
+- M4.18 remains the canonical evidence closure/remediation layer; M4.19 bridges verified M3.84/M3.85/M3.86 staging-or-pilot execution evidence, while M4.20 composes that verified identity with canonical evidence readiness and exposes deterministic blockers.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -100,7 +100,7 @@ The final acceptance model is based on four gates:
 
 ### Current execution focus
 
-The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.19 evidence/integration line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings, deterministic readiness/remediation visibility, and a verified M3.84/M3.85/M3.86 staging-or-pilot evidence bridge with independent reconstruction. These controls do not constitute legal, organizational or production certification on their own.
+The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.20 evidence/integration line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings, deterministic readiness/remediation visibility, a verified M3.84/M3.85/M3.86 staging-or-pilot evidence bridge with independent reconstruction, and an integration-execution readiness composition layer. These controls do not constitute legal, organizational or production certification on their own.
 
 The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
 
