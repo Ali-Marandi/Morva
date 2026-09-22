@@ -54,3 +54,12 @@ def test_evidence_approver_can_act_with_mfa_at_own_scope():
         resource_scope_id="province-1",
         privileged=True,
     )
+
+
+def test_evidence_api_routes_are_registered():
+    from morva.api.app import app
+
+    paths = {route.path for route in app.routes}
+    assert "/api/v1/evidence-submissions" in paths
+    assert "/api/v1/evidence-submissions/{evidence_id}" in paths
+    assert "/api/v1/evidence-submissions/{evidence_id}/decision" in paths
