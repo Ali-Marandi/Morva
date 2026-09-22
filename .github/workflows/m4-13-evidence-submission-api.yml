@@ -10,7 +10,9 @@ on:
       - "src/morva/runtime/evidence_submission.py"
       - "src/morva/persistence/evidence_submission_records.py"
       - "src/morva/security/policy.py"
+      - "src/morva/persistence/database.py"
       - "tests/test_evidence_submission_service_m4_13.py"
+      - "tests/test_evidence_submission_policy_m4_13.py"
       - "docs/M4_13_EVIDENCE_SUBMISSION_API.md"
       - "alembic/versions/0022_authoritative_evidence_submissions.py"
   pull_request:
@@ -22,7 +24,9 @@ on:
       - "src/morva/runtime/evidence_submission.py"
       - "src/morva/persistence/evidence_submission_records.py"
       - "src/morva/security/policy.py"
+      - "src/morva/persistence/database.py"
       - "tests/test_evidence_submission_service_m4_13.py"
+      - "tests/test_evidence_submission_policy_m4_13.py"
       - "docs/M4_13_EVIDENCE_SUBMISSION_API.md"
       - "alembic/versions/0022_authoritative_evidence_submissions.py"
   workflow_dispatch:
@@ -50,8 +54,13 @@ jobs:
           src/morva/api/v1/evidence_submissions.py
           src/morva/persistence/evidence_submission_records.py
           src/morva/security/policy.py
+          src/morva/persistence/database.py
           tests/test_evidence_submission_service_m4_13.py
+          tests/test_evidence_submission_policy_m4_13.py
       - name: Pytest
-        run: pytest -q tests/test_evidence_submission_service_m4_13.py
+        run: >
+          pytest -q
+          tests/test_evidence_submission_service_m4_13.py
+          tests/test_evidence_submission_policy_m4_13.py
       - name: Migration
         run: alembic upgrade head
