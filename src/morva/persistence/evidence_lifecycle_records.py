@@ -107,19 +107,15 @@ class EvidenceLifecycleRepository:
         if predecessor_id == successor_id:
             raise EvidenceLifecycleError("evidence cannot supersede itself")
 
-        predecessor = self.session.scalar(
-            select(AuthoritativeEvidenceSubmissionRecord)
-            .where(
+        predecessor = self._scalar_locked(
+            select(AuthoritativeEvidenceSubmissionRecord).where(
                 AuthoritativeEvidenceSubmissionRecord.evidence_id == predecessor_id
             )
-            .with_for_update()
         )
-        successor = self.session.scalar(
-            select(AuthoritativeEvidenceSubmissionRecord)
-            .where(
+        successor = self._scalar_locked(
+            select(AuthoritativeEvidenceSubmissionRecord).where(
                 AuthoritativeEvidenceSubmissionRecord.evidence_id == successor_id
             )
-            .with_for_update()
         )
         if predecessor is None:
             raise KeyError(f"predecessor evidence not found: {predecessor_id}")
@@ -206,6 +202,12 @@ class EvidenceLifecycleRepository:
         self.session.add(record)
         self.session.flush()
         return record
+
+    def _scalar_locked(self, statement):
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            return self.session.scalar(statement)
+        return self.session.scalar(statement.with_for_update())
 
     def list_for_scope(
         self,
