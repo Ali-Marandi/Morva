@@ -168,13 +168,13 @@ class IntegrationExecutionReadinessVerificationRepository:
         self.session.flush()
         return record
 
-    def latest(
+    def _latest_query(
         self,
         *,
-        repository: str = "Ali-Marandi/Morva",
-        candidate_sha: str | None = None,
-        target_environment: str | None = None,
-    ) -> IntegrationExecutionReadinessVerificationRecord | None:
+        repository: str,
+        candidate_sha: str | None,
+        target_environment: str | None,
+    ):
         query = select(IntegrationExecutionReadinessVerificationRecord).where(
             IntegrationExecutionReadinessVerificationRecord.repository == repository
         )
@@ -188,28 +188,65 @@ class IntegrationExecutionReadinessVerificationRepository:
                 IntegrationExecutionReadinessVerificationRecord.target_environment
                 == target_environment
             )
-        record = self.session.scalar(
-            query.order_by(
-                IntegrationExecutionReadinessVerificationRecord.verified_at.desc(),
-                IntegrationExecutionReadinessVerificationRecord.id.desc(),
-            ).limit(1)
+        return query.order_by(
+            IntegrationExecutionReadinessVerificationRecord.verified_at.desc(),
+            IntegrationExecutionReadinessVerificationRecord.id.desc(),
+        ).limit(1)
+
+    def _normalize_loaded_timestamps(
+        self,
+        record: IntegrationExecutionReadinessVerificationRecord,
+    ) -> IntegrationExecutionReadinessVerificationRecord:
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            for field_name in (
+                "assessment_checked_at",
+                "verified_at",
+                "created_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
+        record.assessment_checked_at = _ensure_timezone(
+            record.assessment_checked_at, "assessment_checked_at"
         )
+        record.verified_at = _ensure_timezone(record.verified_at, "verified_at")
+        record.created_at = _ensure_timezone(record.created_at, "created_at")
+        return record
+
+    def latest_raw(
+        self,
+        *,
+        repository: str = "Ali-Marandi/Morva",
+        candidate_sha: str | None = None,
+        target_environment: str | None = None,
+    ) -> IntegrationExecutionReadinessVerificationRecord | None:
+        """Return the persisted receipt without invoking the M4.21 verifier."""
+        query = self._latest_query(
+            repository=repository,
+            candidate_sha=candidate_sha,
+            target_environment=target_environment,
+        )
+        record = self.session.scalar(query)
         if record is not None:
-            bind = self.session.get_bind()
-            if bind is not None and bind.dialect.name == "sqlite":
-                for field_name in (
-                    "assessment_checked_at",
-                    "verified_at",
-                    "created_at",
-                ):
-                    value = getattr(record, field_name)
-                    if value is not None and value.tzinfo is None:
-                        setattr(record, field_name, value.replace(tzinfo=timezone.utc))
-            record.assessment_checked_at = _ensure_timezone(
-                record.assessment_checked_at, "assessment_checked_at"
-            )
-            record.verified_at = _ensure_timezone(record.verified_at, "verified_at")
-            record.created_at = _ensure_timezone(record.created_at, "created_at")
+            return self._normalize_loaded_timestamps(record)
+        return None
+
+    def latest(
+        self,
+        *,
+        repository: str = "Ali-Marandi/Morva",
+        candidate_sha: str | None = None,
+        target_environment: str | None = None,
+    ) -> IntegrationExecutionReadinessVerificationRecord | None:
+        query = self._latest_query(
+            repository=repository,
+            candidate_sha=candidate_sha,
+            target_environment=target_environment,
+        )
+        record = self.session.scalar(query)
+        if record is not None:
+            record = self._normalize_loaded_timestamps(record)
             record.to_verification()
         return record
 
