@@ -131,15 +131,20 @@ def verify_integration_execution_evidence_binding(
             "integration execution binding candidate SHA mismatch"
         )
 
-    expected = build_integration_execution_evidence_binding(
-        execution_readiness_gate,
-        authoritative_registry,
-        repository=repository,
-        candidate_sha=candidate_sha,
-        bound_by=binding.bound_by,
-        bound_at=binding.bound_at,
-        authoritative_evidence_ids=authoritative_evidence_ids,
-    )
+    try:
+        expected = build_integration_execution_evidence_binding(
+            execution_readiness_gate,
+            authoritative_registry,
+            repository=repository,
+            candidate_sha=candidate_sha,
+            bound_by=binding.bound_by,
+            bound_at=binding.bound_at,
+            authoritative_evidence_ids=authoritative_evidence_ids,
+        )
+    except IntegrationExecutionEvidenceBridgeError as exc:
+        raise IntegrationExecutionEvidenceBindingVerificationError(
+            f"independent reconstruction failed: {exc}"
+        ) from exc
     if expected != binding:
         raise IntegrationExecutionEvidenceBindingVerificationError(
             "independent reconstruction does not match the recorded binding"
