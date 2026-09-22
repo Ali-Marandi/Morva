@@ -142,6 +142,7 @@ class ThreeWayReconciliationBinding:
     treasury_instruction_sha256: str
     bank_settlement_sha256: str
     comparison_fingerprint: str
+    evidence_document_sha256: str
     bound_by: str
     bound_at: datetime
 
@@ -157,6 +158,7 @@ class ThreeWayReconciliationBinding:
             "treasury_instruction_sha256": self.treasury_instruction_sha256.lower(),
             "bank_settlement_sha256": self.bank_settlement_sha256.lower(),
             "comparison_fingerprint": self.comparison_fingerprint.lower(),
+            "evidence_document_sha256": self.evidence_document_sha256.lower(),
             "bound_by": self.bound_by,
             "bound_at": self.bound_at.astimezone(timezone.utc).isoformat(),
         }
