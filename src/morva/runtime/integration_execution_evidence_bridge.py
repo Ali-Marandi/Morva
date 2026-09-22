@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -202,19 +202,15 @@ def _validate_authoritative_evidence(
     *,
     checked_at: datetime,
 ) -> tuple[tuple[str, str, str], ...]:
-    if tuple(evidence_ids) != REQUIRED_ADAPTERS:
-        missing = [adapter for adapter in REQUIRED_ADAPTERS if adapter not in evidence_ids]
-        extras = [adapter for adapter in evidence_ids if adapter not in REQUIRED_ADAPTERS]
-        if missing:
-            raise IntegrationExecutionEvidenceBridgeError(
-                f"missing authoritative evidence mapping for adapter: {missing[0]}"
-            )
-        if extras:
-            raise IntegrationExecutionEvidenceBridgeError(
-                f"unsupported authoritative evidence adapter: {extras[0]}"
-            )
+    missing = [adapter for adapter in REQUIRED_ADAPTERS if adapter not in evidence_ids]
+    extras = [adapter for adapter in evidence_ids if adapter not in REQUIRED_ADAPTERS]
+    if missing:
         raise IntegrationExecutionEvidenceBridgeError(
-            "authoritative adapter evidence mappings must use the canonical order"
+            f"missing authoritative evidence mapping for adapter: {missing[0]}"
+        )
+    if extras:
+        raise IntegrationExecutionEvidenceBridgeError(
+            f"unsupported authoritative evidence adapter: {extras[0]}"
         )
 
     if checked_at.tzinfo is None:
@@ -316,7 +312,7 @@ def build_integration_execution_evidence_binding(
         )
     if (
         bound_time - gate_checked_at
-        > __import__("datetime").timedelta(hours=gate.max_execution_age_hours)
+        > timedelta(hours=gate.max_execution_age_hours)
     ):
         raise IntegrationExecutionEvidenceBridgeError(
             "integration execution readiness evidence is stale"
@@ -327,11 +323,6 @@ def build_integration_execution_evidence_binding(
         authoritative_evidence_ids,
         checked_at=bound_at,
     )
-    if authoritative_registry.fingerprint != authoritative_registry.fingerprint.lower():
-        raise IntegrationExecutionEvidenceBridgeError(
-            "authoritative evidence registry fingerprint must be canonical lowercase"
-        )
-
     return IntegrationExecutionEvidenceBinding(
         binding_version=1,
         repository=repository,
