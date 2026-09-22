@@ -88,7 +88,7 @@ def upgrade() -> None:
         ["binding_fingerprint"],
     )
     op.create_index(
-        "ix_integration_readiness_verification_binding_verification_fingerprint",
+        "ix_integ_readiness_binding_verification_fp",
         "integration_execution_readiness_verifications",
         ["binding_verification_fingerprint"],
     )
