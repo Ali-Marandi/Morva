@@ -47,6 +47,7 @@ def _submission(
     status: str = "accepted",
     submitted_by: str = "submitter",
     decided_by: str = "approver",
+    submission_scope_id: str = "province-1",
 ):
     record = AuthoritativeEvidenceSubmissionRecord(
         evidence_id=evidence_id,
@@ -56,7 +57,7 @@ def _submission(
         issuer="authority",
         population_scope=population_scope,
         submission_scope=Scope.PROVINCE.value,
-        submission_scope_id="province-1",
+        submission_scope_id=submission_scope_id,
         effective_from=effective_from,
         effective_to=datetime(2027, 1, 1, tzinfo=timezone.utc),
         expires_at=datetime(2026, 12, 31, tzinfo=timezone.utc),
@@ -85,6 +86,15 @@ def _submission(
     )
     session.add(record)
     session.flush()
+    # SQLite strips timezone metadata from DateTime(timezone=True); restore the
+    # application-level invariant for the identity-mapped test record.
+    record.effective_from = effective_from
+    record.effective_to = datetime(2027, 1, 1, tzinfo=timezone.utc)
+    record.expires_at = datetime(2026, 12, 31, tzinfo=timezone.utc)
+    record.submitted_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    record.decided_at = (
+        datetime(2026, 1, 2, tzinfo=timezone.utc) if status != "pending" else None
+    )
     return record
 
 
@@ -186,20 +196,19 @@ def test_duplicate_predecessor_is_rejected(session):
 
 
 def test_scope_isolation_is_enforced(session):
-    old = _submission(
+    _submission(
         session,
         evidence_id="E-OLD",
         effective_from=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        submission_scope_id="province-2",
     )
-    new = _submission(
+    _submission(
         session,
         evidence_id="E-NEW",
         effective_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
         submitted_by="new-submitter",
+        submission_scope_id="province-2",
     )
-    old.submission_scope_id = "province-2"
-    new.submission_scope_id = "province-2"
-    session.flush()
 
     with pytest.raises(Exception, match="principal scope"):
         EvidenceLifecycleRepository(session).create_link(
