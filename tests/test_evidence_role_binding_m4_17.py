@@ -14,10 +14,45 @@ from morva.persistence.evidence_submission_records import (
 )
 from morva.persistence.models import Base
 from morva.runtime.evidence_submission import _fingerprint
-from morva.security.policy import Scope
+from morva.security.policy import Principal, Scope, authorize
 
 
 NOW = datetime(2026, 9, 22, 12, tzinfo=timezone.utc)
+
+
+def test_binding_manager_permission_requires_mfa():
+    principal = Principal(
+        user_id="binding-manager",
+        role="evidence_binding_manager",
+        scope=Scope.PROVINCE,
+        scope_id="province-1",
+        mfa_verified=False,
+    )
+    with pytest.raises(Exception, match="MFA"):
+        authorize(
+            principal,
+            "evidence.binding.write",
+            Scope.PROVINCE,
+            resource_scope_id="province-1",
+            privileged=True,
+        )
+
+
+def test_binding_manager_permission_allows_scoped_mfa_action():
+    principal = Principal(
+        user_id="binding-manager",
+        role="evidence_binding_manager",
+        scope=Scope.PROVINCE,
+        scope_id="province-1",
+        mfa_verified=True,
+    )
+    authorize(
+        principal,
+        "evidence.binding.write",
+        Scope.PROVINCE,
+        resource_scope_id="province-1",
+        privileged=True,
+    )
 
 
 @pytest.fixture()
