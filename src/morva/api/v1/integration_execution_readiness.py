@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select
 
 from morva.persistence.database import SessionLocal
 from morva.persistence.integration_execution_readiness_records import (
@@ -23,8 +24,8 @@ CANONICAL_REPOSITORY = "Ali-Marandi/Morva"
 class IntegrationExecutionReadinessVerificationResponse(BaseModel):
     assessment: dict[str, object]
     verification_fingerprint: str
-    verified_at: str
-    created_at: str
+    verified_at: datetime
+    created_at: datetime
 
 
 @router.get(
@@ -71,6 +72,6 @@ def get_integration_execution_readiness(
         return IntegrationExecutionReadinessVerificationResponse(
             assessment=assessment,
             verification_fingerprint=verification.fingerprint,
-            verified_at=verification.verified_at.isoformat(),
-            created_at=record.created_at.isoformat(),
+            verified_at=verification.verified_at,
+            created_at=record.created_at,
         )
