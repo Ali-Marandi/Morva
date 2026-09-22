@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.19 integration-execution evidence bridge and independent binding verifier are implemented on `main`; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.20 integration-execution readiness assessment is under active implementation on `main`; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -117,11 +117,12 @@
 - M4.17 persisted evidence role bindings with canonical role/source binding, accepted/current evidence enforcement, exact registry fingerprint binding, MFA/SoD/scope controls and dedicated CI gate
 - M4.18 deterministic evidence readiness/remediation assessment with lifecycle-aware supersession blocking, role-binding convergence and read-only readiness API
 - M4.19 integration-execution evidence bridge plus independent binding verifier, binding verified M3.84/M3.85/M3.86 staging-or-pilot execution to the M4.1 authoritative registry with deterministic reconstruction and fail-closed controls
+- M4.20 integration-execution readiness assessment composing independently verified execution-binding identity with canonical evidence readiness, deterministic blockers and fail-closed readiness state
 
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.19 is the current main evidence/integration baseline.
-2. Maintain the M4.1–M4.19 evidence/integration line as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.20 is the current main evidence/integration baseline.
+2. Maintain the M4.1–M4.20 evidence/integration line as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
 5. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
@@ -131,7 +132,7 @@
 9. Remove remaining demonstration-only frontend behavior and wire operational views to authenticated APIs. **M3.14 completed for the primary dashboard/employee views.**
 10. Complete employee self-service, objection/case management and production PDF/reporting. **M3.15 foundation and M3.16 UX hardening implemented: authenticated self-service profile/payslips/orders, artifact-bound PDF download, persistent employee cases, payslip detail/provenance view, period filter and resilient download UX. M3.22 identity-directory reconciliation is now implemented; broader reporting, document-template certification and enterprise grievance policy/SLA evidence remain pending.**
 11. Implement official SINA, accounting, treasury, bank, tax and insurance adapters only from authoritative contracts.
-12. Run staging tests for every adapter and at least one pilot environment where authorized. **M4.19 now provides the fail-closed M4 bridge and independent verifier for verified M3.84/M3.85/M3.86 execution evidence; it does not execute providers or fabricate external evidence.**
+4. Run staging tests for every adapter and at least one pilot environment where authorized. **M4.19 provides the fail-closed M4 bridge and independent verifier; M4.20 provides the software-side readiness composition. Neither executes providers or fabricates external evidence.**
 13. Complete end-to-end three-way reconciliation: Morva entitlement ↔ Treasury/PFM instruction ↔ Bank settlement. **M3.27 software hard-stop contract is implemented; M3.32 now blocks settlement at the payment-batch boundary when any member item has an unresolved exception. Live adapter evidence and authorized staging/pilot settlement remain pending.**
 14. Extend M3.30 from persisted exception/resolution state into API/UI workflows and settlement-linked payment-item/batch operations. **M3.31 adds authenticated provider-neutral API workflows for exception creation, open/all listing, immutable event history and idempotent resolution. M3.32 adds a provider-neutral batch/item release guard that consumes the existing exception state and fails closed. Provider-specific settlement behavior remains prohibited without authoritative contracts.**
 15. Complete production key-management, encryption-at-rest, secret rotation and retention controls. **M3.33 implements the application-side versioned key-ring, authenticated encryption/lookup primitives, retained-key rotation compatibility and production configuration gate. Infrastructure-managed database/storage encryption, KMS/HSM custody, automated secret rotation, backup-key segregation, retention evidence and independent security validation remain pending operational work.**

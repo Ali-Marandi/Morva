@@ -1,0 +1,52 @@
+name: M4 Integration Execution Readiness Assessment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-integration-execution-readiness-assessment.yml"
+      - "src/morva/runtime/integration_execution_readiness_assessment.py"
+      - "src/morva/runtime/integration_execution_evidence_binding_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence_bridge.py"
+      - "src/morva/runtime/evidence_readiness.py"
+      - "tests/test_integration_execution_readiness_assessment.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-integration-execution-readiness-assessment.yml"
+      - "src/morva/runtime/integration_execution_readiness_assessment.py"
+      - "src/morva/runtime/integration_execution_evidence_binding_verifier.py"
+      - "src/morva/runtime/integration_execution_evidence_bridge.py"
+      - "src/morva/runtime/evidence_readiness.py"
+      - "tests/test_integration_execution_readiness_assessment.py"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  assessment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/runtime/integration_execution_readiness_assessment.py
+          tests/test_integration_execution_readiness_assessment.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_integration_execution_readiness_assessment.py
+      - name: Boundary
+        run: |
+          echo "M4 integration execution readiness remains fail-closed until authoritative evidence closure is complete." >> "$GITHUB_STEP_SUMMARY"
+          echo "Assessment does not execute providers, use credentials or mutate production systems." >> "$GITHUB_STEP_SUMMARY"
