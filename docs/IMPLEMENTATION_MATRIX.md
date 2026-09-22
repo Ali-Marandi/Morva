@@ -134,3 +134,5 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 59 | M4.21 Independent Integration Execution Readiness Verification | **M4.21 independently reloads the M4.20 assessment, checks the ready/state contract, exact repository/SHA identity, verification-time ordering and canonical SHA-256 fingerprint without invoking the M4.20 builder; verification-only** |
 
 | 60 | M4.22 Persisted Integration Execution Readiness | **M4.22 persists independently verified M4.21 receipts append-only, revalidates M4.20/M4.21 fingerprints on read, binds exact repository/candidate SHA/environment and exposes a ministry-scoped read-only readiness API; no provider activation or production mutation** |
+
+| 61 | M4.23 Independent Persisted Integration Readiness Verification | **Direct API/runtime reconstruction of persisted M4.22 assessment and verification fingerprints; exact canonical repository/candidate SHA/staging-or-pilot identity; strict timestamp and blocker-shape checks; verification-only and does not invoke M4.20/M4.21 builders or mutate providers/production** |
