@@ -111,9 +111,11 @@ class EvidenceRoleBindingRepository:
         if principal_scope_id is None or not principal_scope_id.strip():
             raise EvidenceRoleBindingError("principal_scope_id is required")
 
-        record = self._scalar_locked(
-            select(AuthoritativeEvidenceSubmissionRecord).where(
-                AuthoritativeEvidenceSubmissionRecord.evidence_id == evidence_id
+        record = self._normalize_loaded_submission(
+            self._scalar_locked(
+                select(AuthoritativeEvidenceSubmissionRecord).where(
+                    AuthoritativeEvidenceSubmissionRecord.evidence_id == evidence_id
+                )
             )
         )
         if record is None:
@@ -229,6 +231,30 @@ class EvidenceRoleBindingRepository:
             return self.session.scalar(statement)
         return self.session.scalar(statement.with_for_update())
 
+    def _normalize_loaded_submission(self, record):
+        if record is None:
+            return None
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            for field_name in (
+                "effective_from",
+                "effective_to",
+                "expires_at",
+                "submitted_at",
+                "decided_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
+        return record
+
+    def _normalize_loaded_binding(self, record):
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            if record.bound_at.tzinfo is None:
+                record.bound_at = record.bound_at.replace(tzinfo=timezone.utc)
+        return record
+
     def list_current(
         self,
         *,
@@ -267,13 +293,14 @@ class EvidenceRoleBindingRepository:
                 EvidenceRoleBindingRecord.submission_scope_id
                 == principal_scope_id,
             )
-        records = list(
-            self.session.scalars(
+        records = [
+            self._normalize_loaded_binding(record)
+            for record in self.session.scalars(
                 query.order_by(
                     EvidenceRoleBindingRecord.certification_role.asc()
                 )
             ).all()
-        )
+        ]
         try:
             assessment = build_convergence_assessment(
                 registry,
