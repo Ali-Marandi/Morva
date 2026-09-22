@@ -8,7 +8,12 @@ from sqlalchemy.orm import sessionmaker
 
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.persistence.models import Base
-from morva.runtime.evidence_submission import EvidenceSubmissionError, decide_evidence, submit_evidence
+from morva.runtime.evidence_submission import (
+    EvidenceSubmissionError,
+    decide_evidence,
+    submit_evidence,
+    verify_submission_record,
+)
 from morva.security.policy import Scope
 
 NOW = datetime(2026, 9, 22, 12, tzinfo=timezone.utc)
@@ -109,3 +114,27 @@ def test_acceptance_is_one_way_from_pending(session):
             decided_at=NOW,
             rejection_reason="late",
         )
+
+
+def test_persisted_pending_record_verifies_cleanly(session):
+    record = _submit(session)
+    verify_submission_record(record)
+
+
+def test_persisted_accepted_record_verifies_cleanly(session):
+    record = _submit(session)
+    decide_evidence(
+        session,
+        evidence_id=record.evidence_id,
+        approver_id="approver",
+        decision="accepted",
+        decided_at=NOW,
+    )
+    verify_submission_record(record)
+
+
+def test_persisted_fingerprint_mutation_is_detected(session):
+    record = _submit(session)
+    record.source_uri = "https://attacker.example/changed"
+    with pytest.raises(EvidenceSubmissionError, match="fingerprint"):
+        verify_submission_record(record)
