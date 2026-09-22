@@ -83,7 +83,7 @@ def test_invalid_window_is_rejected(session):
 
 def test_acceptance_requires_distinct_actor(session):
     record = _submit(session)
-    with pytest.raises(Exception, match="distinct"):
+    with pytest.raises(EvidenceSubmissionError, match="separation of duties"):
         decide_evidence(
             session,
             evidence_id=record.evidence_id,
@@ -119,6 +119,24 @@ def test_acceptance_is_one_way_from_pending(session):
 def test_persisted_pending_record_verifies_cleanly(session):
     record = _submit(session)
     verify_submission_record(record)
+
+
+def test_decision_metadata_persists(session):
+    record = _submit(session)
+    decide_evidence(
+        session,
+        evidence_id=record.evidence_id,
+        approver_id="approver",
+        decision="accepted",
+        decided_at=NOW,
+    )
+    session.commit()
+    session.expire_all()
+    persisted = session.get(AuthoritativeEvidenceSubmissionRecord, record.id)
+    assert persisted is not None
+    assert persisted.status == "accepted"
+    assert persisted.decided_by == "approver"
+    assert persisted.decided_at == NOW
 
 
 def test_persisted_accepted_record_verifies_cleanly(session):
