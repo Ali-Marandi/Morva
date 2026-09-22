@@ -1,3 +1,17 @@
+## Unreleased — M4.16 Evidence Lifecycle API
+
+### Evidence lifecycle operations
+- Persist fingerprinted evidence supersession/renewal relationships in an append-only table.
+- Expose authenticated lifecycle creation and history endpoints.
+- Require dedicated lifecycle permission, MFA, submitter separation and exact organization-scope continuity.
+- Revalidate the complete lifecycle graph before persisting each new relationship.
+- Produce the M4.15 deterministic lineage assessment from persisted events.
+- Add PostgreSQL/Alembic migration, regression coverage and a dedicated CI gate.
+
+### Safety
+- Lifecycle operations modify only Morva evidence metadata and lineage records.
+- No external document upload, provider call, production activation or production certification is performed.
+
 ## Unreleased — M4.15 Evidence Lifecycle
 
 ### Evidence lineage
