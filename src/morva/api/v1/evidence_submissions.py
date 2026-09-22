@@ -380,7 +380,7 @@ def list_role_bindings(
                 principal_scope_id=principal.scope_id,
                 checked_at=datetime.now().astimezone(),
             )
-        except (EvidenceRoleBindingError, EvidenceRegistryBridgeError) as exc:
+        except (EvidenceRoleBindingError, EvidenceRegistryBridgeError, ValueError) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return EvidenceRoleBindingCollectionResponse(
             bindings=[EvidenceRoleBindingResponse.from_record(record) for record in records],
