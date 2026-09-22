@@ -33,7 +33,9 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "payment_reconciler": frozenset({"payroll.read", "payroll.payment.reconcile"}),
     "hr_admin": frozenset({"personnel.read", "personnel.write", "personnel.review", "payroll.read"}),
     "personnel_approver": frozenset({"personnel.read", "personnel.order.approve", "personnel.approve"}),
-    "auditor": frozenset({"audit.read", "payroll.read"}),
+    "auditor": frozenset({"audit.read", "payroll.read", "evidence.read"}),
+    "evidence_submitter": frozenset({"evidence.read", "evidence.submit"}),
+    "evidence_approver": frozenset({"evidence.read", "evidence.approve"}),
     "admin": frozenset({"*"}),
 }
 
@@ -41,7 +43,7 @@ PRIVILEGED_ROLES = frozenset(
     {
         "admin", "finance_approver", "payroll_approver", "auditor", "personnel_approver",
         "district_finance", "province_finance", "ministry_finance", "payment_releaser",
-        "payment_reconciler",
+        "payment_reconciler", "evidence_approver",
     }
 )
 
