@@ -157,3 +157,13 @@ def test_m4_23_verifies_blocked_state_without_promoting_it():
 
     assert verification.state == "blocked"
     assert verification.verified is True
+
+
+def test_m4_23_rejects_naive_persisted_timestamp():
+    record = _record(assessment_checked_at=NOW.replace(tzinfo=None))
+
+    with pytest.raises(
+        PersistedIntegrationExecutionReadinessVerificationError,
+        match="assessment_checked_at must be timezone-aware",
+    ):
+        verify_persisted_integration_execution_readiness(record)
