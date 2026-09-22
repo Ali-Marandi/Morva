@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.22 persists independently verified M4.20 readiness and exposes a read-only readiness API; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.23 independently re-verifies persisted M4.22 integration-readiness receipts through a read-only API; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -120,11 +120,12 @@
 - M4.20 integration-execution readiness assessment composing independently verified execution-binding identity with canonical evidence readiness, deterministic blockers and fail-closed readiness state
 - M4.21 independent integration-execution readiness verifier with direct fingerprint reconstruction, exact repository/SHA binding, ready-state consistency and verification-time ordering
 - M4.22 append-only persistence of independently verified integration-execution readiness receipts with fingerprint revalidation and a ministry-scoped read-only readiness API
+- M4.23 independent API-level verification of persisted M4.22 receipts with direct SHA-256 reconstruction, canonical repository/SHA/environment checks, timestamp ordering, strict blocker-shape validation and no M4.20/M4.21 builder invocation
 
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.22 is the current main evidence/integration baseline.
-2. Maintain the M4.1–M4.22 evidence/integration line as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.23 is the current software verification baseline built on M4.22.
+2. Maintain the M4.1–M4.23 evidence/integration line as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
 5. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
@@ -146,3 +147,5 @@
 ## Production gate
 
 Morva must not be used for real payroll or real payment until all applicable legal, authoritative-data, integration, security, operational, reconciliation, load and recovery evidence is complete and formally approved.
+
+| 61 | M4.23 Independent Persisted Readiness Verification | **M4.23 independently verifies the persisted M4.22 receipt directly at API/runtime level, reconstructing assessment and verification SHA-256 fingerprints, enforcing exact repository/SHA/environment and temporal identity, rejecting malformed blocker JSON and avoiding any M4.20/M4.21 builder invocation; read-only verification only** |
