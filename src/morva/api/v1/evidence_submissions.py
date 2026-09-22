@@ -10,7 +10,7 @@ from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.security.auth import Principal, get_current_principal
-from morva.security.policy import authorize
+from morva.security.policy import Scope, authorize
 from morva.runtime.authoritative_evidence_intake import ALLOWED_SOURCE_TYPES
 from morva.runtime.evidence_submission import EvidenceSubmissionError, decide_evidence, submit_evidence
 
@@ -41,6 +41,8 @@ class EvidenceSubmissionResponse(BaseModel):
     source_sha256: str
     issuer: str
     population_scope: str
+    submission_scope: str
+    submission_scope_id: str
     effective_from: datetime
     effective_to: datetime | None
     expires_at: datetime | None
@@ -61,6 +63,8 @@ class EvidenceSubmissionResponse(BaseModel):
             source_sha256=record.source_sha256,
             issuer=record.issuer,
             population_scope=record.population_scope,
+            submission_scope=record.submission_scope,
+            submission_scope_id=record.submission_scope_id,
             effective_from=record.effective_from,
             effective_to=record.effective_to,
             expires_at=record.expires_at,
@@ -90,6 +94,8 @@ def create_submission(
                 source_sha256=payload.source_sha256,
                 issuer=payload.issuer,
                 population_scope=payload.population_scope,
+                submission_scope=principal.scope,
+                submission_scope_id=principal.scope_id,
                 effective_from=payload.effective_from,
                 effective_to=payload.effective_to,
                 expires_at=payload.expires_at,
