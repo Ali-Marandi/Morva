@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
+from typing import cast
 
 import pytest
 
@@ -18,7 +19,7 @@ def _assessment_fingerprint(data: dict[str, object]) -> str:
         "repository": data["repository"],
         "candidate_sha": str(data["candidate_sha"]).lower(),
         "target_environment": data["target_environment"],
-        "checked_at": data["assessment_checked_at"]
+        "checked_at": cast(datetime, data["assessment_checked_at"])
         .astimezone(timezone.utc)
         .isoformat(),
         "evidence_readiness_fingerprint": str(
@@ -121,7 +122,8 @@ def test_m4_23_rejects_naive_persistence_timestamp():
 
 def test_m4_23_rejects_future_assessment_verification_order():
     data = _receipt()
-    data["assessment_checked_at"] = data["verified_at"] + timedelta(minutes=1)
+    verified_at = cast(datetime, data["verified_at"])
+    data["assessment_checked_at"] = verified_at + timedelta(minutes=1)
 
     with pytest.raises(IndependentPersistedIntegrationReadinessVerificationError):
         _verify(data)
@@ -130,14 +132,21 @@ def test_m4_23_rejects_future_assessment_verification_order():
 def test_m4_23_rejects_ready_receipt_with_blockers():
     data = _receipt()
     data["state"] = "ready"
-    data["blockers"] = ()
+    data["blockers"] = ("unexpected-blocker",)
 
     data["assessment_fingerprint"] = _assessment_fingerprint(data)
     data["verification_fingerprint"] = _verification_fingerprint(
         str(data["assessment_fingerprint"]),
-        data["verified_at"],
+        cast(datetime, data["verified_at"]),
     )
-    data["blockers"] = ("unexpected-blocker",)
+
+    with pytest.raises(IndependentPersistedIntegrationReadinessVerificationError):
+        _verify(data)
+
+
+def test_m4_23_rejects_blockers_that_are_not_strings():
+    data = _receipt()
+    data["blockers"] = (123,)  # type: ignore[list-item]
 
     with pytest.raises(IndependentPersistedIntegrationReadinessVerificationError):
         _verify(data)
