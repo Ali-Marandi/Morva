@@ -172,7 +172,10 @@ class EvidenceLifecycleRepository:
             .order_by(AuthoritativeEvidenceSubmissionRecord.evidence_id.asc())
         ).all()
         registry, _ = build_registry_projection(
-            accepted_records,
+            tuple(
+                self._normalize_loaded_submission(record)
+                for record in accepted_records
+            ),
             projected_at=linked_at_utc,
         )
         existing_events = self.session.scalars(
