@@ -173,12 +173,11 @@ def test_assessment_fingerprint_tampering_is_rejected():
         checked_at=NOW,
         receipts=(),
     )
-    tampered = replace(assessment, fingerprint="f" * 64)
     with pytest.raises(
         EvidenceReadinessError,
         match="fingerprint mismatch",
     ):
-        tampered.__post_init__()
+        replace(assessment, fingerprint="f" * 64)
 
 
 def test_registry_mismatch_is_rejected():
