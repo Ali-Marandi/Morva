@@ -10,6 +10,7 @@ from morva.persistence.evidence_submission_records import (
     AuthoritativeEvidenceSubmissionRecord,
 )
 from morva.runtime.authoritative_evidence_intake import (
+    AuthoritativeEvidenceIntakeError,
     AuthoritativeEvidenceItem,
     AuthoritativeEvidenceRegistry,
     build_registry,
@@ -76,8 +77,9 @@ def submission_to_authoritative_item(
             "accepted evidence is missing approval metadata"
         )
 
-    item = AuthoritativeEvidenceItem(
-        intake_version=1,
+    try:
+        item = AuthoritativeEvidenceItem(
+            intake_version=1,
         evidence_id=record.evidence_id.strip(),
         source_type=record.source_type.strip(),
         source_uri=record.source_uri.strip(),
@@ -93,16 +95,16 @@ def submission_to_authoritative_item(
         status="accepted",
         approved_by=record.decided_by.strip(),
         approved_at=_as_iso(record.decided_at, "decided_at"),
-        expires_at=(
-            _as_iso(record.expires_at, "expires_at")
-            if record.expires_at
-            else None
-        ),
-    )
-    if item.fingerprint != _expected_item_fingerprint(item):
-        raise EvidenceRegistryBridgeError(
-            "mapped authoritative evidence fingerprint is inconsistent"
+            expires_at=(
+                _as_iso(record.expires_at, "expires_at")
+                if record.expires_at
+                else None
+            ),
         )
+    except (AuthoritativeEvidenceIntakeError, ValueError) as exc:
+        raise EvidenceRegistryBridgeError(
+            f"accepted evidence cannot be mapped into M4.1 registry: {exc}"
+        ) from exc
     return item
 
 
@@ -110,10 +112,6 @@ def _as_iso(value: datetime, name: str) -> str:
     if value.tzinfo is None:
         raise EvidenceRegistryBridgeError(f"{name} must include a timezone")
     return value.astimezone(timezone.utc).isoformat()
-
-
-def _expected_item_fingerprint(item: AuthoritativeEvidenceItem) -> str:
-    return item.fingerprint
 
 
 def build_registry_projection(
