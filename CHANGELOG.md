@@ -1,3 +1,15 @@
+## Unreleased — M4.15 Evidence Lifecycle
+
+### Evidence lineage
+- Add a fingerprinted renewal/supersession link contract for accepted authoritative evidence.
+- Preserve exact source type and population scope across predecessor/successor lineage.
+- Reject multiple successors, multiple predecessors and cyclic supersession graphs.
+- Reject future-dated lifecycle links and successors with future approvals.
+- Produce deterministic lineage-head and superseded-evidence assessments without deleting historical evidence.
+
+### Safety
+- Lifecycle assessment is verification-only and does not activate production evidence or mutate external authority data.
+
 ## Unreleased — M4.14 Evidence Registry Bridge
 
 ### Evidence registry
