@@ -10,9 +10,11 @@ from sqlalchemy.exc import IntegrityError
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
 from morva.persistence.evidence_lifecycle_records import EvidenceLifecycleRepository
+from morva.persistence.evidence_role_binding_records import EvidenceRoleBindingError, EvidenceRoleBindingRepository
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
+from morva.runtime.evidence_convergence import CLOSURE_ROLE_SOURCE_TYPES
 from morva.runtime.evidence_lifecycle import EvidenceLifecycleError, build_lifecycle_assessment
 from morva.runtime.evidence_registry_bridge import (
     EvidenceRegistryBridgeError,
@@ -71,6 +73,47 @@ class EvidenceLifecycleEventResponse(BaseModel):
 
 class EvidenceLifecycleResponse(BaseModel):
     events: list[EvidenceLifecycleEventResponse]
+    assessment: dict[str, object]
+
+
+class EvidenceRoleBindingCreate(BaseModel):
+    certification_role: str = Field(min_length=1, max_length=60)
+    authoritative_evidence_id: str = Field(min_length=1, max_length=120)
+    reason: str = Field(min_length=1, max_length=4000)
+
+
+class EvidenceRoleBindingResponse(BaseModel):
+    certification_role: str
+    authoritative_evidence_id: str
+    binding_kind: str
+    binding_fingerprint: str
+    registry_fingerprint: str
+    population_scope: str
+    submission_scope: str
+    submission_scope_id: str
+    bound_by: str
+    bound_at: datetime
+    reason: str
+
+    @classmethod
+    def from_record(cls, record) -> "EvidenceRoleBindingResponse":
+        return cls(
+            certification_role=record.certification_role,
+            authoritative_evidence_id=record.authoritative_evidence_id,
+            binding_kind=record.binding_kind,
+            binding_fingerprint=record.binding_fingerprint,
+            registry_fingerprint=record.registry_fingerprint,
+            population_scope=record.population_scope,
+            submission_scope=record.submission_scope,
+            submission_scope_id=record.submission_scope_id,
+            bound_by=record.bound_by,
+            bound_at=record.bound_at,
+            reason=record.reason,
+        )
+
+
+class EvidenceRoleBindingCollectionResponse(BaseModel):
+    bindings: list[EvidenceRoleBindingResponse]
     assessment: dict[str, object]
 
 
@@ -271,6 +314,78 @@ def supersede_evidence(
         )
         session.commit()
         return EvidenceLifecycleEventResponse.from_record(record)
+
+
+@router.post("/bindings", response_model=EvidenceRoleBindingResponse, status_code=status.HTTP_201_CREATED)
+def create_role_binding(
+    payload: EvidenceRoleBindingCreate,
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceRoleBindingResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if payload.certification_role not in CLOSURE_ROLE_SOURCE_TYPES:
+        raise HTTPException(status_code=409, detail="unsupported certification role")
+    with SessionLocal() as session:
+        repository = EvidenceRoleBindingRepository(session)
+        try:
+            record = repository.create_binding(
+                certification_role=payload.certification_role,
+                authoritative_evidence_id=payload.authoritative_evidence_id,
+                bound_by=principal.user_id,
+                bound_at=datetime.now().astimezone(),
+                reason=payload.reason,
+                principal_scope=principal.scope,
+                principal_scope_id=principal.scope_id,
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except EvidenceRoleBindingError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except IntegrityError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail="role binding already exists") from exc
+
+        append_audit_event(
+            event_type="evidence.binding.created",
+            entity_type="authoritative_evidence_role_binding",
+            entity_id=record.binding_fingerprint,
+            actor_id=principal.user_id,
+            payload={
+                "certification_role": record.certification_role,
+                "authoritative_evidence_id": record.authoritative_evidence_id,
+                "binding_fingerprint": record.binding_fingerprint,
+                "registry_fingerprint": record.registry_fingerprint,
+            },
+            reason=record.reason,
+            session=session,
+        )
+        session.commit()
+        return EvidenceRoleBindingResponse.from_record(record)
+
+
+@router.get("/bindings", response_model=EvidenceRoleBindingCollectionResponse)
+def list_role_bindings(
+    principal: Principal = Depends(get_current_principal),
+) -> EvidenceRoleBindingCollectionResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = EvidenceRoleBindingRepository(session)
+        try:
+            records, assessment = repository.list_current(
+                principal_scope=principal.scope,
+                principal_scope_id=principal.scope_id,
+                checked_at=datetime.now().astimezone(),
+            )
+        except (EvidenceRoleBindingError, EvidenceRegistryBridgeError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return EvidenceRoleBindingCollectionResponse(
+            bindings=[EvidenceRoleBindingResponse.from_record(record) for record in records],
+            assessment=assessment.to_payload(),
+        )
 
 
 @router.get("/lifecycle", response_model=EvidenceLifecycleResponse)
