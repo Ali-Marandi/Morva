@@ -175,6 +175,7 @@ class PolicyBoundReadinessFreshnessResponse(BaseModel):
 
 class FreshnessPolicyCreate(BaseModel):
     policy_id: str
+    policy_version: int = 1
     max_age_seconds: int
 
 
@@ -287,6 +288,7 @@ def create_readiness_freshness_policy(
         policy = build_freshness_policy(
             policy_id=payload.policy_id,
             max_age_seconds=payload.max_age_seconds,
+            policy_version=payload.policy_version,
         )
     except ReadinessConvergenceFreshnessPolicyError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -381,6 +383,7 @@ def get_policy_registry_bound_readiness_convergence_freshness(
     organization_scope: str | None = Query(default=None),
     organization_scope_id: str | None = Query(default=None),
     policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
     principal: Principal = Depends(get_current_principal),
 ) -> PolicyBoundReadinessFreshnessResponse:
     authorize(principal, "evidence.read", principal.scope)
@@ -413,7 +416,10 @@ def get_policy_registry_bound_readiness_convergence_freshness(
                     status_code=404,
                     detail="no persisted scope-bound readiness convergence found",
                 )
-            policy_record = policy_repository.get(policy_id=policy_id)
+            policy_record = policy_repository.get(
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
             if policy_record is None:
                 raise HTTPException(
                     status_code=404,
@@ -443,13 +449,17 @@ def get_policy_registry_bound_readiness_convergence_freshness(
 )
 def get_readiness_freshness_policy(
     policy_id: str,
+    policy_version: int = Query(default=1, ge=1),
     principal: Principal = Depends(get_current_principal),
 ) -> FreshnessPolicyResponse:
     authorize(principal, "evidence.read", principal.scope)
     with SessionLocal() as session:
         repository = ReadinessConvergenceFreshnessPolicyRepository(session)
         try:
-            record = repository.get(policy_id=policy_id)
+            record = repository.get(
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
         except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         if record is None:
@@ -505,6 +515,7 @@ def get_policy_bound_readiness_convergence_freshness(
             policy = build_freshness_policy(
                 policy_id=policy_id,
                 max_age_seconds=max_age_seconds,
+                policy_version=policy_version,
             )
             freshness = build_policy_bound_freshness(
                 policy,
