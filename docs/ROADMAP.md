@@ -123,6 +123,7 @@
 - M4.23 deterministic paginated history API for persisted readiness receipts with candidate/environment filters and fail-closed validation
 - M4.24 controlled verified-readiness persistence service that forces assessment-file ingestion through independent M4.21 verification before persistence
 - M4.25 organization-scope binding for persisted readiness receipts with scope-bound fingerprints and read/history isolation across school, district, province and ministry domains
+- M4.26 scope-bound readiness convergence that rebuilds current evidence readiness for the exact receipt scope and fails closed on drift or incomplete evidence
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.23 is the current development baseline.
