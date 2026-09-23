@@ -102,6 +102,9 @@ def test_persists_only_after_independent_verification(
     )
 
     assert record.verification_fingerprint == verification.fingerprint
+    assert record.organization_scope == "ministry"
+    assert record.organization_scope_id == "ministry"
+    assert record.scope_binding_fingerprint
     assert len(session.scalars(select(IntegrationExecutionReadinessVerificationRecord)).all()) == 1
 
 
