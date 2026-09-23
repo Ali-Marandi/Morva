@@ -115,11 +115,12 @@ def _receipt(session: Session, *, policy_id: str = "integration-staging-v1"):
         )(),
         observed_at=NOW,
     )
+    registry_count, registry_fingerprint = policy_repository.integrity_snapshot()
     freshness = build_registry_bound_policy_readiness_freshness(
         policy_bound,
         registry_integrity_version=1,
-        registry_policy_count=1,
-        registry_fingerprint="b" * 64,
+        registry_policy_count=registry_count,
+        registry_fingerprint=registry_fingerprint,
     )
     receipt_repository = RegistryBoundPolicyReadinessFreshnessRepository(session)
     receipt = receipt_repository.record(
