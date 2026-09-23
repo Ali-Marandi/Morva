@@ -17,6 +17,26 @@ def test_m4_22_readiness_route_is_registered():
     assert "/api/v1/integration-execution/readiness/convergence" in paths
     assert "/api/v1/integration-execution/readiness/convergence/receipts" in paths
     assert "/api/v1/integration-execution/readiness/convergence/history" in paths
+    assert "/api/v1/integration-execution/readiness/convergence/freshness" in paths
+    freshness_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness"
+    ]["get"]
+    freshness_params = {
+        parameter["name"] for parameter in freshness_operation["parameters"]
+    }
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "max_age_seconds",
+    } <= freshness_params
+    freshness_schema = freshness_operation["responses"][
+        "200"
+    ]["content"]["application/json"]["schema"]
+    assert freshness_schema["$ref"] == (
+        "#/components/schemas/ReadinessConvergenceFreshnessResponse"
+    )
     receipt_operation = paths[
         "/api/v1/integration-execution/readiness/convergence/receipts"
     ]["post"]
