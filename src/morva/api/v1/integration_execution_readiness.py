@@ -63,6 +63,10 @@ from morva.runtime.registry_bound_policy_readiness_freshness_m4_34 import (
     RegistryBoundPolicyReadinessFreshnessError,
     build_registry_bound_policy_readiness_freshness,
 )
+from morva.runtime.historical_snapshot_bound_policy_readiness_freshness_m4_39 import (
+    HistoricalSnapshotBoundPolicyReadinessFreshnessError,
+    build_historical_snapshot_bound_policy_readiness_freshness,
+)
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
     ReadinessConvergenceFreshnessPolicyError,
     build_freshness_policy,
@@ -243,6 +247,10 @@ class HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse(BaseMod
 
 
 class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
+    freshness: dict[str, object]
+
+
+class HistoricalSnapshotBoundPolicyReadinessFreshnessResponse(BaseModel):
     freshness: dict[str, object]
 
 class RegistryBoundPolicyReadinessFreshnessReceiptResponse(BaseModel):
@@ -895,6 +903,92 @@ def verify_readiness_freshness_policy_registry_snapshot(
         snapshot=record.to_snapshot().to_payload(),
     )
 
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound",
+    response_model=HistoricalSnapshotBoundPolicyReadinessFreshnessResponse,
+)
+def get_historical_snapshot_bound_readiness_convergence_freshness(
+    snapshot_id: UUID,
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalSnapshotBoundPolicyReadinessFreshnessResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        try:
+            records = convergence_repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+            if not records:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted scope-bound readiness convergence found",
+                )
+            snapshot_record = snapshot_repository.reconstruct(
+                snapshot_id,
+                policy_repository,
+            )
+            policy_record = snapshot_repository.resolve_policy(
+                snapshot_id,
+                policy_repository,
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
+            policy_bound = build_policy_bound_freshness(
+                policy_record.to_policy(),
+                records[0].to_convergence(),
+                observed_at=datetime.now(timezone.utc),
+            )
+            snapshot = snapshot_record.to_snapshot()
+            freshness = build_historical_snapshot_bound_policy_readiness_freshness(
+                policy_bound,
+                snapshot_id=snapshot_record.id,
+                snapshot_fingerprint=snapshot.fingerprint,
+                registry_integrity_version=snapshot.integrity_version,
+                registry_policy_count=snapshot.policy_count,
+                registry_fingerprint=snapshot.registry_fingerprint,
+            )
+        except HTTPException:
+            raise
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            FreshnessPolicyRegistrySnapshotPersistenceError,
+            PolicyBoundReadinessFreshnessError,
+            HistoricalSnapshotBoundPolicyReadinessFreshnessError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return HistoricalSnapshotBoundPolicyReadinessFreshnessResponse(
+        freshness=freshness.to_payload(),
+    )
 
 
 @router.post(
