@@ -74,7 +74,9 @@ def _fingerprint(
     return hashlib.sha256(
         json.dumps(
             payload,
+            ensure_ascii=True,
             sort_keys=True,
+            separators=(",", ":"),
         ).encode("utf-8")
     ).hexdigest()
 
