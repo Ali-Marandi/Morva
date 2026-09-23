@@ -1,3 +1,13 @@
+## Unreleased — M4.40 Historical Snapshot-Bound Freshness Receipts
+
+### Readiness policy governance
+- Persist M4.39 historical snapshot-bound freshness evaluations as append-only, fingerprint-idempotent receipts.
+- Reconstruct the exact M4.36 snapshot and snapshot-resolved policy during independent receipt verification.
+- Expose ministry-managed receipt creation plus read-only cursor history and verification APIs.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.39 Historical Snapshot-Bound Freshness Evaluation
 
 ### Readiness policy governance
