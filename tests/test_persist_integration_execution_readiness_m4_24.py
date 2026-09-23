@@ -99,6 +99,8 @@ def test_persists_only_after_independent_verification(
         repository_name="Ali-Marandi/Morva",
         candidate_sha=SHA,
         verified_at=NOW,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
 
     assert record.verification_fingerprint == verification.fingerprint
@@ -174,6 +176,8 @@ def test_blocked_assessment_is_persisted_as_blocked_receipt(
         repository_name="Ali-Marandi/Morva",
         candidate_sha=SHA,
         verified_at=NOW,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
 
     assert verification.assessment.ready is False
@@ -195,6 +199,8 @@ def test_duplicate_verified_receipt_is_idempotent(
         repository_name="Ali-Marandi/Morva",
         candidate_sha=SHA,
         verified_at=NOW,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
     second, _ = persist_verified_integration_execution_readiness(
         repository,
@@ -202,6 +208,8 @@ def test_duplicate_verified_receipt_is_idempotent(
         repository_name="Ali-Marandi/Morva",
         candidate_sha=SHA,
         verified_at=NOW,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
 
     assert second.id == first.id
