@@ -18,6 +18,24 @@ def test_m4_22_readiness_route_is_registered():
     assert "/api/v1/integration-execution/readiness/convergence/receipts" in paths
     assert "/api/v1/integration-execution/readiness/convergence/history" in paths
     assert "/api/v1/integration-execution/readiness/convergence/freshness" in paths
+    assert (
+        "/api/v1/integration-execution/readiness/convergence/freshness/policy-bound"
+        in paths
+    )
+    policy_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policy-bound"
+    ]["get"]
+    policy_params = {
+        parameter["name"] for parameter in policy_operation["parameters"]
+    }
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "policy_id",
+        "max_age_seconds",
+    } <= policy_params
     freshness_operation = paths[
         "/api/v1/integration-execution/readiness/convergence/freshness"
     ]["get"]
