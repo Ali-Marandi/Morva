@@ -1,3 +1,13 @@
+## Unreleased — M4.33 Freshness Policy Registry Integrity
+
+### Registry integrity
+- Add deterministic aggregate SHA-256 fingerprinting over all persisted freshness-policy identities.
+- Revalidate every persisted policy before inclusion in the snapshot.
+- Expose authenticated read-only registry integrity API.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials or production authority.
+
 ## Unreleased — M4.32 Versioned Freshness Policy Identity
 
 ### Readiness policy governance
