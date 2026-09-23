@@ -29,17 +29,18 @@ def test_m4_22_readiness_route_is_registered():
         "/api/v1/integration-execution/readiness/convergence/freshness/policies"
         in paths
     )
-    history_operation = paths[
+    freshness_policy_history_operation = paths[
         "/api/v1/integration-execution/readiness/convergence/freshness/policies"
     ]["get"]
-    history_params = {
-        parameter["name"] for parameter in history_operation["parameters"]
+    freshness_policy_history_params = {
+        parameter["name"]
+        for parameter in freshness_policy_history_operation["parameters"]
     }
-    assert {"before_created_at", "before_id", "limit"} <= history_params
-    history_schema = history_operation["responses"][
+    assert {"before_created_at", "before_id", "limit"} <= freshness_policy_history_params
+    freshness_policy_history_schema = freshness_policy_history_operation["responses"][
         "200"
     ]["content"]["application/json"]["schema"]
-    assert history_schema["$ref"] == (
+    assert freshness_policy_history_schema["$ref"] == (
         "#/components/schemas/FreshnessPolicyRegistryHistoryResponse"
     )
     assert (
