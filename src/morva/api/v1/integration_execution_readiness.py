@@ -17,6 +17,10 @@ from morva.persistence.scope_bound_readiness_convergence_records_m4_27 import (
     ScopeBoundReadinessConvergencePersistenceError,
     ScopeBoundReadinessConvergenceRepository,
 )
+from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 import (
+    ReadinessConvergenceFreshnessPolicyPersistenceError,
+    ReadinessConvergenceFreshnessPolicyRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -173,6 +177,15 @@ class PolicyBoundReadinessFreshnessResponse(BaseModel):
     freshness: dict[str, object]
 
 
+class FreshnessPolicyCreate(BaseModel):
+    policy_id: str
+    max_age_seconds: int
+
+
+class FreshnessPolicyResponse(BaseModel):
+    policy: dict[str, object]
+
+
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
     convergence: dict[str, object]
@@ -246,6 +259,150 @@ def get_readiness_convergence_freshness(
     return ReadinessConvergenceFreshnessResponse(
         freshness=freshness.to_payload(),
     )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policies",
+    response_model=FreshnessPolicyResponse,
+)
+def create_readiness_freshness_policy(
+    payload: FreshnessPolicyCreate,
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="freshness policy registry is ministry-managed",
+        )
+    try:
+        policy = build_freshness_policy(
+            policy_id=payload.policy_id,
+            max_age_seconds=payload.max_age_seconds,
+        )
+    except ReadinessConvergenceFreshnessPolicyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    with SessionLocal() as session:
+        repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            record = repository.record(
+                policy,
+                recorded_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.freshness_policy.recorded",
+                entity_type="readiness_convergence_freshness_policy",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "policy_id": record.policy_id,
+                    "policy_version": record.policy_version,
+                    "fingerprint": record.fingerprint,
+                    "max_age_seconds": record.max_age_seconds,
+                },
+                reason="versioned readiness freshness policy persisted",
+                session=session,
+            )
+            session.commit()
+        except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return FreshnessPolicyResponse(policy=record.to_policy().to_payload())
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-bound",
+    response_model=PolicyBoundReadinessFreshnessResponse,
+)
+def get_policy_registry_bound_readiness_convergence_freshness(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    policy_id: str = Query(..., min_length=1, max_length=100),
+    principal: Principal = Depends(get_current_principal),
+) -> PolicyBoundReadinessFreshnessResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    observed_at = datetime.now(timezone.utc)
+    with SessionLocal() as session:
+        convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            records = convergence_repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+            if not records:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted scope-bound readiness convergence found",
+                )
+            policy_record = policy_repository.get(policy_id=policy_id)
+            if policy_record is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="freshness policy not found",
+                )
+            freshness = build_policy_bound_freshness(
+                policy_record.to_policy(),
+                records[0].to_convergence(),
+                observed_at=observed_at,
+            )
+        except HTTPException:
+            raise
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            PolicyBoundReadinessFreshnessError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return PolicyBoundReadinessFreshnessResponse(
+        freshness=freshness.to_payload(),
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policies/{policy_id}",
+    response_model=FreshnessPolicyResponse,
+)
+def get_readiness_freshness_policy(
+    policy_id: str,
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            record = repository.get(policy_id=policy_id)
+        except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        if record is None:
+            raise HTTPException(status_code=404, detail="freshness policy not found")
+        return FreshnessPolicyResponse(policy=record.to_policy().to_payload())
 
 
 @router.get(
