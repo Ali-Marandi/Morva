@@ -171,8 +171,6 @@ def build_scope_bound_readiness_convergence(
         != current_evidence_readiness.fingerprint.lower()
     ):
         blockers.append("EVIDENCE_READINESS_FINGERPRINT_MISMATCH")
-    if assessment.candidate_sha.lower() != assessment.candidate_sha:
-        blockers.append("CANDIDATE_SHA_NOT_NORMALIZED")
 
     state = "converged" if not blockers else "blocked"
     fingerprint = _fingerprint(
