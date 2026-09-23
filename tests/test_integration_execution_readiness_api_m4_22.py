@@ -15,6 +15,13 @@ def test_m4_22_readiness_route_is_registered():
     history_schema = history_operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert history_schema["$ref"] == "#/components/schemas/IntegrationExecutionReadinessVerificationHistoryResponse"
     assert "/api/v1/integration-execution/readiness/convergence" in paths
+    integrity_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/integrity"
+    ]["get"]
+    integrity_schema = integrity_operation["responses"]["200"]["content"]["application/json"]["schema"]
+    assert integrity_schema["$ref"] == (
+        "#/components/schemas/FreshnessPolicyRegistryIntegrityResponse"
+    )
     assert "/api/v1/integration-execution/readiness/convergence/receipts" in paths
     assert "/api/v1/integration-execution/readiness/convergence/history" in paths
     assert "/api/v1/integration-execution/readiness/convergence/freshness" in paths
