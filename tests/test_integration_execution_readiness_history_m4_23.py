@@ -176,7 +176,9 @@ def test_history_fails_closed_when_any_selected_receipt_is_tampered(session):
         _verified(
             checked_at=NOW,
             verified_at=NOW,
-        )
+        ),
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
     session.flush()
     record.blockers = None
