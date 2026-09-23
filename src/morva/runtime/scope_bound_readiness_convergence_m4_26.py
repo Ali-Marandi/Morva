@@ -211,7 +211,7 @@ def build_scope_bound_readiness_convergence(
         checked_at=checked_at,
         persisted_verification_fingerprint=verification.fingerprint,
         persisted_evidence_readiness_fingerprint=assessment.evidence_readiness_fingerprint.lower(),
-        current_evidence_readiness_fingerprint=current_evidence_readiness.fingerprint.lower(),
+        current_evidence_readiness_fingerprint=replayed_current_fingerprint.lower(),
         state=state,
         blockers=tuple(blockers),
         fingerprint=fingerprint,
