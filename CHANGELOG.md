@@ -1,3 +1,13 @@
+## Unreleased — M4.41 Historical Snapshot-Bound Freshness Receipt Lineage
+
+### Readiness policy governance
+- Link each M4.40 historical freshness receipt to the exact M4.37 historical receipt-to-snapshot binding.
+- Revalidate snapshot, registry and policy continuity across M4.37 and M4.40 before accepting lineage.
+- Expose ministry-managed lineage creation and read-only independent verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.40 Historical Snapshot-Bound Freshness Receipts
 
 ### Readiness policy governance
