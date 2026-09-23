@@ -133,6 +133,7 @@
 - M4.33 deterministic aggregate integrity snapshot for the persisted freshness-policy registry
 - M4.34 registry-integrity-bound freshness evaluation with deterministic binding across policy, assessment and registry snapshot identities
 - M4.35 append-only persistence and cursor history for registry-integrity-bound freshness evaluation receipts with idempotent fingerprint binding
+- M4.36 historical registry snapshot anchoring with exact member-ID manifests and independent fail-closed reconstruction
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.35 registry-bound evaluation receipts.
