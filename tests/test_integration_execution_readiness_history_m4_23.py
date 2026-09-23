@@ -154,7 +154,9 @@ def test_history_filters_candidate_and_environment(session):
             verified_at=NOW,
             candidate_sha="c" * 40,
             target_environment="pilot",
-        )
+        ),
+        organization_scope="pilot",
+        organization_scope_id="pilot-1",
     )
 
     records = repository.list_verified(
