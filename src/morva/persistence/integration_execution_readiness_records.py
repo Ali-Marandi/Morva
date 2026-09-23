@@ -175,6 +175,35 @@ class IntegrationExecutionReadinessVerificationRepository:
         candidate_sha: str | None = None,
         target_environment: str | None = None,
     ) -> IntegrationExecutionReadinessVerificationRecord | None:
+        records = self.list_verified(
+            repository=repository,
+            candidate_sha=candidate_sha,
+            target_environment=target_environment,
+            limit=1,
+        )
+        return records[0] if records else None
+
+    def list_verified(
+        self,
+        *,
+        repository: str = "Ali-Marandi/Morva",
+        candidate_sha: str | None = None,
+        target_environment: str | None = None,
+        verified_before: datetime | None = None,
+        before_id: UUID | None = None,
+        limit: int = 100,
+    ) -> list[IntegrationExecutionReadinessVerificationRecord]:
+        if limit < 1 or limit > 100:
+            raise IntegrationExecutionReadinessPersistenceError(
+                "readiness history limit must be between 1 and 100"
+            )
+        if (verified_before is None) != (before_id is None):
+            raise IntegrationExecutionReadinessPersistenceError(
+                "verified_before and before_id must be supplied together"
+            )
+        if verified_before is not None:
+            verified_before = _ensure_timezone(verified_before, "verified_before")
+
         query = select(IntegrationExecutionReadinessVerificationRecord).where(
             IntegrationExecutionReadinessVerificationRecord.repository == repository
         )
@@ -188,14 +217,30 @@ class IntegrationExecutionReadinessVerificationRepository:
                 IntegrationExecutionReadinessVerificationRecord.target_environment
                 == target_environment
             )
-        record = self.session.scalar(
+        if verified_before is not None and before_id is not None:
+            query = query.where(
+                (
+                    IntegrationExecutionReadinessVerificationRecord.verified_at
+                    < verified_before
+                )
+                | (
+                    (IntegrationExecutionReadinessVerificationRecord.verified_at == verified_before)
+                    & (
+                        IntegrationExecutionReadinessVerificationRecord.id
+                        < before_id
+                    )
+                )
+            )
+
+        records = self.session.scalars(
             query.order_by(
                 IntegrationExecutionReadinessVerificationRecord.verified_at.desc(),
                 IntegrationExecutionReadinessVerificationRecord.id.desc(),
-            ).limit(1)
-        )
-        if record is not None:
-            bind = self.session.get_bind()
+            ).limit(limit)
+        ).all()
+
+        bind = self.session.get_bind()
+        for record in records:
             if bind is not None and bind.dialect.name == "sqlite":
                 for field_name in (
                     "assessment_checked_at",
@@ -211,7 +256,8 @@ class IntegrationExecutionReadinessVerificationRepository:
             record.verified_at = _ensure_timezone(record.verified_at, "verified_at")
             record.created_at = _ensure_timezone(record.created_at, "created_at")
             record.to_verification()
-        return record
+
+        return records
 
 
 def _ensure_timezone(value: datetime, name: str) -> datetime:
