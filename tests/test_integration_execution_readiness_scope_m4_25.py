@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
+import json
 
 import pytest
 from fastapi import HTTPException
@@ -44,7 +45,7 @@ def _verification(candidate_sha: str = "d" * 40):
         "blockers": [],
     }
     assessment_fingerprint = sha256(
-        __import__("json").dumps(
+        json.dumps(
             fingerprint_payload,
             sort_keys=True,
             separators=(",", ":"),
@@ -178,3 +179,21 @@ def test_ministry_can_select_a_scope_or_all_scopes():
         "province",
         "province-7",
     )
+
+
+def test_invalid_scope_is_rejected_before_insert(session):
+    repository = IntegrationExecutionReadinessVerificationRepository(session)
+
+    with pytest.raises(
+        IntegrationExecutionReadinessPersistenceError,
+        match="organization_scope must be school, district, province or ministry",
+    ):
+        repository.record(
+            _verification(),
+            organization_scope="unknown",
+            organization_scope_id="x",
+        )
+
+    assert session.scalars(
+        select(IntegrationExecutionReadinessVerificationRecord)
+    ).all() == []
