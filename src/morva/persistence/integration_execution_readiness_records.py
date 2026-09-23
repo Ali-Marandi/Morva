@@ -193,9 +193,9 @@ class IntegrationExecutionReadinessVerificationRepository:
         before_id: UUID | None = None,
         limit: int = 100,
     ) -> list[IntegrationExecutionReadinessVerificationRecord]:
-        if limit < 1 or limit > 100:
+        if limit < 1 or limit > 101:
             raise IntegrationExecutionReadinessPersistenceError(
-                "readiness history limit must be between 1 and 100"
+                "readiness history query limit must be between 1 and 101"
             )
         if (verified_before is None) != (before_id is None):
             raise IntegrationExecutionReadinessPersistenceError(
