@@ -22,7 +22,6 @@ class ScopeBoundReadinessConvergenceError(ValueError):
     """Raised when a persisted readiness receipt diverges from current scoped evidence."""
 
 
-
 @dataclass(frozen=True, slots=True)
 class ScopeBoundReadinessConvergence:
     convergence_version: int
