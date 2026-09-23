@@ -190,6 +190,13 @@ class FreshnessPolicyRegistryHistoryResponse(BaseModel):
     next_before_id: UUID | None = None
 
 
+class FreshnessPolicyRegistryIntegrityResponse(BaseModel):
+    integrity_version: int
+    policy_count: int
+    fingerprint: str
+    generated_at: datetime
+
+
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
     convergence: dict[str, object]
@@ -367,6 +374,30 @@ def list_readiness_freshness_policies(
         has_more=has_more,
         next_before_created_at=next_created_at,
         next_before_id=next_id,
+    )
+
+
+
+
+@router.get(
+    "/readiness/convergence/freshness/policies/integrity",
+    response_model=FreshnessPolicyRegistryIntegrityResponse,
+)
+def get_readiness_freshness_policy_registry_integrity(
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyRegistryIntegrityResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            policy_count, fingerprint = repository.integrity_snapshot()
+        except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return FreshnessPolicyRegistryIntegrityResponse(
+        integrity_version=1,
+        policy_count=policy_count,
+        fingerprint=fingerprint,
+        generated_at=datetime.now(timezone.utc),
     )
 
 
