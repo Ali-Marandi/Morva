@@ -4,8 +4,6 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
 
-import pytest
-
 from morva.runtime.evidence_closure_matrix import CLOSURE_ROLE_SOURCE_TYPES
 from morva.runtime.evidence_readiness import (
     EvidenceReadinessAssessment,
@@ -22,7 +20,6 @@ from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
     build_scope_bound_readiness_convergence,
 )
 from morva.runtime.readiness_convergence_freshness_m4_28 import (
-    ReadinessConvergenceFreshnessError,
     assess_readiness_convergence_freshness,
 )
 
