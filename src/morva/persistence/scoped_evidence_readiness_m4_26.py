@@ -6,7 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from morva.persistence.evidence_lifecycle_records import EvidenceLifecycleRepository
-from morva.persistence.evidence_role_binding_records import EvidenceRoleBindingError, EvidenceRoleBindingRepository
+from morva.persistence.evidence_role_binding_records import (
+    EvidenceRoleBindingError,
+    EvidenceRoleBindingRepository,
+)
 from morva.persistence.evidence_submission_records import AuthoritativeEvidenceSubmissionRecord
 from morva.runtime.evidence_lifecycle import EvidenceLifecycleError, build_lifecycle_assessment
 from morva.runtime.evidence_readiness import (
