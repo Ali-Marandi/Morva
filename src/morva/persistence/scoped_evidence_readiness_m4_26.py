@@ -64,6 +64,7 @@ def build_current_scoped_evidence_readiness(
             principal_scope=scope,
             principal_scope_id=scope_id,
             checked_at=checked_at,
+            exact_scope=True,
         )
         lifecycle_repository = EvidenceLifecycleRepository(session)
         lifecycle_records = lifecycle_repository.list_for_scope(
