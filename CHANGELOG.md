@@ -1,3 +1,13 @@
+## Unreleased — M4.38 Historical Snapshot Policy Resolution
+
+### Readiness policy governance
+- Resolve freshness policies through an independently reconstructed M4.36 historical snapshot membership set.
+- Reject policies appended after the snapshot capture boundary.
+- Expose read-only authenticated historical policy resolution.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.37 Receipt-to-Historical-Snapshot Binding
 
 ### Readiness policy governance
