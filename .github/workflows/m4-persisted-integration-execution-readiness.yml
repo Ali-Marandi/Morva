@@ -1,5 +1,7 @@
 name: M4 Persisted Integration Execution Readiness
 
+# M4.27 final validation trigger for append-only convergence receipt persistence.
+
 on:
   push:
     branches: [main]
