@@ -9,7 +9,6 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 import (
     ReadinessConvergenceFreshnessPolicyPersistenceError,
     ReadinessConvergenceFreshnessPolicyRepository,
-    ReadinessConvergenceFreshnessPolicyRecord,
 )
 from morva.persistence.readiness_freshness_policy_registry_snapshots_m4_36 import (
     FreshnessPolicyRegistrySnapshotPersistenceError,
@@ -119,7 +118,6 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
         *,
         receipt_id: UUID,
         snapshot_id: UUID,
-        receipt_repository: RegistryBoundPolicyReadinessFreshnessRecord | None = None,
         policy_repository: ReadinessConvergenceFreshnessPolicyRepository | None = None,
         snapshot_repository: FreshnessPolicyRegistrySnapshotRepository | None = None,
         bound_by: str,
