@@ -7,16 +7,19 @@ on:
       - ".github/workflows/m4-persisted-integration-execution-readiness.yml"
       - "alembic/env.py"
       - "alembic/versions/0025_integration_execution_readiness_verifications.py"
+      - "alembic/versions/0026_integration_readiness_scope_bindings.py"
       - "src/morva/api/app.py"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
       - "src/morva/persistence/integration_execution_readiness_records.py"
       - "src/morva/runtime/independent_integration_execution_readiness_verifier_m4_21.py"
       - "src/morva/runtime/persist_integration_execution_readiness_m4_24.py"
+      - "src/morva/runtime/readiness_scope_binding_m4_25.py"
       - "tests/test_integration_execution_readiness_persistence_m4_22.py"
       - "tests/test_integration_execution_readiness_api_m4_22.py"
       - "tests/test_integration_execution_readiness_history_m4_23.py"
       - "tests/test_persist_integration_execution_readiness_m4_24.py"
+      - "tests/test_integration_execution_readiness_scope_m4_25.py"
   pull_request:
     branches: [main]
     paths:
@@ -57,10 +60,13 @@ jobs:
           src/morva/api/v1/integration_execution_readiness.py
           src/morva/persistence/integration_execution_readiness_records.py
           src/morva/runtime/persist_integration_execution_readiness_m4_24.py
+          src/morva/runtime/readiness_scope_binding_m4_25.py
           tests/test_integration_execution_readiness_persistence_m4_22.py
           tests/test_integration_execution_readiness_api_m4_22.py
           tests/test_integration_execution_readiness_history_m4_23.py
           tests/test_persist_integration_execution_readiness_m4_24.py
+          tests/test_integration_execution_readiness_scope_m4_25.py
+          tests/test_integration_execution_readiness_scope_m4_25.py
       - name: Pytest
         run: >
           pytest -q
@@ -74,5 +80,5 @@ jobs:
         run: alembic upgrade head
       - name: Boundary
         run: |
-          echo "M4.24 requires assessment-file ingestion to pass through the independent M4.21 verifier before persistence." >> "$GITHUB_STEP_SUMMARY"
+          echo "M4.25 binds persisted readiness receipts to an exact organization scope and enforces scope isolation on read." >> "$GITHUB_STEP_SUMMARY"
           echo "The readiness API is read-only and performs no provider activation, credential use or production mutation." >> "$GITHUB_STEP_SUMMARY"
