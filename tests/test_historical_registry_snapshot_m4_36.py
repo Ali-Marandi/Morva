@@ -104,6 +104,67 @@ def test_m4_36_snapshot_round_trip_and_reconstruction():
         engine.dispose()
 
 
+def test_m4_36_later_registry_append_does_not_change_historical_snapshot():
+    engine, session = _repositories()
+    try:
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        policy_repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=1,
+                max_age_seconds=3600,
+            ),
+            recorded_by="auditor",
+        )
+        repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        snapshot = repository.capture(policy_repository, captured_by="auditor")
+        historical = snapshot.to_snapshot()
+        policy_repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=2,
+                max_age_seconds=1800,
+            ),
+            recorded_by="auditor",
+        )
+        session.commit()
+
+        rebuilt = repository.reconstruct(snapshot.id, policy_repository)
+        assert rebuilt.to_snapshot().fingerprint == historical.fingerprint
+        assert rebuilt.to_snapshot().policy_count == 1
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_m4_36_reconstruction_fails_on_member_mutation():
+    engine, session = _repositories()
+    try:
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        record = policy_repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=1,
+                max_age_seconds=3600,
+            ),
+            recorded_by="auditor",
+        )
+        repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        snapshot = repository.capture(policy_repository, captured_by="auditor")
+        record.max_age_seconds = 7200
+        session.commit()
+
+        try:
+            repository.reconstruct(snapshot.id, policy_repository)
+        except FreshnessPolicyRegistrySnapshotPersistenceError as exc:
+            assert "structurally invalid" in str(exc)
+        else:
+            raise AssertionError("mutated snapshot member must fail closed")
+    finally:
+        session.close()
+        engine.dispose()
+
+
 def test_m4_36_reconstruction_fails_when_member_is_missing():
     engine, session = _repositories()
     try:
