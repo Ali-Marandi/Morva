@@ -36,6 +36,14 @@ from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
     ScopeBoundReadinessConvergenceError,
     build_scope_bound_readiness_convergence,
 )
+from morva.runtime.readiness_convergence_freshness_m4_28 import (
+    ReadinessConvergenceFreshnessError,
+    assess_readiness_convergence_freshness,
+)
+from morva.persistence.scope_bound_readiness_convergence_records_m4_27 import (
+    ScopeBoundReadinessConvergencePersistenceError,
+    ScopeBoundReadinessConvergenceRepository,
+)
 
 router = APIRouter(
     prefix="/integration-execution",
@@ -150,6 +158,10 @@ class ScopeBoundReadinessConvergenceResponse(BaseModel):
     convergence: dict[str, object]
 
 
+class ReadinessConvergenceFreshnessResponse(BaseModel):
+    freshness: dict[str, object]
+
+
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
     convergence: dict[str, object]
@@ -162,6 +174,67 @@ class ScopeBoundReadinessConvergenceReceiptHistoryResponse(BaseModel):
     has_more: bool
     next_before_checked_at: datetime | None = None
     next_before_id: UUID | None = None
+
+
+@router.get(
+    "/readiness/convergence/freshness",
+    response_model=ReadinessConvergenceFreshnessResponse,
+)
+def get_readiness_convergence_freshness(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    max_age_seconds: int = Query(..., ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> ReadinessConvergenceFreshnessResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    observed_at = datetime.now(timezone.utc)
+    with SessionLocal() as session:
+        repository = ScopeBoundReadinessConvergenceRepository(session)
+        try:
+            records = repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+            if not records:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted scope-bound readiness convergence found",
+                )
+            freshness = assess_readiness_convergence_freshness(
+                records[0].to_convergence(),
+                observed_at=observed_at,
+                max_age_seconds=max_age_seconds,
+            )
+        except HTTPException:
+            raise
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return ReadinessConvergenceFreshnessResponse(
+        freshness=freshness.to_payload(),
+    )
 
 
 @router.post(
