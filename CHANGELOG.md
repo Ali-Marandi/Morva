@@ -1,3 +1,13 @@
+## Unreleased — M4.34 Registry-Bound Freshness Evaluation Integrity
+
+### Readiness policy governance
+- Add an opt-in registry-integrity-bound freshness evaluation API.
+- Bind policy identity, freshness assessment identity and registry snapshot identity into a deterministic SHA-256 result.
+- Preserve the existing registry-bound freshness API for backward compatibility.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.33 Freshness Policy Registry Integrity
 
 ### Registry integrity
