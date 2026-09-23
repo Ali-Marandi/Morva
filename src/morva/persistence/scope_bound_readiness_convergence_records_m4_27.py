@@ -186,7 +186,7 @@ class ScopeBoundReadinessConvergenceRepository:
             )
         )
         if existing is not None:
-            _normalize_loaded_record(existing)
+            _normalize_loaded_record(self.session, existing)
             existing.to_convergence()
             if existing.recorded_by != actor:
                 raise ScopeBoundReadinessConvergencePersistenceError(
@@ -319,8 +319,11 @@ class ScopeBoundReadinessConvergenceRepository:
         return records
 
 
-def _normalize_loaded_record(record: ScopeBoundReadinessConvergenceRecord) -> None:
-    bind = record._sa_instance_state.session.get_bind() if record._sa_instance_state.session else None
+def _normalize_loaded_record(
+    session: Session,
+    record: ScopeBoundReadinessConvergenceRecord,
+) -> None:
+    bind = session.get_bind()
     if bind is not None and bind.dialect.name == "sqlite":
         for field_name in ("checked_at", "created_at"):
             value = getattr(record, field_name)
