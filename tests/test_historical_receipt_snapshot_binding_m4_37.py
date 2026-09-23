@@ -217,6 +217,33 @@ def test_m4_37_rejects_receipt_snapshot_registry_mismatch():
         engine.dispose()
 
 
+def test_m4_37_verification_rejects_tampered_bound_policy_identity():
+    engine, session = _repositories()
+    try:
+        _, receipt = _receipt(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        snapshot = FreshnessPolicyRegistrySnapshotRepository(session).capture(
+            policy_repository,
+            captured_by="auditor",
+        )
+        repository = HistoricalRegistryBoundFreshnessReceiptBindingRepository(session)
+        binding = repository.bind(
+            receipt_id=receipt.id,
+            snapshot_id=snapshot.id,
+            bound_by="auditor",
+        )
+        binding.policy_id = "tampered-policy"
+        try:
+            repository.verify(binding.id)
+        except HistoricalRegistryBoundFreshnessReceiptPersistenceError as exc:
+            assert "bound policy id differs" in str(exc)
+        else:
+            raise AssertionError("tampered bound policy identity must fail closed")
+    finally:
+        session.close()
+        engine.dispose()
+
+
 def test_m4_37_rejects_binding_from_different_actor():
     engine, session = _repositories()
     try:
