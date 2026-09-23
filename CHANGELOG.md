@@ -1,3 +1,24 @@
+## Unreleased — M4.32 Versioned Freshness Policy Identity
+
+### Readiness policy governance
+- Preserve explicit positive policy versions in runtime and persistence.
+- Include policy version in deterministic identity fingerprints.
+- Support exact version selection in registry-bound and direct policy lookup APIs.
+- Keep version 1 as the backwards-compatible default.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credential use, payroll calculation, payment mutation or production authorization.
+
+## Unreleased — M4.31 Freshness Policy Registry History
+
+### Registry history
+- Add deterministic newest-first cursor pagination for persisted freshness-policy identities.
+- Revalidate every returned policy fingerprint before exposure.
+- Expose authenticated registry history with stable before-created-at / before-id cursors.
+
+### Safety
+- Read-only governance metadata; no external provider execution or production authority.
+
 ## Unreleased — M4.18 Evidence Readiness
 
 ### Evidence readiness
