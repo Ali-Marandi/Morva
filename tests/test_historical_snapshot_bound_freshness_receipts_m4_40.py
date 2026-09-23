@@ -79,7 +79,7 @@ def _freshness(
         },
     )()
     policy_record = snapshot_repository.resolve_policy(
-        snapshot.id,
+        snapshot_record.id,
         policy_repository,
         policy_id="integration-staging-v1",
         policy_version=policy_version,
@@ -91,7 +91,7 @@ def _freshness(
     )
     return build_historical_snapshot_bound_policy_readiness_freshness(
         policy_bound,
-        snapshot_id=snapshot.id,
+        snapshot_id=snapshot_record.id,
         snapshot_fingerprint=snapshot.fingerprint,
         registry_integrity_version=snapshot.integrity_version,
         registry_policy_count=snapshot.policy_count,
