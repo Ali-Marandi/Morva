@@ -15,6 +15,7 @@
 - M4.22 persists append-only receipts for independently verified integration-execution readiness.
 - M4.23 adds deterministic, paginated audit history for those receipts.
 - M4.24 adds a controlled internal persistence service that runs the independent M4.21 verifier before any receipt reaches the persistence boundary.
+- M4.25 binds each persisted receipt to an exact organization scope and enforces that binding in the current-readiness and history APIs.
 - The readiness APIs remain read-only and fail closed on any persisted fingerprint or structural mismatch.
 - M4.22 does not rebuild M4.20; persisted receipts revalidate the M4.20 and M4.21 fingerprints on read. No external integration is executed and no production authority is implied.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
