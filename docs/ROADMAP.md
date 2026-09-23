@@ -136,6 +136,7 @@
 - M4.36 historical registry snapshot anchoring with exact member-ID manifests and independent fail-closed reconstruction
 - M4.37 receipt-to-historical-snapshot binding with exact M4.35 receipt identity, M4.36 membership continuity and independent re-verification
 - M4.38 historical snapshot policy resolution against exact immutable member-ID membership
+- M4.39 historical snapshot-bound freshness evaluation using snapshot-resolved policy identity
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.37 receipt-to-historical-snapshot binding.
