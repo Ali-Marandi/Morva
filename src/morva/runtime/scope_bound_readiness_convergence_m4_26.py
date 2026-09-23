@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 
-from morva.runtime.evidence_readiness import EvidenceReadinessAssessment
+from morva.runtime.evidence_readiness import (
+    EvidenceReadinessAssessment,
+    replay_readiness_fingerprint,
+)
 from morva.runtime.independent_integration_execution_readiness_verifier_m4_21 import (
     IndependentIntegrationExecutionReadinessVerification,
 )
@@ -174,9 +177,13 @@ def build_scope_bound_readiness_convergence(
         blockers.append("VERIFICATION_TIME_IN_FUTURE")
     if not current_evidence_readiness.complete:
         blockers.append("CURRENT_EVIDENCE_READINESS_INCOMPLETE")
+    replayed_current_fingerprint = replay_readiness_fingerprint(
+        current_evidence_readiness,
+        checked_at=assessment.checked_at,
+    )
     if (
         assessment.evidence_readiness_fingerprint.lower()
-        != current_evidence_readiness.fingerprint.lower()
+        != replayed_current_fingerprint.lower()
     ):
         blockers.append("EVIDENCE_READINESS_FINGERPRINT_MISMATCH")
 
@@ -190,7 +197,7 @@ def build_scope_bound_readiness_convergence(
         checked_at=checked_at,
         persisted_verification_fingerprint=verification.fingerprint,
         persisted_evidence_readiness_fingerprint=assessment.evidence_readiness_fingerprint,
-        current_evidence_readiness_fingerprint=current_evidence_readiness.fingerprint,
+        current_evidence_readiness_fingerprint=replayed_current_fingerprint,
         state=state,
         blockers=tuple(blockers),
     )
