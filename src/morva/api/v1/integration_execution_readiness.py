@@ -47,6 +47,10 @@ from morva.runtime.policy_bound_readiness_freshness_m4_29 import (
     PolicyBoundReadinessFreshnessError,
     build_policy_bound_freshness,
 )
+from morva.runtime.registry_bound_policy_readiness_freshness_m4_34 import (
+    RegistryBoundPolicyReadinessFreshnessError,
+    build_registry_bound_policy_readiness_freshness,
+)
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
     ReadinessConvergenceFreshnessPolicyError,
     build_freshness_policy,
@@ -196,6 +200,9 @@ class FreshnessPolicyRegistryIntegrityResponse(BaseModel):
     fingerprint: str
     generated_at: datetime
 
+
+class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
+    freshness: dict[str, object]
 
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
@@ -470,6 +477,87 @@ def get_policy_registry_bound_readiness_convergence_freshness(
         ) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
     return PolicyBoundReadinessFreshnessResponse(
+        freshness=freshness.to_payload(),
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-bound-integrity",
+    response_model=RegistryBoundPolicyReadinessFreshnessResponse,
+)
+def get_registry_integrity_bound_readiness_convergence_freshness(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> RegistryBoundPolicyReadinessFreshnessResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    observed_at = datetime.now(timezone.utc)
+    with SessionLocal() as session:
+        convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            records = convergence_repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+            if not records:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted scope-bound readiness convergence found",
+                )
+            policy_record = policy_repository.get(
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
+            if policy_record is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="freshness policy not found",
+                )
+            policy_bound = build_policy_bound_freshness(
+                policy_record.to_policy(),
+                records[0].to_convergence(),
+                observed_at=observed_at,
+            )
+            policy_count, registry_fingerprint = policy_repository.integrity_snapshot()
+            freshness = build_registry_bound_policy_readiness_freshness(
+                policy_bound,
+                registry_integrity_version=1,
+                registry_policy_count=policy_count,
+                registry_fingerprint=registry_fingerprint,
+            )
+        except HTTPException:
+            raise
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            PolicyBoundReadinessFreshnessError,
+            RegistryBoundPolicyReadinessFreshnessError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RegistryBoundPolicyReadinessFreshnessResponse(
         freshness=freshness.to_payload(),
     )
 
