@@ -116,29 +116,29 @@ def test_registry_integrity_snapshot_is_deterministic_and_changes_with_append():
     with local() as session:
         repository = ReadinessConvergenceFreshnessPolicyRepository(session)
         first = repository.record(
-        build_freshness_policy(
-            policy_id="integration-staging",
-            policy_version=1,
-            max_age_seconds=3600,
-        ),
-        recorded_by="auditor-1",
-    )
-    count_one, fingerprint_one = repository.integrity_snapshot()
-    count_two, fingerprint_two = repository.integrity_snapshot()
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=1,
+                max_age_seconds=3600,
+            ),
+            recorded_by="auditor-1",
+        )
+        count_one, fingerprint_one = repository.integrity_snapshot()
+        count_two, fingerprint_two = repository.integrity_snapshot()
 
-    assert first.policy_version == 1
-    assert count_one == count_two == 1
-    assert fingerprint_one == fingerprint_two
+        assert first.policy_version == 1
+        assert count_one == count_two == 1
+        assert fingerprint_one == fingerprint_two
 
-    repository.record(
-        build_freshness_policy(
-            policy_id="integration-staging",
-            policy_version=2,
-            max_age_seconds=1800,
-        ),
-        recorded_by="auditor-1",
-    )
-    count_three, fingerprint_three = repository.integrity_snapshot()
+        repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=2,
+                max_age_seconds=1800,
+            ),
+            recorded_by="auditor-1",
+        )
+        count_three, fingerprint_three = repository.integrity_snapshot()
 
         assert count_three == 2
         assert fingerprint_three != fingerprint_one
