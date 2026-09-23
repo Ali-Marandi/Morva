@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.24 hardens the persistence entry boundary so assessment files must pass independent M4.21 verification before a receipt can be persisted; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.25 binds persisted readiness receipts to exact organization scopes and enforces scope-isolated reads; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -123,8 +123,6 @@
 - M4.23 deterministic paginated history API for persisted readiness receipts with candidate/environment filters and fail-closed validation
 - M4.24 controlled verified-readiness persistence service that forces assessment-file ingestion through independent M4.21 verification before persistence
 - M4.25 organization-scope binding for persisted readiness receipts with scope-bound fingerprints and read/history isolation across school, district, province and ministry domains
-- M4.23 deterministic, paginated history API for persisted readiness receipts with candidate/environment filters, stable timestamp+UUID cursoring and fail-closed validation of every returned receipt
-
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.23 is the current development baseline.
