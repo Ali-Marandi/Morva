@@ -190,11 +190,11 @@ def test_tampered_persisted_verification_fails_closed(session):
         match="verification fingerprint mismatch",
     ):
         repository.latest(
-        candidate_sha=SHA,
-        target_environment="staging",
-        organization_scope="ministry",
-        organization_scope_id="ministry",
-    )
+            candidate_sha=SHA,
+            target_environment="staging",
+            organization_scope="ministry",
+            organization_scope_id="ministry",
+        )
 
 def test_malformed_blocker_payload_fails_closed(session):
     verification = _verified()
