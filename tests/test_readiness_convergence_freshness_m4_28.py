@@ -139,7 +139,9 @@ def test_blocked_convergence_cannot_be_fresh():
         organization_scope_id=convergence.organization_scope_id,
         checked_at=convergence.checked_at,
         persisted_verification_fingerprint=convergence.persisted_verification_fingerprint,
-        persisted_evidence_readiness_fingerprint=convergence.persisted_evidence_readiness_fingerprint,
+        persisted_evidence_readiness_fingerprint=(
+            convergence.persisted_evidence_readiness_fingerprint
+        ),
         current_evidence_readiness_fingerprint=convergence.current_evidence_readiness_fingerprint,
         state="blocked",
         blockers=("CURRENT_EVIDENCE_READINESS_INCOMPLETE",),
