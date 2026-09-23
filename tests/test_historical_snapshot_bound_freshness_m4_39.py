@@ -15,9 +15,6 @@ from morva.persistence.readiness_freshness_policy_registry_snapshots_m4_36 impor
     FreshnessPolicyRegistrySnapshotRepository,
     FreshnessPolicyRegistrySnapshotPersistenceError,
 )
-from morva.persistence.scope_bound_readiness_convergence_records_m4_27 import (
-    ScopeBoundReadinessConvergenceRecord,
-)
 from morva.runtime.historical_snapshot_bound_policy_readiness_freshness_m4_39 import (
     HistoricalSnapshotBoundPolicyReadinessFreshnessError,
     build_historical_snapshot_bound_policy_readiness_freshness,
@@ -189,3 +186,14 @@ def test_m4_39_runtime_rejects_tampered_snapshot_fingerprint():
         assert "fingerprint mismatch" in str(exc)
     else:
         raise AssertionError("tampered snapshot identity must fail closed")
+
+
+def test_m4_39_openapi_contract_is_registered():
+    from morva.api.app import app
+
+    path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound"
+    )
+    assert path in app.openapi()["paths"]
+    assert app.openapi()["paths"][path]["get"]["responses"]["200"]
