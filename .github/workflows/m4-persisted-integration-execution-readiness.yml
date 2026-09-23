@@ -8,6 +8,7 @@ on:
       - "alembic/env.py"
       - "alembic/versions/0025_integration_execution_readiness_verifications.py"
       - "alembic/versions/0026_integration_readiness_scope_bindings.py"
+      - "alembic/versions/0027_scope_bound_readiness_convergences.py"
       - "src/morva/api/app.py"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
@@ -17,6 +18,8 @@ on:
       - "src/morva/runtime/readiness_scope_binding_m4_25.py"
       - "src/morva/runtime/scope_bound_readiness_convergence_m4_26.py"
       - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
+      - "src/morva/persistence/scope_bound_readiness_convergence_records_m4_27.py"
+      - "src/morva/runtime/persist_scope_bound_readiness_convergence_m4_27.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -37,6 +40,7 @@ on:
       - "alembic/env.py"
       - "alembic/versions/0025_integration_execution_readiness_verifications.py"
       - "alembic/versions/0026_integration_readiness_scope_bindings.py"
+      - "alembic/versions/0027_scope_bound_readiness_convergences.py"
       - "src/morva/api/app.py"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
@@ -46,6 +50,8 @@ on:
       - "src/morva/runtime/readiness_scope_binding_m4_25.py"
       - "src/morva/runtime/scope_bound_readiness_convergence_m4_26.py"
       - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
+      - "src/morva/persistence/scope_bound_readiness_convergence_records_m4_27.py"
+      - "src/morva/runtime/persist_scope_bound_readiness_convergence_m4_27.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -96,6 +102,7 @@ jobs:
           tests/test_integration_execution_readiness_scope_m4_25.py
           tests/test_scope_bound_readiness_convergence_m4_26.py
           tests/test_scoped_evidence_readiness_m4_26.py
+          tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
       - name: Pytest
         run: >
           pytest -q
@@ -106,6 +113,7 @@ jobs:
           tests/test_integration_execution_readiness_scope_m4_25.py
           tests/test_scope_bound_readiness_convergence_m4_26.py
           tests/test_scoped_evidence_readiness_m4_26.py
+          tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
