@@ -51,10 +51,6 @@ from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
     ReadinessConvergenceFreshnessPolicyError,
     build_freshness_policy,
 )
-from morva.persistence.scope_bound_readiness_convergence_records_m4_27 import (
-    ScopeBoundReadinessConvergencePersistenceError,
-    ScopeBoundReadinessConvergenceRepository,
-)
 
 router = APIRouter(
     prefix="/integration-execution",
