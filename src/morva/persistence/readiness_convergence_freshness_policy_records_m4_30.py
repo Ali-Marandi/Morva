@@ -198,6 +198,10 @@ class ReadinessConvergenceFreshnessPolicyRepository:
         return records, has_more
 
     def integrity_snapshot(self) -> tuple[int, str]:
+        count, fingerprint, _ = self.integrity_snapshot_manifest()
+        return count, fingerprint
+
+    def integrity_snapshot_manifest(self) -> tuple[int, str, tuple[UUID, ...]]:
         records = list(
             self.session.scalars(
                 select(ReadinessConvergenceFreshnessPolicyRecord).order_by(
@@ -207,31 +211,32 @@ class ReadinessConvergenceFreshnessPolicyRepository:
                 )
             ).all()
         )
-        payload: list[dict[str, object]] = []
-        for record in records:
-            _normalize_loaded_policy_record(self.session, record)
-            policy = record.to_policy()
-            payload.append(
-                {
-                    "record_id": str(record.id),
-                    "policy_version": policy.policy_version,
-                    "policy_id": policy.policy_id,
-                    "max_age_seconds": policy.max_age_seconds,
-                    "fingerprint": policy.fingerprint.lower(),
-                    "recorded_by": record.recorded_by,
-                    "created_at": record.created_at.astimezone(timezone.utc).isoformat(),
-                }
+        count, fingerprint = _integrity_snapshot_for_records(self.session, records)
+        return count, fingerprint, tuple(sorted(record.id for record in records))
+
+    def integrity_snapshot_for_record_ids(
+        self,
+        record_ids: tuple[UUID, ...],
+    ) -> tuple[int, str]:
+        normalized_ids = tuple(dict.fromkeys(record_ids))
+        if len(normalized_ids) != len(record_ids):
+            raise ReadinessConvergenceFreshnessPolicyPersistenceError(
+                "snapshot member record ids must be unique"
             )
-        encoded = json.dumps(
-            {
-                "integrity_version": 1,
-                "policies": payload,
-            },
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        return len(payload), sha256(encoded).hexdigest()
+        records = list(
+            self.session.scalars(
+                select(ReadinessConvergenceFreshnessPolicyRecord).where(
+                    ReadinessConvergenceFreshnessPolicyRecord.id.in_(normalized_ids)
+                )
+            ).all()
+        )
+        found_ids = {record.id for record in records}
+        missing = set(normalized_ids) - found_ids
+        if missing:
+            raise ReadinessConvergenceFreshnessPolicyPersistenceError(
+                "snapshot member policy record is missing"
+            )
+        return _integrity_snapshot_for_records(self.session, records)
 
     def get(
         self,
@@ -272,3 +277,43 @@ def _normalize_loaded_policy_record(
                     field_name,
                     value.replace(tzinfo=timezone.utc),
                 )
+
+
+
+def _integrity_snapshot_for_records(
+    session: Session,
+    records: list[ReadinessConvergenceFreshnessPolicyRecord],
+) -> tuple[int, str]:
+    ordered = sorted(
+        records,
+        key=lambda record: (
+            record.policy_id,
+            record.policy_version,
+            record.fingerprint,
+        ),
+    )
+    payload: list[dict[str, object]] = []
+    for record in ordered:
+        _normalize_loaded_policy_record(session, record)
+        policy = record.to_policy()
+        payload.append(
+            {
+                "record_id": str(record.id),
+                "policy_version": policy.policy_version,
+                "policy_id": policy.policy_id,
+                "max_age_seconds": policy.max_age_seconds,
+                "fingerprint": policy.fingerprint.lower(),
+                "recorded_by": record.recorded_by,
+                "created_at": record.created_at.astimezone(timezone.utc).isoformat(),
+            }
+        )
+    encoded = json.dumps(
+        {
+            "integrity_version": 1,
+            "policies": payload,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return len(payload), sha256(encoded).hexdigest()
