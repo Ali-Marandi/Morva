@@ -46,9 +46,10 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
             "ix_integ_readiness_binding_verification_fp",
             "binding_verification_fingerprint",
         ),
-        UniqueConstraint(
+        Index(
+            "ix_integration_readiness_verification_scope_binding_fingerprint",
             "scope_binding_fingerprint",
-            name="uq_integration_readiness_scope_binding_fingerprint",
+            unique=True,
         ),
     )
 
@@ -353,7 +354,6 @@ class IntegrationExecutionReadinessVerificationRepository:
             record.verified_at = _ensure_timezone(record.verified_at, "verified_at")
             record.created_at = _ensure_timezone(record.created_at, "created_at")
             record.to_verification()
-            record.verify_scope_binding()
 
         return records
 
