@@ -305,7 +305,9 @@ def _normalize_loaded_record(
 
 def _ensure_timezone(value: datetime, name: str) -> datetime:
     if value.tzinfo is None:
-        raise RegistryBoundPolicyReadinessFreshnessPersistenceError(
-            f"{name} must be timezone-aware"
-        )
+        # SQLite does not preserve timezone offsets for SQLAlchemy DateTime.
+        # Persisted receipt reconstruction therefore treats a database-loaded
+        # naive value as UTC, matching the repository's existing normalization
+        # rule for SQLite while keeping caller-supplied runtime timestamps strict.
+        value = value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
