@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.23 adds deterministic, paginated audit history for independently verified integration readiness receipts; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.24 hardens the persistence entry boundary so assessment files must pass independent M4.21 verification before a receipt can be persisted; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
