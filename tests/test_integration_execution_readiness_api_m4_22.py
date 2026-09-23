@@ -54,6 +54,18 @@ def test_m4_22_readiness_route_is_registered():
         ]["post"]["parameters"]
     }
     assert policy_create_params == set()
+    policy_schema = app.openapi()["components"]["schemas"]["FreshnessPolicyCreate"]
+    assert policy_schema["properties"]["policy_version"]["default"] == 1
+    registry_bound_version_names = {
+        parameter["name"] for parameter in registry_bound_operation["parameters"]
+    }
+    assert "policy_version" in registry_bound_version_names
+    specific_policy_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/{policy_id}"
+    ]["get"]
+    assert "policy_version" in {
+        parameter["name"] for parameter in specific_policy_operation["parameters"]
+    }
     policy_create_schema = paths[
         "/api/v1/integration-execution/readiness/convergence/freshness/policies"
     ]["post"]["requestBody"]["content"]["application/json"]["schema"]
