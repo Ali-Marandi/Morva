@@ -115,10 +115,16 @@ def test_history_is_deterministic_with_tie_breaker(session):
     second.id = UUID("00000000-0000-0000-0000-000000000002")
     third.id = UUID("00000000-0000-0000-0000-000000000003")
 
-    page = repository.list_verified(limit=2)
+    page = repository.list_verified(
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+        limit=2,
+    )
     assert [record.id for record in page] == [third.id, second.id]
 
     next_page = repository.list_verified(
+        organization_scope="ministry",
+        organization_scope_id="ministry",
         verified_before=page[-1].verified_at,
         before_id=page[-1].id,
         limit=2,
@@ -146,6 +152,8 @@ def test_history_filters_candidate_and_environment(session):
     records = repository.list_verified(
         candidate_sha="c" * 40,
         target_environment="pilot",
+        organization_scope="pilot",
+        organization_scope_id="pilot-1",
     )
     assert len(records) == 1
     assert records[0].candidate_sha == "c" * 40
@@ -167,4 +175,8 @@ def test_history_fails_closed_when_any_selected_receipt_is_tampered(session):
         IntegrationExecutionReadinessPersistenceError,
         match="structurally invalid",
     ):
-        repository.list_verified(limit=10)
+        repository.list_verified(
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+        limit=10,
+    )
