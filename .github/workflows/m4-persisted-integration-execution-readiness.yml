@@ -11,6 +11,7 @@ on:
       - "alembic/versions/0025_integration_execution_readiness_verifications.py"
       - "alembic/versions/0026_integration_readiness_scope_bindings.py"
       - "alembic/versions/0027_scope_bound_readiness_convergences.py"
+      - "alembic/versions/0028_readiness_convergence_freshness_policies.py"
       - "src/morva/api/app.py"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
@@ -25,6 +26,7 @@ on:
       - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/runtime/readiness_convergence_freshness_policy_m4_29.py"
       - "src/morva/runtime/policy_bound_readiness_freshness_m4_29.py"
+      - "src/morva/persistence/readiness_convergence_freshness_policy_records_m4_30.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -46,6 +48,7 @@ on:
       - "alembic/versions/0025_integration_execution_readiness_verifications.py"
       - "alembic/versions/0026_integration_readiness_scope_bindings.py"
       - "alembic/versions/0027_scope_bound_readiness_convergences.py"
+      - "alembic/versions/0028_readiness_convergence_freshness_policies.py"
       - "src/morva/api/app.py"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
@@ -60,6 +63,7 @@ on:
       - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/runtime/readiness_convergence_freshness_policy_m4_29.py"
       - "src/morva/runtime/policy_bound_readiness_freshness_m4_29.py"
+      - "src/morva/persistence/readiness_convergence_freshness_policy_records_m4_30.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -113,6 +117,7 @@ jobs:
           tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
           tests/test_readiness_convergence_freshness_m4_28.py
           tests/test_readiness_convergence_freshness_policy_m4_29.py
+          tests/test_readiness_convergence_freshness_policy_persistence_m4_30.py
       - name: Pytest
         run: >
           pytest -q
@@ -126,6 +131,7 @@ jobs:
           tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
           tests/test_readiness_convergence_freshness_m4_28.py
           tests/test_readiness_convergence_freshness_policy_m4_29.py
+          tests/test_readiness_convergence_freshness_policy_persistence_m4_30.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
@@ -136,3 +142,4 @@ jobs:
           echo "The readiness API is read-only and performs no provider activation, credential use or production mutation." >> "$GITHUB_STEP_SUMMARY"
           echo "M4.28 freshness is a read-only age/confirmation gate over persisted M4.27 convergence observations; it does not grant production authority." >> "$GITHUB_STEP_SUMMARY"
           echo "M4.29 binds M4.28 freshness observations to an explicit versioned policy identity; policy parameters remain explicit and evidence-only." >> "$GITHUB_STEP_SUMMARY"
+          echo "M4.30 persists explicit freshness-policy identities and requires registry-bound freshness evaluation; no hidden default policy is introduced." >> "$GITHUB_STEP_SUMMARY"
