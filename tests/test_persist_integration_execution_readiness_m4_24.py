@@ -138,7 +138,7 @@ def test_tampered_assessment_fingerprint_blocks_persistence(
     )
     repository = IntegrationExecutionReadinessVerificationRepository(session)
 
-    with pytest.raises(ValueError, match="fingerprint mismatch"):
+    with pytest.raises(ValueError, match="assessment structure is invalid"):
         persist_verified_integration_execution_readiness(
             repository,
             assessment_path,
