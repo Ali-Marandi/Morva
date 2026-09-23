@@ -144,6 +144,36 @@ class FreshnessPolicyRegistrySnapshotRepository:
         record.to_snapshot()
         return record
 
+    def resolve_policy(
+        self,
+        snapshot_id: UUID,
+        policy_repository: ReadinessConvergenceFreshnessPolicyRepository,
+        *,
+        policy_id: str,
+        policy_version: int = 1,
+    ):
+        record = self.reconstruct(snapshot_id, policy_repository)
+        snapshot = record.to_snapshot()
+        policy_record = policy_repository.get(
+            policy_id=policy_id,
+            policy_version=policy_version,
+        )
+        if policy_record is None:
+            raise FreshnessPolicyRegistrySnapshotPersistenceError(
+                "historical snapshot policy not found"
+            )
+        if policy_record.id not in snapshot.member_record_ids:
+            raise FreshnessPolicyRegistrySnapshotPersistenceError(
+                "policy is not a member of the historical registry snapshot"
+            )
+        try:
+            policy_record.to_policy()
+        except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
+            raise FreshnessPolicyRegistrySnapshotPersistenceError(
+                f"historical snapshot policy reconstruction failed: {exc}"
+            ) from exc
+        return policy_record
+
     def reconstruct(
         self,
         snapshot_id: UUID,
