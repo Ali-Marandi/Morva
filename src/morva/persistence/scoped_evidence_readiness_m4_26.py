@@ -36,16 +36,13 @@ def build_current_scoped_evidence_readiness(
     checked_at: datetime,
 ) -> EvidenceReadinessAssessment:
     try:
-        scope = Scope(organization_scope)
-    except ValueError as exc:
-        raise ScopedEvidenceReadinessPersistenceError(
-            "organization_scope must be a valid Morva scope"
-        ) from exc
-    scope_id = organization_scope_id.strip()
-    if not scope_id:
-        raise ScopedEvidenceReadinessPersistenceError(
-            "organization_scope_id is required"
+        normalized_scope, scope_id = normalize_readiness_scope(
+            organization_scope,
+            organization_scope_id,
         )
+    except ReadinessScopeBindingError as exc:
+        raise ScopedEvidenceReadinessPersistenceError(str(exc)) from exc
+    scope = Scope(normalized_scope)
 
     accepted_query = select(AuthoritativeEvidenceSubmissionRecord).where(
         AuthoritativeEvidenceSubmissionRecord.status == "accepted",
