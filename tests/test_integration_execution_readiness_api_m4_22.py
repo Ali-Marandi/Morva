@@ -36,6 +36,29 @@ def test_m4_22_readiness_route_is_registered():
         "/api/v1/integration-execution/readiness/convergence/freshness/policies"
         in paths
     )
+    assert (
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/snapshots"
+        in paths
+    )
+    snapshot_post = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/snapshots"
+    ]["post"]
+    assert snapshot_post["responses"]["200"]["content"]["application/json"]["schema"][
+        "$ref"
+    ] == "#/components/schemas/FreshnessPolicyRegistrySnapshotResponse"
+    assert (
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/snapshots/{snapshot_id}/verify"
+        in paths
+    )
+    snapshot_verify = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/snapshots/{snapshot_id}/verify"
+    ]["get"]
+    assert snapshot_verify["parameters"][0]["name"] == "snapshot_id"
+    assert snapshot_verify["responses"]["200"]["content"]["application/json"]["schema"][
+        "$ref"
+    ] == (
+        "#/components/schemas/FreshnessPolicyRegistrySnapshotVerificationResponse"
+    )
     freshness_policy_history_operation = paths[
         "/api/v1/integration-execution/readiness/convergence/freshness/policies"
     ]["get"]
