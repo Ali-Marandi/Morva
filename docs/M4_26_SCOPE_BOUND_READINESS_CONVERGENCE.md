@@ -22,7 +22,7 @@ A result is `converged` only when:
 
 - the persisted assessment was itself `ready`;
 - current scoped evidence readiness is complete;
-- the persisted evidence-readiness fingerprint exactly matches the current scoped evidence-readiness fingerprint.
+- the persisted evidence-readiness fingerprint exactly matches the current scoped evidence-readiness state replayed at the persisted observation timestamp, so clock drift alone does not create divergence.
 
 Otherwise the result is `blocked` with deterministic blocker codes, including:
 
