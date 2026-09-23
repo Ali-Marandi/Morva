@@ -132,9 +132,10 @@
 - M4.32 explicit positive policy-version support across runtime, persistence and freshness-policy APIs
 - M4.33 deterministic aggregate integrity snapshot for the persisted freshness-policy registry
 - M4.34 registry-integrity-bound freshness evaluation with deterministic binding across policy, assessment and registry snapshot identities
+- M4.35 append-only persistence and cursor history for registry-integrity-bound freshness evaluation receipts with idempotent fingerprint binding
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.31 history and M4.32 explicit versioning.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.35 registry-bound evaluation receipts.
 2. Maintain the  as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
