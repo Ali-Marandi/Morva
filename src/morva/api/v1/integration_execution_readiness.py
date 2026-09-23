@@ -152,15 +152,23 @@ def get_integration_execution_readiness_history(
 
         has_more = len(records) > limit
         page = records[:limit]
-        items = [
-            IntegrationExecutionReadinessVerificationResponse(
-                assessment=(verification := record.to_verification()).assessment.to_payload(),
-                verification_fingerprint=verification.fingerprint,
-                verified_at=verification.verified_at,
-                created_at=record.created_at,
-            )
-            for record in page
-        ]
+        items: list[IntegrationExecutionReadinessVerificationResponse] = []
+        try:
+            for record in page:
+                verification = record.to_verification()
+                items.append(
+                    IntegrationExecutionReadinessVerificationResponse(
+                        assessment=verification.assessment.to_payload(),
+                        verification_fingerprint=verification.fingerprint,
+                        verified_at=verification.verified_at,
+                        created_at=record.created_at,
+                    )
+                )
+        except IntegrationExecutionReadinessPersistenceError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="persisted integration execution readiness verification is invalid",
+            ) from exc
 
         next_verified_at = page[-1].verified_at if has_more and page else None
         next_id = page[-1].id if has_more and page else None
