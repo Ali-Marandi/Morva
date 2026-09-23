@@ -21,6 +21,10 @@ from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 impo
     ReadinessConvergenceFreshnessPolicyPersistenceError,
     ReadinessConvergenceFreshnessPolicyRepository,
 )
+from morva.persistence.registry_bound_policy_readiness_freshness_records_m4_35 import (
+    RegistryBoundPolicyReadinessFreshnessPersistenceError,
+    RegistryBoundPolicyReadinessFreshnessRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -203,6 +207,25 @@ class FreshnessPolicyRegistryIntegrityResponse(BaseModel):
 
 class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
     freshness: dict[str, object]
+
+class RegistryBoundPolicyReadinessFreshnessReceiptResponse(BaseModel):
+    id: UUID
+    freshness: dict[str, object]
+    repository: str
+    candidate_sha: str
+    target_environment: str
+    organization_scope: str
+    organization_scope_id: str
+    recorded_by: str
+    created_at: datetime
+
+
+class RegistryBoundPolicyReadinessFreshnessReceiptHistoryResponse(BaseModel):
+    items: list[RegistryBoundPolicyReadinessFreshnessReceiptResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
 
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
@@ -509,44 +532,17 @@ def get_registry_integrity_bound_readiness_convergence_freshness(
             detail="organization_scope and organization_scope_id are required",
         )
     candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
-    observed_at = datetime.now(timezone.utc)
     with SessionLocal() as session:
-        convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
-        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
         try:
-            records = convergence_repository.list_verified(
-                repository=CANONICAL_REPOSITORY,
+            freshness, _ = _build_registry_integrity_bound_freshness(
+                session,
                 candidate_sha=candidate_sha,
                 target_environment=target_environment,
                 organization_scope=scope_filter,
                 organization_scope_id=scope_id_filter,
-                limit=1,
-            )
-            if not records:
-                raise HTTPException(
-                    status_code=404,
-                    detail="no persisted scope-bound readiness convergence found",
-                )
-            policy_record = policy_repository.get(
                 policy_id=policy_id,
                 policy_version=policy_version,
-            )
-            if policy_record is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail="freshness policy not found",
-                )
-            policy_bound = build_policy_bound_freshness(
-                policy_record.to_policy(),
-                records[0].to_convergence(),
-                observed_at=observed_at,
-            )
-            policy_count, registry_fingerprint = policy_repository.integrity_snapshot()
-            freshness = build_registry_bound_policy_readiness_freshness(
-                policy_bound,
-                registry_integrity_version=1,
-                registry_policy_count=policy_count,
-                registry_fingerprint=registry_fingerprint,
+                observed_at=datetime.now(timezone.utc),
             )
         except HTTPException:
             raise
@@ -560,6 +556,229 @@ def get_registry_integrity_bound_readiness_convergence_freshness(
     return RegistryBoundPolicyReadinessFreshnessResponse(
         freshness=freshness.to_payload(),
     )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-bound-integrity/receipts",
+    response_model=RegistryBoundPolicyReadinessFreshnessReceiptResponse,
+)
+def persist_registry_integrity_bound_readiness_convergence_freshness_receipt(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> RegistryBoundPolicyReadinessFreshnessReceiptResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="registry-bound freshness receipts are ministry-managed",
+        )
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        try:
+            freshness, convergence = _build_registry_integrity_bound_freshness(
+                session,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                policy_id=policy_id,
+                policy_version=policy_version,
+                observed_at=datetime.now(timezone.utc),
+            )
+            repository = RegistryBoundPolicyReadinessFreshnessRepository(session)
+            record = repository.record(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=convergence.candidate_sha,
+                target_environment=convergence.target_environment,
+                organization_scope=convergence.organization_scope,
+                organization_scope_id=convergence.organization_scope_id,
+                freshness=freshness,
+                recorded_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.registry_bound_freshness_receipt.recorded",
+                entity_type="registry_bound_policy_readiness_freshness_receipt",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "binding_fingerprint": record.binding_fingerprint,
+                    "registry_fingerprint": record.registry_fingerprint,
+                    "policy_id": record.policy_id,
+                    "policy_version": record.policy_version,
+                    "candidate_sha": record.candidate_sha,
+                },
+                reason="registry-bound freshness evaluation receipt persisted",
+                session=session,
+            )
+            session.commit()
+        except HTTPException:
+            raise
+        except RegistryBoundPolicyReadinessFreshnessPersistenceError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            PolicyBoundReadinessFreshnessError,
+            RegistryBoundPolicyReadinessFreshnessError,
+        ) as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RegistryBoundPolicyReadinessFreshnessReceiptResponse(
+        id=record.id,
+        freshness=record.to_freshness().to_payload(),
+        repository=record.repository,
+        candidate_sha=record.candidate_sha,
+        target_environment=record.target_environment,
+        organization_scope=record.organization_scope,
+        organization_scope_id=record.organization_scope_id,
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-bound-integrity/receipts",
+    response_model=RegistryBoundPolicyReadinessFreshnessReceiptHistoryResponse,
+)
+def list_registry_integrity_bound_readiness_convergence_freshness_receipts(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> RegistryBoundPolicyReadinessFreshnessReceiptHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    if before_created_at is not None and before_created_at.tzinfo is None:
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at must be timezone-aware",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        repository = RegistryBoundPolicyReadinessFreshnessRepository(session)
+        try:
+            records, has_more = repository.list(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except RegistryBoundPolicyReadinessFreshnessPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        RegistryBoundPolicyReadinessFreshnessReceiptResponse(
+            id=record.id,
+            freshness=record.to_freshness().to_payload(),
+            repository=record.repository,
+            candidate_sha=record.candidate_sha,
+            target_environment=record.target_environment,
+            organization_scope=record.organization_scope,
+            organization_scope_id=record.organization_scope_id,
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    next_created_at = records[-1].created_at if has_more else None
+    next_id = records[-1].id if has_more else None
+    return RegistryBoundPolicyReadinessFreshnessReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=next_created_at,
+        next_before_id=next_id,
+    )
+
+
+def _build_registry_integrity_bound_freshness(
+    session,
+    *,
+    candidate_sha: str | None,
+    target_environment: str | None,
+    organization_scope: str,
+    organization_scope_id: str,
+    policy_id: str,
+    policy_version: int,
+    observed_at: datetime,
+):
+    convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
+    policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+    records = convergence_repository.list_verified(
+        repository=CANONICAL_REPOSITORY,
+        candidate_sha=candidate_sha,
+        target_environment=target_environment,
+        organization_scope=organization_scope,
+        organization_scope_id=organization_scope_id,
+        limit=1,
+    )
+    if not records:
+        raise HTTPException(
+            status_code=404,
+            detail="no persisted scope-bound readiness convergence found",
+        )
+    convergence = records[0].to_convergence()
+    policy_record = policy_repository.get(
+        policy_id=policy_id,
+        policy_version=policy_version,
+    )
+    if policy_record is None:
+        raise HTTPException(status_code=404, detail="freshness policy not found")
+    policy_bound = build_policy_bound_freshness(
+        policy_record.to_policy(),
+        convergence,
+        observed_at=observed_at,
+    )
+    policy_count, registry_fingerprint = policy_repository.integrity_snapshot()
+    freshness = build_registry_bound_policy_readiness_freshness(
+        policy_bound,
+        registry_integrity_version=1,
+        registry_policy_count=policy_count,
+        registry_fingerprint=registry_fingerprint,
+    )
+    return freshness, convergence
 
 
 @router.get(
