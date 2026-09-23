@@ -126,7 +126,7 @@ def test_get_rejects_invalid_version(session):
         )
 
 
-def test_policy_history_is_cursor_paginated_and_ascending(session):
+def test_policy_history_is_cursor_paginated_and_descending(session):
     repository = ReadinessConvergenceFreshnessPolicyRepository(session)
     first = repository.record(
         build_freshness_policy(
@@ -145,15 +145,15 @@ def test_policy_history_is_cursor_paginated_and_ascending(session):
 
     first_page, has_more = repository.list(limit=1)
     assert has_more is True
-    assert [record.id for record in first_page] == [first.id]
+    assert [record.id for record in first_page] == [second.id]
 
     second_page, second_has_more = repository.list(
-        before_created_at=first.created_at,
-        before_id=first.id,
+        before_created_at=second.created_at,
+        before_id=second.id,
         limit=1,
     )
     assert second_has_more is False
-    assert [record.id for record in second_page] == [second.id]
+    assert [record.id for record in second_page] == [first.id]
 
 
 def test_policy_history_rejects_invalid_limit(session):
