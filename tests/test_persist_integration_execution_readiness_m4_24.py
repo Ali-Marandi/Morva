@@ -10,7 +10,6 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from morva.persistence.integration_execution_readiness_records import (
-    IntegrationExecutionReadinessPersistenceError,
     IntegrationExecutionReadinessVerificationRecord,
     IntegrationExecutionReadinessVerificationRepository,
 )
