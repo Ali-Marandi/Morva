@@ -51,7 +51,7 @@ def test_m4_22_readiness_route_is_registered():
         parameter["name"]
         for parameter in paths[
             "/api/v1/integration-execution/readiness/convergence/freshness/policies"
-        ]["post"]["parameters"]
+        ]["post"].get("parameters", [])
     }
     assert policy_create_params == set()
     policy_create_schema = paths[
