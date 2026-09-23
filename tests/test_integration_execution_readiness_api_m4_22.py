@@ -14,6 +14,17 @@ def test_m4_22_readiness_route_is_registered():
     history_operation = paths["/api/v1/integration-execution/readiness/history"]["get"]
     history_schema = history_operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert history_schema["$ref"] == "#/components/schemas/IntegrationExecutionReadinessVerificationHistoryResponse"
+    assert "/api/v1/integration-execution/readiness/convergence" in paths
+    convergence_operation = paths["/api/v1/integration-execution/readiness/convergence"]["get"]
+    convergence_schema = convergence_operation["responses"]["200"]["content"]["application/json"]["schema"]
+    assert convergence_schema["$ref"] == "#/components/schemas/ScopeBoundReadinessConvergenceResponse"
+    convergence_params = {parameter["name"] for parameter in convergence_operation["parameters"]}
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+    } <= convergence_params
     query_params = {parameter["name"] for parameter in history_operation["parameters"]}
     assert {
         "candidate_sha",
