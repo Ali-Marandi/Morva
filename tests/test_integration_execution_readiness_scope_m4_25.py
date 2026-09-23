@@ -197,3 +197,29 @@ def test_invalid_scope_is_rejected_before_insert(session):
     assert session.scalars(
         select(IntegrationExecutionReadinessVerificationRecord)
     ).all() == []
+
+
+def test_history_scope_filter_does_not_cross_organization_boundary(session):
+    repository = IntegrationExecutionReadinessVerificationRepository(session)
+    district_verification = _verification("d" * 40)
+    province_verification = _verification("e" * 40)
+
+    repository.record(
+        district_verification,
+        organization_scope="district",
+        organization_scope_id="district-1",
+    )
+    repository.record(
+        province_verification,
+        organization_scope="district",
+        organization_scope_id="district-2",
+    )
+
+    records = repository.list_verified(
+        organization_scope="district",
+        organization_scope_id="district-1",
+    )
+
+    assert len(records) == 1
+    assert records[0].candidate_sha == district_verification.assessment.candidate_sha
+    assert records[0].organization_scope_id == "district-1"
