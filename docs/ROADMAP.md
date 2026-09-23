@@ -124,6 +124,7 @@
 - M4.24 controlled verified-readiness persistence service that forces assessment-file ingestion through independent M4.21 verification before persistence
 - M4.25 organization-scope binding for persisted readiness receipts with scope-bound fingerprints and read/history isolation across school, district, province and ministry domains
 - M4.26 scope-bound readiness convergence that rebuilds current evidence readiness for the exact receipt scope, replays its fingerprint at the persisted observation timestamp and fails closed on evidence drift or incomplete evidence
+- M4.27 append-only persistence of scope-bound convergence observations with MFA-protected recording, fingerprint revalidation and deterministic history
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.26 is the current development baseline.
