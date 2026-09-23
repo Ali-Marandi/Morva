@@ -6,6 +6,10 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from morva.persistence.evidence_lifecycle_records import (
+    AuthoritativeEvidenceLifecycleEventRecord,
+)
+from morva.persistence.evidence_role_binding_records import EvidenceRoleBindingRecord
 from morva.persistence.evidence_submission_records import (
     AuthoritativeEvidenceSubmissionRecord,
 )
@@ -26,7 +30,11 @@ def session():
     engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(
         engine,
-        tables=[AuthoritativeEvidenceSubmissionRecord.__table__],
+        tables=[
+            AuthoritativeEvidenceSubmissionRecord.__table__,
+            EvidenceRoleBindingRecord.__table__,
+            AuthoritativeEvidenceLifecycleEventRecord.__table__,
+        ],
     )
     local = sessionmaker(bind=engine, future=True)
     with local() as db:
@@ -80,19 +88,22 @@ def test_current_readiness_uses_only_exact_scope(session):
         scope_id="district-2",
     )
 
-    assessment = build_current_scoped_evidence_readiness(
+    district_one = build_current_scoped_evidence_readiness(
         session,
         organization_scope="district",
         organization_scope_id="district-1",
         checked_at=NOW,
     )
+    district_two = build_current_scoped_evidence_readiness(
+        session,
+        organization_scope="district",
+        organization_scope_id="district-2",
+        checked_at=NOW,
+    )
 
-    assert assessment.repository == "Ali-Marandi/Morva"
-    assert "district-one" not in {
-        item.evidence_id for item in ()
-    }
-    assert assessment.fingerprint
-    assert assessment.complete is False
+    assert district_one.repository == "Ali-Marandi/Morva"
+    assert district_one.fingerprint != district_two.fingerprint
+    assert district_one.complete is False
 
 
 def test_current_readiness_fails_closed_for_empty_registry(session):
