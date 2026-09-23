@@ -173,7 +173,8 @@ def test_convergence_fingerprint_tamper_is_rejected():
             organization_scope_id=result.organization_scope_id,
             checked_at=result.checked_at,
             persisted_verification_fingerprint=result.persisted_verification_fingerprint,
-            persisted_evidence_readiness_fingerprint=result.persisted_evidence_readiness_fingerprint,
+            persisted_evidence_readiness_fingerprint=
+                result.persisted_evidence_readiness_fingerprint,
             current_evidence_readiness_fingerprint=result.current_evidence_readiness_fingerprint,
             state=result.state,
             blockers=result.blockers,
