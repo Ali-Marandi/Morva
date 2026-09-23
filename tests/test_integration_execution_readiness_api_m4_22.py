@@ -15,6 +15,35 @@ def test_m4_22_readiness_route_is_registered():
     history_schema = history_operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert history_schema["$ref"] == "#/components/schemas/IntegrationExecutionReadinessVerificationHistoryResponse"
     assert "/api/v1/integration-execution/readiness/convergence" in paths
+    assert "/api/v1/integration-execution/readiness/convergence/receipts" in paths
+    assert "/api/v1/integration-execution/readiness/convergence/history" in paths
+    receipt_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/receipts"
+    ]["post"]
+    history_convergence_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/history"
+    ]["get"]
+    receipt_params = {
+        parameter["name"] for parameter in receipt_operation["parameters"]
+    }
+    history_convergence_params = {
+        parameter["name"] for parameter in history_convergence_operation["parameters"]
+    }
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+    } <= receipt_params
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "checked_before",
+        "before_id",
+        "limit",
+    } <= history_convergence_params
     convergence_operation = paths["/api/v1/integration-execution/readiness/convergence"]["get"]
     convergence_schema = convergence_operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert convergence_schema["$ref"] == "#/components/schemas/ScopeBoundReadinessConvergenceResponse"
