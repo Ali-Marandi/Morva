@@ -132,7 +132,9 @@ class ScopeBoundReadinessConvergence:
             "organization_scope_id": self.organization_scope_id,
             "checked_at": self.checked_at.astimezone(timezone.utc).isoformat(),
             "persisted_verification_fingerprint": self.persisted_verification_fingerprint,
-            "persisted_evidence_readiness_fingerprint": self.persisted_evidence_readiness_fingerprint,
+            "persisted_evidence_readiness_fingerprint": (
+                self.persisted_evidence_readiness_fingerprint
+            ),
             "current_evidence_readiness_fingerprint": self.current_evidence_readiness_fingerprint,
             "state": self.state,
             "blockers": list(self.blockers),
@@ -233,7 +235,9 @@ def _fingerprint(
         "organization_scope_id": organization_scope_id,
         "checked_at": checked_at.astimezone(timezone.utc).isoformat(),
         "persisted_verification_fingerprint": persisted_verification_fingerprint.lower(),
-        "persisted_evidence_readiness_fingerprint": persisted_evidence_readiness_fingerprint.lower(),
+        "persisted_evidence_readiness_fingerprint": (
+            persisted_evidence_readiness_fingerprint.lower()
+        ),
         "current_evidence_readiness_fingerprint": current_evidence_readiness_fingerprint.lower(),
         "state": state,
         "blockers": list(blockers),
