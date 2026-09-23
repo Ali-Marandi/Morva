@@ -25,6 +25,10 @@ from morva.persistence.registry_bound_policy_readiness_freshness_records_m4_35 i
     RegistryBoundPolicyReadinessFreshnessPersistenceError,
     RegistryBoundPolicyReadinessFreshnessRepository,
 )
+from morva.persistence.readiness_freshness_policy_registry_snapshots_m4_36 import (
+    FreshnessPolicyRegistrySnapshotPersistenceError,
+    FreshnessPolicyRegistrySnapshotRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -203,6 +207,18 @@ class FreshnessPolicyRegistryIntegrityResponse(BaseModel):
     policy_count: int
     fingerprint: str
     generated_at: datetime
+
+
+class FreshnessPolicyRegistrySnapshotResponse(BaseModel):
+    id: UUID
+    snapshot: dict[str, object]
+    captured_by: str
+    created_at: datetime
+
+
+class FreshnessPolicyRegistrySnapshotVerificationResponse(BaseModel):
+    valid: bool
+    snapshot: dict[str, object]
 
 
 class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
@@ -779,6 +795,84 @@ def _build_registry_integrity_bound_freshness(
         registry_fingerprint=registry_fingerprint,
     )
     return freshness, convergence
+
+
+@router.post(
+    "/readiness/convergence/freshness/policies/snapshots",
+    response_model=FreshnessPolicyRegistrySnapshotResponse,
+)
+def capture_readiness_freshness_policy_registry_snapshot(
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyRegistrySnapshotResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="freshness registry snapshots are ministry-managed",
+        )
+    with SessionLocal() as session:
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        try:
+            record = snapshot_repository.capture(
+                policy_repository,
+                captured_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.freshness_policy_registry_snapshot.captured",
+                entity_type="readiness_freshness_policy_registry_snapshot",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "snapshot_fingerprint": record.fingerprint,
+                    "registry_fingerprint": record.registry_fingerprint,
+                    "policy_count": record.policy_count,
+                },
+                reason="historical freshness policy registry snapshot captured",
+                session=session,
+            )
+            session.commit()
+        except FreshnessPolicyRegistrySnapshotPersistenceError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return FreshnessPolicyRegistrySnapshotResponse(
+        id=record.id,
+        snapshot=record.to_snapshot().to_payload(),
+        captured_by=record.captured_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policies/snapshots/{snapshot_id}/verify",
+    response_model=FreshnessPolicyRegistrySnapshotVerificationResponse,
+)
+def verify_readiness_freshness_policy_registry_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyRegistrySnapshotVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        try:
+            record = snapshot_repository.reconstruct(
+                snapshot_id,
+                policy_repository,
+            )
+        except FreshnessPolicyRegistrySnapshotPersistenceError as exc:
+            if "not found" in str(exc):
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return FreshnessPolicyRegistrySnapshotVerificationResponse(
+        valid=True,
+        snapshot=record.to_snapshot().to_payload(),
+    )
 
 
 @router.get(
