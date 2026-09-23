@@ -44,11 +44,22 @@ on:
       - "src/morva/runtime/independent_integration_execution_readiness_verifier_m4_21.py"
       - "src/morva/runtime/persist_integration_execution_readiness_m4_24.py"
       - "src/morva/runtime/readiness_scope_binding_m4_25.py"
+      - "src/morva/runtime/scope_bound_readiness_convergence_m4_26.py"
+      - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
+      - "src/morva/persistence/evidence_lifecycle_records.py"
+      - "src/morva/persistence/evidence_role_binding_records.py"
+      - "src/morva/persistence/evidence_submission_records.py"
+      - "src/morva/runtime/evidence_lifecycle.py"
+      - "src/morva/runtime/evidence_readiness.py"
+      - "src/morva/runtime/evidence_registry_bridge.py"
+      - "src/morva/runtime/evidence_submission.py"
       - "tests/test_integration_execution_readiness_persistence_m4_22.py"
       - "tests/test_integration_execution_readiness_api_m4_22.py"
       - "tests/test_integration_execution_readiness_history_m4_23.py"
       - "tests/test_persist_integration_execution_readiness_m4_24.py"
       - "tests/test_integration_execution_readiness_scope_m4_25.py"
+      - "tests/test_scope_bound_readiness_convergence_m4_26.py"
+      - "tests/test_scoped_evidence_readiness_m4_26.py"
   workflow_dispatch:
 
 permissions:
