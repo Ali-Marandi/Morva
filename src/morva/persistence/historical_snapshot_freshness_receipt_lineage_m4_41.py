@@ -14,7 +14,6 @@ from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_3
 from morva.persistence.historical_snapshot_bound_freshness_receipts_m4_40 import (
     HistoricalSnapshotBoundFreshnessReceiptPersistenceError,
     HistoricalSnapshotBoundFreshnessReceiptRepository,
-    HistoricalSnapshotBoundPolicyReadinessFreshnessRecord,
 )
 from morva.runtime.historical_snapshot_freshness_receipt_lineage_m4_41 import (
     HistoricalSnapshotFreshnessReceiptLineage,
@@ -313,6 +312,17 @@ class HistoricalSnapshotFreshnessReceiptLineageRepository:
         ):
             raise HistoricalSnapshotFreshnessReceiptLineagePersistenceError(
                 "lineage policy identity differs from freshness receipt"
+            )
+        if (
+            record.registry_integrity_version != binding.registry_integrity_version
+            or record.registry_policy_count != binding.registry_policy_count
+            or record.registry_fingerprint != binding.registry_fingerprint
+            or record.registry_integrity_version != freshness.registry_integrity_version
+            or record.registry_policy_count != freshness.registry_policy_count
+            or record.registry_fingerprint != freshness.registry_fingerprint
+        ):
+            raise HistoricalSnapshotFreshnessReceiptLineagePersistenceError(
+                "lineage registry identity differs from source records"
             )
         lineage = build_historical_snapshot_freshness_receipt_lineage(
             freshness_receipt_id=freshness_record.id,
