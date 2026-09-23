@@ -162,6 +162,8 @@ def build_scope_bound_readiness_convergence(
     assessment = verification.assessment
     if assessment.repository != current_evidence_readiness.repository:
         blockers.append("REPOSITORY_MISMATCH")
+    if assessment.state != "ready":
+        blockers.append("PERSISTED_READINESS_NOT_READY")
     if not current_evidence_readiness.complete:
         blockers.append("CURRENT_EVIDENCE_READINESS_INCOMPLETE")
     if (
