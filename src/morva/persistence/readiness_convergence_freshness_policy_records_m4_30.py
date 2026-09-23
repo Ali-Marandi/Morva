@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Index, String, select
+from sqlalchemy import DateTime, Index, String, asc, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
@@ -142,6 +142,57 @@ class ReadinessConvergenceFreshnessPolicyRepository:
         self.session.flush()
         record.to_policy()
         return record
+
+    def list(
+        self,
+        *,
+        before_created_at: datetime | None = None,
+        before_id: UUID | None = None,
+        limit: int = 50,
+    ) -> tuple[list[ReadinessConvergenceFreshnessPolicyRecord], bool]:
+        if limit < 1 or limit > 100:
+            raise ReadinessConvergenceFreshnessPolicyPersistenceError(
+                "limit must be between 1 and 100"
+            )
+        stmt = select(ReadinessConvergenceFreshnessPolicyRecord)
+        if before_created_at is not None and before_created_at.tzinfo is None:
+            raise ReadinessConvergenceFreshnessPolicyPersistenceError(
+                "before_created_at must be timezone-aware"
+            )
+        if before_created_at is not None and before_id is None:
+            stmt = stmt.where(
+                ReadinessConvergenceFreshnessPolicyRecord.created_at
+                < before_created_at
+            )
+        elif before_created_at is not None and before_id is not None:
+            stmt = stmt.where(
+                (
+                    ReadinessConvergenceFreshnessPolicyRecord.created_at
+                    < before_created_at
+                )
+                |
+                (
+                    (
+                        ReadinessConvergenceFreshnessPolicyRecord.created_at
+                        == before_created_at
+                    )
+                    & (
+                        ReadinessConvergenceFreshnessPolicyRecord.id
+                        < before_id
+                    )
+                )
+            )
+        stmt = stmt.order_by(
+            asc(ReadinessConvergenceFreshnessPolicyRecord.created_at),
+            asc(ReadinessConvergenceFreshnessPolicyRecord.id),
+        ).limit(limit + 1)
+        records = list(self.session.scalars(stmt).all())
+        has_more = len(records) > limit
+        records = records[:limit]
+        for record in records:
+            _normalize_loaded_policy_record(self.session, record)
+            record.to_policy()
+        return records, has_more
 
     def get(
         self,
