@@ -182,6 +182,13 @@ class FreshnessPolicyResponse(BaseModel):
     policy: dict[str, object]
 
 
+class FreshnessPolicyRegistryHistoryResponse(BaseModel):
+    items: list[FreshnessPolicyResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
+
 class ScopeBoundReadinessConvergenceReceiptResponse(BaseModel):
     id: UUID
     convergence: dict[str, object]
@@ -310,6 +317,55 @@ def create_readiness_freshness_policy(
             session.rollback()
             raise HTTPException(status_code=409, detail=str(exc)) from exc
     return FreshnessPolicyResponse(policy=record.to_policy().to_payload())
+
+
+
+
+@router.get(
+    "/readiness/convergence/freshness/policies",
+    response_model=FreshnessPolicyRegistryHistoryResponse,
+)
+def list_readiness_freshness_policies(
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyRegistryHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if before_created_at is not None and before_created_at.tzinfo is None:
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at must be timezone-aware",
+        )
+    if (
+        principal.scope is not Scope.MINISTRY
+        and before_id is not None
+    ):
+        # Cursor values are opaque; non-ministry callers must still be scoped
+        # by their own authority, while the policy registry itself is ministry-managed.
+        raise HTTPException(status_code=403, detail="freshness policy registry is ministry-managed")
+    with SessionLocal() as session:
+        repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            records, has_more = repository.list(
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        FreshnessPolicyResponse(policy=record.to_policy().to_payload())
+        for record in records
+    ]
+    next_created_at = records[-1].created_at if has_more else None
+    next_id = records[-1].id if has_more else None
+    return FreshnessPolicyRegistryHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=next_created_at,
+        next_before_id=next_id,
+    )
 
 
 @router.get(
