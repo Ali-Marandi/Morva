@@ -57,7 +57,10 @@ def test_m4_22_readiness_route_is_registered():
     policy_schema = app.openapi()["components"]["schemas"]["FreshnessPolicyCreate"]
     assert policy_schema["properties"]["policy_version"]["default"] == 1
     registry_bound_version_names = {
-        parameter["name"] for parameter in registry_bound_operation["parameters"]
+        parameter["name"]
+        for parameter in paths[
+            "/api/v1/integration-execution/readiness/convergence/freshness/policy-registry-bound"
+        ]["get"]["parameters"]
     }
     assert "policy_version" in registry_bound_version_names
     specific_policy_operation = paths[
