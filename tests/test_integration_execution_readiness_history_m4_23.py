@@ -186,7 +186,7 @@ def test_history_fails_closed_when_any_selected_receipt_is_tampered(session):
         match="structurally invalid",
     ):
         repository.list_verified(
-        organization_scope="ministry",
-        organization_scope_id="ministry",
-        limit=10,
-    )
+            organization_scope="ministry",
+            organization_scope_id="ministry",
+            limit=10,
+        )
