@@ -1,3 +1,14 @@
+## Unreleased — M4.36 Historical Registry Snapshot & Reconstruction
+
+### Readiness policy governance
+- Add append-only historical snapshot anchors for the freshness-policy registry.
+- Persist exact immutable policy-record UUID membership alongside the M4.33 aggregate registry fingerprint.
+- Add independent fail-closed reconstruction of historical snapshots against the exact recorded membership set.
+- Expose authenticated ministry-managed snapshot capture and read-only verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.35 Registry-Bound Freshness Evaluation Receipts
 
 ### Readiness policy governance
