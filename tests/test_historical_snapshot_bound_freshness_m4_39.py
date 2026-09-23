@@ -22,9 +22,6 @@ from morva.runtime.historical_snapshot_bound_policy_readiness_freshness_m4_39 im
 from morva.runtime.policy_bound_readiness_freshness_m4_29 import (
     build_policy_bound_freshness,
 )
-from morva.runtime.readiness_convergence_freshness_m4_28 import (
-    ReadinessConvergenceFreshnessAssessment,
-)
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
     build_freshness_policy,
 )
@@ -53,33 +50,6 @@ def _policy_bound():
     )
     checked_at = NOW - timedelta(minutes=5)
     observed_at = NOW
-    payload = {
-        "freshness_version": 1,
-        "convergence_fingerprint": "a" * 64,
-        "checked_at": checked_at.isoformat(),
-        "observed_at": observed_at.isoformat(),
-        "max_age_seconds": policy.max_age_seconds,
-        "age_seconds": 300,
-        "state": "fresh",
-        "blockers": [],
-    }
-    import hashlib
-    import json
-
-    fingerprint = hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    assessment = ReadinessConvergenceFreshnessAssessment(
-        freshness_version=1,
-        convergence_fingerprint="a" * 64,
-        checked_at=checked_at,
-        observed_at=observed_at,
-        max_age_seconds=3600,
-        age_seconds=300,
-        state="fresh",
-        blockers=(),
-        fingerprint=fingerprint,
-    )
     return build_policy_bound_freshness(
         policy,
         type(
