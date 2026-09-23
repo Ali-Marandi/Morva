@@ -60,6 +60,8 @@ on:
       - "tests/test_integration_execution_readiness_scope_m4_25.py"
       - "tests/test_scope_bound_readiness_convergence_m4_26.py"
       - "tests/test_scoped_evidence_readiness_m4_26.py"
+      - "tests/test_scope_bound_readiness_convergence_m4_26.py"
+      - "tests/test_scoped_evidence_readiness_m4_26.py"
   workflow_dispatch:
 
 permissions:
