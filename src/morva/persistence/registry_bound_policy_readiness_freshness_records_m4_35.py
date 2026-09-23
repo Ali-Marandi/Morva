@@ -202,6 +202,7 @@ class RegistryBoundPolicyReadinessFreshnessRepository:
         )
         self.session.add(record)
         self.session.flush()
+        _normalize_loaded_record(self.session, record)
         record.to_freshness()
         return record
 
