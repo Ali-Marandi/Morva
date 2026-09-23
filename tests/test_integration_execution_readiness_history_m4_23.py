@@ -47,22 +47,19 @@ def _verified(
     *,
     checked_at: datetime,
     verified_at: datetime,
+    candidate_sha: str = SHA,
+    target_environment: str = "staging",
 ) -> IndependentIntegrationExecutionReadinessVerification:
-    payload = {
+    fingerprint_payload = {
         "assessment_version": 1,
         "repository": "Ali-Marandi/Morva",
-        "candidate_sha": SHA,
-        "target_environment": "staging",
-        "checked_at": checked_at,
+        "candidate_sha": candidate_sha,
+        "target_environment": target_environment,
+        "checked_at": checked_at.astimezone(timezone.utc).isoformat(),
         "evidence_readiness_fingerprint": "3" * 64,
         "binding_fingerprint": "1" * 64,
         "binding_verification_fingerprint": "2" * 64,
         "state": "ready",
-        "blockers": (),
-    }
-    fingerprint_payload = {
-        **payload,
-        "checked_at": checked_at.astimezone(timezone.utc).isoformat(),
         "blockers": [],
     }
     fingerprint = sha256(
@@ -71,12 +68,20 @@ def _verified(
             ensure_ascii=True,
             sort_keys=True,
             separators=(",", ":"),
-            default=str,
         ).encode("utf-8")
     ).hexdigest()
     assessment = IntegrationExecutionReadinessAssessment(
         fingerprint=fingerprint,
-        **payload,
+        assessment_version=1,
+        repository="Ali-Marandi/Morva",
+        candidate_sha=candidate_sha,
+        target_environment=target_environment,
+        checked_at=checked_at,
+        evidence_readiness_fingerprint="3" * 64,
+        binding_fingerprint="1" * 64,
+        binding_verification_fingerprint="2" * 64,
+        state="ready",
+        blockers=(),
     )
     return IndependentIntegrationExecutionReadinessVerification(
         assessment=assessment,
@@ -129,41 +134,14 @@ def test_history_filters_candidate_and_environment(session):
             verified_at=NOW - timedelta(minutes=1),
         )
     )
-    other = _verified(
-        checked_at=NOW - timedelta(minutes=1),
-        verified_at=NOW,
+    repository.record(
+        _verified(
+            checked_at=NOW - timedelta(minutes=1),
+            verified_at=NOW,
+            candidate_sha="c" * 40,
+            target_environment="pilot",
+        )
     )
-    other.assessment = IntegrationExecutionReadinessAssessment(
-        assessment_version=1,
-        repository="Ali-Marandi/Morva",
-        candidate_sha="c" * 40,
-        target_environment="pilot",
-        checked_at=NOW - timedelta(minutes=1),
-        evidence_readiness_fingerprint="3" * 64,
-        binding_fingerprint="1" * 64,
-        binding_verification_fingerprint="2" * 64,
-        state="ready",
-        blockers=(),
-        fingerprint=sha256(
-            json.dumps(
-                {
-                    "assessment_version": 1,
-                    "repository": "Ali-Marandi/Morva",
-                    "candidate_sha": "c" * 40,
-                    "target_environment": "pilot",
-                    "checked_at": (NOW - timedelta(minutes=1)).isoformat(),
-                    "evidence_readiness_fingerprint": "3" * 64,
-                    "binding_fingerprint": "1" * 64,
-                    "binding_verification_fingerprint": "2" * 64,
-                    "state": "ready",
-                    "blockers": [],
-                },
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest(),
-    )
-    repository.record(other)
 
     records = repository.list_verified(
         candidate_sha="c" * 40,
