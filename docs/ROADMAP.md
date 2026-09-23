@@ -122,6 +122,7 @@
 - M4.22 append-only persistence of independently verified integration-execution readiness receipts with fingerprint revalidation and a ministry-scoped read-only readiness API
 - M4.23 deterministic paginated history API for persisted readiness receipts with candidate/environment filters and fail-closed validation
 - M4.24 controlled verified-readiness persistence service that forces assessment-file ingestion through independent M4.21 verification before persistence
+- M4.25 organization-scope binding for persisted readiness receipts with scope-bound fingerprints and read/history isolation across school, district, province and ministry domains
 - M4.23 deterministic, paginated history API for persisted readiness receipts with candidate/environment filters, stable timestamp+UUID cursoring and fail-closed validation of every returned receipt
 
 ## Current execution queue
