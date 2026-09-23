@@ -311,6 +311,18 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
                 "receipt and historical snapshot policy counts differ"
             )
+        if binding.policy_id != receipt.policy_bound.policy.policy_id:
+            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                "bound policy id differs from receipt"
+            )
+        if binding.policy_version != receipt.policy_bound.policy.policy_version:
+            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                "bound policy version differs from receipt"
+            )
+        if binding.policy_fingerprint != receipt.policy_bound.policy.fingerprint:
+            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                "bound policy fingerprint differs from receipt"
+            )
         return record
 
 
