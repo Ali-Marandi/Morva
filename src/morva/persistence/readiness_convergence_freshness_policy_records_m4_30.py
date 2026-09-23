@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Index, String, asc, select
+from sqlalchemy import DateTime, Index, String, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
