@@ -1,3 +1,13 @@
+## Unreleased — M4.39 Historical Snapshot-Bound Freshness Evaluation
+
+### Readiness policy governance
+- Evaluate convergence freshness using a policy resolved only from an independently reconstructed historical registry snapshot.
+- Bind the result to the exact snapshot and registry identities with deterministic SHA-256.
+- Expose an authenticated read-only historical snapshot-bound freshness endpoint.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.38 Historical Snapshot Policy Resolution
 
 ### Readiness policy governance
