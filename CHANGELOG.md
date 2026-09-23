@@ -1,3 +1,14 @@
+## Unreleased — M4.37 Receipt-to-Historical-Snapshot Binding
+
+### Readiness policy governance
+- Add an append-only binding between an exact M4.35 registry-bound freshness receipt and an exact M4.36 historical registry snapshot.
+- Reconstruct the recorded historical member set before accepting the binding.
+- Require exact registry identity and exact policy membership/fingerprint continuity.
+- Add independent read-only re-verification and ministry-managed creation APIs.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.36 Historical Registry Snapshot & Reconstruction
 
 ### Readiness policy governance
