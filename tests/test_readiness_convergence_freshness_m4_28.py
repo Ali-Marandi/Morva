@@ -6,9 +6,9 @@ import json
 
 import pytest
 
+from morva.runtime.evidence_closure_matrix import CLOSURE_ROLE_SOURCE_TYPES
 from morva.runtime.evidence_readiness import (
     EvidenceReadinessAssessment,
-    EvidenceRemediationItem,
     _readiness_fingerprint,
 )
 from morva.runtime.independent_integration_execution_readiness_verifier_m4_21 import (
@@ -32,23 +32,16 @@ SHA = "a" * 40
 
 
 def _readiness() -> EvidenceReadinessAssessment:
-    remediation = (
-        EvidenceRemediationItem(
-            role="legal_approval",
-            state="blocked",
-            reason_code="MISSING_BINDING",
-            detail="missing legal binding",
-        ),
-    )
+    ready_roles = tuple(CLOSURE_ROLE_SOURCE_TYPES)
     fingerprint = _readiness_fingerprint(
         repository="Ali-Marandi/Morva",
         checked_at=NOW,
         registry_fingerprint="1" * 64,
         convergence_fingerprint="2" * 64,
         lifecycle_fingerprint=None,
-        ready_roles=(),
-        blocked_roles=("legal_approval",),
-        remediation=remediation,
+        ready_roles=ready_roles,
+        blocked_roles=(),
+        remediation=(),
     )
     return EvidenceReadinessAssessment(
         assessment_version=1,
@@ -57,9 +50,9 @@ def _readiness() -> EvidenceReadinessAssessment:
         registry_fingerprint="1" * 64,
         convergence_fingerprint="2" * 64,
         lifecycle_fingerprint=None,
-        ready_roles=(),
-        blocked_roles=("legal_approval",),
-        remediation=remediation,
+        ready_roles=ready_roles,
+        blocked_roles=(),
+        remediation=(),
         fingerprint=fingerprint,
     )
 
@@ -131,6 +124,7 @@ def test_receipt_becomes_stale_after_window():
 
 
 def test_blocked_convergence_cannot_be_fresh():
+    readiness = _readiness()
     convergence = _convergence()
     from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
         ScopeBoundReadinessConvergence,
@@ -160,12 +154,15 @@ def test_blocked_convergence_cannot_be_fresh():
         ),
     )
 
-    with pytest.raises(ReadinessConvergenceFreshnessError):
-        assess_readiness_convergence_freshness(
-            blocked,
-            observed_at=NOW,
-            max_age_seconds=3600,
-        )
+    result = assess_readiness_convergence_freshness(
+        blocked,
+        observed_at=NOW,
+        max_age_seconds=3600,
+    )
+
+    assert result.state == "blocked"
+    assert "CONVERGENCE_NOT_CONFIRMED" in result.blockers
+    assert readiness.complete is True
 
 
 def test_future_observation_is_blocked():
