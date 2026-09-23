@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -58,6 +58,7 @@ def build_current_scoped_evidence_readiness(
         )
     ).all()
     try:
+        accepted_records = _normalize_loaded_submissions(session, accepted_records)
         registry, _ = build_registry_projection(
             accepted_records,
             projected_at=checked_at,
@@ -104,3 +105,24 @@ def build_current_scoped_evidence_readiness(
         raise ScopedEvidenceReadinessPersistenceError(
             f"current scoped evidence readiness rebuild failed: {exc}"
         ) from exc
+
+
+
+def _normalize_loaded_submissions(
+    session: Session,
+    records: list[AuthoritativeEvidenceSubmissionRecord],
+) -> list[AuthoritativeEvidenceSubmissionRecord]:
+    bind = session.get_bind()
+    if bind is not None and bind.dialect.name == "sqlite":
+        for record in records:
+            for field_name in (
+                "effective_from",
+                "effective_to",
+                "expires_at",
+                "submitted_at",
+                "decided_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
+    return records
