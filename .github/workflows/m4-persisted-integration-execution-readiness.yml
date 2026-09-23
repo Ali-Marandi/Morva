@@ -22,6 +22,7 @@ on:
       - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
       - "src/morva/persistence/scope_bound_readiness_convergence_records_m4_27.py"
       - "src/morva/runtime/persist_scope_bound_readiness_convergence_m4_27.py"
+      - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -54,6 +55,7 @@ on:
       - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
       - "src/morva/persistence/scope_bound_readiness_convergence_records_m4_27.py"
       - "src/morva/runtime/persist_scope_bound_readiness_convergence_m4_27.py"
+      - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
       - "src/morva/persistence/evidence_submission_records.py"
@@ -105,6 +107,7 @@ jobs:
           tests/test_scope_bound_readiness_convergence_m4_26.py
           tests/test_scoped_evidence_readiness_m4_26.py
           tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
+          tests/test_readiness_convergence_freshness_m4_28.py
       - name: Pytest
         run: >
           pytest -q
@@ -116,6 +119,7 @@ jobs:
           tests/test_scope_bound_readiness_convergence_m4_26.py
           tests/test_scoped_evidence_readiness_m4_26.py
           tests/test_scope_bound_readiness_convergence_persistence_m4_27.py
+          tests/test_readiness_convergence_freshness_m4_28.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
@@ -124,3 +128,4 @@ jobs:
         run: |
           echo "M4.26 rebuilds current evidence readiness for the exact receipt scope and compares it with the persisted M4.21 evidence fingerprint." >> "$GITHUB_STEP_SUMMARY"
           echo "The readiness API is read-only and performs no provider activation, credential use or production mutation." >> "$GITHUB_STEP_SUMMARY"
+          echo "M4.28 freshness is a read-only age/confirmation gate over persisted M4.27 convergence observations; it does not grant production authority." >> "$GITHUB_STEP_SUMMARY"
