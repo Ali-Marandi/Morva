@@ -12,6 +12,10 @@ from morva.runtime.evidence_readiness import (
 from morva.runtime.independent_integration_execution_readiness_verifier_m4_21 import (
     IndependentIntegrationExecutionReadinessVerification,
 )
+from morva.runtime.integration_execution_readiness_assessment import (
+    IntegrationExecutionReadinessAssessment,
+    _assessment_fingerprint,
+)
 from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
     ScopeBoundReadinessConvergenceError,
     build_scope_bound_readiness_convergence,
@@ -58,14 +62,6 @@ def _evidence_readiness(*, complete: bool, checked_at: datetime) -> EvidenceRead
 
 
 def _verification(evidence_readiness: EvidenceReadinessAssessment):
-    assessment = __import__(
-        "morva.runtime.integration_execution_readiness_assessment",
-        fromlist=["IntegrationExecutionReadinessAssessment"],
-    ).IntegrationExecutionReadinessAssessment
-    from morva.runtime.integration_execution_readiness_assessment import (
-        _assessment_fingerprint,
-    )
-
     assessment_fingerprint = _assessment_fingerprint(
         repository="Ali-Marandi/Morva",
         candidate_sha=SHA,
@@ -77,7 +73,7 @@ def _verification(evidence_readiness: EvidenceReadinessAssessment):
         state="ready",
         blockers=(),
     )
-    readiness = assessment(
+    readiness = IntegrationExecutionReadinessAssessment(
         assessment_version=1,
         repository="Ali-Marandi/Morva",
         candidate_sha=SHA,
