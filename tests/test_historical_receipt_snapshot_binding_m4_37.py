@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_37 import (
     HistoricalRegistryBoundFreshnessReceiptBindingRecord,
     HistoricalRegistryBoundFreshnessReceiptBindingRepository,
-    HistoricalRegistryBoundFreshnessReceiptPersistenceError,
+    HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
 )
 from morva.persistence.models import Base
 from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 import (
@@ -208,7 +208,7 @@ def test_m4_37_rejects_receipt_snapshot_registry_mismatch():
                 snapshot_id=snapshot.id,
                 bound_by="auditor",
             )
-        except HistoricalRegistryBoundFreshnessReceiptPersistenceError as exc:
+        except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
             assert "structurally invalid" in str(exc)
         else:
             raise AssertionError("tampered receipt must fail closed")
@@ -235,7 +235,7 @@ def test_m4_37_verification_rejects_tampered_bound_policy_identity():
         binding.policy_id = "tampered-policy"
         try:
             repository.verify(binding.id)
-        except HistoricalRegistryBoundFreshnessReceiptPersistenceError as exc:
+        except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
             assert "bound policy id differs" in str(exc)
         else:
             raise AssertionError("tampered bound policy identity must fail closed")
@@ -265,7 +265,7 @@ def test_m4_37_rejects_binding_from_different_actor():
                 snapshot_id=snapshot.id,
                 bound_by="second-actor",
             )
-        except HistoricalRegistryBoundFreshnessReceiptPersistenceError as exc:
+        except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
             assert "different actor" in str(exc)
         else:
             raise AssertionError("actor mismatch must fail closed")
