@@ -176,6 +176,7 @@ def get_scope_bound_readiness_convergence(
 
     candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
 
+    checked_at = datetime.now(timezone.utc)
     with SessionLocal() as session:
         repository = IntegrationExecutionReadinessVerificationRepository(session)
         try:
@@ -196,14 +197,14 @@ def get_scope_bound_readiness_convergence(
                 session,
                 organization_scope=scope_filter,
                 organization_scope_id=scope_id_filter,
-                checked_at=datetime.now(timezone.utc),
+                checked_at=checked_at,
             )
             convergence = build_scope_bound_readiness_convergence(
                 verification,
                 current_evidence_readiness,
                 organization_scope=scope_filter,
                 organization_scope_id=scope_id_filter,
-                checked_at=datetime.now(timezone.utc),
+                checked_at=checked_at,
             )
         except HTTPException:
             raise
