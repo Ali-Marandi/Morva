@@ -186,6 +186,7 @@ class ScopeBoundReadinessConvergenceRepository:
             )
         )
         if existing is not None:
+            _normalize_loaded_record(existing)
             existing.to_convergence()
             if existing.recorded_by != actor:
                 raise ScopeBoundReadinessConvergencePersistenceError(
@@ -316,6 +317,19 @@ class ScopeBoundReadinessConvergenceRepository:
             record.to_convergence()
 
         return records
+
+
+def _normalize_loaded_record(record: ScopeBoundReadinessConvergenceRecord) -> None:
+    bind = record._sa_instance_state.session.get_bind() if record._sa_instance_state.session else None
+    if bind is not None and bind.dialect.name == "sqlite":
+        for field_name in ("checked_at", "created_at"):
+            value = getattr(record, field_name)
+            if value.tzinfo is None:
+                setattr(
+                    record,
+                    field_name,
+                    value.replace(tzinfo=timezone.utc),
+                )
 
 
 def _ensure_timezone(value: datetime, name: str) -> datetime:
