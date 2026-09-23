@@ -25,6 +25,40 @@ def test_m4_22_readiness_route_is_registered():
     policy_operation = paths[
         "/api/v1/integration-execution/readiness/convergence/freshness/policy-bound"
     ]["get"]
+    assert (
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies"
+        in paths
+    )
+    assert (
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies/{policy_id}"
+        in paths
+    )
+    policy_create_params = {
+        parameter["name"]
+        for parameter in paths[
+            "/api/v1/integration-execution/readiness/convergence/freshness/policies"
+        ]["post"]["parameters"]
+    }
+    assert policy_create_params == set()
+    policy_create_schema = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policies"
+    ]["post"]["requestBody"]["content"]["application/json"]["schema"]
+    assert policy_create_schema["$ref"] == (
+        "#/components/schemas/FreshnessPolicyCreate"
+    )
+    registry_bound_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policy-registry-bound"
+    ]["get"]
+    registry_bound_params = {
+        parameter["name"] for parameter in registry_bound_operation["parameters"]
+    }
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "policy_id",
+    } <= registry_bound_params
     policy_params = {
         parameter["name"] for parameter in policy_operation["parameters"]
     }
