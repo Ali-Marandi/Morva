@@ -183,8 +183,8 @@ class ReadinessConvergenceFreshnessPolicyRepository:
                 )
             )
         stmt = stmt.order_by(
-            asc(ReadinessConvergenceFreshnessPolicyRecord.created_at),
-            asc(ReadinessConvergenceFreshnessPolicyRecord.id),
+            ReadinessConvergenceFreshnessPolicyRecord.created_at.desc(),
+            ReadinessConvergenceFreshnessPolicyRecord.id.desc(),
         ).limit(limit + 1)
         records = list(self.session.scalars(stmt).all())
         has_more = len(records) > limit
