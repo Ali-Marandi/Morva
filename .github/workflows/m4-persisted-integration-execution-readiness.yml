@@ -28,8 +28,11 @@ on:
       - "src/morva/persistence/database.py"
       - "src/morva/persistence/integration_execution_readiness_records.py"
       - "src/morva/runtime/independent_integration_execution_readiness_verifier_m4_21.py"
+      - "src/morva/runtime/persist_integration_execution_readiness_m4_24.py"
       - "tests/test_integration_execution_readiness_persistence_m4_22.py"
       - "tests/test_integration_execution_readiness_api_m4_22.py"
+      - "tests/test_integration_execution_readiness_history_m4_23.py"
+      - "tests/test_persist_integration_execution_readiness_m4_24.py"
   workflow_dispatch:
 
 permissions:
@@ -53,6 +56,7 @@ jobs:
           ruff check
           src/morva/api/v1/integration_execution_readiness.py
           src/morva/persistence/integration_execution_readiness_records.py
+          src/morva/runtime/persist_integration_execution_readiness_m4_24.py
           tests/test_integration_execution_readiness_persistence_m4_22.py
           tests/test_integration_execution_readiness_api_m4_22.py
           tests/test_integration_execution_readiness_history_m4_23.py
@@ -63,6 +67,7 @@ jobs:
           tests/test_integration_execution_readiness_persistence_m4_22.py
           tests/test_integration_execution_readiness_api_m4_22.py
           tests/test_integration_execution_readiness_history_m4_23.py
+          tests/test_persist_integration_execution_readiness_m4_24.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
