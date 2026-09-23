@@ -28,18 +28,18 @@ def _scope_binding_fingerprint(
 
 
 def upgrade() -> None:
-    op.add_column(
-        "integration_execution_readiness_verifications",
-        sa.Column("organization_scope", sa.String(20), nullable=True),
-    )
-    op.add_column(
-        "integration_execution_readiness_verifications",
-        sa.Column("organization_scope_id", sa.String(100), nullable=True),
-    )
-    op.add_column(
-        "integration_execution_readiness_verifications",
-        sa.Column("scope_binding_fingerprint", sa.String(64), nullable=True),
-    )
+    with op.batch_alter_table(
+        "integration_execution_readiness_verifications"
+    ) as batch_op:
+        batch_op.add_column(
+            sa.Column("organization_scope", sa.String(20), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("organization_scope_id", sa.String(100), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("scope_binding_fingerprint", sa.String(64), nullable=True)
+        )
 
     bind = op.get_bind()
     rows = bind.execute(
@@ -77,24 +77,24 @@ def upgrade() -> None:
             },
         )
 
-    op.alter_column(
-        "integration_execution_readiness_verifications",
-        "organization_scope",
-        existing_type=sa.String(20),
-        nullable=False,
-    )
-    op.alter_column(
-        "integration_execution_readiness_verifications",
-        "organization_scope_id",
-        existing_type=sa.String(100),
-        nullable=False,
-    )
-    op.alter_column(
-        "integration_execution_readiness_verifications",
-        "scope_binding_fingerprint",
-        existing_type=sa.String(64),
-        nullable=False,
-    )
+    with op.batch_alter_table(
+        "integration_execution_readiness_verifications"
+    ) as batch_op:
+        batch_op.alter_column(
+            "organization_scope",
+            existing_type=sa.String(20),
+            nullable=False,
+        )
+        batch_op.alter_column(
+            "organization_scope_id",
+            existing_type=sa.String(100),
+            nullable=False,
+        )
+        batch_op.alter_column(
+            "scope_binding_fingerprint",
+            existing_type=sa.String(64),
+            nullable=False,
+        )
 
     op.create_index(
         "ix_integration_readiness_verification_organization_scope",
@@ -110,20 +110,11 @@ def upgrade() -> None:
         "ix_integration_readiness_verification_scope_binding_fingerprint",
         "integration_execution_readiness_verifications",
         ["scope_binding_fingerprint"],
-    )
-    op.create_unique_constraint(
-        "uq_integration_readiness_scope_binding_fingerprint",
-        "integration_execution_readiness_verifications",
-        ["scope_binding_fingerprint"],
+        unique=True,
     )
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "uq_integration_readiness_scope_binding_fingerprint",
-        "integration_execution_readiness_verifications",
-        type_="unique",
-    )
     op.drop_index(
         "ix_integration_readiness_verification_scope_binding_fingerprint",
         table_name="integration_execution_readiness_verifications",
