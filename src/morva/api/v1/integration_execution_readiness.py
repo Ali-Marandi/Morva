@@ -15,7 +15,6 @@ from morva.persistence.integration_execution_readiness_records import (
 )
 from morva.persistence.scope_bound_readiness_convergence_records_m4_27 import (
     ScopeBoundReadinessConvergencePersistenceError,
-    ScopeBoundReadinessConvergenceRecord,
     ScopeBoundReadinessConvergenceRepository,
 )
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
