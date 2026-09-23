@@ -1,3 +1,14 @@
+## Unreleased — M4.35 Registry-Bound Freshness Evaluation Receipts
+
+### Readiness policy governance
+- Add append-only persistence for registry-integrity-bound freshness evaluation receipts.
+- Bind each receipt to the exact policy identity, convergence fingerprint and aggregate registry snapshot used by the evaluation.
+- Add idempotent fingerprint-based recording with actor separation on replay.
+- Expose authenticated ministry-managed receipt creation plus scope-aware cursor-paginated history.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.34 Registry-Bound Freshness Evaluation Integrity
 
 ### Readiness policy governance
