@@ -17,6 +17,14 @@ from morva.runtime.readiness_scope_binding_m4_25 import (
     ReadinessScopeBindingError,
     normalize_readiness_scope,
 )
+from morva.persistence.scoped_evidence_readiness_m4_26 import (
+    ScopedEvidenceReadinessPersistenceError,
+    build_current_scoped_evidence_readiness,
+)
+from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
+    ScopeBoundReadinessConvergenceError,
+    build_scope_bound_readiness_convergence,
+)
 
 router = APIRouter(
     prefix="/integration-execution",
@@ -123,6 +131,92 @@ def _resolve_scope_filter(
     except ReadinessScopeBindingError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+
+
+
+
+class ScopeBoundReadinessConvergenceResponse(BaseModel):
+    convergence: dict[str, object]
+
+
+@router.get(
+    "/readiness/convergence",
+    response_model=ScopeBoundReadinessConvergenceResponse,
+)
+def get_scope_bound_readiness_convergence(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    principal: Principal = Depends(get_current_principal),
+) -> ScopeBoundReadinessConvergenceResponse:
+    authorize(principal, "evidence.read", principal.scope)
+
+    if (
+        principal.scope is not Scope.MINISTRY
+        and organization_scope is None
+        and organization_scope_id is None
+    ):
+        organization_scope = principal.scope.value
+        organization_scope_id = principal.scope_id
+
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+
+    with SessionLocal() as session:
+        repository = IntegrationExecutionReadinessVerificationRepository(session)
+        try:
+            record = repository.latest(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+            )
+            if record is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted integration execution readiness verification found",
+                )
+            verification = record.to_verification()
+            current_evidence_readiness = build_current_scoped_evidence_readiness(
+                session,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                checked_at=datetime.now(timezone.utc),
+            )
+            convergence = build_scope_bound_readiness_convergence(
+                verification,
+                current_evidence_readiness,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                checked_at=datetime.now(timezone.utc),
+            )
+        except HTTPException:
+            raise
+        except (
+            IntegrationExecutionReadinessPersistenceError,
+            ScopedEvidenceReadinessPersistenceError,
+            ScopeBoundReadinessConvergenceError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return ScopeBoundReadinessConvergenceResponse(
+        convergence=convergence.to_payload()
+    )
 
 class IntegrationExecutionReadinessVerificationHistoryResponse(BaseModel):
     items: list[IntegrationExecutionReadinessVerificationResponse]
