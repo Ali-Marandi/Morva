@@ -28,15 +28,10 @@ class PolicyBoundReadinessFreshness:
             raise PolicyBoundReadinessFreshnessError(
                 "unsupported policy-bound freshness version"
             )
-        try:
-            if self.assessment.max_age_seconds != self.policy.max_age_seconds:
-                raise PolicyBoundReadinessFreshnessPolicyMismatch(
-                    "freshness assessment max age does not match policy"
-                )
-        except AttributeError:
-            raise PolicyBoundReadinessFreshnessError(
-                "invalid freshness policy binding"
-            ) from None
+        if self.assessment.max_age_seconds != self.policy.max_age_seconds:
+            raise PolicyBoundReadinessFreshnessPolicyMismatch(
+                "freshness assessment max age does not match policy"
+            )
 
     @property
     def fresh(self) -> bool:
