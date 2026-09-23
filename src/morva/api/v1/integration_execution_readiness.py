@@ -47,7 +47,8 @@ def get_integration_execution_readiness(
     organization_scope_id: str | None = Query(default=None),
     principal: Principal = Depends(get_current_principal),
 ) -> IntegrationExecutionReadinessVerificationResponse:
-    authorize(principal, "evidence.read", principal.scope)    if candidate_sha is not None:
+    authorize(principal, "evidence.read", principal.scope)
+    if candidate_sha is not None:
         candidate_sha = candidate_sha.strip().lower()
         if len(candidate_sha) != 40 or any(
             char not in "0123456789abcdef" for char in candidate_sha
@@ -98,7 +99,6 @@ def get_integration_execution_readiness(
 
 
 
-
 def _resolve_scope_filter(
     principal: Principal,
     organization_scope: str | None,
@@ -122,6 +122,7 @@ def _resolve_scope_filter(
         return normalize_readiness_scope(organization_scope, organization_scope_id or "")
     except ReadinessScopeBindingError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
 
 class IntegrationExecutionReadinessVerificationHistoryResponse(BaseModel):
     items: list[IntegrationExecutionReadinessVerificationResponse]
