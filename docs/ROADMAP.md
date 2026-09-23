@@ -138,9 +138,10 @@
 - M4.38 historical snapshot policy resolution against exact immutable member-ID membership
 - M4.39 historical snapshot-bound freshness evaluation using snapshot-resolved policy identity
 - M4.40 append-only persistence of historical snapshot-bound freshness evaluations with exact snapshot/policy identity, fingerprint idempotency, cursor history and independent fail-closed verification
+- M4.41 historical freshness receipt lineage binding M4.40 to the exact M4.37 receipt-to-snapshot binding with independent continuity verification
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.40 historical snapshot-bound freshness receipts.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.41 historical snapshot-bound freshness receipt lineage.
 2. Maintain the  as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
