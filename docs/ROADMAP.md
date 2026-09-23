@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.25 binds persisted readiness receipts to exact organization scopes and enforces scope-isolated reads; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.26 rebuilds current authoritative evidence readiness for the exact receipt scope and exposes a fail-closed convergence check; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
