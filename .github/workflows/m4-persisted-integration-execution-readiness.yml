@@ -15,11 +15,14 @@ on:
       - "src/morva/runtime/independent_integration_execution_readiness_verifier_m4_21.py"
       - "src/morva/runtime/persist_integration_execution_readiness_m4_24.py"
       - "src/morva/runtime/readiness_scope_binding_m4_25.py"
+      - "src/morva/runtime/scope_bound_readiness_convergence_m4_26.py"
+      - "src/morva/persistence/scoped_evidence_readiness_m4_26.py"
       - "tests/test_integration_execution_readiness_persistence_m4_22.py"
       - "tests/test_integration_execution_readiness_api_m4_22.py"
       - "tests/test_integration_execution_readiness_history_m4_23.py"
       - "tests/test_persist_integration_execution_readiness_m4_24.py"
       - "tests/test_integration_execution_readiness_scope_m4_25.py"
+      - "tests/test_scope_bound_readiness_convergence_m4_26.py"
   pull_request:
     branches: [main]
     paths:
@@ -64,11 +67,14 @@ jobs:
           src/morva/persistence/integration_execution_readiness_records.py
           src/morva/runtime/persist_integration_execution_readiness_m4_24.py
           src/morva/runtime/readiness_scope_binding_m4_25.py
+          src/morva/runtime/scope_bound_readiness_convergence_m4_26.py
+          src/morva/persistence/scoped_evidence_readiness_m4_26.py
           tests/test_integration_execution_readiness_persistence_m4_22.py
           tests/test_integration_execution_readiness_api_m4_22.py
           tests/test_integration_execution_readiness_history_m4_23.py
           tests/test_persist_integration_execution_readiness_m4_24.py
           tests/test_integration_execution_readiness_scope_m4_25.py
+          tests/test_scope_bound_readiness_convergence_m4_26.py
       - name: Pytest
         run: >
           pytest -q
@@ -83,5 +89,5 @@ jobs:
         run: alembic upgrade head
       - name: Boundary
         run: |
-          echo "M4.25 binds persisted readiness receipts to an exact organization scope and enforces scope isolation on read." >> "$GITHUB_STEP_SUMMARY"
+          echo "M4.26 rebuilds current evidence readiness for the exact receipt scope and compares it with the persisted M4.21 evidence fingerprint." >> "$GITHUB_STEP_SUMMARY"
           echo "The readiness API is read-only and performs no provider activation, credential use or production mutation." >> "$GITHUB_STEP_SUMMARY"
