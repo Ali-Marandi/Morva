@@ -120,6 +120,8 @@
 - M4.20 integration-execution readiness assessment composing independently verified execution-binding identity with canonical evidence readiness, deterministic blockers and fail-closed readiness state
 - M4.21 independent integration-execution readiness verifier with direct fingerprint reconstruction, exact repository/SHA binding, ready-state consistency and verification-time ordering
 - M4.22 append-only persistence of independently verified integration-execution readiness receipts with fingerprint revalidation and a ministry-scoped read-only readiness API
+- M4.23 deterministic paginated history API for persisted readiness receipts with candidate/environment filters and fail-closed validation
+- M4.24 controlled verified-readiness persistence service that forces assessment-file ingestion through independent M4.21 verification before persistence
 - M4.23 deterministic, paginated history API for persisted readiness receipts with candidate/environment filters, stable timestamp+UUID cursoring and fail-closed validation of every returned receipt
 
 ## Current execution queue
