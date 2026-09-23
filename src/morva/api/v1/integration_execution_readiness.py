@@ -480,6 +480,7 @@ def get_policy_bound_readiness_convergence_freshness(
     organization_scope: str | None = Query(default=None),
     organization_scope_id: str | None = Query(default=None),
     policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
     max_age_seconds: int = Query(..., ge=1),
     principal: Principal = Depends(get_current_principal),
 ) -> PolicyBoundReadinessFreshnessResponse:
