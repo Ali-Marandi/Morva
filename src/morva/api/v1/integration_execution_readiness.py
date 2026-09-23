@@ -952,7 +952,8 @@ def bind_registry_integrity_receipt_to_historical_snapshot(
 
 
 @router.get(
-    "/readiness/convergence/freshness/policy-registry-bound-integrity/receipt-snapshot-bindings/{binding_id}/verify",
+    "/readiness/convergence/freshness/policy-registry-bound-integrity/"
+    "receipt-snapshot-bindings/{binding_id}/verify",
     response_model=HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse,
 )
 def verify_registry_integrity_receipt_historical_snapshot_binding(
