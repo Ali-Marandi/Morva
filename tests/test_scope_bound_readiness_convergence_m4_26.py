@@ -180,3 +180,22 @@ def test_convergence_fingerprint_tamper_is_rejected():
             blockers=result.blockers,
             fingerprint="f" * 64,
         )
+
+
+def test_future_verified_at_is_blocked():
+    current = _evidence_readiness(complete=True, checked_at=NOW)
+    verification = IndependentIntegrationExecutionReadinessVerification(
+        assessment=_verification(current).assessment,
+        verified_at=NOW + timedelta(minutes=10),
+    )
+
+    result = build_scope_bound_readiness_convergence(
+        verification,
+        current,
+        organization_scope="district",
+        organization_scope_id="district-1",
+        checked_at=NOW + timedelta(minutes=5),
+    )
+
+    assert result.converged is False
+    assert "VERIFICATION_TIME_IN_FUTURE" in result.blockers
