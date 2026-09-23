@@ -17,6 +17,7 @@ from morva.runtime.integration_execution_readiness_assessment import (
     _assessment_fingerprint,
 )
 from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
+    _fingerprint as convergence_fingerprint,
     build_scope_bound_readiness_convergence,
 )
 from morva.runtime.readiness_convergence_freshness_m4_28 import (
@@ -142,12 +143,22 @@ def test_blocked_convergence_cannot_be_fresh():
         current_evidence_readiness_fingerprint=convergence.current_evidence_readiness_fingerprint,
         state="blocked",
         blockers=("CURRENT_EVIDENCE_READINESS_INCOMPLETE",),
-        fingerprint=_fingerprint(
-            convergence_fingerprint=convergence.fingerprint,
+        fingerprint=convergence_fingerprint(
+            repository=convergence.repository,
+            candidate_sha=convergence.candidate_sha,
+            target_environment=convergence.target_environment,
+            organization_scope=convergence.organization_scope,
+            organization_scope_id=convergence.organization_scope_id,
             checked_at=convergence.checked_at,
-            observed_at=NOW,
-            max_age_seconds=3600,
-            age_seconds=0,
+            persisted_verification_fingerprint=(
+                convergence.persisted_verification_fingerprint
+            ),
+            persisted_evidence_readiness_fingerprint=(
+                convergence.persisted_evidence_readiness_fingerprint
+            ),
+            current_evidence_readiness_fingerprint=(
+                convergence.current_evidence_readiness_fingerprint
+            ),
             state="blocked",
             blockers=("CURRENT_EVIDENCE_READINESS_INCOMPLETE",),
         ),
