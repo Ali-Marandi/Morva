@@ -214,3 +214,54 @@ def test_m4_36_rejects_duplicate_or_noncanonical_members():
         assert "unique" in str(exc)
     else:
         raise AssertionError("duplicate member ids must be rejected")
+
+
+def test_m4_38_resolves_policy_only_from_historical_snapshot_membership():
+    engine, session = _repositories()
+    try:
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        first = policy_repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=1,
+                max_age_seconds=3600,
+            ),
+            recorded_by="auditor",
+        )
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        snapshot = snapshot_repository.capture(policy_repository, captured_by="auditor")
+
+        resolved = snapshot_repository.resolve_policy(
+            snapshot.id,
+            policy_repository,
+            policy_id="integration-staging",
+            policy_version=1,
+        )
+        assert resolved.id == first.id
+
+        policy_repository.record(
+            build_freshness_policy(
+                policy_id="integration-staging",
+                policy_version=2,
+                max_age_seconds=1800,
+            ),
+            recorded_by="auditor",
+        )
+        session.commit()
+
+        try:
+            snapshot_repository.resolve_policy(
+                snapshot.id,
+                policy_repository,
+                policy_id="integration-staging",
+                policy_version=2,
+            )
+        except FreshnessPolicyRegistrySnapshotPersistenceError as exc:
+            assert "not a member" in str(exc)
+        else:
+            raise AssertionError(
+                "policy appended after snapshot capture must not resolve from the historical snapshot"
+            )
+    finally:
+        session.close()
+        engine.dispose()
