@@ -109,7 +109,7 @@ def test_scope_bound_readiness_converges_when_scoped_evidence_fingerprint_matche
     assert result.blockers == ()
 
 
-def test_scope_bound_readiness_blocks_when_current_evidence_changes():
+def test_scope_bound_readiness_ignores_observation_time_only():
     persisted = _evidence_readiness(complete=True, checked_at=NOW)
     current = _evidence_readiness(
         complete=True,
@@ -125,7 +125,28 @@ def test_scope_bound_readiness_blocks_when_current_evidence_changes():
         checked_at=NOW + timedelta(minutes=6),
     )
 
+    assert result.converged is True
+    assert result.blockers == ()
+
+
+def test_scope_bound_readiness_blocks_when_current_evidence_changes():
+    persisted = _evidence_readiness(complete=True, checked_at=NOW)
+    current = _evidence_readiness(
+        complete=False,
+        checked_at=NOW + timedelta(minutes=5),
+    )
+    verification = _verification(persisted)
+
+    result = build_scope_bound_readiness_convergence(
+        verification,
+        current,
+        organization_scope="district",
+        organization_scope_id="district-1",
+        checked_at=NOW + timedelta(minutes=6),
+    )
+
     assert result.converged is False
+    assert "CURRENT_EVIDENCE_READINESS_INCOMPLETE" in result.blockers
     assert "EVIDENCE_READINESS_FINGERPRINT_MISMATCH" in result.blockers
 
 
