@@ -83,7 +83,6 @@ jobs:
           tests/test_integration_execution_readiness_scope_m4_25.py
           tests/test_scope_bound_readiness_convergence_m4_26.py
           tests/test_scoped_evidence_readiness_m4_26.py
-          tests/test_scoped_evidence_readiness_m4_26.py
       - name: Pytest
         run: >
           pytest -q
@@ -92,6 +91,8 @@ jobs:
           tests/test_integration_execution_readiness_history_m4_23.py
           tests/test_persist_integration_execution_readiness_m4_24.py
           tests/test_integration_execution_readiness_scope_m4_25.py
+          tests/test_scope_bound_readiness_convergence_m4_26.py
+          tests/test_scoped_evidence_readiness_m4_26.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
