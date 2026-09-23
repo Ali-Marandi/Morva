@@ -95,7 +95,9 @@ def test_history_is_deterministic_with_tie_breaker(session):
         _verified(
             checked_at=NOW - timedelta(minutes=3),
             verified_at=NOW,
-        )
+        ),
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
     second = repository.record(
         _verified(
