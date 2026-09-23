@@ -162,8 +162,8 @@ def test_history_filters_candidate_and_environment(session):
     records = repository.list_verified(
         candidate_sha="c" * 40,
         target_environment="pilot",
-        organization_scope="pilot",
-        organization_scope_id="pilot-1",
+        organization_scope="district",
+        organization_scope_id="district-1",
     )
     assert len(records) == 1
     assert records[0].candidate_sha == "c" * 40
