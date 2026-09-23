@@ -13,7 +13,6 @@ from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 impo
     ReadinessConvergenceFreshnessPolicyRepository,
 )
 from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
-    ReadinessConvergenceFreshnessPolicy,
     build_freshness_policy,
 )
 
@@ -85,15 +84,9 @@ def test_same_id_and_version_cannot_change_policy(session):
     )
     repository.record(first, recorded_by="auditor-1")
 
-    from morva.runtime.readiness_convergence_freshness_policy_m4_29 import (
-        ReadinessConvergenceFreshnessPolicy,
-    )
-
-    second = ReadinessConvergenceFreshnessPolicy(
-        policy_version=1,
+    second = build_freshness_policy(
         policy_id="integration-staging-v1",
         max_age_seconds=7200,
-        fingerprint="b" * 64,
     )
 
     with pytest.raises(
