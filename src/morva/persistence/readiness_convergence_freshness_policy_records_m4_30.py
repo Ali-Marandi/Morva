@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from hashlib import sha256
+import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, Index, String, select
@@ -194,6 +196,42 @@ class ReadinessConvergenceFreshnessPolicyRepository:
             _normalize_loaded_policy_record(self.session, record)
             record.to_policy()
         return records, has_more
+
+    def integrity_snapshot(self) -> tuple[int, str]:
+        records = list(
+            self.session.scalars(
+                select(ReadinessConvergenceFreshnessPolicyRecord).order_by(
+                    ReadinessConvergenceFreshnessPolicyRecord.policy_id.asc(),
+                    ReadinessConvergenceFreshnessPolicyRecord.policy_version.asc(),
+                    ReadinessConvergenceFreshnessPolicyRecord.fingerprint.asc(),
+                )
+            ).all()
+        )
+        payload: list[dict[str, object]] = []
+        for record in records:
+            _normalize_loaded_policy_record(self.session, record)
+            policy = record.to_policy()
+            payload.append(
+                {
+                    "record_id": str(record.id),
+                    "policy_version": policy.policy_version,
+                    "policy_id": policy.policy_id,
+                    "max_age_seconds": policy.max_age_seconds,
+                    "fingerprint": policy.fingerprint.lower(),
+                    "recorded_by": record.recorded_by,
+                    "created_at": record.created_at.astimezone(timezone.utc).isoformat(),
+                }
+            )
+        encoded = json.dumps(
+            {
+                "integrity_version": 1,
+                "policies": payload,
+            },
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return len(payload), sha256(encoded).hexdigest()
 
     def get(
         self,
