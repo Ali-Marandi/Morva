@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+
+from morva.audit.persistence import append_audit_event
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -216,6 +218,21 @@ def persist_scope_bound_readiness_convergence_receipt(
         ) as exc:
             session.rollback()
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+        append_audit_event(
+            event_type="integration.readiness.convergence.recorded",
+            entity_type="scope_bound_readiness_convergence",
+            entity_id=str(record.id),
+            actor_id=principal.user_id,
+            payload={
+                "convergence_fingerprint": record.convergence_fingerprint,
+                "state": record.state,
+                "organization_scope": record.organization_scope,
+                "organization_scope_id": record.organization_scope_id,
+            },
+            reason="scope-bound readiness convergence observation persisted",
+            session=session,
+        )
+        session.commit()
         return ScopeBoundReadinessConvergenceReceiptResponse(
             id=record.id,
             convergence=record.to_convergence().to_payload(),
@@ -325,13 +342,17 @@ def _normalize_candidate_sha_for_history(candidate_sha: str | None) -> str | Non
     return normalized
 
 
-def _normalize_history_timestamp(value: datetime | None) -> datetime | None:
+def _normalize_history_timestamp(
+    value: datetime | None,
+    *,
+    name: str = "verified_before",
+) -> datetime | None:
     if value is None:
         return None
     if value.tzinfo is None:
         raise HTTPException(
             status_code=422,
-            detail="verified_before must be timezone-aware",
+            detail=f"{name} must be timezone-aware",
         )
     return value.astimezone(timezone.utc)
 
@@ -365,7 +386,10 @@ def get_scope_bound_readiness_convergence_history(
             detail="checked_before and before_id must be supplied together",
         )
     candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
-    checked_before = _normalize_history_timestamp(checked_before)
+    checked_before = _normalize_history_timestamp(
+        checked_before,
+        name="checked_before",
+    )
     with SessionLocal() as session:
         repository = ScopeBoundReadinessConvergenceRepository(session)
         try:
