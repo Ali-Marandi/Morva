@@ -21,6 +21,7 @@
 - M4.27 adds append-only persistence for scope-bound convergence observations, a controlled MFA-protected recording path and deterministic convergence history.
 - M4.28 adds an explicit freshness gate over persisted convergence observations without embedding a default age policy.
 - M4.29 binds freshness checks to an explicit versioned policy identity without silently introducing a default operational window.
+- M4.30 persists freshness policy identities and supports registry-bound freshness evaluation so policy parameters are auditable rather than supplied only at request time.
 - M4.22 does not rebuild M4.20; persisted receipts revalidate the M4.20 and M4.21 fingerprints on read. No external integration is executed and no production authority is implied.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
