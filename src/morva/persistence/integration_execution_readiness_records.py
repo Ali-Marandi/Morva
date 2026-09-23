@@ -224,7 +224,10 @@ class IntegrationExecutionReadinessVerificationRepository:
                     < verified_before
                 )
                 | (
-                    (IntegrationExecutionReadinessVerificationRecord.verified_at == verified_before)
+                    (
+                        IntegrationExecutionReadinessVerificationRecord.verified_at
+                        == verified_before
+                    )
                     & (
                         IntegrationExecutionReadinessVerificationRecord.id
                         < before_id
