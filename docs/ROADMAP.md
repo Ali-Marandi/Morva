@@ -127,6 +127,7 @@
 - M4.27 append-only persistence of scope-bound convergence observations with MFA-protected recording, fingerprint revalidation and deterministic history
 - M4.28 explicit freshness gate over persisted scope-bound convergence observations with caller-supplied age policy and fail-closed stale handling
 - M4.29 explicit versioned freshness-policy identity binding for convergence observations without embedding a default operational window
+- M4.30 persisted freshness-policy registry with deterministic policy fingerprints and registry-bound convergence freshness evaluation
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; M4.27 is the current development baseline.
