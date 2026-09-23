@@ -124,3 +124,43 @@ def test_get_rejects_invalid_version(session):
             policy_id="integration-staging-v1",
             policy_version=0,
         )
+
+
+def test_policy_history_is_cursor_paginated_and_ascending(session):
+    repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+    first = repository.record(
+        build_freshness_policy(
+            policy_id="policy-a",
+            max_age_seconds=3600,
+        ),
+        recorded_by="auditor-1",
+    )
+    second = repository.record(
+        build_freshness_policy(
+            policy_id="policy-b",
+            max_age_seconds=7200,
+        ),
+        recorded_by="auditor-1",
+    )
+
+    first_page, has_more = repository.list(limit=1)
+    assert has_more is True
+    assert [record.id for record in first_page] == [first.id]
+
+    second_page, second_has_more = repository.list(
+        before_created_at=first.created_at,
+        before_id=first.id,
+        limit=1,
+    )
+    assert second_has_more is False
+    assert [record.id for record in second_page] == [second.id]
+
+
+def test_policy_history_rejects_invalid_limit(session):
+    repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+
+    with pytest.raises(
+        ReadinessConvergenceFreshnessPolicyPersistenceError,
+        match="limit must be between 1 and 100",
+    ):
+        repository.list(limit=0)
