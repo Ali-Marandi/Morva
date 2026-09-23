@@ -117,6 +117,8 @@ def test_candidate_sha_mismatch_blocks_persistence(session, tmp_path: Path):
             repository_name="Ali-Marandi/Morva",
             candidate_sha="b" * 40,
             verified_at=NOW,
+            organization_scope="ministry",
+            organization_scope_id="ministry",
         )
 
     assert session.scalars(select(IntegrationExecutionReadinessVerificationRecord)).all() == []
@@ -140,6 +142,8 @@ def test_tampered_assessment_fingerprint_blocks_persistence(
             repository_name="Ali-Marandi/Morva",
             candidate_sha=SHA,
             verified_at=NOW,
+            organization_scope="ministry",
+            organization_scope_id="ministry",
         )
 
     assert session.scalars(select(IntegrationExecutionReadinessVerificationRecord)).all() == []
