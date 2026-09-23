@@ -130,6 +130,7 @@
 - M4.30 persisted freshness-policy registry with deterministic policy fingerprints and registry-bound convergence freshness evaluation
 - M4.31 deterministic, cursor-paginated freshness-policy registry history with fail-closed policy reconstruction
 - M4.32 explicit positive policy-version support across runtime, persistence and freshness-policy APIs
+- M4.33 deterministic aggregate integrity snapshot for the persisted freshness-policy registry
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.31 history and M4.32 explicit versioning.
