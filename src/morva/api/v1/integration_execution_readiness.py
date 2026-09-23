@@ -29,6 +29,10 @@ from morva.persistence.readiness_freshness_policy_registry_snapshots_m4_36 impor
     FreshnessPolicyRegistrySnapshotPersistenceError,
     FreshnessPolicyRegistrySnapshotRepository,
 )
+from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_37 import (
+    HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
+    HistoricalRegistryBoundFreshnessReceiptBindingRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -219,6 +223,23 @@ class FreshnessPolicyRegistrySnapshotResponse(BaseModel):
 class FreshnessPolicyRegistrySnapshotVerificationResponse(BaseModel):
     valid: bool
     snapshot: dict[str, object]
+
+
+class HistoricalRegistryBoundFreshnessReceiptBindingCreate(BaseModel):
+    receipt_id: UUID
+    snapshot_id: UUID
+
+
+class HistoricalRegistryBoundFreshnessReceiptBindingResponse(BaseModel):
+    id: UUID
+    binding: dict[str, object]
+    bound_by: str
+    created_at: datetime
+
+
+class HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse(BaseModel):
+    valid: bool
+    binding: dict[str, object]
 
 
 class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
@@ -872,6 +893,83 @@ def verify_readiness_freshness_policy_registry_snapshot(
     return FreshnessPolicyRegistrySnapshotVerificationResponse(
         valid=True,
         snapshot=record.to_snapshot().to_payload(),
+    )
+
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-bound-integrity/receipt-snapshot-bindings",
+    response_model=HistoricalRegistryBoundFreshnessReceiptBindingResponse,
+)
+def bind_registry_integrity_receipt_to_historical_snapshot(
+    payload: HistoricalRegistryBoundFreshnessReceiptBindingCreate,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalRegistryBoundFreshnessReceiptBindingResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical receipt bindings are ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = HistoricalRegistryBoundFreshnessReceiptBindingRepository(session)
+        try:
+            record = repository.bind(
+                receipt_id=payload.receipt_id,
+                snapshot_id=payload.snapshot_id,
+                bound_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.historical_receipt_snapshot_binding.recorded",
+                entity_type="historical_registry_bound_freshness_receipt_binding",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "receipt_id": str(record.receipt_id),
+                    "snapshot_id": str(record.snapshot_id),
+                    "fingerprint": record.fingerprint,
+                    "registry_fingerprint": record.registry_fingerprint,
+                },
+                reason="registry-bound freshness receipt anchored to historical registry snapshot",
+                session=session,
+            )
+            session.commit()
+        except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
+            session.rollback()
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalRegistryBoundFreshnessReceiptBindingResponse(
+        id=record.id,
+        binding=record.to_binding().to_payload(),
+        bound_by=record.bound_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-bound-integrity/receipt-snapshot-bindings/{binding_id}/verify",
+    response_model=HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse,
+)
+def verify_registry_integrity_receipt_historical_snapshot_binding(
+    binding_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = HistoricalRegistryBoundFreshnessReceiptBindingRepository(session)
+        try:
+            record = repository.verify(binding_id)
+        except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalRegistryBoundFreshnessReceiptBindingVerificationResponse(
+        valid=True,
+        binding=record.to_binding().to_payload(),
     )
 
 
