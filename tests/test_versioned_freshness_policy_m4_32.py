@@ -105,9 +105,17 @@ def test_policy_version_must_be_positive():
         raise AssertionError("non-positive policy version must be rejected")
 
 
-def test_registry_integrity_snapshot_is_deterministic_and_changes_with_append(session):
-    repository = ReadinessConvergenceFreshnessPolicyRepository(session)
-    first = repository.record(
+def test_registry_integrity_snapshot_is_deterministic_and_changes_with_append():
+    engine = create_engine("sqlite:///:memory:", future=True)
+    Base.metadata.create_all(
+        engine,
+        tables=[ReadinessConvergenceFreshnessPolicyRecord.__table__],
+    )
+    local = sessionmaker(bind=engine, future=True)
+
+    with local() as session:
+        repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        first = repository.record(
         build_freshness_policy(
             policy_id="integration-staging",
             policy_version=1,
@@ -132,5 +140,5 @@ def test_registry_integrity_snapshot_is_deterministic_and_changes_with_append(se
     )
     count_three, fingerprint_three = repository.integrity_snapshot()
 
-    assert count_three == 2
-    assert fingerprint_three != fingerprint_one
+        assert count_three == 2
+        assert fingerprint_three != fingerprint_one
