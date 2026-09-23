@@ -18,6 +18,7 @@ from morva.runtime.integration_execution_readiness_assessment import (
 )
 from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
     ScopeBoundReadinessConvergenceError,
+    _fingerprint as convergence_fingerprint,
     build_scope_bound_readiness_convergence,
 )
 
