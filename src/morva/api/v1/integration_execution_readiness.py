@@ -975,6 +975,33 @@ def verify_registry_integrity_receipt_historical_snapshot_binding(
 
 
 @router.get(
+    "/readiness/convergence/freshness/policies/snapshots/{snapshot_id}/policies/{policy_id}",
+    response_model=FreshnessPolicyResponse,
+)
+def get_historical_snapshot_freshness_policy(
+    snapshot_id: UUID,
+    policy_id: str,
+    policy_version: int = Query(default=1, ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> FreshnessPolicyResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            record = snapshot_repository.resolve_policy(
+                snapshot_id,
+                policy_repository,
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
+        except FreshnessPolicyRegistrySnapshotPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return FreshnessPolicyResponse(policy=record.to_policy().to_payload())
+
+
+@router.get(
     "/readiness/convergence/freshness/policies/{policy_id}",
     response_model=FreshnessPolicyResponse,
 )
