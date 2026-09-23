@@ -33,6 +33,10 @@ from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_3
     HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
     HistoricalRegistryBoundFreshnessReceiptBindingRepository,
 )
+from morva.persistence.historical_snapshot_bound_freshness_receipts_m4_40 import (
+    HistoricalSnapshotBoundFreshnessReceiptPersistenceError,
+    HistoricalSnapshotBoundFreshnessReceiptRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -251,6 +255,31 @@ class RegistryBoundPolicyReadinessFreshnessResponse(BaseModel):
 
 
 class HistoricalSnapshotBoundPolicyReadinessFreshnessResponse(BaseModel):
+    freshness: dict[str, object]
+
+
+
+class HistoricalSnapshotBoundFreshnessReceiptResponse(BaseModel):
+    id: UUID
+    freshness: dict[str, object]
+    repository: str
+    candidate_sha: str
+    target_environment: str
+    organization_scope: str
+    organization_scope_id: str
+    recorded_by: str
+    created_at: datetime
+
+
+class HistoricalSnapshotBoundFreshnessReceiptHistoryResponse(BaseModel):
+    items: list[HistoricalSnapshotBoundFreshnessReceiptResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
+
+class HistoricalSnapshotBoundFreshnessReceiptVerificationResponse(BaseModel):
+    valid: bool
     freshness: dict[str, object]
 
 class RegistryBoundPolicyReadinessFreshnessReceiptResponse(BaseModel):
@@ -988,6 +1017,237 @@ def get_historical_snapshot_bound_readiness_convergence_freshness(
             raise HTTPException(status_code=409, detail=str(exc)) from exc
     return HistoricalSnapshotBoundPolicyReadinessFreshnessResponse(
         freshness=freshness.to_payload(),
+    )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/receipts",
+    response_model=HistoricalSnapshotBoundFreshnessReceiptResponse,
+)
+def persist_historical_snapshot_bound_freshness_receipt(
+    snapshot_id: UUID,
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    policy_id: str = Query(..., min_length=1, max_length=100),
+    policy_version: int = Query(default=1, ge=1),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalSnapshotBoundFreshnessReceiptResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical snapshot-bound freshness receipts are ministry-managed",
+        )
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        try:
+            convergence_repository = ScopeBoundReadinessConvergenceRepository(session)
+            policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+            snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+            records = convergence_repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+            if not records:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no persisted scope-bound readiness convergence found",
+                )
+            snapshot_record = snapshot_repository.reconstruct(
+                snapshot_id,
+                policy_repository,
+            )
+            policy_record = snapshot_repository.resolve_policy(
+                snapshot_id,
+                policy_repository,
+                policy_id=policy_id,
+                policy_version=policy_version,
+            )
+            snapshot = snapshot_record.to_snapshot()
+            policy_bound = build_policy_bound_freshness(
+                policy_record.to_policy(),
+                records[0].to_convergence(),
+                observed_at=datetime.now(timezone.utc),
+            )
+            freshness = build_historical_snapshot_bound_policy_readiness_freshness(
+                policy_bound,
+                snapshot_id=snapshot.id,
+                snapshot_fingerprint=snapshot.fingerprint,
+                registry_integrity_version=snapshot.integrity_version,
+                registry_policy_count=snapshot.policy_count,
+                registry_fingerprint=snapshot.registry_fingerprint,
+            )
+            repository = HistoricalSnapshotBoundFreshnessReceiptRepository(session)
+            record = repository.record(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=records[0].candidate_sha,
+                target_environment=records[0].target_environment,
+                organization_scope=records[0].organization_scope,
+                organization_scope_id=records[0].organization_scope_id,
+                freshness=freshness,
+                recorded_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.historical_snapshot_bound_freshness_receipt.recorded",
+                entity_type="historical_snapshot_bound_policy_readiness_freshness_receipt",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "binding_fingerprint": record.binding_fingerprint,
+                    "snapshot_id": str(record.snapshot_id),
+                    "snapshot_fingerprint": record.snapshot_fingerprint,
+                    "policy_id": record.policy_id,
+                    "policy_version": record.policy_version,
+                    "candidate_sha": record.candidate_sha,
+                },
+                reason="historical snapshot-bound freshness evaluation receipt persisted",
+                session=session,
+            )
+            session.commit()
+        except HTTPException:
+            raise
+        except HistoricalSnapshotBoundFreshnessReceiptPersistenceError as exc:
+            session.rollback()
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+        except (
+            ScopeBoundReadinessConvergencePersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            FreshnessPolicyRegistrySnapshotPersistenceError,
+            PolicyBoundReadinessFreshnessError,
+            HistoricalSnapshotBoundPolicyReadinessFreshnessError,
+        ) as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return HistoricalSnapshotBoundFreshnessReceiptResponse(
+        id=record.id,
+        freshness=record.to_freshness().to_payload(),
+        repository=record.repository,
+        candidate_sha=record.candidate_sha,
+        target_environment=record.target_environment,
+        organization_scope=record.organization_scope,
+        organization_scope_id=record.organization_scope_id,
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/receipts",
+    response_model=HistoricalSnapshotBoundFreshnessReceiptHistoryResponse,
+)
+def list_historical_snapshot_bound_freshness_receipts(
+    snapshot_id: UUID | None = Query(default=None),
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalSnapshotBoundFreshnessReceiptHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    if before_created_at is not None and before_created_at.tzinfo is None:
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at must be timezone-aware",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        repository = HistoricalSnapshotBoundFreshnessReceiptRepository(session)
+        try:
+            records, has_more = repository.list(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                snapshot_id=snapshot_id,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except HistoricalSnapshotBoundFreshnessReceiptPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        HistoricalSnapshotBoundFreshnessReceiptResponse(
+            id=record.id,
+            freshness=record.to_freshness().to_payload(),
+            repository=record.repository,
+            candidate_sha=record.candidate_sha,
+            target_environment=record.target_environment,
+            organization_scope=record.organization_scope,
+            organization_scope_id=record.organization_scope_id,
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return HistoricalSnapshotBoundFreshnessReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more else None,
+        next_before_id=records[-1].id if has_more else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/receipts/{receipt_id}/verify",
+    response_model=HistoricalSnapshotBoundFreshnessReceiptVerificationResponse,
+)
+def verify_historical_snapshot_bound_freshness_receipt(
+    receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalSnapshotBoundFreshnessReceiptVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = HistoricalSnapshotBoundFreshnessReceiptRepository(session)
+        try:
+            record = repository.verify(receipt_id)
+        except HistoricalSnapshotBoundFreshnessReceiptPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalSnapshotBoundFreshnessReceiptVerificationResponse(
+        valid=True,
+        freshness=record.to_freshness().to_payload(),
     )
 
 
