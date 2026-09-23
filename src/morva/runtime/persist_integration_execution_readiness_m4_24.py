@@ -21,6 +21,8 @@ def persist_verified_integration_execution_readiness(
     repository_name: str,
     candidate_sha: str,
     verified_at: datetime,
+    organization_scope: str,
+    organization_scope_id: str,
 ) -> tuple[
     IntegrationExecutionReadinessVerificationRecord,
     IndependentIntegrationExecutionReadinessVerification,
@@ -37,5 +39,9 @@ def persist_verified_integration_execution_readiness(
         candidate_sha=candidate_sha,
         verified_at=verified_at,
     )
-    record = repository.record(verification)
+    record = repository.record(
+        verification,
+        organization_scope=organization_scope,
+        organization_scope_id=organization_scope_id,
+    )
     return record, verification
