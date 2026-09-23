@@ -60,6 +60,27 @@ def test_m4_22_readiness_route_is_registered():
             "/api/v1/integration-execution/readiness/convergence/freshness/policies"
         ]["post"].get("parameters", [])
     }
+    registry_integrity_bound_operation = paths[
+        "/api/v1/integration-execution/readiness/convergence/freshness/policy-registry-bound-integrity"
+    ]["get"]
+    registry_integrity_bound_params = {
+        parameter["name"]
+        for parameter in registry_integrity_bound_operation["parameters"]
+    }
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "policy_id",
+        "policy_version",
+    } <= registry_integrity_bound_params
+    registry_integrity_bound_schema = registry_integrity_bound_operation["responses"][
+        "200"
+    ]["content"]["application/json"]["schema"]
+    assert registry_integrity_bound_schema["$ref"] == (
+        "#/components/schemas/RegistryBoundPolicyReadinessFreshnessResponse"
+    )
     assert policy_create_params == set()
     policy_schema = app.openapi()["components"]["schemas"]["FreshnessPolicyCreate"]
     assert policy_schema["properties"]["policy_version"]["default"] == 1
