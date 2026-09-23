@@ -27,7 +27,7 @@ from morva.runtime.historical_registry_bound_freshness_receipt_m4_37 import (
 from .models import Base
 
 
-class HistoricalRegistryBoundFreshnessReceiptPersistenceError(ValueError):
+class HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(ValueError):
     """Raised when an M4.35 receipt cannot be bound safely to M4.36."""
 
 
@@ -102,7 +102,7 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRecord(Base):
                 fingerprint=self.fingerprint,
             )
         except (TypeError, ValueError, HistoricalRegistryBoundFreshnessReceiptError) as exc:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "persisted historical receipt binding is structurally invalid"
             ) from exc
 
@@ -124,7 +124,7 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
     ) -> HistoricalRegistryBoundFreshnessReceiptBindingRecord:
         actor = bound_by.strip()
         if not actor:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound_by is required"
             )
 
@@ -132,13 +132,13 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             RegistryBoundPolicyReadinessFreshnessRecord, receipt_id
         )
         if receipt_record is None:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "registry-bound freshness receipt not found"
             )
         try:
             receipt = receipt_record.to_freshness()
         except RegistryBoundPolicyReadinessFreshnessPersistenceError as exc:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 f"receipt reconstruction failed: {exc}"
             ) from exc
 
@@ -159,37 +159,37 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             FreshnessPolicyRegistrySnapshotPersistenceError,
             ReadinessConvergenceFreshnessPolicyPersistenceError,
         ) as exc:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 str(exc)
             ) from exc
         if policy_record is None:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt policy is missing from the current registry"
             )
         try:
             policy = policy_record.to_policy()
         except ReadinessConvergenceFreshnessPolicyPersistenceError as exc:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 f"receipt policy reconstruction failed: {exc}"
             ) from exc
         if policy.fingerprint != receipt.policy_bound.policy.fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt policy fingerprint differs from the persisted policy"
             )
         if policy_record.id not in snapshot.member_record_ids:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt policy is not a member of the historical registry snapshot"
             )
         if receipt.registry_integrity_version != snapshot.integrity_version:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt registry integrity version differs from snapshot"
             )
         if receipt.registry_policy_count != snapshot.policy_count:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt registry policy count differs from snapshot"
             )
         if receipt.registry_fingerprint != snapshot.registry_fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt registry fingerprint differs from snapshot"
             )
 
@@ -216,11 +216,11 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             _normalize_loaded_record(self.session, existing)
             existing.to_binding()
             if existing.fingerprint != binding.fingerprint:
-                raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                     "receipt is already bound to a different historical snapshot"
                 )
             if existing.bound_by != actor:
-                raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                     "receipt binding is already recorded by a different actor"
                 )
             return existing
@@ -235,7 +235,7 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             _normalize_loaded_record(self.session, existing_fingerprint)
             existing_fingerprint.to_binding()
             if existing_fingerprint.bound_by != actor:
-                raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+                raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                     "binding fingerprint is already recorded by a different actor"
                 )
             return existing_fingerprint
@@ -271,7 +271,7 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             HistoricalRegistryBoundFreshnessReceiptBindingRecord, binding_id
         )
         if record is None:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "historical receipt binding not found"
             )
         _normalize_loaded_record(self.session, record)
@@ -280,12 +280,12 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
             RegistryBoundPolicyReadinessFreshnessRecord, record.receipt_id
         )
         if receipt_record is None:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound receipt is missing"
             )
         receipt = receipt_record.to_freshness()
         if receipt.fingerprint != binding.receipt_binding_fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound receipt fingerprint changed"
             )
         policy_repository = policy_repository or ReadinessConvergenceFreshnessPolicyRepository(
@@ -300,27 +300,27 @@ class HistoricalRegistryBoundFreshnessReceiptBindingRepository:
         )
         snapshot = snapshot_record.to_snapshot()
         if snapshot.fingerprint != binding.snapshot_fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "historical registry snapshot fingerprint changed"
             )
         if receipt.registry_fingerprint != snapshot.registry_fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt and historical snapshot registry fingerprints differ"
             )
         if receipt.registry_policy_count != snapshot.policy_count:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "receipt and historical snapshot policy counts differ"
             )
         if binding.policy_id != receipt.policy_bound.policy.policy_id:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound policy id differs from receipt"
             )
         if binding.policy_version != receipt.policy_bound.policy.policy_version:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound policy version differs from receipt"
             )
         if binding.policy_fingerprint != receipt.policy_bound.policy.fingerprint:
-            raise HistoricalRegistryBoundFreshnessReceiptPersistenceError(
+            raise HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError(
                 "bound policy fingerprint differs from receipt"
             )
         return record
