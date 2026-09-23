@@ -198,6 +198,7 @@ class IntegrationExecutionReadinessVerificationRepository:
             organization_scope_id=organization_scope_id,
         )
         if existing is not None:
+            self._normalize_loaded_record(existing)
             try:
                 existing.to_verification()
                 if (
@@ -235,6 +236,25 @@ class IntegrationExecutionReadinessVerificationRepository:
         )
         self.session.add(record)
         self.session.flush()
+        return record
+
+
+
+
+    def _normalize_loaded_record(
+        self,
+        record: IntegrationExecutionReadinessVerificationRecord,
+    ) -> IntegrationExecutionReadinessVerificationRecord:
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            for field_name in (
+                "assessment_checked_at",
+                "verified_at",
+                "created_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
         return record
 
     def latest(
