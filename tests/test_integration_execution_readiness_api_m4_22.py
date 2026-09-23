@@ -15,4 +15,13 @@ def test_m4_22_readiness_route_is_registered():
     history_schema = history_operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert history_schema["$ref"] == "#/components/schemas/IntegrationExecutionReadinessVerificationHistoryResponse"
     query_params = {parameter["name"] for parameter in history_operation["parameters"]}
-    assert {"candidate_sha", "target_environment", "verified_before", "before_id", "limit"} <= query_params
+    assert {
+        "candidate_sha",
+        "target_environment",
+        "organization_scope",
+        "organization_scope_id",
+        "verified_before",
+        "before_id",
+        "limit",
+    } <= query_params
+    assert history_schema["$ref"] == "#/components/schemas/IntegrationExecutionReadinessVerificationHistoryResponse"
