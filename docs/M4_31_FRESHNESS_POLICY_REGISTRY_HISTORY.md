@@ -6,7 +6,7 @@ M4.31 hardens the M4.30 persisted freshness-policy registry with a deterministic
 
 The registry history endpoint:
 
-- returns persisted policy identities in deterministic creation-order;
+- returns persisted policy identities newest-first in deterministic creation order;
 - uses `before_created_at` plus `before_id` as a stable cursor;
 - limits each page to at most 100 records;
 - validates each restored policy fingerprint before returning it;
