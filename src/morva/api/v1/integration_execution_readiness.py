@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -107,7 +107,7 @@ def _normalize_history_timestamp(value: datetime | None) -> datetime | None:
             status_code=422,
             detail="verified_before must be timezone-aware",
         )
-    return value.astimezone()
+    return value.astimezone(timezone.utc)
 
 
 @router.get(
