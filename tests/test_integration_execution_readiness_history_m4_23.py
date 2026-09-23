@@ -144,7 +144,9 @@ def test_history_filters_candidate_and_environment(session):
         _verified(
             checked_at=NOW - timedelta(minutes=2),
             verified_at=NOW - timedelta(minutes=1),
-        )
+        ),
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
     repository.record(
         _verified(
