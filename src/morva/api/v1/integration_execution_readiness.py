@@ -13,6 +13,10 @@ from morva.persistence.integration_execution_readiness_records import (
 )
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
+from morva.runtime.readiness_scope_binding_m4_25 import (
+    ReadinessScopeBindingError,
+    normalize_readiness_scope,
+)
 
 router = APIRouter(
     prefix="/integration-execution",
@@ -27,6 +31,9 @@ class IntegrationExecutionReadinessVerificationResponse(BaseModel):
     verification_fingerprint: str
     verified_at: datetime
     created_at: datetime
+    organization_scope: str
+    organization_scope_id: str
+    scope_binding_fingerprint: str
 
 
 @router.get(
@@ -36,10 +43,11 @@ class IntegrationExecutionReadinessVerificationResponse(BaseModel):
 def get_integration_execution_readiness(
     candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
     target_environment: str | None = Query(default=None, pattern="^(staging|pilot)$"),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
     principal: Principal = Depends(get_current_principal),
 ) -> IntegrationExecutionReadinessVerificationResponse:
-    authorize(principal, "evidence.read", Scope.MINISTRY)
-    if candidate_sha is not None:
+    authorize(principal, "evidence.read", principal.scope)    if candidate_sha is not None:
         candidate_sha = candidate_sha.strip().lower()
         if len(candidate_sha) != 40 or any(
             char not in "0123456789abcdef" for char in candidate_sha
@@ -49,10 +57,17 @@ def get_integration_execution_readiness(
     with SessionLocal() as session:
         repository = IntegrationExecutionReadinessVerificationRepository(session)
         try:
+            scope_filter, scope_id_filter = _resolve_scope_filter(
+                principal,
+                organization_scope,
+                organization_scope_id,
+            )
             record = repository.latest(
                 repository=CANONICAL_REPOSITORY,
                 candidate_sha=candidate_sha,
                 target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
             )
         except IntegrationExecutionReadinessPersistenceError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -75,8 +90,38 @@ def get_integration_execution_readiness(
             verification_fingerprint=verification.fingerprint,
             verified_at=verification.verified_at,
             created_at=record.created_at,
+            organization_scope=record.organization_scope,
+            organization_scope_id=record.organization_scope_id,
+            scope_binding_fingerprint=record.scope_binding_fingerprint,
         )
 
+
+
+
+
+def _resolve_scope_filter(
+    principal: Principal,
+    organization_scope: str | None,
+    organization_scope_id: str | None,
+) -> tuple[str | None, str | None]:
+    if principal.scope is not Scope.MINISTRY:
+        if organization_scope is not None and organization_scope != principal.scope.value:
+            raise HTTPException(status_code=403, detail="organization scope violation")
+        if organization_scope_id is not None and organization_scope_id != principal.scope_id:
+            raise HTTPException(status_code=403, detail="organization scope violation")
+        return principal.scope.value, principal.scope_id
+
+    if (organization_scope is None) != (organization_scope_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id must be supplied together",
+        )
+    if organization_scope is None:
+        return None, None
+    try:
+        return normalize_readiness_scope(organization_scope, organization_scope_id or "")
+    except ReadinessScopeBindingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 class IntegrationExecutionReadinessVerificationHistoryResponse(BaseModel):
     items: list[IntegrationExecutionReadinessVerificationResponse]
@@ -120,12 +165,20 @@ def get_integration_execution_readiness_history(
         default=None,
         pattern="^(staging|pilot)$",
     ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
     verified_before: datetime | None = Query(default=None),
     before_id: UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
     principal: Principal = Depends(get_current_principal),
 ) -> IntegrationExecutionReadinessVerificationHistoryResponse:
-    authorize(principal, "evidence.read", Scope.MINISTRY)
+    authorize(principal, "evidence.read", principal.scope)
+
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
 
     if (verified_before is None) != (before_id is None):
         raise HTTPException(
@@ -143,6 +196,8 @@ def get_integration_execution_readiness_history(
                 repository=CANONICAL_REPOSITORY,
                 candidate_sha=candidate_sha,
                 target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
                 verified_before=verified_before,
                 before_id=before_id,
                 limit=limit + 1,
@@ -162,6 +217,9 @@ def get_integration_execution_readiness_history(
                         verification_fingerprint=verification.fingerprint,
                         verified_at=verification.verified_at,
                         created_at=record.created_at,
+                        organization_scope=record.organization_scope,
+                        organization_scope_id=record.organization_scope_id,
+                        scope_binding_fingerprint=record.scope_binding_fingerprint,
                     )
                 )
         except IntegrationExecutionReadinessPersistenceError as exc:
