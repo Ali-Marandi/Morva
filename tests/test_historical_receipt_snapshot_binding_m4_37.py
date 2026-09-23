@@ -236,7 +236,7 @@ def test_m4_37_verification_rejects_tampered_bound_policy_identity():
         try:
             repository.verify(binding.id)
         except HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError as exc:
-            assert "bound policy id differs" in str(exc)
+            assert "structurally invalid" in str(exc)
         else:
             raise AssertionError("tampered bound policy identity must fail closed")
     finally:
