@@ -85,6 +85,7 @@ class ReadinessConvergenceFreshnessPolicyRepository:
             policy = build_freshness_policy(
                 policy_id=policy.policy_id,
                 max_age_seconds=policy.max_age_seconds,
+                policy_version=policy.policy_version,
             )
             if policy.fingerprint.lower() != policy.fingerprint:
                 raise ReadinessConvergenceFreshnessPolicyError(
