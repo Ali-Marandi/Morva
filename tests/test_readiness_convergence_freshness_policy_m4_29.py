@@ -215,3 +215,98 @@ def _convergence():
         organization_scope_id="district-1",
         checked_at=NOW,
     )
+
+
+def test_registry_bound_freshness_binds_registry_integrity_snapshot():
+    from morva.runtime.registry_bound_policy_readiness_freshness_m4_34 import (
+        build_registry_bound_policy_readiness_freshness,
+    )
+
+    policy = build_freshness_policy(
+        policy_id="integration-staging-v1",
+        policy_version=1,
+        max_age_seconds=3600,
+    )
+    policy_bound = build_policy_bound_freshness(
+        policy,
+        _convergence(),
+        observed_at=NOW,
+    )
+
+    first = build_registry_bound_policy_readiness_freshness(
+        policy_bound,
+        registry_integrity_version=1,
+        registry_policy_count=2,
+        registry_fingerprint="b" * 64,
+    )
+    second = build_registry_bound_policy_readiness_freshness(
+        policy_bound,
+        registry_integrity_version=1,
+        registry_policy_count=2,
+        registry_fingerprint="b" * 64,
+    )
+
+    assert first.fingerprint == second.fingerprint
+    assert first.registry_policy_count == 2
+    assert first.to_payload()["registry"]["fingerprint"] == "b" * 64
+
+
+def test_registry_bound_freshness_changes_when_registry_changes():
+    from morva.runtime.registry_bound_policy_readiness_freshness_m4_34 import (
+        build_registry_bound_policy_readiness_freshness,
+    )
+
+    policy = build_freshness_policy(
+        policy_id="integration-staging-v1",
+        policy_version=1,
+        max_age_seconds=3600,
+    )
+    policy_bound = build_policy_bound_freshness(
+        policy,
+        _convergence(),
+        observed_at=NOW,
+    )
+
+    first = build_registry_bound_policy_readiness_freshness(
+        policy_bound,
+        registry_integrity_version=1,
+        registry_policy_count=1,
+        registry_fingerprint="c" * 64,
+    )
+    second = build_registry_bound_policy_readiness_freshness(
+        policy_bound,
+        registry_integrity_version=1,
+        registry_policy_count=2,
+        registry_fingerprint="d" * 64,
+    )
+
+    assert first.fingerprint != second.fingerprint
+
+
+def test_registry_bound_freshness_rejects_invalid_registry_fingerprint():
+    from morva.runtime.registry_bound_policy_readiness_freshness_m4_34 import (
+        RegistryBoundPolicyReadinessFreshnessError,
+        build_registry_bound_policy_readiness_freshness,
+    )
+
+    policy = build_freshness_policy(
+        policy_id="integration-staging-v1",
+        policy_version=1,
+        max_age_seconds=3600,
+    )
+    policy_bound = build_policy_bound_freshness(
+        policy,
+        _convergence(),
+        observed_at=NOW,
+    )
+
+    with pytest.raises(
+        RegistryBoundPolicyReadinessFreshnessError,
+        match="registry_fingerprint must be SHA-256",
+    ):
+        build_registry_bound_policy_readiness_freshness(
+            policy_bound,
+            registry_integrity_version=1,
+            registry_policy_count=1,
+            registry_fingerprint="not-a-fingerprint",
+        )
