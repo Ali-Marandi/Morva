@@ -17,9 +17,9 @@ class ReadinessConvergenceFreshnessPolicy:
     fingerprint: str
 
     def __post_init__(self) -> None:
-        if self.policy_version != 1:
+        if self.policy_version < 1:
             raise ReadinessConvergenceFreshnessPolicyError(
-                "unsupported freshness policy version"
+                "policy_version must be positive"
             )
         policy_id = self.policy_id.strip()
         if not policy_id:
@@ -64,15 +64,20 @@ def build_freshness_policy(
     *,
     policy_id: str,
     max_age_seconds: int,
+    policy_version: int = 1,
 ) -> ReadinessConvergenceFreshnessPolicy:
     policy_id = policy_id.strip()
+    if policy_version < 1:
+        raise ReadinessConvergenceFreshnessPolicyError(
+            "policy_version must be positive"
+        )
     fingerprint = _fingerprint(
-        policy_version=1,
+        policy_version=policy_version,
         policy_id=policy_id,
         max_age_seconds=max_age_seconds,
     )
     return ReadinessConvergenceFreshnessPolicy(
-        policy_version=1,
+        policy_version=policy_version,
         policy_id=policy_id,
         max_age_seconds=max_age_seconds,
         fingerprint=fingerprint,
