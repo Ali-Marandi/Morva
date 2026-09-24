@@ -205,9 +205,17 @@ class HistoricalFreshnessVerificationHistoryIntegrityRepository:
         source_repository = IndependentHistoricalFreshnessReceiptVerificationRepository(
             self.session
         )
+        source_query = select(
+            IndependentHistoricalFreshnessReceiptVerificationRecord
+        )
+        if record.created_at is not None:
+            source_query = source_query.where(
+                IndependentHistoricalFreshnessReceiptVerificationRecord.created_at
+                < record.created_at
+            )
         source_records = list(
             self.session.scalars(
-                select(IndependentHistoricalFreshnessReceiptVerificationRecord).order_by(
+                source_query.order_by(
                     IndependentHistoricalFreshnessReceiptVerificationRecord.created_at.asc(),
                     IndependentHistoricalFreshnessReceiptVerificationRecord.id.asc(),
                 )
