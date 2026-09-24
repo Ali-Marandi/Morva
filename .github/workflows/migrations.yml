@@ -3,6 +3,12 @@ name: Migrations
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/migrations.yml"
+      - "pyproject.toml"
+      - "alembic/**"
+      - "src/morva/persistence/**"
+      - "src/morva/runtime/config.py"
   pull_request:
     branches: [main]
   workflow_dispatch:
