@@ -15,8 +15,8 @@ class FieldCryptoError(ValueError):
     pass
 
 
-_LEGACY_KEY_VERSION = "1"
-_CURRENT_KEY_VERSION = "2"
+_LEGACY_KEY_VERSION = "v1"
+_CURRENT_KEY_VERSION = "v2"
 _KEY_VERSION_RE = re.compile(r"^[A-Za-z0-9._-]{1,32}$")
 _HKDF_SALT = b"morva-field-crypto-hkdf-v2"
 _HKDF_INFO_PREFIX = b"morva/field-crypto/key/"
@@ -59,7 +59,7 @@ def encrypt(value: str, *, key_material: str, key_version: str = _CURRENT_KEY_VE
     nonce = os.urandom(12)
     ciphertext = AESGCM(key).encrypt(nonce, value.encode("utf-8"), None)
     encoded = base64.urlsafe_b64encode(nonce + ciphertext).decode("ascii")
-    return f"v{version}.{encoded}"
+    return f"{version}.{encoded}"
 
 
 def decrypt(
@@ -76,7 +76,7 @@ def decrypt(
     """
     try:
         encoded = token
-        if token.startswith("v") and "." in token:
+        if "." in token:
             prefix, encoded = token.split(".", 1)
             embedded_version = _validate_key_version(prefix[1:])
             if key_version is not None and _validate_key_version(key_version) != embedded_version:
@@ -84,7 +84,7 @@ def decrypt(
             key = _key(key_material, embedded_version)
         else:
             if key_version not in (None, _LEGACY_KEY_VERSION):
-                raise FieldCryptoError("legacy ciphertext requires key version 1")
+                raise FieldCryptoError("legacy ciphertext requires key version v1")
             key = _legacy_key(key_material)
         raw = base64.urlsafe_b64decode(encoded.encode("ascii"))
         if len(raw) < 13:
