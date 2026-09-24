@@ -5,6 +5,7 @@ import pytest
 from morva.api.app import app
 from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
     HistoricalFreshnessChainVerificationReceiptPersistenceError,
+    HistoricalFreshnessChainVerificationReceiptRecord,
     HistoricalFreshnessChainVerificationReceiptRepository,
 )
 from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 import (
@@ -19,6 +20,15 @@ from tests.test_historical_snapshot_freshness_receipt_lineage_m4_41 import (
     NOW,
     _session,
 )
+
+
+def _session_m4_44():
+    engine, session = _session_m4_44()
+    HistoricalFreshnessChainVerificationReceiptRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
+    return engine, session
 
 
 def _lineage_id(session, freshness_receipt_id):
