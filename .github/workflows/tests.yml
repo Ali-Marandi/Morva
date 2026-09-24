@@ -3,6 +3,13 @@ name: Tests
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/tests.yml"
+      - "pyproject.toml"
+      - "alembic/**"
+      - "src/**"
+      - "tests/**"
+      - "fixtures/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
