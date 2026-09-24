@@ -78,7 +78,7 @@ def decrypt(
         encoded = token
         if "." in token:
             prefix, encoded = token.split(".", 1)
-            embedded_version = _validate_key_version(prefix[1:])
+            embedded_version = _validate_key_version(prefix)
             if key_version is not None and _validate_key_version(key_version) != embedded_version:
                 raise FieldCryptoError("field encryption key version mismatch")
             key = _key(key_material, embedded_version)
