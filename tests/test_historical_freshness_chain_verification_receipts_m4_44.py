@@ -23,7 +23,7 @@ from tests.test_historical_snapshot_freshness_receipt_lineage_m4_41 import (
 
 
 def _session_m4_44():
-    engine, session = _session_m4_44()
+    engine, session = _session()
     HistoricalFreshnessChainVerificationReceiptRecord.__table__.create(
         bind=engine,
         checkfirst=True,
@@ -41,7 +41,7 @@ def _lineage_id(session, freshness_receipt_id):
 
 
 def test_m4_44_records_and_reverifies_deterministic_chain_receipt():
-    engine, session = _session()
+    engine, session = _session_m4_44()
     try:
         inputs = _chain_inputs(session)
         verification = verify_historical_freshness_chain(**inputs)
@@ -60,7 +60,7 @@ def test_m4_44_records_and_reverifies_deterministic_chain_receipt():
 
 
 def test_m4_44_history_is_cursor_paginated_and_reverified():
-    engine, session = _session()
+    engine, session = _session_m4_44()
     try:
         first_inputs = _chain_inputs(session)
         second_inputs = _chain_inputs(session)
@@ -94,7 +94,7 @@ def test_m4_44_history_is_cursor_paginated_and_reverified():
 
 
 def test_m4_44_fails_closed_on_tampered_blockers():
-    engine, session = _session()
+    engine, session = _session_m4_44()
     try:
         inputs = _chain_inputs(session)
         repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
@@ -115,7 +115,7 @@ def test_m4_44_fails_closed_on_tampered_blockers():
 
 
 def test_m4_44_rejects_invalid_cursor_and_state():
-    engine, session = _session()
+    engine, session = _session_m4_44()
     try:
         repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
         with pytest.raises(
