@@ -41,6 +41,10 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
     HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
+from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
+    HistoricalFreshnessChainVerificationReceiptPersistenceError,
+    HistoricalFreshnessChainVerificationReceiptRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
 )
@@ -407,6 +411,21 @@ class HistoricalSnapshotFreshnessReceiptLineageVerificationResponse(BaseModel):
 class HistoricalFreshnessChainVerificationResponse(BaseModel):
     valid: bool
     verification: dict[str, object]
+
+
+class HistoricalFreshnessChainVerificationReceiptResponse(BaseModel):
+    id: UUID
+    lineage_id: UUID
+    verification: dict[str, object]
+    recorded_by: str
+    created_at: datetime
+
+
+class HistoricalFreshnessChainVerificationReceiptHistoryResponse(BaseModel):
+    items: list[HistoricalFreshnessChainVerificationReceiptResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
 
 
 class HistoricalSnapshotFreshnessReceiptLineageHistoryResponse(BaseModel):
@@ -1852,6 +1871,122 @@ def verify_historical_freshness_receipt_chain(
     return HistoricalFreshnessChainVerificationResponse(
         valid=verification.valid,
         verification=verification.to_payload(),
+    )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/{lineage_id}/verification-receipts",
+    response_model=HistoricalFreshnessChainVerificationReceiptResponse,
+)
+def persist_historical_freshness_chain_verification_receipt(
+    lineage_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessChainVerificationReceiptResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical freshness chain verification receipts are ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
+        try:
+            record = repository.record(
+                lineage_id=lineage_id,
+                recorded_by=principal.user_id,
+            )
+            verification = record.to_verification()
+            append_audit_event(
+                event_type="integration.readiness.historical_freshness_chain_verification.recorded",
+                entity_type="historical_freshness_chain_verification_receipt",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "lineage_id": str(record.lineage_id),
+                    "state": record.state,
+                    "fingerprint": record.fingerprint,
+                },
+                reason="M4.43 historical freshness chain verification receipt persisted",
+                session=session,
+            )
+            session.commit()
+        except HistoricalFreshnessChainVerificationReceiptPersistenceError as exc:
+            session.rollback()
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+    return HistoricalFreshnessChainVerificationReceiptResponse(
+        id=record.id,
+        lineage_id=record.lineage_id,
+        verification=verification.to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/verification-history",
+    response_model=HistoricalFreshnessChainVerificationReceiptHistoryResponse,
+)
+def list_historical_freshness_chain_verification_history(
+    lineage_id: UUID | None = Query(default=None),
+    state: str | None = Query(default=None, pattern="^(verified|blocked)$"),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessChainVerificationReceiptHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical freshness chain verification history is ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
+        try:
+            records, has_more = repository.list(
+                lineage_id=lineage_id,
+                state=state,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except HistoricalFreshnessChainVerificationReceiptPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    items = [
+        HistoricalFreshnessChainVerificationReceiptResponse(
+            id=record.id,
+            lineage_id=record.lineage_id,
+            verification=record.to_verification().to_payload(),
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    next_before_created_at = records[-1].created_at if has_more and records else None
+    next_before_id = records[-1].id if has_more and records else None
+    return HistoricalFreshnessChainVerificationReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=next_before_created_at,
+        next_before_id=next_before_id,
     )
 
 
