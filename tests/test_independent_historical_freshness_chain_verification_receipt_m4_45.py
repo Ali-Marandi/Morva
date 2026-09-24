@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from morva.api.app import app
+
 from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
     HistoricalFreshnessChainVerificationReceiptRecord,
     HistoricalFreshnessChainVerificationReceiptRepository,
@@ -115,3 +117,15 @@ def test_m4_45_rejects_structurally_invalid_receipt():
     finally:
         session.close()
         engine.dispose()
+
+
+def test_m4_45_openapi_independent_receipt_verification_route_is_registered():
+    path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/"
+        "verification-receipts/{receipt_id}/verify-independent"
+    )
+    operation = app.openapi()["paths"][path]["get"]
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"]["$ref"] == (
+        "#/components/schemas/IndependentHistoricalFreshnessChainVerificationReceiptResponse"
+    )
