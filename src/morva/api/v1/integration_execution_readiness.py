@@ -90,6 +90,13 @@ class IntegrationExecutionReadinessVerificationResponse(BaseModel):
     scope_binding_fingerprint: str
 
 
+class IntegrationExecutionReadinessVerificationHistoryResponse(BaseModel):
+    items: list[IntegrationExecutionReadinessVerificationResponse]
+    has_more: bool
+    next_verified_before: datetime | None = None
+    next_before_id: UUID | None = None
+
+
 @router.get(
     "/readiness",
     response_model=IntegrationExecutionReadinessVerificationResponse,
@@ -174,6 +181,76 @@ def _normalize_history_timestamp(value: datetime) -> datetime:
             detail="before_created_at must be timezone-aware",
         )
     return value.astimezone(timezone.utc)
+
+@router.get(
+    "/readiness/history",
+    response_model=IntegrationExecutionReadinessVerificationHistoryResponse,
+)
+def list_integration_execution_readiness_history(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    verified_before: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> IntegrationExecutionReadinessVerificationHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if (verified_before is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="verified_before and before_id must be supplied together",
+        )
+    if verified_before is not None:
+        verified_before = _normalize_history_timestamp(verified_before)
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+
+    with SessionLocal() as session:
+        repository = IntegrationExecutionReadinessVerificationRepository(session)
+        try:
+            records = repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                verified_before=verified_before,
+                before_id=before_id,
+                limit=limit + 1,
+            )
+        except IntegrationExecutionReadinessPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    has_more = len(records) > limit
+    records = records[:limit]
+    items = [
+        IntegrationExecutionReadinessVerificationResponse(
+            assessment=record.to_verification().assessment.to_payload(),
+            verification_fingerprint=record.verification_fingerprint,
+            verified_at=record.verified_at,
+            created_at=record.created_at,
+            organization_scope=record.organization_scope,
+            organization_scope_id=record.organization_scope_id,
+            scope_binding_fingerprint=record.scope_binding_fingerprint,
+        )
+        for record in records
+    ]
+    return IntegrationExecutionReadinessVerificationHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_verified_before=records[-1].verified_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
 
 
 def _resolve_scope_filter(
