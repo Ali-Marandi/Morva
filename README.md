@@ -27,6 +27,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.41 links each historical freshness receipt to its exact M4.37 receipt-to-snapshot binding with independent continuity verification.
 - M4.42 exposes deterministic, ministry-managed lineage history with timestamp+UUID cursors, exact receipt/binding/snapshot filters and per-record source re-verification.
 - M4.43 independently reconstructs the M4.36→M4.37→M4.40→M4.41 identity chain and returns deterministic verified/blocked status plus a chain fingerprint through a read-only API.
+- M4.44 persists those chain-verification results as fingerprint-idempotent receipts, provides ministry-managed cursor history and a direct receipt re-verification API.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
 - This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
