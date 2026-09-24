@@ -43,7 +43,6 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
 )
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
-    build_current_scoped_evidence_readiness,
 )
 from morva.runtime.persist_scope_bound_readiness_convergence_m4_27 import (
     PersistScopeBoundReadinessConvergenceError,
@@ -51,7 +50,6 @@ from morva.runtime.persist_scope_bound_readiness_convergence_m4_27 import (
 )
 from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
     ScopeBoundReadinessConvergenceError,
-    build_scope_bound_readiness_convergence,
 )
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerificationError,
