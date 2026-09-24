@@ -1,3 +1,13 @@
+## Unreleased — M4.48 Independent Historical Verification History Integrity
+
+### Readiness policy governance
+- Independently reconstruct the point-in-time M4.46 verification history behind an M4.47 integrity snapshot without invoking the M4.47 integrity builder.
+- Compare aggregate counts, history fingerprint and integrity fingerprint with deterministic blocker codes and a verification fingerprint.
+- Expose an authenticated read-only independent-verification endpoint and a dedicated CI gate.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## 1.0.1 — Current distribution baseline
 
 The canonical distribution identifier remains `1.0.1`, matching the published Git tag `v1.0.1` and its distributed package archives `morva_payroll-1.0.1-py3-none-any.whl` and `morva_payroll-1.0.1.tar.gz`. Development entries below remain separately marked `Unreleased`.
