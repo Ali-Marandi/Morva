@@ -1,3 +1,21 @@
+## 1.0.1 — Current distribution baseline
+
+The canonical distribution identifier remains `1.0.1`, matching the published Git tag `v1.0.1` and its distributed package archives `morva_payroll-1.0.1-py3-none-any.whl` and `morva_payroll-1.0.1.tar.gz`. Development entries below remain separately marked `Unreleased`.
+
+## Unreleased — Release Hygiene & Security Trust Hardening
+
+### Process and transparency
+- Add version/tag/distribution archive consistency validation and dedicated CI enforcement.
+- Add real-vs-governance-scaffolding documentation and externally visible lint, test, migration, pip-audit and web-build badges.
+- Add independent-review governance for security, rules, calculator and lifecycle changes.
+- Add explicit MIT licensing and contribution/fork policy.
+- Add a reusable local verification script covering dependency installation, Ruff, Pytest, pip-audit and the web build.
+
+### Security
+- Add HKDF-SHA256 derivation for new AES-GCM field ciphertexts with versioned envelopes.
+- Preserve decryption of legacy unversioned ciphertexts and document decrypt-and-reencrypt migration.
+- Add additive field-crypto and realistic `fixtures/1405-05` lifecycle/rule/audit integration coverage.
+
 ## Unreleased — M4.43 Historical Freshness Chain Verifier
 
 ### Readiness policy governance
