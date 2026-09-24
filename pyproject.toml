@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "morva-payroll"
 version = "1.0.1"
 description = "Morva Payroll Platform"
+license = {file = "LICENSE"}
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1.0",
