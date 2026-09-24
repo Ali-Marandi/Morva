@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from uuid import uuid4
 
 from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_37 import (
     HistoricalRegistryBoundFreshnessReceiptBindingRepository,
@@ -89,7 +90,7 @@ def test_m4_43_blocks_when_lineage_snapshot_identity_drifts():
         inputs = _chain_inputs(session)
         tampered_lineage = replace(
             inputs["lineage"],
-            snapshot_id=__import__("uuid").uuid4(),
+            snapshot_id=uuid4(),
         )
 
         result = verify_historical_freshness_chain(
