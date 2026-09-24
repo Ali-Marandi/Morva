@@ -41,6 +41,10 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
     HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
+from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
+    HistoricalFreshnessChainVerificationError,
+    verify_historical_freshness_chain,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
     build_current_scoped_evidence_readiness,
@@ -301,6 +305,10 @@ class HistoricalSnapshotFreshnessReceiptLineageResponse(BaseModel):
 class HistoricalSnapshotFreshnessReceiptLineageVerificationResponse(BaseModel):
     valid: bool
     lineage: dict[str, object]
+
+class HistoricalFreshnessChainVerificationResponse(BaseModel):
+    valid: bool
+    verification: dict[str, object]
 
 
 class HistoricalSnapshotFreshnessReceiptLineageHistoryResponse(BaseModel):
@@ -1490,6 +1498,60 @@ def verify_historical_snapshot_freshness_receipt_lineage(
     return HistoricalSnapshotFreshnessReceiptLineageVerificationResponse(
         valid=True,
         lineage=record.to_lineage().to_payload(),
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/{lineage_id}/verify-chain",
+    response_model=HistoricalFreshnessChainVerificationResponse,
+)
+def verify_historical_freshness_receipt_chain(
+    lineage_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessChainVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        lineage_repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
+        freshness_repository = HistoricalSnapshotBoundFreshnessReceiptRepository(session)
+        binding_repository = HistoricalRegistryBoundFreshnessReceiptBindingRepository(session)
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            lineage_record = lineage_repository.verify(lineage_id)
+            lineage = lineage_record.to_lineage()
+            freshness_record = freshness_repository.verify(lineage.freshness_receipt_id)
+            freshness = freshness_record.to_freshness()
+            binding_record = binding_repository.verify(lineage.historical_binding_id)
+            binding = binding_record.to_binding()
+            snapshot_record = snapshot_repository.reconstruct(
+                lineage.snapshot_id,
+                policy_repository,
+            )
+            snapshot = snapshot_record.to_snapshot()
+            verification = verify_historical_freshness_chain(
+                freshness_receipt_id=freshness_record.id,
+                freshness=freshness,
+                historical_binding_id=binding_record.id,
+                historical_binding=binding,
+                snapshot_id=snapshot_record.id,
+                snapshot=snapshot,
+                lineage=lineage,
+            )
+        except (
+            HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
+            HistoricalSnapshotBoundFreshnessReceiptPersistenceError,
+            HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
+            FreshnessPolicyRegistrySnapshotPersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            HistoricalFreshnessChainVerificationError,
+        ) as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+    return HistoricalFreshnessChainVerificationResponse(
+        valid=verification.valid,
+        verification=verification.to_payload(),
     )
 
 
