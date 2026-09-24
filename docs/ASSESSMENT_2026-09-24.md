@@ -1,10 +1,10 @@
 # Morva — Technical & Production Assessment Refresh
 
-**Assessment date:** 2026-09-24  
+**Assessment date:** 2026-09-25  
 **Repository:** `Ali-Marandi/Morva`  
 **Canonical branch:** `main`  
-**Assessed development head:** `d7fceba5e38a09b9e05629e78d67f868ce8aae88`  
-**Assessment basis:** M4.19–M4.43 persisted integration-readiness/freshness/history line, release/security hardening, and the current cumulative CI state
+**Assessed development head:** `b575f689a8ba459bfae4807d962305112b41ec8c`  
+**Assessment basis:** M4.19–M4.44 persisted integration-readiness/freshness/history line, release/security hardening, and the current cumulative CI state
 
 > **Safety statement:** This refresh is an engineering assessment only. It does not certify Morva for real payroll or payment. Legal rules, authoritative source status, external integration authority, operational controls and organizational approvals remain subject to independent evidence and formal approval.
 
@@ -14,7 +14,7 @@ The M4 readiness line has progressed from persisted integration-execution eviden
 
 At the assessed head, M4.43 independently reconstructs the M4.36 → M4.37 → M4.40 → M4.41 identity chain and produces deterministic verified/blocked blocker codes and a chain fingerprint through a read-only verification boundary. The complete CI matrix for this head finished with **55/55 workflow runs successful, 0 failures and no queued/in-progress runs**.
 
-The repository therefore has strong automated integrity for the implemented and tested software paths. This remains distinct from production certification. The principal unresolved production dependencies are still external: authoritative population and legal evidence, official provider contracts and staging/pilot execution evidence, operational key custody, disaster-recovery/load/security certification, live three-way financial reconciliation, and formal finance/legal/operations approval.
+The repository therefore has strong automated integrity for the implemented and tested software paths. M4.44 additionally persists the M4.43 verification result as a fingerprint-idempotent receipt, exposes ministry-managed cursor history with re-verification, and provides a direct receipt verification API. This remains distinct from production certification. The principal unresolved production dependencies are still external: authoritative population and legal evidence, official provider contracts and staging/pilot execution evidence, operational key custody, disaster-recovery/load/security certification, live three-way financial reconciliation, and formal finance/legal/operations approval.
 
 ## Current maturity snapshot
 
@@ -38,8 +38,9 @@ The repository therefore has strong automated integrity for the implemented and 
 - M4.36–M4.40 establish immutable historical registry snapshots, exact membership reconstruction, historical policy resolution, historical freshness evaluation and persisted historical receipts.
 - M4.41–M4.42 add historical freshness lineage and deterministic, ministry-managed lineage history with source-record re-verification.
 - M4.43 independently reconstructs the complete historical freshness identity chain and exposes deterministic verification status through a read-only API.
+- M4.44 persists M4.43 results as append-only, fingerprint-idempotent receipts, re-verifies persisted receipts against the underlying historical chain, and exposes ministry-managed history plus direct receipt verification.
 - Release/security hardening adds explicit version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, reproducible local verification and independent-review governance hooks.
-- The assessed head completed the repository workflow matrix with **55 successful runs out of 55**.
+- The assessed head completed the repository workflow matrix with **55 successful runs out of 55**, with 0 failures and no queued/in-progress runs.
 
 ## Remaining high-priority gaps
 
