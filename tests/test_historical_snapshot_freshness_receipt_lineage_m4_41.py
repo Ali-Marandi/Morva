@@ -94,7 +94,7 @@ def _source_records(session: Session):
         },
     )()
     policy_record = snapshot_repository.resolve_policy(
-        snapshot.id,
+        snapshot_record.id,
         policy_repository,
         policy_id="integration-staging-v1",
         policy_version=1,
