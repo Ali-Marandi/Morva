@@ -258,6 +258,79 @@ class HistoricalSnapshotFreshnessReceiptLineageRepository:
         record.to_lineage()
         return record
 
+    def list(
+        self,
+        *,
+        freshness_receipt_id: UUID | None = None,
+        historical_binding_id: UUID | None = None,
+        snapshot_id: UUID | None = None,
+        before_created_at: datetime | None = None,
+        before_id: UUID | None = None,
+        limit: int = 50,
+    ) -> tuple[list[HistoricalSnapshotFreshnessReceiptLineageRecord], bool]:
+        """Return newest-first lineage history with deterministic cursor pagination."""
+        if limit < 1 or limit > 100:
+            raise HistoricalSnapshotFreshnessReceiptLineagePersistenceError(
+                "limit must be between 1 and 100"
+            )
+        if before_created_at is not None and before_created_at.tzinfo is None:
+            raise HistoricalSnapshotFreshnessReceiptLineagePersistenceError(
+                "before_created_at must be timezone-aware"
+            )
+
+        query = select(HistoricalSnapshotFreshnessReceiptLineageRecord)
+        if freshness_receipt_id is not None:
+            query = query.where(
+                HistoricalSnapshotFreshnessReceiptLineageRecord.freshness_receipt_id
+                == freshness_receipt_id
+            )
+        if historical_binding_id is not None:
+            query = query.where(
+                HistoricalSnapshotFreshnessReceiptLineageRecord.historical_binding_id
+                == historical_binding_id
+            )
+        if snapshot_id is not None:
+            query = query.where(
+                HistoricalSnapshotFreshnessReceiptLineageRecord.snapshot_id == snapshot_id
+            )
+        if before_created_at is not None and before_id is None:
+            query = query.where(
+                HistoricalSnapshotFreshnessReceiptLineageRecord.created_at
+                < before_created_at
+            )
+        elif before_created_at is not None and before_id is not None:
+            query = query.where(
+                (
+                    HistoricalSnapshotFreshnessReceiptLineageRecord.created_at
+                    < before_created_at
+                )
+                |
+                (
+                    (
+                        HistoricalSnapshotFreshnessReceiptLineageRecord.created_at
+                        == before_created_at
+                    )
+                    & (
+                        HistoricalSnapshotFreshnessReceiptLineageRecord.id < before_id
+                    )
+                )
+            )
+
+        records = list(
+            self.session.scalars(
+                query.order_by(
+                    HistoricalSnapshotFreshnessReceiptLineageRecord.created_at.desc(),
+                    HistoricalSnapshotFreshnessReceiptLineageRecord.id.desc(),
+                ).limit(limit + 1)
+            ).all()
+        )
+        has_more = len(records) > limit
+        records = records[:limit]
+        for record in records:
+            _normalize_loaded_record(self.session, record)
+            self.verify(record.id)
+        return records, has_more
+
     def verify(
         self,
         lineage_id: UUID,
