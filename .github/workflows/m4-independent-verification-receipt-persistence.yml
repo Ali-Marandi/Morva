@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/m4-independent-verification-receipt-persistence.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
       - "alembic/versions/0034_historical_freshness_chain_verification_receipts.py"
       - "alembic/versions/0035_independent_historical_freshness_receipt_verifications.py"
       - "src/morva/persistence/historical_freshness_chain_verification_receipts_m4_44.py"
