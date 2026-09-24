@@ -3,18 +3,18 @@
 **Assessment date:** 2026-09-25  
 **Repository:** `Ali-Marandi/Morva`  
 **Canonical branch:** `main`  
-**Assessed development head:** `b575f689a8ba459bfae4807d962305112b41ec8c`  
-**Assessment basis:** M4.19–M4.44 persisted integration-readiness/freshness/history line, release/security hardening, and the current cumulative CI state
+**Assessed development head:** `3c678f9c5be6571d54cb4aabfb02291c313398f1`  
+**Assessment basis:** M4.19–M4.48 persisted integration-readiness/freshness/history line, release/security hardening, and the current cumulative CI state
 
 > **Safety statement:** This refresh is an engineering assessment only. It does not certify Morva for real payroll or payment. Legal rules, authoritative source status, external integration authority, operational controls and organizational approvals remain subject to independent evidence and formal approval.
 
 ## Executive assessment
 
-The M4 readiness line has progressed from persisted integration-execution evidence through scope-bound convergence, explicit freshness-policy identity, historical registry reconstruction, receipt-to-snapshot binding, historical freshness receipts, lineage history and the M4.43 independent chain verifier.
+The M4 readiness line has progressed from persisted integration-execution evidence through scope-bound convergence, explicit freshness-policy identity, historical registry reconstruction, receipt-to-snapshot binding, historical freshness receipts, lineage history, M4.43 chain verification, M4.47 point-in-time history integrity snapshots and M4.48 independent re-verification.
 
-At the assessed head, M4.43 independently reconstructs the M4.36 → M4.37 → M4.40 → M4.41 identity chain and produces deterministic verified/blocked blocker codes and a chain fingerprint through a read-only verification boundary. The complete CI matrix for this head finished with **55/55 workflow runs successful, 0 failures and no queued/in-progress runs**.
+At the assessed head, M4.48 independently reconstructs the point-in-time M4.46 verification history behind each M4.47 integrity snapshot and compares history fingerprint, aggregate counts and integrity fingerprint with deterministic mismatch blockers. The current M4.48 and cumulative workflow runs are still pending, so this refresh does not claim a final green matrix.
 
-The repository therefore has strong automated integrity for the implemented and tested software paths. M4.44 additionally persists the M4.43 verification result as a fingerprint-idempotent receipt, exposes ministry-managed cursor history with re-verification, and provides a direct receipt verification API. This remains distinct from production certification. The principal unresolved production dependencies are still external: authoritative population and legal evidence, official provider contracts and staging/pilot execution evidence, operational key custody, disaster-recovery/load/security certification, live three-way financial reconciliation, and formal finance/legal/operations approval.
+The repository therefore has strong automated integrity for the implemented and tested software paths. M4.44 additionally persists the M4.43 verification result as a fingerprint-idempotent receipt, M4.46 persists the M4.45 independent result, M4.47 snapshots the complete M4.46 history point-in-time, and M4.48 independently reconstructs and re-verifies each snapshot without invoking the M4.47 builder. This remains distinct from production certification. The principal unresolved production dependencies are still external: authoritative population and legal evidence, official provider contracts and staging/pilot execution evidence, operational key custody, disaster-recovery/load/security certification, live three-way financial reconciliation, and formal finance/legal/operations approval.
 
 ## Current maturity snapshot
 
@@ -39,8 +39,9 @@ The repository therefore has strong automated integrity for the implemented and 
 - M4.41–M4.42 add historical freshness lineage and deterministic, ministry-managed lineage history with source-record re-verification.
 - M4.43 independently reconstructs the complete historical freshness identity chain and exposes deterministic verification status through a read-only API.
 - M4.44 persists M4.43 results as append-only, fingerprint-idempotent receipts, re-verifies persisted receipts against the underlying historical chain, and exposes ministry-managed history plus direct receipt verification.
+- M4.45–M4.46 independently verify and persist the receipt-level verification result with deterministic source-chain reconstruction.
+- M4.47 captures deterministic point-in-time aggregate integrity snapshots over the complete M4.46 history, and M4.48 independently reconstructs that historical boundary without invoking the M4.47 builder.
 - Release/security hardening adds explicit version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, reproducible local verification and independent-review governance hooks.
-- The assessed head completed the repository workflow matrix with **55 successful runs out of 55**, with 0 failures and no queued/in-progress runs.
 
 ## Remaining high-priority gaps
 
