@@ -26,6 +26,9 @@ on:
       - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/runtime/readiness_convergence_freshness_policy_m4_29.py"
       - "src/morva/runtime/policy_bound_readiness_freshness_m4_29.py"
+      - "src/morva/runtime/historical_freshness_chain_verifier_m4_43.py"
+      - "tests/test_historical_freshness_chain_verifier_m4_43.py"
+      - "tests/test_historical_freshness_chain_api_m4_43.py"
       - "src/morva/persistence/readiness_convergence_freshness_policy_records_m4_30.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
@@ -63,6 +66,9 @@ on:
       - "src/morva/runtime/readiness_convergence_freshness_m4_28.py"
       - "src/morva/runtime/readiness_convergence_freshness_policy_m4_29.py"
       - "src/morva/runtime/policy_bound_readiness_freshness_m4_29.py"
+      - "src/morva/runtime/historical_freshness_chain_verifier_m4_43.py"
+      - "tests/test_historical_freshness_chain_verifier_m4_43.py"
+      - "tests/test_historical_freshness_chain_api_m4_43.py"
       - "src/morva/persistence/readiness_convergence_freshness_policy_records_m4_30.py"
       - "src/morva/persistence/evidence_lifecycle_records.py"
       - "src/morva/persistence/evidence_role_binding_records.py"
@@ -118,6 +124,8 @@ jobs:
           tests/test_readiness_convergence_freshness_m4_28.py
           tests/test_readiness_convergence_freshness_policy_m4_29.py
           tests/test_readiness_convergence_freshness_policy_persistence_m4_30.py
+          tests/test_historical_freshness_chain_verifier_m4_43.py
+          tests/test_historical_freshness_chain_api_m4_43.py
       - name: Pytest
         run: >
           pytest -q
@@ -132,6 +140,8 @@ jobs:
           tests/test_readiness_convergence_freshness_m4_28.py
           tests/test_readiness_convergence_freshness_policy_m4_29.py
           tests/test_readiness_convergence_freshness_policy_persistence_m4_30.py
+          tests/test_historical_freshness_chain_verifier_m4_43.py
+          tests/test_historical_freshness_chain_api_m4_43.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_22.db
