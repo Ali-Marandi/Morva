@@ -3,6 +3,9 @@ name: pip-audit
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/pip-audit.yml"
+      - "pyproject.toml"
   pull_request:
     branches: [main]
   workflow_dispatch:
