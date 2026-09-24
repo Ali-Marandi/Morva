@@ -1673,7 +1673,3 @@ def get_policy_bound_readiness_convergence_freshness(
     return PolicyBoundReadinessFreshnessResponse(
         freshness=freshness.to_payload(),
     )
-
-
-@router.post(
-    "/readiness/convergence/receipts",
