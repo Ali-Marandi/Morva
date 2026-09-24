@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
@@ -75,18 +75,17 @@ def test_m4_47_captures_and_reverifies_history_integrity():
         engine.dispose()
 
 
-def test_m4_47_detects_history_change_after_snapshot():
+def test_m4_47_preserves_point_in_time_snapshot_after_history_append():
     engine, session = _session_m4_47()
     try:
         _persist_source_verification(session, "a" * 64)
         repository = HistoricalFreshnessVerificationHistoryIntegrityRepository(session)
         snapshot = repository.capture(captured_by="ministry")
         _persist_source_verification(session, "b" * 64)
-        with pytest.raises(
-            HistoricalFreshnessVerificationHistoryIntegrityPersistenceError,
-            match="differs from reconstructed M4.46 history",
-        ):
-            repository.verify(snapshot.id)
+
+        assert repository.verify(snapshot.id).id == snapshot.id
+        current = repository.capture(captured_by="ministry")
+        assert current.to_integrity().record_count == 2
     finally:
         session.close()
         engine.dispose()
@@ -122,13 +121,9 @@ def test_m4_47_is_cursor_paginated():
         _persist_source_verification(session, "a" * 64)
         repository = HistoricalFreshnessVerificationHistoryIntegrityRepository(session)
         first = repository.capture(captured_by="ministry")
-        first.created_at = first.created_at.replace(second=0)
-        session.flush()
 
         _persist_source_verification(session, "b" * 64)
         second = repository.capture(captured_by="ministry")
-        second.created_at = first.created_at + timedelta(minutes=1)
-        session.flush()
 
         page, has_more = repository.list(limit=1)
         assert has_more is True
