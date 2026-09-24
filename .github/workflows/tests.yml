@@ -1,3 +1,4 @@
+# M4.46 persistence tranche: keep the main test suite as the cumulative validation trigger.
 name: Tests
 
 on:
