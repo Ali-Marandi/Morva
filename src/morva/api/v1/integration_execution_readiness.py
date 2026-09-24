@@ -46,6 +46,10 @@ from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 im
     HistoricalFreshnessChainVerificationReceiptPersistenceError,
     HistoricalFreshnessChainVerificationReceiptRepository,
 )
+from morva.persistence.independent_historical_freshness_receipt_verifications_m4_46 import (
+    IndependentHistoricalFreshnessReceiptVerificationPersistenceError,
+    IndependentHistoricalFreshnessReceiptVerificationRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
 )
@@ -435,6 +439,22 @@ class HistoricalFreshnessChainVerificationReceiptHistoryResponse(BaseModel):
 
 class IndependentHistoricalFreshnessChainVerificationReceiptResponse(BaseModel):
     verification: dict[str, object]
+
+
+class IndependentHistoricalFreshnessReceiptVerificationResponse(BaseModel):
+    id: UUID
+    receipt_id: UUID
+    lineage_id: UUID
+    verification: dict[str, object]
+    recorded_by: str
+    created_at: datetime
+
+
+class IndependentHistoricalFreshnessReceiptVerificationHistoryResponse(BaseModel):
+    items: list[IndependentHistoricalFreshnessReceiptVerificationResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
 
 
 class HistoricalSnapshotFreshnessReceiptLineageHistoryResponse(BaseModel):
@@ -2089,6 +2109,151 @@ def independently_verify_historical_freshness_chain_verification_receipt(
 
     return IndependentHistoricalFreshnessChainVerificationReceiptResponse(
         verification=independent.to_payload(),
+    )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/verification-receipts/{receipt_id}/independent-verification-receipts",
+    response_model=IndependentHistoricalFreshnessReceiptVerificationResponse,
+)
+def persist_independent_historical_freshness_receipt_verification(
+    receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalFreshnessReceiptVerificationResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="independent historical freshness receipt verifications are ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = IndependentHistoricalFreshnessReceiptVerificationRepository(session)
+        try:
+            record = repository.record(
+                receipt_id=receipt_id,
+                recorded_by=principal.user_id,
+            )
+            verification = record.to_verification()
+            append_audit_event(
+                event_type="integration.readiness.independent_historical_freshness_receipt_verification.recorded",
+                entity_type="independent_historical_freshness_receipt_verification",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "receipt_id": str(record.receipt_id),
+                    "lineage_id": str(record.lineage_id),
+                    "valid": record.valid,
+                    "verification_fingerprint": record.verification_fingerprint,
+                },
+                reason="M4.45 independent historical freshness receipt verification persisted",
+                session=session,
+            )
+            session.commit()
+        except IndependentHistoricalFreshnessReceiptVerificationPersistenceError as exc:
+            session.rollback()
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalFreshnessReceiptVerificationResponse(
+        id=record.id,
+        receipt_id=record.receipt_id,
+        lineage_id=record.lineage_id,
+        verification=verification.to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history",
+    response_model=IndependentHistoricalFreshnessReceiptVerificationHistoryResponse,
+)
+def list_independent_historical_freshness_receipt_verifications(
+    receipt_id: UUID | None = Query(default=None),
+    valid: bool | None = Query(default=None),
+    chain_valid: bool | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalFreshnessReceiptVerificationHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="independent historical freshness receipt verification history is ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+
+    with SessionLocal() as session:
+        repository = IndependentHistoricalFreshnessReceiptVerificationRepository(session)
+        try:
+            records, has_more = repository.list(
+                receipt_id=receipt_id,
+                valid=valid,
+                chain_valid=chain_valid,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except IndependentHistoricalFreshnessReceiptVerificationPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    items = [
+        IndependentHistoricalFreshnessReceiptVerificationResponse(
+            id=record.id,
+            receipt_id=record.receipt_id,
+            lineage_id=record.lineage_id,
+            verification=record.to_verification().to_payload(),
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return IndependentHistoricalFreshnessReceiptVerificationHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-receipts/{verification_receipt_id}/verify",
+    response_model=IndependentHistoricalFreshnessReceiptVerificationResponse,
+)
+def verify_independent_historical_freshness_receipt_verification(
+    verification_receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalFreshnessReceiptVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = IndependentHistoricalFreshnessReceiptVerificationRepository(session)
+        try:
+            record = repository.verify(verification_receipt_id)
+        except IndependentHistoricalFreshnessReceiptVerificationPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalFreshnessReceiptVerificationResponse(
+        id=record.id,
+        receipt_id=record.receipt_id,
+        lineage_id=record.lineage_id,
+        verification=record.to_verification().to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
     )
 
 
