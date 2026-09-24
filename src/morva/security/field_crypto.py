@@ -23,9 +23,12 @@ _HKDF_INFO_PREFIX = b"morva/field-crypto/key/"
 
 
 def _validate_key_version(key_version: str) -> str:
-    if not isinstance(key_version, str) or not _KEY_VERSION_RE.fullmatch(key_version):
+    if not isinstance(key_version, str):
         raise FieldCryptoError("invalid field encryption key version")
-    return key_version
+    candidate = f"v{key_version}" if key_version.isdigit() else key_version
+    if not _KEY_VERSION_RE.fullmatch(candidate):
+        raise FieldCryptoError("invalid field encryption key version")
+    return candidate
 
 
 def _legacy_key(material: str) -> bytes:
