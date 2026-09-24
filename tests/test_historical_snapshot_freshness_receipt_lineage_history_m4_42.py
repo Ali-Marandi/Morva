@@ -25,19 +25,28 @@ def _session():
     return engine, Session(engine)
 
 
-def test_m4_42_history_rejects_unpaired_cursor():
+def test_m4_42_history_accepts_timestamp_cursor_boundary():
+    engine, session = _session()
+    try:
+        repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
+        records, has_more = repository.list(before_created_at=NOW)
+        assert records == []
+        assert has_more is False
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_m4_42_history_rejects_invalid_limit():
     engine, session = _session()
     try:
         repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
         try:
-            repository.list(before_created_at=NOW)
+            repository.list(limit=0)
         except ValueError as exc:
-            assert "limit" not in str(exc)
+            assert "limit must be between 1 and 100" in str(exc)
         else:
-            # The repository permits a timestamp-only cursor boundary.
-            records, has_more = repository.list(before_created_at=NOW)
-            assert records == []
-            assert has_more is False
+            raise AssertionError("invalid history limit must be rejected")
     finally:
         session.close()
         engine.dispose()
