@@ -12,6 +12,7 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
+    _fingerprint,
     verify_historical_freshness_chain,
 )
 from morva.runtime.independent_historical_freshness_chain_verification_receipt_verifier_m4_45 import (
@@ -65,7 +66,26 @@ def test_m4_45_blocks_when_persisted_identity_drifts():
             lineage_id=_lineage_id(session, inputs["freshness_receipt_id"]),
             recorded_by="ministry",
         )
+        tampered_blockers = ("PERSISTED_DRIFT",)
+        record.blockers_json = '["PERSISTED_DRIFT"]'
         record.state = "blocked"
+        record.fingerprint = _fingerprint(
+            freshness_receipt_id=record.freshness_receipt_id,
+            historical_binding_id=record.historical_binding_id,
+            snapshot_id=record.snapshot_id,
+            lineage_fingerprint=record.lineage_fingerprint,
+            freshness_receipt_fingerprint=record.freshness_receipt_fingerprint,
+            historical_binding_fingerprint=record.historical_binding_fingerprint,
+            snapshot_fingerprint=record.snapshot_fingerprint,
+            policy_id=record.policy_id,
+            policy_version=record.policy_version,
+            policy_fingerprint=record.policy_fingerprint,
+            registry_integrity_version=record.registry_integrity_version,
+            registry_policy_count=record.registry_policy_count,
+            registry_fingerprint=record.registry_fingerprint,
+            state=record.state,
+            blockers=tampered_blockers,
+        )
         session.flush()
 
         result = verify_historical_freshness_chain_verification_receipt(
