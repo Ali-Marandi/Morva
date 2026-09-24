@@ -41,6 +41,18 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
     HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
+from morva.persistence.scoped_evidence_readiness_m4_26 import (
+    ScopedEvidenceReadinessPersistenceError,
+    build_current_scoped_evidence_readiness,
+)
+from morva.runtime.persist_scope_bound_readiness_convergence_m4_27 import (
+    PersistScopeBoundReadinessConvergenceError,
+    persist_latest_scope_bound_readiness_convergence,
+)
+from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
+    ScopeBoundReadinessConvergenceError,
+    build_scope_bound_readiness_convergence,
+)
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerificationError,
     verify_historical_freshness_chain,
@@ -437,6 +449,208 @@ class ScopeBoundReadinessConvergenceReceiptHistoryResponse(BaseModel):
     has_more: bool
     next_before_checked_at: datetime | None = None
     next_before_id: UUID | None = None
+
+
+@router.get(
+    "/readiness/convergence",
+    response_model=ScopeBoundReadinessConvergenceResponse,
+)
+def get_scope_bound_readiness_convergence(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    principal: Principal = Depends(get_current_principal),
+) -> ScopeBoundReadinessConvergenceResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        repository = ScopeBoundReadinessConvergenceRepository(session)
+        try:
+            records = repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                limit=1,
+            )
+        except ScopeBoundReadinessConvergencePersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if not records:
+        raise HTTPException(
+            status_code=404,
+            detail="no persisted scope-bound readiness convergence found",
+        )
+    return ScopeBoundReadinessConvergenceResponse(
+        convergence=records[0].to_convergence().to_payload(),
+    )
+
+
+@router.post(
+    "/readiness/convergence/receipts",
+    response_model=ScopeBoundReadinessConvergenceReceiptResponse,
+)
+def persist_scope_bound_readiness_convergence_receipt(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    principal: Principal = Depends(get_current_principal),
+) -> ScopeBoundReadinessConvergenceReceiptResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="readiness convergence receipts are ministry-managed",
+        )
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    checked_at = datetime.now(timezone.utc)
+    with SessionLocal() as session:
+        try:
+            record = persist_latest_scope_bound_readiness_convergence(
+                session,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                checked_at=checked_at,
+                recorded_by=principal.user_id,
+            )
+            append_audit_event(
+                event_type="integration.readiness.scope_bound_convergence.recorded",
+                entity_type="scope_bound_readiness_convergence",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "candidate_sha": record.candidate_sha,
+                    "target_environment": record.target_environment,
+                    "organization_scope": record.organization_scope,
+                    "organization_scope_id": record.organization_scope_id,
+                    "convergence_fingerprint": record.convergence_fingerprint,
+                },
+                reason="scope-bound readiness convergence receipt persisted",
+                session=session,
+            )
+            session.commit()
+        except HTTPException:
+            raise
+        except (
+            PersistScopeBoundReadinessConvergenceError,
+            IntegrationExecutionReadinessPersistenceError,
+            ScopedEvidenceReadinessPersistenceError,
+            ScopeBoundReadinessConvergenceError,
+            ScopeBoundReadinessConvergencePersistenceError,
+        ) as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return ScopeBoundReadinessConvergenceReceiptResponse(
+        id=record.id,
+        convergence=record.to_convergence().to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/history",
+    response_model=ScopeBoundReadinessConvergenceReceiptHistoryResponse,
+)
+def list_scope_bound_readiness_convergence_history(
+    candidate_sha: str | None = Query(default=None, min_length=40, max_length=40),
+    target_environment: str | None = Query(
+        default=None,
+        pattern="^(staging|pilot)$",
+    ),
+    organization_scope: str | None = Query(default=None),
+    organization_scope_id: str | None = Query(default=None),
+    checked_before: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> ScopeBoundReadinessConvergenceReceiptHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    scope_filter, scope_id_filter = _resolve_scope_filter(
+        principal,
+        organization_scope,
+        organization_scope_id,
+    )
+    if scope_filter is None or scope_id_filter is None:
+        raise HTTPException(
+            status_code=422,
+            detail="organization_scope and organization_scope_id are required",
+        )
+    if (checked_before is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="checked_before and before_id must be supplied together",
+        )
+    if checked_before is not None:
+        checked_before = _normalize_history_timestamp(checked_before)
+    candidate_sha = _normalize_candidate_sha_for_history(candidate_sha)
+    with SessionLocal() as session:
+        repository = ScopeBoundReadinessConvergenceRepository(session)
+        try:
+            records = repository.list_verified(
+                repository=CANONICAL_REPOSITORY,
+                candidate_sha=candidate_sha,
+                target_environment=target_environment,
+                organization_scope=scope_filter,
+                organization_scope_id=scope_id_filter,
+                checked_before=checked_before,
+                before_id=before_id,
+                limit=limit + 1,
+            )
+        except ScopeBoundReadinessConvergencePersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    has_more = len(records) > limit
+    records = records[:limit]
+    items = [
+        ScopeBoundReadinessConvergenceReceiptResponse(
+            id=record.id,
+            convergence=record.to_convergence().to_payload(),
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return ScopeBoundReadinessConvergenceReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_checked_at=records[-1].checked_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
 
 
 @router.get(
