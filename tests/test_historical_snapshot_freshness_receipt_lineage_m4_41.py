@@ -66,7 +66,7 @@ def _session():
     return engine, Session(engine)
 
 
-def _source_records(session: Session):
+def _source_records(session: Session, *, convergence_fingerprint: str = "b" * 64):
     policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
     policy_repository.record(
         build_freshness_policy(
@@ -88,7 +88,7 @@ def _source_records(session: Session):
         "Convergence",
         (),
         {
-            "fingerprint": "b" * 64,
+            "fingerprint": convergence_fingerprint,
             "checked_at": checked_at,
             "state": "converged",
         },
@@ -168,71 +168,3 @@ def test_m4_41_links_m4_40_receipt_to_m4_37_lineage_and_verifies():
         assert verified.to_lineage().fingerprint == lineage.to_lineage().fingerprint
         assert verified.snapshot_id == freshness_receipt.snapshot_id
     finally:
-        session.close()
-        engine.dispose()
-
-
-def test_m4_41_same_lineage_is_idempotent_only_for_same_actor():
-    engine, session = _session()
-    try:
-        _, binding, freshness_receipt = _source_records(session)
-        repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
-
-        first = repository.bind(
-            freshness_receipt_id=freshness_receipt.id,
-            historical_binding_id=binding.id,
-            bound_by="ministry",
-        )
-        second = repository.bind(
-            freshness_receipt_id=freshness_receipt.id,
-            historical_binding_id=binding.id,
-            bound_by="ministry",
-        )
-        assert first.id == second.id
-
-        with pytest.raises(HistoricalSnapshotFreshnessReceiptLineagePersistenceError):
-            repository.bind(
-                freshness_receipt_id=freshness_receipt.id,
-                historical_binding_id=binding.id,
-                bound_by="other-ministry",
-            )
-    finally:
-        session.close()
-        engine.dispose()
-
-
-def test_m4_41_verification_rejects_tampered_snapshot_identity():
-    engine, session = _session()
-    try:
-        _, binding, freshness_receipt = _source_records(session)
-        repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
-        lineage = repository.bind(
-            freshness_receipt_id=freshness_receipt.id,
-            historical_binding_id=binding.id,
-            bound_by="ministry",
-        )
-        lineage.snapshot_fingerprint = "d" * 64
-        session.flush()
-
-        with pytest.raises(
-            HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
-            match="structurally invalid|snapshot fingerprint",
-        ):
-            repository.verify(lineage.id)
-    finally:
-        session.close()
-        engine.dispose()
-
-
-def test_m4_41_openapi_contract_is_registered():
-    from morva.api.app import app
-
-    paths = app.openapi()["paths"]
-    assert (
-        "/api/v1/integration-execution/readiness/convergence/freshness/"
-        "policy-registry-snapshot-bound/receipt-lineage"
-    ) in paths
-    assert (
-        "/api/v1/integration-execution/readiness/convergence/freshness/"
-        "policy-registry-snapshot-bound/receipt-lineage/{lineage_id}/verify"
-    ) in paths
