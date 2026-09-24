@@ -62,7 +62,7 @@ from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
 )
 from morva.runtime.independent_historical_freshness_chain_verification_receipt_verifier_m4_45 import (
     IndependentHistoricalFreshnessChainVerificationReceiptError,
-    verify_historical_freshness_chain_verification_receipt,
+    verify_historical_freshness_chain_verification_receipt as independently_verify_historical_freshness_chain_verification_receipt,
 )
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
@@ -2070,7 +2070,7 @@ def independently_verify_historical_freshness_chain_verification_receipt(
                 snapshot=snapshot_record.to_snapshot(),
                 lineage=lineage,
             )
-            independent = verify_historical_freshness_chain_verification_receipt(
+            independent = independently_verify_historical_freshness_chain_verification_receipt(
                 receipt=receipt_record,
                 reconstructed=reconstructed,
             )
