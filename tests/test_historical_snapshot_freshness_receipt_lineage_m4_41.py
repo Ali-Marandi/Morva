@@ -15,7 +15,6 @@ from morva.persistence.historical_snapshot_bound_freshness_receipts_m4_40 import
     HistoricalSnapshotBoundPolicyReadinessFreshnessRecord,
 )
 from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 import (
-    HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
     HistoricalSnapshotFreshnessReceiptLineageRecord,
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
