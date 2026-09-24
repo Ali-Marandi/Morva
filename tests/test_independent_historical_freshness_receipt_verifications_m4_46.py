@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -123,7 +123,30 @@ def test_m4_46_rejects_invalid_cursor():
             IndependentHistoricalFreshnessReceiptVerificationPersistenceError,
             match="before_created_at must be timezone-aware",
         ):
-            repository.list(before_created_at=pytest.importorskip("datetime").datetime.now())
+            repository.list(before_created_at=datetime.now())
     finally:
         session.close()
         engine.dispose()
+
+
+def test_m4_46_openapi_routes_are_registered():
+    from morva.api.app import app
+
+    paths = app.openapi()["paths"]
+    write_path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/"
+        "verification-receipts/{receipt_id}/independent-verification-receipts"
+    )
+    history_path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/independent-verification-history"
+    )
+    verify_path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/"
+        "independent-verification-receipts/{verification_receipt_id}/verify"
+    )
+    assert "post" in paths[write_path]
+    assert "get" in paths[history_path]
+    assert "get" in paths[verify_path]
