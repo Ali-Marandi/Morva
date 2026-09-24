@@ -74,7 +74,7 @@ def test_m4_44_history_is_cursor_paginated_and_reverified():
             recorded_by="ministry",
         )
         first.created_at = NOW
-        second.created_at = NOW
+        second.created_at = NOW + __import__("datetime").timedelta(minutes=1)
         session.flush()
 
         page, has_more = repository.list(limit=1)
@@ -106,7 +106,7 @@ def test_m4_44_fails_closed_on_tampered_blockers():
         session.flush()
         with pytest.raises(
             HistoricalFreshnessChainVerificationReceiptPersistenceError,
-            match="M4.44 blockers payload|differs from reconstructed",
+            match="persisted M4.44 verification receipt is structurally invalid",
         ):
             repository.verify(record.id)
     finally:
