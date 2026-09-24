@@ -50,6 +50,10 @@ from morva.persistence.independent_historical_freshness_receipt_verifications_m4
     IndependentHistoricalFreshnessReceiptVerificationPersistenceError,
     IndependentHistoricalFreshnessReceiptVerificationRepository,
 )
+from morva.persistence.historical_freshness_verification_history_integrity_m4_47 import (
+    HistoricalFreshnessVerificationHistoryIntegrityPersistenceError,
+    HistoricalFreshnessVerificationHistoryIntegrityRepository,
+)
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
     ScopedEvidenceReadinessPersistenceError,
 )
@@ -2374,4 +2378,151 @@ def get_policy_bound_readiness_convergence_freshness(
             raise HTTPException(status_code=409, detail=str(exc)) from exc
     return PolicyBoundReadinessFreshnessResponse(
         freshness=freshness.to_payload(),
+    )
+
+
+class HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(BaseModel):
+    id: UUID
+    integrity: dict[str, object]
+    captured_by: str
+    created_at: datetime
+
+
+class HistoricalFreshnessVerificationHistoryIntegrityHistoryResponse(BaseModel):
+    items: list[HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/snapshots",
+    response_model=HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse,
+)
+def capture_historical_freshness_verification_history_integrity_snapshot(
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical freshness verification history integrity is ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessVerificationHistoryIntegrityRepository(session)
+        try:
+            record = repository.capture(captured_by=principal.user_id)
+            integrity = record.to_integrity()
+            append_audit_event(
+                event_type=(
+                    "integration.readiness."
+                    "historical_freshness_verification_history_integrity.snapshot.recorded"
+                ),
+                entity_type="historical_freshness_verification_history_integrity_snapshot",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "record_count": record.record_count,
+                    "valid_count": record.valid_count,
+                    "chain_valid_count": record.chain_valid_count,
+                    "history_fingerprint": record.history_fingerprint,
+                    "fingerprint": record.fingerprint,
+                },
+                reason="M4.47 historical freshness verification history integrity snapshot persisted",
+                session=session,
+            )
+            session.commit()
+        except HistoricalFreshnessVerificationHistoryIntegrityPersistenceError as exc:
+            session.rollback()
+            status = 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(
+        id=record.id,
+        integrity=integrity.to_payload(),
+        captured_by=record.captured_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/snapshots",
+    response_model=HistoricalFreshnessVerificationHistoryIntegrityHistoryResponse,
+)
+def list_historical_freshness_verification_history_integrity_snapshots(
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessVerificationHistoryIntegrityHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical freshness verification history integrity is ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessVerificationHistoryIntegrityRepository(session)
+        try:
+            records, has_more = repository.list(
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except HistoricalFreshnessVerificationHistoryIntegrityPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    items = [
+        HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(
+            id=record.id,
+            integrity=record.to_integrity().to_payload(),
+            captured_by=record.captured_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return HistoricalFreshnessVerificationHistoryIntegrityHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/snapshots/{snapshot_id}/verify",
+    response_model=HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse,
+)
+def verify_historical_freshness_verification_history_integrity_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessVerificationHistoryIntegrityRepository(session)
+        try:
+            record = repository.verify(snapshot_id)
+        except HistoricalFreshnessVerificationHistoryIntegrityPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(
+        id=record.id,
+        integrity=record.to_integrity().to_payload(),
+        captured_by=record.captured_by,
+        created_at=record.created_at,
     )

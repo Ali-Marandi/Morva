@@ -16,6 +16,16 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 - Preserve decryption of legacy unversioned ciphertexts and document decrypt-and-reencrypt migration.
 - Add additive field-crypto and realistic `fixtures/1405-05` lifecycle/rule/audit integration coverage.
 
+## Unreleased — M4.47 Historical Verification History Integrity Snapshots
+
+### Readiness policy governance
+- Persist a deterministic aggregate SHA-256 integrity snapshot over the complete M4.46 independent historical freshness verification history.
+- Re-verify every M4.46 source record before snapshot capture, history listing and snapshot verification.
+- Expose ministry-managed cursor history and point-in-time snapshot re-verification without adding production authority.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.46 Independent Verification Receipt Persistence
 
 ### Readiness policy governance
