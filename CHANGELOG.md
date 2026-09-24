@@ -16,6 +16,16 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 - Preserve decryption of legacy unversioned ciphertexts and document decrypt-and-reencrypt migration.
 - Add additive field-crypto and realistic `fixtures/1405-05` lifecycle/rule/audit integration coverage.
 
+## Unreleased — M4.45 Independent Historical Freshness Receipt Verification
+
+### Readiness policy governance
+- Independently reconstruct the M4.36 → M4.37 → M4.40 → M4.41 chain and compare it field-by-field with the persisted M4.44 verification receipt.
+- Emit deterministic receipt-verification identity and mismatch state through a read-only API.
+- Keep verification-only semantics with no provider execution, credentials or production authority.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.44 Historical Freshness Chain Verification Receipts
 
 ### Readiness policy governance
