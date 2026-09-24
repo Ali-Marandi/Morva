@@ -10,7 +10,7 @@ def test_hkdf_v2_round_trip_uses_versioned_ciphertext() -> None:
     token = encrypt(
         "secret",
         key_material="managed-high-entropy-secret",
-        key_version="2",
+        key_version="v2",
     )
     assert token.startswith("v2.")
     assert decrypt(token, key_material="managed-high-entropy-secret") == "secret"
@@ -27,7 +27,7 @@ def test_legacy_v1_ciphertext_remains_decryptable() -> None:
 
 
 def test_explicit_key_version_round_trip() -> None:
-    first = encrypt("same", key_material="managed-high-entropy-secret", key_version="7")
+    first = encrypt("same", key_material="managed-high-entropy-secret", key_version="v7")
     second = encrypt("same", key_material="managed-high-entropy-secret", key_version="7")
     assert first != second
     assert (
