@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 
 from morva.api.app import app
@@ -74,7 +76,7 @@ def test_m4_44_history_is_cursor_paginated_and_reverified():
             recorded_by="ministry",
         )
         first.created_at = NOW
-        second.created_at = NOW + __import__("datetime").timedelta(minutes=1)
+        second.created_at = NOW + timedelta(minutes=1)
         session.flush()
 
         page, has_more = repository.list(limit=1)
