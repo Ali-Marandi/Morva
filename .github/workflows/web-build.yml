@@ -3,6 +3,9 @@ name: Web Build
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/web-build.yml"
+      - "web/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
