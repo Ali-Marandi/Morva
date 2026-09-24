@@ -8,7 +8,6 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_37 import (
     HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
-    HistoricalRegistryBoundFreshnessReceiptBindingRecord,
     HistoricalRegistryBoundFreshnessReceiptBindingRepository,
 )
 from morva.persistence.historical_snapshot_bound_freshness_receipts_m4_40 import (
