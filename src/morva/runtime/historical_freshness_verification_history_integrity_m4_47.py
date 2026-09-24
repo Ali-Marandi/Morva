@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
-from uuid import UUID
-
 from morva.persistence.independent_historical_freshness_receipt_verifications_m4_46 import (
     IndependentHistoricalFreshnessReceiptVerificationRecord,
 )
