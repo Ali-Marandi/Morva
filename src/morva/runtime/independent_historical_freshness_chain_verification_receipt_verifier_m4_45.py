@@ -11,10 +11,6 @@ from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 im
 )
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerification,
-    HistoricalFreshnessChainVerificationError,
-)
-from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
-    verify_historical_freshness_chain,
 )
 
 
