@@ -23,7 +23,7 @@ from morva.persistence.readiness_freshness_policy_registry_snapshots_m4_36 impor
     FreshnessPolicyRegistrySnapshotPersistenceError,
     FreshnessPolicyRegistrySnapshotRepository,
 )
-from morva.persistence.readiness_convergence_freshness_policies_m4_30 import (
+from morva.persistence.readiness_convergence_freshness_policy_records_m4_30 import (
     ReadinessConvergenceFreshnessPolicyPersistenceError,
     ReadinessConvergenceFreshnessPolicyRepository,
 )
