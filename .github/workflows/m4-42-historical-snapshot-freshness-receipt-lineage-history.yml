@@ -1,0 +1,57 @@
+name: M4.42 Historical Snapshot Freshness Receipt Lineage History
+
+on:
+  push:
+    paths:
+      - ".github/workflows/m4-42-historical-snapshot-freshness-receipt-lineage-history.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_snapshot_freshness_receipt_lineage_m4_41.py"
+      - "tests/test_historical_snapshot_freshness_receipt_lineage_m4_41.py"
+      - "tests/test_historical_snapshot_freshness_receipt_lineage_history_m4_42.py"
+      - "alembic/env.py"
+  pull_request:
+    paths:
+      - ".github/workflows/m4-42-historical-snapshot-freshness-receipt-lineage-history.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_snapshot_freshness_receipt_lineage_m4_41.py"
+      - "tests/test_historical_snapshot_freshness_receipt_lineage_m4_41.py"
+      - "tests/test_historical_snapshot_freshness_receipt_lineage_history_m4_42.py"
+      - "alembic/env.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  historical-lineage-history:
+    name: M4.42 historical lineage history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/persistence/historical_snapshot_freshness_receipt_lineage_m4_41.py
+          tests/test_historical_snapshot_freshness_receipt_lineage_m4_41.py
+          tests/test_historical_snapshot_freshness_receipt_lineage_history_m4_42.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_historical_snapshot_freshness_receipt_lineage_m4_41.py
+          tests/test_historical_snapshot_freshness_receipt_lineage_history_m4_42.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_42.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.42 provides ministry-managed, read-only historical lineage history." >> "$GITHUB_STEP_SUMMARY"
+          echo "History records are re-verified against their M4.40 receipt and M4.37 binding before exposure." >> "$GITHUB_STEP_SUMMARY"
+          echo "No provider execution, production credentials, payroll calculation, payment mutation or production authorization is performed." >> "$GITHUB_STEP_SUMMARY"
