@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import timezone
+
 from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
     HistoricalFreshnessChainVerificationReceiptRepository,
 )
@@ -82,9 +84,16 @@ def test_m4_48_preserves_point_in_time_boundary():
             IndependentHistoricalFreshnessReceiptVerificationRepository(session)
             .list(limit=100)[0]
         )
-        source_records = [
-            record for record in all_records if record.created_at < snapshot.created_at
-        ]
+        snapshot_created_at = snapshot.created_at
+        if snapshot_created_at.tzinfo is None:
+            snapshot_created_at = snapshot_created_at.replace(tzinfo=timezone.utc)
+        source_records = []
+        for record in all_records:
+            record_created_at = record.created_at
+            if record_created_at.tzinfo is None:
+                record_created_at = record_created_at.replace(tzinfo=timezone.utc)
+            if record_created_at < snapshot_created_at:
+                source_records.append(record)
         result = independently_verify_historical_freshness_verification_history_integrity(
             snapshot=snapshot,
             source_records=source_records,
