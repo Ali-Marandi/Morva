@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import replace
 from uuid import uuid4
 
 from morva.persistence.historical_registry_bound_freshness_receipt_bindings_m4_37 import (
@@ -15,6 +14,9 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerification,
     verify_historical_freshness_chain,
+)
+from morva.runtime.historical_snapshot_freshness_receipt_lineage_m4_41 import (
+    build_historical_snapshot_freshness_receipt_lineage,
 )
 
 from tests.test_historical_snapshot_freshness_receipt_lineage_m4_41 import (
@@ -88,9 +90,20 @@ def test_m4_43_blocks_when_lineage_snapshot_identity_drifts():
     engine, session = _session()
     try:
         inputs = _chain_inputs(session)
-        tampered_lineage = replace(
-            inputs["lineage"],
+        original = inputs["lineage"]
+        tampered_lineage = build_historical_snapshot_freshness_receipt_lineage(
+            freshness_receipt_id=original.freshness_receipt_id,
+            historical_binding_id=original.historical_binding_id,
             snapshot_id=uuid4(),
+            freshness_receipt_fingerprint=original.freshness_receipt_fingerprint,
+            historical_binding_fingerprint=original.historical_binding_fingerprint,
+            snapshot_fingerprint=original.snapshot_fingerprint,
+            registry_integrity_version=original.registry_integrity_version,
+            registry_policy_count=original.registry_policy_count,
+            registry_fingerprint=original.registry_fingerprint,
+            policy_id=original.policy_id,
+            policy_version=original.policy_version,
+            policy_fingerprint=original.policy_fingerprint,
         )
 
         result = verify_historical_freshness_chain(
@@ -109,9 +122,20 @@ def test_m4_43_blocks_when_registry_identity_drifts():
     engine, session = _session()
     try:
         inputs = _chain_inputs(session)
-        tampered_lineage = replace(
-            inputs["lineage"],
+        original = inputs["lineage"]
+        tampered_lineage = build_historical_snapshot_freshness_receipt_lineage(
+            freshness_receipt_id=original.freshness_receipt_id,
+            historical_binding_id=original.historical_binding_id,
+            snapshot_id=original.snapshot_id,
+            freshness_receipt_fingerprint=original.freshness_receipt_fingerprint,
+            historical_binding_fingerprint=original.historical_binding_fingerprint,
+            snapshot_fingerprint=original.snapshot_fingerprint,
+            registry_integrity_version=original.registry_integrity_version,
+            registry_policy_count=original.registry_policy_count,
             registry_fingerprint="d" * 64,
+            policy_id=original.policy_id,
+            policy_version=original.policy_version,
+            policy_fingerprint=original.policy_fingerprint,
         )
 
         result = verify_historical_freshness_chain(
