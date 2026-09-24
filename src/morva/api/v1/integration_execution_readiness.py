@@ -1991,6 +1991,32 @@ def list_historical_freshness_chain_verification_history(
 
 
 @router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/verification-receipts/{receipt_id}/verify",
+    response_model=HistoricalFreshnessChainVerificationReceiptResponse,
+)
+def verify_historical_freshness_chain_verification_receipt(
+    receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalFreshnessChainVerificationReceiptResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
+        try:
+            record = repository.verify(receipt_id)
+        except HistoricalFreshnessChainVerificationReceiptPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalFreshnessChainVerificationReceiptResponse(
+        id=record.id,
+        lineage_id=record.lineage_id,
+        verification=record.to_verification().to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
     "/readiness/convergence/freshness/policies/snapshots/{snapshot_id}/policies/{policy_id}",
     response_model=FreshnessPolicyResponse,
 )
