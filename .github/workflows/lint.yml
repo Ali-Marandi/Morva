@@ -3,6 +3,13 @@ name: Lint
 on:
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/lint.yml"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
+      - "tools/**"
+      - "scripts/**"
   pull_request:
     branches: [main]
   workflow_dispatch:
