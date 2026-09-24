@@ -42,6 +42,7 @@ from morva.persistence.historical_snapshot_freshness_receipt_lineage_m4_41 impor
     HistoricalSnapshotFreshnessReceiptLineageRepository,
 )
 from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
+    HistoricalFreshnessChainVerificationReceiptRecord,
     HistoricalFreshnessChainVerificationReceiptPersistenceError,
     HistoricalFreshnessChainVerificationReceiptRepository,
 )
@@ -58,6 +59,10 @@ from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
 from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerificationError,
     verify_historical_freshness_chain,
+)
+from morva.runtime.independent_historical_freshness_chain_verification_receipt_verifier_m4_45 import (
+    IndependentHistoricalFreshnessChainVerificationReceiptError,
+    verify_historical_freshness_chain_verification_receipt,
 )
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
@@ -426,6 +431,10 @@ class HistoricalFreshnessChainVerificationReceiptHistoryResponse(BaseModel):
     has_more: bool
     next_before_created_at: datetime | None = None
     next_before_id: UUID | None = None
+
+
+class IndependentHistoricalFreshnessChainVerificationReceiptResponse(BaseModel):
+    verification: dict[str, object]
 
 
 class HistoricalSnapshotFreshnessReceiptLineageHistoryResponse(BaseModel):
@@ -2013,6 +2022,73 @@ def verify_historical_freshness_chain_verification_receipt(
         verification=record.to_verification().to_payload(),
         recorded_by=record.recorded_by,
         created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/verification-receipts/{receipt_id}/verify-independent",
+    response_model=IndependentHistoricalFreshnessChainVerificationReceiptResponse,
+)
+def independently_verify_historical_freshness_chain_verification_receipt(
+    receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalFreshnessChainVerificationReceiptResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        receipt_record = session.get(
+            HistoricalFreshnessChainVerificationReceiptRecord,
+            receipt_id,
+        )
+        if receipt_record is None:
+            raise HTTPException(
+                status_code=404,
+                detail="historical freshness chain verification receipt not found",
+            )
+        lineage_repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
+        freshness_repository = HistoricalSnapshotBoundFreshnessReceiptRepository(session)
+        binding_repository = HistoricalRegistryBoundFreshnessReceiptBindingRepository(session)
+        snapshot_repository = FreshnessPolicyRegistrySnapshotRepository(session)
+        policy_repository = ReadinessConvergenceFreshnessPolicyRepository(session)
+        try:
+            lineage_record = lineage_repository.verify(receipt_record.lineage_id)
+            lineage = lineage_record.to_lineage()
+            freshness_record = freshness_repository.verify(lineage.freshness_receipt_id)
+            freshness = freshness_record.to_freshness()
+            binding_record = binding_repository.verify(lineage.historical_binding_id)
+            binding = binding_record.to_binding()
+            snapshot_record = snapshot_repository.reconstruct(
+                lineage.snapshot_id,
+                policy_repository,
+            )
+            reconstructed = verify_historical_freshness_chain(
+                freshness_receipt_id=freshness_record.id,
+                freshness=freshness,
+                historical_binding_id=binding_record.id,
+                historical_binding=binding,
+                snapshot_id=snapshot_record.id,
+                snapshot=snapshot_record.to_snapshot(),
+                lineage=lineage,
+            )
+            independent = verify_historical_freshness_chain_verification_receipt(
+                receipt=receipt_record,
+                reconstructed=reconstructed,
+            )
+        except (
+            HistoricalFreshnessChainVerificationReceiptPersistenceError,
+            HistoricalSnapshotFreshnessReceiptLineagePersistenceError,
+            HistoricalSnapshotBoundFreshnessReceiptPersistenceError,
+            HistoricalRegistryBoundFreshnessReceiptBindingPersistenceError,
+            FreshnessPolicyRegistrySnapshotPersistenceError,
+            ReadinessConvergenceFreshnessPolicyPersistenceError,
+            HistoricalFreshnessChainVerificationError,
+            IndependentHistoricalFreshnessChainVerificationReceiptError,
+        ) as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+    return IndependentHistoricalFreshnessChainVerificationReceiptResponse(
+        verification=independent.to_payload(),
     )
 
 
