@@ -7,6 +7,7 @@ import json
 from uuid import UUID
 
 from morva.persistence.independent_historical_freshness_receipt_verifications_m4_46 import (
+    IndependentHistoricalFreshnessReceiptVerificationPersistenceError,
     IndependentHistoricalFreshnessReceiptVerificationRecord,
 )
 from morva.persistence.historical_freshness_verification_history_integrity_m4_47 import (
@@ -113,8 +114,13 @@ def independently_verify_historical_freshness_verification_history_integrity(
             "persisted M4.47 history integrity snapshot is structurally invalid"
         ) from exc
 
+    point_in_time_records = [
+        record
+        for record in source_records
+        if _timestamp(record.created_at) < _timestamp(snapshot.created_at)
+    ]
     ordered = sorted(
-        source_records,
+        point_in_time_records,
         key=lambda record: (
             _timestamp(record.created_at),
             str(record.id),
@@ -126,7 +132,7 @@ def independently_verify_historical_freshness_verification_history_integrity(
     for record in ordered:
         try:
             verification = record.to_verification()
-        except Exception as exc:
+        except IndependentHistoricalFreshnessReceiptVerificationPersistenceError as exc:
             raise IndependentHistoricalFreshnessVerificationHistoryIntegrityError(
                 "M4.46 source history verification record is structurally invalid"
             ) from exc
