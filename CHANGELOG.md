@@ -16,6 +16,16 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 - Preserve decryption of legacy unversioned ciphertexts and document decrypt-and-reencrypt migration.
 - Add additive field-crypto and realistic `fixtures/1405-05` lifecycle/rule/audit integration coverage.
 
+## Unreleased — M4.46 Independent Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.45 independent historical freshness receipt verification as append-only, fingerprint-idempotent evidence.
+- Expose ministry-managed cursor history with valid/chain-valid filters and source-chain re-verification.
+- Keep the evidence boundary verification-only with no provider execution or production authority.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.45 Independent Historical Freshness Receipt Verification
 
 ### Readiness policy governance
