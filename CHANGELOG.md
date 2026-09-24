@@ -1,3 +1,13 @@
+## Unreleased — M4.42 Historical Snapshot-Bound Freshness Receipt Lineage History
+
+### Readiness policy governance
+- Expose deterministic newest-first history for M4.41 lineage records with timestamp+UUID cursors and optional receipt/binding/snapshot filters.
+- Re-verify every selected lineage record against its M4.40 receipt and M4.37 historical binding before exposure.
+- Keep lineage-history access ministry-managed and read-only; no new production authority is introduced.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.41 Historical Snapshot-Bound Freshness Receipt Lineage
 
 ### Readiness policy governance
