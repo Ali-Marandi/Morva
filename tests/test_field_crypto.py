@@ -7,7 +7,11 @@ from morva.security.field_crypto import decrypt, encrypt
 
 
 def test_hkdf_v2_round_trip_uses_versioned_ciphertext() -> None:
-    token = encrypt("secret", key_material="managed-high-entropy-secret", key_version="2")
+    token = encrypt(
+        "secret",
+        key_material="managed-high-entropy-secret",
+        key_version="2",
+    )
     assert token.startswith("v2.")
     assert decrypt(token, key_material="managed-high-entropy-secret") == "secret"
 
@@ -26,5 +30,19 @@ def test_explicit_key_version_round_trip() -> None:
     first = encrypt("same", key_material="managed-high-entropy-secret", key_version="7")
     second = encrypt("same", key_material="managed-high-entropy-secret", key_version="7")
     assert first != second
-    assert decrypt(first, key_material="managed-high-entropy-secret", key_version="7") == "same"
-    assert decrypt(second, key_material="managed-high-entropy-secret", key_version="7") == "same"
+    assert (
+        decrypt(
+            first,
+            key_material="managed-high-entropy-secret",
+            key_version="7",
+        )
+        == "same"
+    )
+    assert (
+        decrypt(
+            second,
+            key_material="managed-high-entropy-secret",
+            key_version="7",
+        )
+        == "same"
+    )
