@@ -45,23 +45,11 @@ from morva.runtime.historical_freshness_chain_verifier_m4_43 import (
     HistoricalFreshnessChainVerificationError,
     verify_historical_freshness_chain,
 )
-from morva.persistence.scoped_evidence_readiness_m4_26 import (
-    ScopedEvidenceReadinessPersistenceError,
-    build_current_scoped_evidence_readiness,
-)
-from morva.runtime.persist_scope_bound_readiness_convergence_m4_27 import (
-    PersistScopeBoundReadinessConvergenceError,
-    persist_latest_scope_bound_readiness_convergence,
-)
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
 from morva.runtime.readiness_scope_binding_m4_25 import (
     ReadinessScopeBindingError,
     normalize_readiness_scope,
-)
-from morva.runtime.scope_bound_readiness_convergence_m4_26 import (
-    ScopeBoundReadinessConvergenceError,
-    build_scope_bound_readiness_convergence,
 )
 from morva.runtime.readiness_convergence_freshness_m4_28 import (
     ReadinessConvergenceFreshnessError,
@@ -163,6 +151,29 @@ def get_integration_execution_readiness(
         )
 
 
+
+
+def _normalize_candidate_sha_for_history(candidate_sha: str | None) -> str | None:
+    if candidate_sha is None:
+        return None
+    normalized = candidate_sha.strip().lower()
+    if len(normalized) != 40 or any(
+        char not in "0123456789abcdef" for char in normalized
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="candidate_sha must be a Git commit SHA-1",
+        )
+    return normalized
+
+
+def _normalize_history_timestamp(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at must be timezone-aware",
+        )
+    return value.astimezone(timezone.utc)
 
 
 def _resolve_scope_filter(
