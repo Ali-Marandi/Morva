@@ -154,3 +154,11 @@ def test_m4_44_openapi_routes_are_registered():
     assert history_path in paths
     assert "post" in paths[write_path]
     assert "get" in paths[history_path]
+
+    verify_path = (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/verification-receipts/{receipt_id}/verify"
+    )
+    assert verify_path in paths
+    assert "get" in paths[verify_path]
+
