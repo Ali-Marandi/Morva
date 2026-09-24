@@ -15,6 +15,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/m4-independent-historical-freshness-receipt-verification.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/runtime/independent_historical_freshness_chain_verification_receipt_verifier_m4_45.py"
       - "src/morva/runtime/historical_freshness_chain_verifier_m4_43.py"
       - "src/morva/persistence/historical_freshness_chain_verification_receipts_m4_44.py"
