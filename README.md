@@ -8,6 +8,7 @@
 - M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
 - M4.41 links each historical freshness receipt to its exact M4.37 receipt-to-snapshot binding with independent continuity verification.
 - M4.42 exposes deterministic, ministry-managed lineage history with timestamp+UUID cursors, exact receipt/binding/snapshot filters and per-record source re-verification.
+- M4.43 independently reconstructs the M4.36→M4.37→M4.40→M4.41 identity chain and returns deterministic verified/blocked status plus a chain fingerprint through a read-only API.
 - This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
