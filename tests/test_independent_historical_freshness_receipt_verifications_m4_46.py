@@ -49,7 +49,7 @@ def test_m4_46_is_cursor_paginated_and_reverified():
     engine, session = _session_m4_46()
     try:
         first_inputs = _chain_inputs(session)
-        second_inputs = _chain_inputs(session)
+        second_inputs = _chain_inputs(session, convergence_fingerprint="c" * 64)
         source_repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
         repository = IndependentHistoricalFreshnessReceiptVerificationRepository(session)
         first_source = source_repository.record(
