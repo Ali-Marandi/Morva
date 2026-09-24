@@ -12,7 +12,7 @@ ruff check .
 pytest -q
 python -m pip install pip-audit
 pip-audit
-./scripts/verify_local.sh
+bash scripts/verify_local.sh
 ```
 
 For the web application:
@@ -23,7 +23,7 @@ npm ci
 npm run build
 ```
 
-`./scripts/verify_local.sh` is the canonical one-command local reproduction of the release-hygiene checks and the core CI quality gates.
+`bash scripts/verify_local.sh` is the canonical one-command local reproduction of the release-hygiene checks and the core CI quality gates.
 
 ## Branch and pull-request convention
 
