@@ -1411,6 +1411,66 @@ def bind_historical_snapshot_freshness_receipt_lineage(
 
 
 @router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/receipt-lineage/history",
+    response_model=HistoricalSnapshotFreshnessReceiptLineageHistoryResponse,
+)
+def list_historical_snapshot_freshness_receipt_lineage(
+    freshness_receipt_id: UUID | None = Query(default=None),
+    historical_binding_id: UUID | None = Query(default=None),
+    snapshot_id: UUID | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalSnapshotFreshnessReceiptLineageHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="historical freshness receipt lineage history is ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+
+    with SessionLocal() as session:
+        repository = HistoricalSnapshotFreshnessReceiptLineageRepository(session)
+        try:
+            records, has_more = repository.list(
+                freshness_receipt_id=freshness_receipt_id,
+                historical_binding_id=historical_binding_id,
+                snapshot_id=snapshot_id,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except HistoricalSnapshotFreshnessReceiptLineagePersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    items = [
+        HistoricalSnapshotFreshnessReceiptLineageResponse(
+            id=record.id,
+            lineage=record.to_lineage().to_payload(),
+            bound_by=record.bound_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    next_before_created_at = records[-1].created_at if has_more and records else None
+    next_before_id = records[-1].id if has_more and records else None
+    return HistoricalSnapshotFreshnessReceiptLineageHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=next_before_created_at,
+        next_before_id=next_before_id,
+    )
+
+
+@router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/{lineage_id}/verify",
     response_model=HistoricalSnapshotFreshnessReceiptLineageVerificationResponse,
