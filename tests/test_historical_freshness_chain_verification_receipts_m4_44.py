@@ -64,8 +64,8 @@ def test_m4_44_records_and_reverifies_deterministic_chain_receipt():
 def test_m4_44_history_is_cursor_paginated_and_reverified():
     engine, session = _session_m4_44()
     try:
-        first_inputs = _chain_inputs(session)
-        second_inputs = _chain_inputs(session)
+        first_inputs = _chain_inputs(session, convergence_fingerprint="b" * 64)
+        second_inputs = _chain_inputs(session, convergence_fingerprint="c" * 64)
         repository = HistoricalFreshnessChainVerificationReceiptRepository(session)
         first = repository.record(
             lineage_id=_lineage_id(session, first_inputs["freshness_receipt_id"]),

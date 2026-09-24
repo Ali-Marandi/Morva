@@ -25,10 +25,10 @@ from tests.test_historical_snapshot_freshness_receipt_lineage_m4_41 import (
 )
 
 
-def _chain_inputs(session):
+def _chain_inputs(session, *, convergence_fingerprint: str = "b" * 64):
     snapshot_record, binding_record, receipt_record = _source_records(
         session,
-        convergence_fingerprint="b" * 64,
+        convergence_fingerprint=convergence_fingerprint,
     )
     lineage_record = HistoricalSnapshotFreshnessReceiptLineageRepository(session).bind(
         freshness_receipt_id=receipt_record.id,
