@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import timezone
-
 from morva.persistence.historical_freshness_chain_verification_receipts_m4_44 import (
     HistoricalFreshnessChainVerificationReceiptRepository,
 )
