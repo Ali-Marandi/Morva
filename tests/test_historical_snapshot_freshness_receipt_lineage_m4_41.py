@@ -168,3 +168,4 @@ def test_m4_41_links_m4_40_receipt_to_m4_37_lineage_and_verifies():
         assert verified.to_lineage().fingerprint == lineage.to_lineage().fingerprint
         assert verified.snapshot_id == freshness_receipt.snapshot_id
     finally:
+        session.close()
