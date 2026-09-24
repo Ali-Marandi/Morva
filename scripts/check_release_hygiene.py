@@ -6,9 +6,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import tomllib
 from pathlib import Path
 from typing import Any
-import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,7 +70,8 @@ def release_event_assets() -> tuple[str, list[str]] | None:
     names = [
         item["name"]
         for item in assets
-        if isinstance(item, dict) and isinstance(item.get("name"), str)
+        if isinstance(item, dict)
+        and isinstance(item.get("name"), str)
     ]
     return tag_name, names
 
