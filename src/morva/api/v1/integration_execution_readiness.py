@@ -60,9 +60,11 @@ from morva.persistence.historical_freshness_verification_history_integrity_m4_47
 from morva.persistence.independent_historical_freshness_verification_history_integrity_receipts_m4_49 import (
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRepository,
+    IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord,
 )
 from morva.persistence.historical_independent_verification_receipt_history_integrity_m4_50 import (
     HistoricalIndependentVerificationReceiptHistoryIntegrityPersistenceError,
+    HistoricalIndependentVerificationReceiptHistoryIntegrityRecord,
     HistoricalIndependentVerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
@@ -86,6 +88,10 @@ from morva.runtime.independent_historical_freshness_chain_verification_receipt_v
 from morva.runtime.independent_historical_freshness_verification_history_integrity_verifier_m4_48 import (
     IndependentHistoricalFreshnessVerificationHistoryIntegrityError,
     independently_verify_historical_freshness_verification_history_integrity,
+)
+from morva.runtime.independent_historical_verification_receipt_history_integrity_verifier_m4_51 import (
+    IndependentHistoricalVerificationReceiptHistoryIntegrityError,
+    independently_verify_historical_independent_verification_receipt_history_integrity,
 )
 from morva.security.auth import Principal, get_current_principal
 from morva.security.policy import Scope, authorize
@@ -2444,6 +2450,10 @@ class HistoricalIndependentVerificationReceiptHistoryIntegrityHistoryResponse(Ba
     next_before_id: UUID | None = None
 
 
+class IndependentHistoricalVerificationReceiptHistoryIntegrityResponse(BaseModel):
+    verification: dict[str, object]
+
+
 @router.post(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/snapshots",
@@ -2916,3 +2926,64 @@ def verify_historical_independent_verification_receipt_history_integrity_snapsho
         captured_by=record.captured_by,
         created_at=record.created_at,
     )
+
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "verification-receipt-history-snapshots/{snapshot_id}/verify-independent",
+    response_model=IndependentHistoricalVerificationReceiptHistoryIntegrityResponse,
+)
+def independently_verify_historical_independent_verification_receipt_history_integrity_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalVerificationReceiptHistoryIntegrityResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        record = session.get(
+            HistoricalIndependentVerificationReceiptHistoryIntegrityRecord,
+            snapshot_id,
+        )
+        if record is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.50 receipt-history integrity snapshot not found",
+            )
+        source_repository = (
+            IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRepository(
+                session
+            )
+        )
+        source_query = (
+            select(
+                IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord
+            )
+            .where(
+                IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord.created_at
+                < record.created_at
+            )
+            .order_by(
+                IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord.created_at.asc(),
+                IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord.id.asc(),
+            )
+        )
+        source_records = list(session.scalars(source_query).all())
+        try:
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
+            verification = (
+                independently_verify_historical_independent_verification_receipt_history_integrity(
+                    snapshot=record,
+                    source_records=source_records,
+                )
+            )
+        except (
+            IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError,
+            IndependentHistoricalVerificationReceiptHistoryIntegrityError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return IndependentHistoricalVerificationReceiptHistoryIntegrityResponse(
+        verification=verification.to_payload(),
+    )
+
