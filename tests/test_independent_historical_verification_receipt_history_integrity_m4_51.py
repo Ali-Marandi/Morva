@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from hashlib import sha256
+import json
+
 import pytest
 
 from morva.persistence.historical_independent_verification_receipt_history_integrity_m4_50 import (
@@ -82,7 +85,7 @@ def test_m4_51_fails_closed_on_tampered_source_record():
         snapshot = HistoricalIndependentVerificationReceiptHistoryIntegrityRepository(
             session
         ).capture(captured_by="ministry")
-        receipt.blockers_json = '["TAMPERED"]'
+        receipt.blockers_json = '[\"TAMPERED\"]'
         session.flush()
         source_records = list(
             session.query(
@@ -110,21 +113,37 @@ def test_m4_51_emits_deterministic_blocker_for_snapshot_mismatch():
             session
         ).capture(captured_by="ministry")
         snapshot.history_fingerprint = "f" * 64
-        snapshot.fingerprint = "0" * 64
+        snapshot.fingerprint = sha256(
+            json.dumps(
+                {
+                    "integrity_version": 1,
+                    "record_count": snapshot.record_count,
+                    "valid_count": snapshot.valid_count,
+                    "history_fingerprint": snapshot.history_fingerprint,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
         session.flush()
         source_records = list(
             session.query(
                 IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord
             ).all()
         )
-        with pytest.raises(
-            IndependentHistoricalVerificationReceiptHistoryIntegrityError,
-            match="history integrity fingerprint mismatch",
-        ):
+        verification = (
             independently_verify_historical_independent_verification_receipt_history_integrity(
                 snapshot=snapshot,
                 source_records=source_records,
             )
+        )
+        assert verification.valid is False
+        assert verification.blockers == (
+            "M450_HISTORY_FINGERPRINT_MISMATCH",
+            "M450_INTEGRITY_FINGERPRINT_MISMATCH",
+        )
+        assert verification.verification_fingerprint
     finally:
         session.close()
         engine.dispose()
