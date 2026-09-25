@@ -69,10 +69,12 @@ from morva.persistence.historical_independent_verification_receipt_history_integ
 )
 from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
     IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptPersistenceError,
+    IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord,
     IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.historical_m4_52_verification_receipt_history_integrity_m4_53 import (
     HistoricalM452VerificationReceiptHistoryIntegrityPersistenceError,
+    HistoricalM452VerificationReceiptHistoryIntegrityRecord,
     HistoricalM452VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.runtime.independent_historical_m4_53_receipt_history_verifier_m4_54 import (
