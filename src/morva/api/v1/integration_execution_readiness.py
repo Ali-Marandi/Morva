@@ -2978,7 +2978,10 @@ def independently_verify_historical_independent_verification_receipt_history_int
                     source_records=source_records,
                 )
             )
-        except IndependentHistoricalVerificationReceiptHistoryIntegrityError as exc:
+        except (
+            IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError,
+            IndependentHistoricalVerificationReceiptHistoryIntegrityError,
+        ) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
     return IndependentHistoricalVerificationReceiptHistoryIntegrityResponse(
         verification=verification.to_payload(),
