@@ -16,9 +16,13 @@ M4.50 adds append-only point-in-time integrity snapshots over the complete M4.49
 
 M4.51 adds an independent verifier for M4.50 receipt-history integrity snapshots. It reconstructs the point-in-time M4.49 receipt history separately from the M4.50 aggregate builder, revalidates source receipts, compares deterministic count/fingerprint identities and emits blocker codes plus a verification fingerprint.
 
+## M4.52 implementation position
+
+M4.52 adds append-only persistence for the M4.51 independent verification result. Recording, history listing and direct verification re-validate the M4.50 snapshot, reconstruct the point-in-time M4.49 receipt history, re-verify every source receipt and preserve the deterministic M4.51 verification fingerprint. Receipt history is ministry-managed with timestamp+UUID cursor pagination and remains verification-only.
+
 ## Validation boundary
 
-M4.48 is governance/readiness metadata only. It introduces no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.52 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
