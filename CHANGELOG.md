@@ -1,3 +1,13 @@
+## Unreleased — M4.67 Independent M4.66 Receipt Verification
+
+### Readiness policy governance
+- Independently reconstruct the M4.65 verification result represented by each persisted M4.66 receipt.
+- Compare persisted snapshot and verification fingerprints with deterministic mismatch blockers and a verification fingerprint.
+- Revalidate the M4.64 snapshot and point-in-time M4.63 source verification history before independent reconstruction.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.66 M4.65 Verification Receipt Persistence
 
 ### Readiness policy governance
