@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
@@ -116,10 +116,6 @@ def test_m4_50_is_cursor_paginated():
 
         _persist_receipt(session, "b" * 64)
         second = repository.capture(captured_by="ministry")
-
-        first.created_at = first.created_at.replace(second=0)
-        second.created_at = first.created_at + timedelta(minutes=1)
-        session.flush()
 
         page, has_more = repository.list(limit=1)
         assert has_more is True
