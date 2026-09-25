@@ -4,6 +4,10 @@
 
 M4.48 extends the historical freshness verification chain with an independent verifier for M4.47 history-integrity snapshots. The verifier reconstructs the point-in-time M4.46 verification history separately from the M4.47 aggregate builder and compares the persisted history fingerprint, record counts, valid counts, chain-valid counts and aggregate integrity fingerprint.
 
+## M4.49 implementation position
+
+M4.49 adds append-only persistence for the independent M4.48 history-integrity verifier. Persistence is derived from the same point-in-time M4.46 reconstruction used by M4.48 and is re-verified on record creation, history listing and direct verification.
+
 ## Validation boundary
 
 M4.48 is governance/readiness metadata only. It introduces no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
