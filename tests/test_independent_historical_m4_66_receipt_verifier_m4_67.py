@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hashlib import sha256
+import json
 from uuid import uuid4
 
 import pytest
@@ -85,6 +87,23 @@ def test_m4_67_emits_deterministic_receipt_mismatch():
             session
         ).record(snapshot_id=snapshot.id, recorded_by="ministry")
         receipt.snapshot_id = uuid4()
+        receipt.verification_fingerprint = sha256(
+            json.dumps(
+                {
+                    "verification_version": 1,
+                    "receipt_id": str(receipt.snapshot_id),
+                    "persisted_snapshot_id": str(receipt.snapshot_id),
+                    "reconstructed_snapshot_id": str(receipt.snapshot_id),
+                    "persisted_verification_fingerprint": receipt.to_verification().verification_fingerprint,
+                    "reconstructed_verification_fingerprint": receipt.to_verification().verification_fingerprint,
+                    "valid": receipt.valid,
+                    "blockers": list(receipt.to_verification().blockers),
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
         session.flush()
         source_records = list(
             session.query(
@@ -99,6 +118,7 @@ def test_m4_67_emits_deterministic_receipt_mismatch():
         assert verification.valid is False
         assert verification.blockers == (
             "M466_SNAPSHOT_ID_MISMATCH",
+            "M466_VERIFICATION_FINGERPRINT_MISMATCH",
             "M466_VERIFICATION_RESULT_MISMATCH",
         )
         assert verification.verification_fingerprint
