@@ -4431,3 +4431,160 @@ def independently_verify_historical_m4_61_receipt_history_integrity_snapshot(
     return IndependentHistoricalM461ReceiptHistoryIntegrityResponse(
         verification=verification.to_payload(),
     )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-60-receipt-history-integrity-snapshots/{snapshot_id}/verification-receipts",
+    response_model=IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse,
+)
+def persist_independent_historical_m4_62_verification_receipt(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="M4.63 verification receipts are ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRepository(session)
+        )
+        try:
+            record = repository.record(
+                snapshot_id=snapshot_id,
+                recorded_by=principal.user_id,
+            )
+            verification = record.to_verification()
+            append_audit_event(
+                event_type=(
+                    "integration.readiness."
+                    "independent_historical_m4_61_receipt_history_integrity."
+                    "receipt.recorded"
+                ),
+                entity_type="independent_m4_61_verification_receipt",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "snapshot_id": str(record.snapshot_id),
+                    "valid": record.valid,
+                    "verification_fingerprint": record.verification_fingerprint,
+                },
+                reason="M4.63 independent M4.62 verification receipt persisted",
+                session=session,
+            )
+            session.commit()
+        except (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptPersistenceError
+        ) as exc:
+            session.rollback()
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse(
+        id=record.id,
+        snapshot_id=record.snapshot_id,
+        verification=verification.to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-60-receipt-history-integrity-snapshots/verification-history",
+    response_model=IndependentHistoricalM461ReceiptHistoryIntegrityReceiptHistoryResponse,
+)
+def list_independent_historical_m4_62_verification_receipts(
+    snapshot_id: UUID | None = Query(default=None),
+    valid: bool | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM461ReceiptHistoryIntegrityReceiptHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="M4.63 verification receipts are ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+    with SessionLocal() as session:
+        repository = (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRepository(session)
+        )
+        try:
+            records, has_more = repository.list(
+                snapshot_id=snapshot_id,
+                valid=valid,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptPersistenceError
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse(
+            id=record.id,
+            snapshot_id=record.snapshot_id,
+            verification=record.to_verification().to_payload(),
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return IndependentHistoricalM461ReceiptHistoryIntegrityReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-60-receipt-history-integrity-snapshots/verification-receipts/"
+    "{verification_receipt_id}/verify",
+    response_model=IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse,
+)
+def verify_independent_historical_m4_62_verification_receipt(
+    verification_receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRepository(session)
+        )
+        try:
+            record = repository.verify(verification_receipt_id)
+        except (
+            IndependentHistoricalM461ReceiptHistoryIntegrityReceiptPersistenceError
+        ) as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse(
+        id=record.id,
+        snapshot_id=record.snapshot_id,
+        verification=record.to_verification().to_payload(),
+        recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
