@@ -17,7 +17,6 @@ from morva.persistence.independent_historical_m4_61_receipt_history_verification
     IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord,
 )
 from morva.persistence.independent_historical_m4_64_verification_receipts_m4_66 import (
-    IndependentHistoricalM464ReceiptHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalM464ReceiptHistoryIntegrityReceiptRecord,
 )
 
@@ -83,13 +82,6 @@ def persist_historical_m4_67_verification(
     source_records: list[IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord],
 ) -> IndependentHistoricalM466VerificationPersistenceReceipt:
     try:
-        persisted = receipt.to_verification()
-    except IndependentHistoricalM464ReceiptHistoryIntegrityReceiptPersistenceError as exc:
-        raise IndependentHistoricalM466VerificationPersistenceError(
-            "persisted M4.66 verification receipt is structurally invalid"
-        ) from exc
-
-    try:
         reconstructed = independently_verify_historical_m4_66_receipt(
             receipt=receipt,
             snapshot=snapshot,
@@ -100,58 +92,22 @@ def persist_historical_m4_67_verification(
             "M4.67 independent reconstruction failed"
         ) from exc
 
-    blockers: list[str] = []
-    if persisted.snapshot_id != reconstructed.reconstructed_snapshot_id:
-        blockers.append("M467_SNAPSHOT_ID_MISMATCH")
-    if (
-        persisted.verification_fingerprint.lower()
-        != reconstructed.reconstructed_verification_fingerprint.lower()
-    ):
-        blockers.append("M467_VERIFICATION_FINGERPRINT_MISMATCH")
-    if persisted != reconstructed_to_verification(reconstructed):
-        blockers.append("M467_VERIFICATION_RESULT_MISMATCH")
-
-    blocker_tuple = tuple(dict.fromkeys(blockers))
-    valid = not blocker_tuple
     return IndependentHistoricalM466VerificationPersistenceReceipt(
         verification_receipt_id=receipt.id,
         persisted_snapshot_id=reconstructed.persisted_snapshot_id,
         reconstructed_snapshot_id=reconstructed.reconstructed_snapshot_id,
-        persisted_verification_fingerprint=persisted.verification_fingerprint,
+        persisted_verification_fingerprint=reconstructed.persisted_verification_fingerprint,
         reconstructed_verification_fingerprint=reconstructed.reconstructed_verification_fingerprint,
-        valid=valid,
-        blockers=blocker_tuple,
+        valid=reconstructed.valid,
+        blockers=reconstructed.blockers,
         verification_fingerprint=_verification_fingerprint(
             verification_receipt_id=receipt.id,
             persisted_snapshot_id=reconstructed.persisted_snapshot_id,
             reconstructed_snapshot_id=reconstructed.reconstructed_snapshot_id,
-            persisted_verification_fingerprint=persisted.verification_fingerprint,
+            persisted_verification_fingerprint=reconstructed.persisted_verification_fingerprint,
             reconstructed_verification_fingerprint=reconstructed.reconstructed_verification_fingerprint,
-            valid=valid,
-            blockers=blocker_tuple,
-        ),
-    )
-
-
-def reconstructed_to_verification(
-    value: IndependentHistoricalM466ReceiptVerification,
-) -> IndependentHistoricalM466VerificationPersistenceReceipt:
-    return IndependentHistoricalM466VerificationPersistenceReceipt(
-        verification_receipt_id=value.receipt_id,
-        persisted_snapshot_id=value.persisted_snapshot_id,
-        reconstructed_snapshot_id=value.reconstructed_snapshot_id,
-        persisted_verification_fingerprint=value.persisted_verification_fingerprint,
-        reconstructed_verification_fingerprint=value.reconstructed_verification_fingerprint,
-        valid=value.valid,
-        blockers=value.blockers,
-        verification_fingerprint=_verification_fingerprint(
-            verification_receipt_id=value.receipt_id,
-            persisted_snapshot_id=value.persisted_snapshot_id,
-            reconstructed_snapshot_id=value.reconstructed_snapshot_id,
-            persisted_verification_fingerprint=value.persisted_verification_fingerprint,
-            reconstructed_verification_fingerprint=value.reconstructed_verification_fingerprint,
-            valid=value.valid,
-            blockers=value.blockers,
+            valid=reconstructed.valid,
+            blockers=reconstructed.blockers,
         ),
     )
 
