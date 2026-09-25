@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.61 captures point-in-time integrity snapshots over the complete M4.60 receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.62 independently verifies M4.61 point-in-time integrity snapshots over the complete M4.60 receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
