@@ -10,7 +10,7 @@ M4.48 is governance/readiness metadata only. It introduces no provider execution
 
 ## Verification posture
 
-The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. The cumulative repository checks remain the authoritative integration signal for the active PR.
+The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. The cumulative repository checks were also executed on the merged `main` head `af077c036fe7df2f0be496f4aa10751a0b2c658f`: 31/31 post-merge workflow runs completed successfully, with no failed or active runs at validation time. The repository therefore has a green post-merge integration baseline at that exact commit.
 
 ## External evidence still required
 
