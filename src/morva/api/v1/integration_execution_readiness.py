@@ -82,6 +82,11 @@ from morva.persistence.historical_m4_60_receipt_history_integrity_m4_61 import (
     HistoricalM460ReceiptHistoryIntegrityRecord,
     HistoricalM460ReceiptHistoryIntegrityRepository,
 )
+from morva.persistence.independent_historical_m4_61_receipt_history_verification_m4_63 import (
+    IndependentHistoricalM461ReceiptHistoryIntegrityReceiptPersistenceError,
+    IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord,
+    IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRepository,
+)
 from morva.runtime.independent_historical_m4_61_receipt_history_verifier_m4_62 import (
     IndependentHistoricalM461ReceiptHistoryIntegrityError,
     independently_verify_historical_m4_61_receipt_history_integrity,
@@ -2543,6 +2548,21 @@ class HistoricalM460ReceiptHistoryIntegritySnapshotResponse(BaseModel):
 
 class HistoricalM460ReceiptHistoryIntegrityHistoryResponse(BaseModel):
     items: list[HistoricalM460ReceiptHistoryIntegritySnapshotResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
+
+class IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse(BaseModel):
+    id: UUID
+    snapshot_id: UUID
+    verification: dict[str, object]
+    recorded_by: str
+    created_at: datetime
+
+
+class IndependentHistoricalM461ReceiptHistoryIntegrityReceiptHistoryResponse(BaseModel):
+    items: list[IndependentHistoricalM461ReceiptHistoryIntegrityReceiptResponse]
     has_more: bool
     next_before_created_at: datetime | None = None
     next_before_id: UUID | None = None
