@@ -56,7 +56,7 @@
 
 | 44 | Independent Release Lineage Verification | **M3.71 independently reconstructs the M3.70 production lineage manifest from its underlying readiness, certification, external-evidence and policy sources and emits a write-once verification receipt; no production action is performed** |
 
-## Canonical payroll lifecycle
+| 45 | Independent Historical Verification Receipts | **M4.49 persists M4.48 independent history-integrity verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history and direct re-verification; no production authority is introduced** |\n\n## Canonical payroll lifecycle
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
 

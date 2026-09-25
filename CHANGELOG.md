@@ -1,3 +1,13 @@
+## Unreleased — M4.49 Independent Historical Verification History Integrity Receipts
+
+### Readiness policy governance
+- Persist independent M4.48 history-integrity verification results as append-only, fingerprint-idempotent receipts.
+- Reconstruct and re-verify the point-in-time M4.46 source history whenever a receipt is recorded, listed or directly verified.
+- Expose ministry-managed cursor history with deterministic validity filtering.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.48 Independent Historical Verification History Integrity
 
 ### Readiness policy governance
