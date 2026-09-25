@@ -1,3 +1,12 @@
+## Unreleased — M4.50 Historical Independent Verification Receipt History Integrity
+
+### Readiness policy governance
+- Persist point-in-time integrity snapshots over the complete M4.49 independent verification receipt history.
+- Re-verify every source receipt before capture, listing and direct snapshot verification; preserve ministry-managed cursor history.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.49 Independent Historical Verification History Integrity Receipts
 
 ### Readiness policy governance
