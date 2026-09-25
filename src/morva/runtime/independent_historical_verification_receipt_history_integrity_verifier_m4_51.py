@@ -13,7 +13,6 @@ from morva.persistence.historical_independent_verification_receipt_history_integ
 from morva.persistence.independent_historical_freshness_verification_history_integrity_receipts_m4_49 import (
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord,
-    IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRepository,
 )
 
 
