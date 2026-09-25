@@ -6,9 +6,7 @@ import json
 from uuid import UUID
 
 from morva.persistence.historical_m4_57_verification_receipt_history_integrity_m4_58 import (
-    HistoricalM457VerificationReceiptHistoryIntegrityPersistenceError,
     HistoricalM457VerificationReceiptHistoryIntegrityRecord,
-    HistoricalM457VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_56_receipt_verification_persistence_m4_57 import (
     IndependentHistoricalM455ReceiptVerificationPersistenceError,
@@ -86,18 +84,17 @@ def independently_verify_historical_m4_60_result(
             "persisted M4.60 verification receipt is structurally invalid"
         ) from exc
 
-    try:
-        from morva.runtime.independent_historical_m4_58_receipt_history_verifier_m4_59 import (
-            independently_verify_historical_m4_58_receipt_history_integrity,
-        )
+    from morva.runtime.independent_historical_m4_58_receipt_history_verifier_m4_59 import (
+        IndependentHistoricalM458ReceiptHistoryIntegrityError,
+        independently_verify_historical_m4_58_receipt_history_integrity,
+    )
 
+    try:
         reconstructed = independently_verify_historical_m4_58_receipt_history_integrity(
             snapshot=snapshot,
             source_records=source_records,
         )
-    except Exception as exc:
-        if isinstance(exc, IndependentHistoricalM460VerificationError):
-            raise
+    except IndependentHistoricalM458ReceiptHistoryIntegrityError as exc:
         raise IndependentHistoricalM460VerificationError(
             "M4.59 independent reconstruction failed"
         ) from exc
