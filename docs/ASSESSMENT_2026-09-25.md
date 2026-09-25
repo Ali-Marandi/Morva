@@ -20,13 +20,17 @@ M4.51 adds an independent verifier for M4.50 receipt-history integrity snapshots
 
 M4.52 adds append-only persistence for the M4.51 independent verification result. Recording, history listing and direct verification re-validate the M4.50 snapshot, reconstruct the point-in-time M4.49 receipt history, re-verify every source receipt and preserve the deterministic M4.51 verification fingerprint. Receipt history is ministry-managed with timestamp+UUID cursor pagination and remains verification-only.
 
+## M4.53 implementation position
+
+M4.53 adds append-only point-in-time integrity snapshots over the persisted M4.52 independent verification receipt history. Capture validates every source receipt before building a deterministic aggregate identity; later history listing and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify each source before comparing history and aggregate fingerprints.
+
 ## Validation boundary
 
 M4.48–M4.52 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
-The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. M4.49 adds persisted independent verification receipts, and M4.50 adds point-in-time receipt-history integrity snapshots with the same fail-closed source-reverification boundary. The cumulative repository checks were also executed on the merged `main` head `af077c036fe7df2f0be496f4aa10751a0b2c658f`: 31/31 post-merge workflow runs completed successfully, with no failed or active runs at validation time. The repository therefore has a green post-merge integration baseline at that exact commit.
+The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. M4.49 adds persisted independent verification receipts, and M4.50 adds point-in-time receipt-history integrity snapshots with the same fail-closed source-reverification boundary. The cumulative repository checks for the M4.52 merge were completed successfully on its pre-merge head `ed471506e4d812fbe27538b1cc4af46b6a9728a5`: 58/58 workflow runs completed successfully with no failed or active runs before merge. Post-merge main workflows are tracked separately.
 
 ## External evidence still required
 
