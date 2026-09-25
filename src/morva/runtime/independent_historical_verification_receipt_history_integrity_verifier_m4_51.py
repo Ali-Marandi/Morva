@@ -121,7 +121,9 @@ def independently_verify_historical_independent_verification_receipt_history_int
     for record in ordered:
         try:
             verification = record.to_verification()
-        except IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError as exc:
+        except (
+            IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError
+        ) as exc:
             raise IndependentHistoricalVerificationReceiptHistoryIntegrityError(
                 "M4.49 source receipt-history record is structurally invalid"
             ) from exc
@@ -134,7 +136,9 @@ def independently_verify_historical_independent_verification_receipt_history_int
                 "persisted_fingerprint": verification.persisted_fingerprint.lower(),
                 "reconstructed_fingerprint": verification.reconstructed_fingerprint.lower(),
                 "persisted_history_fingerprint": verification.persisted_history_fingerprint.lower(),
-                "reconstructed_history_fingerprint": verification.reconstructed_history_fingerprint.lower(),
+                "reconstructed_history_fingerprint": (
+                    verification.reconstructed_history_fingerprint.lower()
+                ),
                 "persisted_record_count": verification.persisted_record_count,
                 "reconstructed_record_count": verification.reconstructed_record_count,
                 "persisted_valid_count": verification.persisted_valid_count,
