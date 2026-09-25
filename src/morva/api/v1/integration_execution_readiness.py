@@ -106,7 +106,7 @@ from morva.runtime.independent_historical_m4_64_receipt_history_verifier_m4_65 i
 )
 from morva.runtime.independent_historical_m4_66_receipt_verifier_m4_67 import (
     IndependentHistoricalM466ReceiptVerificationError,
-    independently_verify_historical_m4_66_receipt,
+    independently_verify_historical_m4_66_receipt as verify_m4_66_receipt_independently,
 )
 from morva.persistence.independent_historical_m4_64_verification_receipts_m4_66 import (
     IndependentHistoricalM464ReceiptHistoryIntegrityReceiptPersistenceError,
@@ -5047,7 +5047,7 @@ def independently_verify_historical_m4_66_receipt(
             )
             for source_record in source_records:
                 source_repository.verify(source_record.id)
-            verification = independently_verify_historical_m4_66_receipt(
+            verification = verify_m4_66_receipt_independently(
                 receipt=receipt,
                 snapshot=snapshot,
                 source_records=source_records,
