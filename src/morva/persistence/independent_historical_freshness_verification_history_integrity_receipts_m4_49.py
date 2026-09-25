@@ -33,9 +33,7 @@ class IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersisten
 class IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord(Base):
     """Append-only persisted result of independent M4.48 verification."""
 
-    __tablename__ = (
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49"
-    )
+    __tablename__ = "independent_historical_verification_receipts_m4_49"
     __table_args__ = (
         Index("ix_m4_49_verification_snapshot_id", "snapshot_id"),
         Index("ix_m4_49_verification_valid", "valid"),
