@@ -60,6 +60,10 @@ M4.61 adds append-only point-in-time integrity snapshots over the persisted M4.6
 
 M4.62 adds an independent verifier for M4.61 point-in-time receipt-history integrity snapshots. It separately reconstructs the point-in-time M4.60 verification-receipt history, revalidates source receipts, compares deterministic count/fingerprint identities and emits blocker codes plus a verification fingerprint.
 
+## M4.63 implementation position
+
+M4.63 adds append-only persistence for the M4.62 independent verification result. Recording, history listing and direct verification re-validate the M4.61 snapshot, reconstruct the point-in-time M4.60 receipt history, re-verify every source receipt and preserve the deterministic M4.62 verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.62 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
