@@ -167,7 +167,10 @@ def independently_verify_historical_independent_verification_receipt_history_int
     blockers: list[str] = []
     if persisted.integrity_version != 1:
         blockers.append("M450_INTEGRITY_VERSION_MISMATCH")
-    if persisted.history_fingerprint.lower() != reconstructed_history_fingerprint:
+    if (
+        persisted.history_fingerprint.lower()
+        != reconstructed_history_fingerprint
+    ):
         blockers.append("M450_HISTORY_FINGERPRINT_MISMATCH")
     if persisted.record_count != reconstructed_record_count:
         blockers.append("M450_RECORD_COUNT_MISMATCH")
