@@ -86,18 +86,23 @@ def test_m4_67_emits_deterministic_receipt_mismatch():
         receipt = IndependentHistoricalM464ReceiptHistoryIntegrityReceiptRepository(
             session
         ).record(snapshot_id=snapshot.id, recorded_by="ministry")
+        verification = receipt.to_verification()
         receipt.snapshot_id = uuid4()
         receipt.verification_fingerprint = sha256(
             json.dumps(
                 {
                     "verification_version": 1,
-                    "receipt_id": str(receipt.snapshot_id),
-                    "persisted_snapshot_id": str(receipt.snapshot_id),
-                    "reconstructed_snapshot_id": str(receipt.snapshot_id),
-                    "persisted_verification_fingerprint": receipt.to_verification().verification_fingerprint,
-                    "reconstructed_verification_fingerprint": receipt.to_verification().verification_fingerprint,
-                    "valid": receipt.valid,
-                    "blockers": list(receipt.to_verification().blockers),
+                    "snapshot_id": str(receipt.snapshot_id),
+                    "persisted_fingerprint": verification.persisted_fingerprint,
+                    "reconstructed_fingerprint": verification.reconstructed_fingerprint,
+                    "persisted_history_fingerprint": verification.persisted_history_fingerprint,
+                    "reconstructed_history_fingerprint": verification.reconstructed_history_fingerprint,
+                    "persisted_record_count": verification.persisted_record_count,
+                    "reconstructed_record_count": verification.reconstructed_record_count,
+                    "persisted_valid_count": verification.persisted_valid_count,
+                    "reconstructed_valid_count": verification.reconstructed_valid_count,
+                    "valid": verification.valid,
+                    "blockers": list(verification.blockers),
                 },
                 ensure_ascii=True,
                 sort_keys=True,
