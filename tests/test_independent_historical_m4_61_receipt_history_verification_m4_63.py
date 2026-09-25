@@ -7,9 +7,6 @@ import pytest
 from morva.persistence.historical_m4_60_receipt_history_integrity_m4_61 import (
     HistoricalM460ReceiptHistoryIntegrityRepository,
 )
-from morva.persistence.independent_historical_m4_58_receipt_history_verification_m4_60 import (
-    IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRepository,
-)
 from morva.persistence.independent_historical_m4_61_receipt_history_verification_m4_63 import (
     IndependentHistoricalM461ReceiptHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord,
