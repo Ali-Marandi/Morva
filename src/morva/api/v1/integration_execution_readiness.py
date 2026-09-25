@@ -79,7 +79,6 @@ from morva.persistence.historical_m4_52_verification_receipt_history_integrity_m
 )
 from morva.persistence.historical_m4_60_receipt_history_integrity_m4_61 import (
     HistoricalM460ReceiptHistoryIntegrityPersistenceError,
-    HistoricalM460ReceiptHistoryIntegrityRecord,
     HistoricalM460ReceiptHistoryIntegrityRepository,
 )
 from morva.runtime.independent_historical_m4_53_receipt_history_verifier_m4_54 import (
