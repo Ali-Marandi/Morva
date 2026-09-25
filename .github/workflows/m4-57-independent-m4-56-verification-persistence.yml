@@ -1,0 +1,64 @@
+name: M4.57 Independent M4.56 Verification Persistence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-57-independent-m4-56-verification-persistence.yml"
+      - "alembic/versions/0042_independent_m4_54_verification_receipts_m4_57.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_m4_53_receipt_history_verification_m4_55.py"
+      - "src/morva/persistence/independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+      - "src/morva/runtime/independent_historical_m4_55_receipt_verifier_m4_56.py"
+      - "src/morva/runtime/independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+      - "tests/test_independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-57-independent-m4-56-verification-persistence.yml"
+      - "alembic/versions/0042_independent_m4_54_verification_receipts_m4_57.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_m4_53_receipt_history_verification_m4_55.py"
+      - "src/morva/persistence/independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+      - "src/morva/runtime/independent_historical_m4_55_receipt_verifier_m4_56.py"
+      - "src/morva/runtime/independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+      - "tests/test_independent_historical_m4_56_receipt_verification_persistence_m4_57.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.57-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  independent-m4-56-verification-persistence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/persistence/independent_historical_m4_56_receipt_verification_persistence_m4_57.py
+          src/morva/runtime/independent_historical_m4_56_receipt_verification_persistence_m4_57.py
+          tests/test_independent_historical_m4_56_receipt_verification_persistence_m4_57.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_independent_historical_m4_56_receipt_verification_persistence_m4_57.py
+          tests/test_independent_historical_m4_55_receipt_verifier_m4_56.py
+          tests/test_independent_historical_m4_53_receipt_history_verification_m4_55.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_57.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.57 persists M4.56 independent receipt verification results with source re-verification and fingerprint idempotency." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "${GITHUB_STEP_SUMMARY}"
