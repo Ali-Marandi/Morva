@@ -116,7 +116,7 @@ def test_m4_55_fails_closed_on_tampered_m4_52_source_receipt():
         session.flush()
         with pytest.raises(
             IndependentHistoricalM453ReceiptHistoryIntegrityReceiptPersistenceError,
-            match="M4.54 independent reconstruction failed",
+            match="M4.53 source snapshot failed verification",
         ):
             repository.verify(record.id)
     finally:
