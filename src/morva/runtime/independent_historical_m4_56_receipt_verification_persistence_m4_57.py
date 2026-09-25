@@ -80,7 +80,7 @@ def _verification_fingerprint(*,
 ) -> str:
     payload = {
         "verification_version": 1,
-        "verification_receipt_id": str(verification_receipt_id),
+        "receipt_id": str(verification_receipt_id),
         "persisted_snapshot_id": str(persisted_snapshot_id),
         "reconstructed_snapshot_id": str(reconstructed_snapshot_id),
         "persisted_verification_fingerprint": persisted_verification_fingerprint.lower(),
