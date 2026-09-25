@@ -60,9 +60,11 @@ from morva.persistence.historical_freshness_verification_history_integrity_m4_47
 from morva.persistence.independent_historical_freshness_verification_history_integrity_receipts_m4_49 import (
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRepository,
+    IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord,
 )
 from morva.persistence.historical_independent_verification_receipt_history_integrity_m4_50 import (
     HistoricalIndependentVerificationReceiptHistoryIntegrityPersistenceError,
+    HistoricalIndependentVerificationReceiptHistoryIntegrityRecord,
     HistoricalIndependentVerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
