@@ -64,6 +64,7 @@
 - M4.56 independent re-verification of persisted M4.55 receipts by reconstructing M4.54 from M4.53 and point-in-time M4.52 evidence with deterministic blocker codes and verification fingerprint
 - M4.57 append-only, fingerprint-idempotent persistence of M4.56 receipt-verification results with M4.55 source re-verification and M4.53/M4.52 source re-verification
 - M4.58 point-in-time integrity snapshots over the complete M4.57 receipt history with deterministic fingerprinting, cursor history and source re-verification
+- M4.59 independent re-verification of M4.58 snapshots against a separately reconstructed point-in-time M4.57 receipt history with deterministic blocker codes and verification fingerprint
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.58 point-in-time integrity snapshots over the M4.57 receipt history.
