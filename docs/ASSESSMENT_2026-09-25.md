@@ -8,13 +8,17 @@ M4.48 extends the historical freshness verification chain with an independent ve
 
 M4.49 adds append-only persistence for the independent M4.48 history-integrity verifier. Persistence is derived from the same point-in-time M4.46 reconstruction used by M4.48 and is re-verified on record creation, history listing and direct verification.
 
+## M4.50 implementation position
+
+M4.50 adds append-only point-in-time integrity snapshots over the complete M4.49 independent verification receipt history. Capture verifies every source receipt first; later history listing and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify those source receipts before comparing deterministic history and aggregate fingerprints.
+
 ## Validation boundary
 
 M4.48 is governance/readiness metadata only. It introduces no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
-The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. The cumulative repository checks were also executed on the merged `main` head `af077c036fe7df2f0be496f4aa10751a0b2c658f`: 31/31 post-merge workflow runs completed successfully, with no failed or active runs at validation time. The repository therefore has a green post-merge integration baseline at that exact commit.
+The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. M4.49 adds persisted independent verification receipts, and M4.50 adds point-in-time receipt-history integrity snapshots with the same fail-closed source-reverification boundary. The cumulative repository checks were also executed on the merged `main` head `af077c036fe7df2f0be496f4aa10751a0b2c658f`: 31/31 post-merge workflow runs completed successfully, with no failed or active runs at validation time. The repository therefore has a green post-merge integration baseline at that exact commit.
 
 ## External evidence still required
 

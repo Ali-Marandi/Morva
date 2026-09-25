@@ -1,0 +1,65 @@
+name: M4.50 Historical Independent Verification Receipt History Integrity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-50-historical-independent-verification-receipt-history-integrity.yml"
+      - "alembic/versions/0037_independent_historical_freshness_verification_history_integrity_receipts.py"
+      - "alembic/versions/0038_historical_independent_verification_receipt_history_integrity.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_freshness_verification_history_integrity_receipts_m4_49.py"
+      - "src/morva/persistence/historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "src/morva/runtime/historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "tests/test_historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "tests/test_independent_historical_freshness_verification_history_integrity_receipts_m4_49.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-50-historical-independent-verification-receipt-history-integrity.yml"
+      - "alembic/versions/0037_independent_historical_freshness_verification_history_integrity_receipts.py"
+      - "alembic/versions/0038_historical_independent_verification_receipt_history_integrity.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_freshness_verification_history_integrity_receipts_m4_49.py"
+      - "src/morva/persistence/historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "src/morva/runtime/historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "tests/test_historical_independent_verification_receipt_history_integrity_m4_50.py"
+      - "tests/test_independent_historical_freshness_verification_history_integrity_receipts_m4_49.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  historical-receipt-history-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/persistence/historical_independent_verification_receipt_history_integrity_m4_50.py
+          src/morva/runtime/historical_independent_verification_receipt_history_integrity_m4_50.py
+          tests/test_historical_independent_verification_receipt_history_integrity_m4_50.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_historical_independent_verification_receipt_history_integrity_m4_50.py
+          tests/test_independent_historical_freshness_verification_history_integrity_receipts_m4_49.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_50.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.50 snapshots and re-verifies the complete point-in-time M4.49 independent verification receipt history." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "${GITHUB_STEP_SUMMARY}"
