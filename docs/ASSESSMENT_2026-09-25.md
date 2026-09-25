@@ -82,7 +82,7 @@ M4.67 adds independent receipt-level verification for persisted M4.66 results. I
 
 ## Validation boundary
 
-M4.48–M4.66 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.67 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
