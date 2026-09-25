@@ -66,7 +66,7 @@ M4.63 adds append-only persistence for the M4.62 independent verification result
 
 ## Validation boundary
 
-M4.48–M4.62 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.63 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
