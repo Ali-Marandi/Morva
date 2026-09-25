@@ -115,7 +115,6 @@ from morva.persistence.independent_historical_m4_64_verification_receipts_m4_66 
 )
 from morva.persistence.independent_historical_m4_67_verification_persistence_m4_68 import (
     IndependentHistoricalM466VerificationPersistenceReceiptPersistenceError,
-    IndependentHistoricalM466VerificationPersistenceReceiptRecord,
     IndependentHistoricalM466VerificationPersistenceReceiptRepository,
 )
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
