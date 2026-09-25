@@ -54,7 +54,7 @@ M4.60 adds append-only persistence for M4.59 independent receipt-history verific
 
 ## Validation boundary
 
-M4.48–M4.59 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.60 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
