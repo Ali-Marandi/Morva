@@ -1,3 +1,13 @@
+## Unreleased — M4.55 M4.54 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.54 independent verification results as append-only, fingerprint-idempotent receipts over M4.53 snapshots.
+- Re-verify the M4.53 source snapshot and every point-in-time M4.52 verification receipt before recording, listing or directly verifying a receipt.
+- Expose ministry-managed cursor history and direct receipt verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.54 Independent M4.53 Receipt-History Verification
 
 ### Readiness policy governance
