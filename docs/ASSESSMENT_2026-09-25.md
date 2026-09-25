@@ -80,6 +80,10 @@ M4.66 adds append-only persistence for the M4.65 independent verification result
 
 M4.67 adds independent receipt-level verification for persisted M4.66 results. It reconstructs the M4.65 result from the M4.64 point-in-time snapshot and M4.63 source history, compares persisted and reconstructed verification identities, and emits deterministic blocker codes plus a verification fingerprint.
 
+## M4.68 implementation position
+
+M4.68 adds append-only persistence for M4.67 independent receipt-level verification results. Recording, history listing and direct verification revalidate the M4.66 receipt, M4.64 snapshot and point-in-time M4.63 source verification history, then preserve the deterministic M4.67 verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.67 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
