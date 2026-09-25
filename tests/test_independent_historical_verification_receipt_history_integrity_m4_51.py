@@ -11,7 +11,6 @@ from morva.runtime.independent_historical_verification_receipt_history_integrity
 )
 from morva.persistence.independent_historical_freshness_verification_history_integrity_receipts_m4_49 import (
     IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRecord,
-    IndependentHistoricalFreshnessVerificationHistoryIntegrityReceiptRepository,
 )
 from tests.test_historical_independent_verification_receipt_history_integrity_m4_50 import (
     _persist_receipt,
