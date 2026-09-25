@@ -48,6 +48,10 @@ M4.58 adds append-only point-in-time integrity snapshots over the complete persi
 
 M4.59 adds an independent verifier for M4.58 point-in-time receipt-history integrity snapshots. It separately reconstructs the point-in-time M4.57 independent verification-receipt history, revalidates source receipts, compares deterministic count/fingerprint identities and emits blocker codes plus a verification fingerprint.
 
+## M4.60 implementation position
+
+M4.60 adds append-only persistence for M4.59 independent receipt-history verification results. Recording, history listing and direct verification revalidate the M4.58 snapshot and the point-in-time M4.57 verification-receipt history while preserving the deterministic M4.59 verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.59 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
