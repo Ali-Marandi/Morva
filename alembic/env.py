@@ -28,6 +28,8 @@ from morva.persistence import evidence_submission_records  # noqa: F401
 from morva.persistence import evidence_lifecycle_records  # noqa: F401
 from morva.persistence import evidence_role_binding_records  # noqa: F401
 from morva.persistence import integration_execution_readiness_records  # noqa: F401
+from morva.persistence import independent_historical_freshness_receipt_verifications_m4_46  # noqa: F401
+from morva.persistence import historical_freshness_verification_history_integrity_m4_47  # noqa: F401
 from morva.persistence import payment_exception_records  # noqa: F401
 
 config = context.config

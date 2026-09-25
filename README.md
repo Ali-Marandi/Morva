@@ -1,20 +1,37 @@
-# Morva Payroll Platform
+[![Lint](https://github.com/Ali-Marandi/Morva/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/Ali-Marandi/Morva/actions/workflows/lint.yml)
+[![Tests](https://github.com/Ali-Marandi/Morva/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Ali-Marandi/Morva/actions/workflows/tests.yml)
+[![Migrations](https://github.com/Ali-Marandi/Morva/actions/workflows/migrations.yml/badge.svg?branch=main)](https://github.com/Ali-Marandi/Morva/actions/workflows/migrations.yml)
+[![pip-audit](https://github.com/Ali-Marandi/Morva/actions/workflows/pip-audit.yml/badge.svg?branch=main)](https://github.com/Ali-Marandi/Morva/actions/workflows/pip-audit.yml)
+[![Web Build](https://github.com/Ali-Marandi/Morva/actions/workflows/web-build.yml/badge.svg?branch=main)](https://github.com/Ali-Marandi/Morva/actions/workflows/web-build.yml)
 
-سامانه جامع، قانون‌محور و قابل حسابرسی حقوق و دستمزد کارکنان آموزش‌وپرورش.
-
-> **Production safety:** Morva is an enterprise validation candidate, not a production-authorized payment system. Real payroll and payment release remain fail-closed until the legal, data, integration, security, reconciliation, DR and operational gates are formally evidenced.
-
-## Current status
-
-**Version:** `1.0.1`  
 **Default branch:** `main`  
 **Public repository:** `Ali-Marandi/Morva`  
-**Public web:** `https://ali-marandi.github.io/Morva/`
+**Public web:** `https://ali-marandi.github.io/Morva/`  
+**License:** MIT — contributions and forks are welcome for engineering, research, documentation and governance work within `CONTRIBUTING.md`.
 
-**Latest `main` activity (2026-09-23):**
-- Latest main commit: `5d10a8a` — `feat: add independent M4.20 readiness verifier (#101)`
-- Main includes the validated M4.1–M4.21 evidence/integration line. M4.22 adds append-only persistence for the independently verified readiness receipt and a read-only readiness API.
-- M4.22 does not rebuild M4.20; persisted receipts revalidate the M4.20 and M4.21 fingerprints on read. No external integration is executed and no production authority is implied.
+## What is real vs. governance scaffolding
+
+Morva has real persisted application paths today for:
+- canonical payroll lifecycle state transitions in `src/morva/payroll/lifecycle.py`;
+- effective-dated safe rule evaluation in `src/morva/rules/engine.py`;
+- Decimal-based payroll calculation in `src/morva/payroll/calculator.py`;
+- JWT/OIDC authentication and scoped authorization in `src/morva/security/auth.py` and `src/morva/security/policy.py`;
+- AES-GCM field encryption with versioned key derivation in `src/morva/security/field_crypto.py`.
+
+The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
+
+**Current development baseline (2026-09-24):**
+- M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
+- M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
+- M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
+- M4.41 links each historical freshness receipt to its exact M4.37 receipt-to-snapshot binding with independent continuity verification.
+- M4.42 exposes deterministic, ministry-managed lineage history with timestamp+UUID cursors, exact receipt/binding/snapshot filters and per-record source re-verification.
+- M4.43 independently reconstructs the M4.36→M4.37→M4.40→M4.41 identity chain and returns deterministic verified/blocked status plus a chain fingerprint through a read-only API.
+- M4.44 persists those chain-verification results as fingerprint-idempotent receipts, provides ministry-managed cursor history and a direct receipt re-verification API.
+- M4.45 independently compares persisted M4.44 receipt identity with a separately reconstructed historical chain and exposes a deterministic verification fingerprint.
+- M4.46 persists those independent-verification results as fingerprint-idempotent evidence with ministry-managed history and re-verification.
+- Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
+- This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
 
 **Latest Changes (v1.0.1):**
@@ -25,161 +42,3 @@
 - ✅ Canonical payroll lifecycle regression test aligned
 
 The current codebase contains the enterprise payroll foundation: persisted payroll artifacts and payslip lines, effective-dated personnel/master-data foundations, legal Rule Pack governance, hierarchical authorization, encrypted sensitive-field primitives, lifecycle audit, transactional Outbox/Inbox, payment-batch controls, reconciliation foundations, historical replay, PostgreSQL migrations, automated tests, CI/CD pipeline and **world-class web platform**.
-
-The authoritative execution chain is:
-
-```text
-Source
-  -> ImportBatch
-  -> MasterData
-  -> EffectivePersonnelSnapshot
-  -> ApprovedRulePack
-  -> PayrollRun
-  -> EmployeePayrollArtifact
-  -> PayslipLines
-  -> Validation
-  -> Review
-  -> Approval
-  -> Freeze
-  -> PaymentBatch
-  -> Outbox
-  -> ExternalReceipt
-  -> BankSettlement
-  -> Reconciliation
-  -> ImmutableAudit
-```
-
-## What is implemented
-
-| Area | Current state |
-|---|---|
-| Payroll lifecycle | Canonical persisted state machine with review/approval/freeze controls |
-| Payroll calculation | Decimal-safe engine with production trust boundary and persisted artifacts |
-| Employee snapshots | Immutable/provenance-aware snapshot boundary for authoritative execution |
-| Rule governance | Versioned Rule Packs, source evidence and activation controls |
-| Legal safety | Unapproved or unsupported legal rules remain non-active / fail-closed |
-| Personnel & organization | Effective-dated foundations plus hierarchical organization scope |
-| Payroll explanation | Persisted payslip line ordering and provenance for deterministic explanation/replay |
-| Retro / replay | Deterministic period and historical replay foundations |
-| Reconciliation | Earnings/deductions comparison, payment and bank reconciliation foundations |
-| Security | OIDC/JWT verification boundary, MFA gate, RBAC/ABAC primitives, sensitive-field crypto |
-| Audit | Persistent hash-linked lifecycle/audit records with tamper verification |
-| Integrations | Typed contracts, receipts, idempotency and transactional Outbox/Inbox |
-| Payment | Payment-batch gates and per-beneficiary payment-item foundations; external release remains fail-closed |
-| Database | PostgreSQL-first production model with Alembic migrations |
-| Quality | Python 3.12/3.13 CI, migrations, tests, linting and dependency audit |
-| Web | RTL-compatible React 18/TypeScript/Tailwind CSS web distribution with 14 components, 6 pages, 7 routes, production-optimized Vite build, deployed through GitHub Pages |
-
-The implementation matrix in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md) is the source of truth for capability-level status.
-
-## Official project roadmap
-
-The following roadmap is the canonical delivery sequence for taking Morva from the current enterprise validation candidate to controlled production readiness. Each stage is intended to be a reviewable, evidence-driven increment rather than a one-shot release.
-
-### Acceptance gates
-
-The final acceptance model is based on four gates:
-
-1. **Legal rules** — every active rule has a valid, reviewed `legal_source`; no unresolved `TODO: NEEDS-LEGAL-SOURCE` remains in the authoritative execution path.
-2. **Authoritative payroll samples** — every production rule set is verified against approved real-world payroll reference samples, line by line, for each applicable employee population.
-3. **External integrations** — every required adapter is contract-tested, failure-mode tested and exercised in an authorized staging/pilot environment.
-4. **Security, compliance and recovery** — independent security evidence, disaster-recovery evidence with documented RTO/RPO, and clean three-way reconciliation are complete.
-
-### Delivery sequence
-
-| Stage | Roadmap milestone | Target outcome |
-|---|---|---|
-| 1 | Rules engine + payroll calculation core | Validate the versioned Rule Pack model and calculation engine against the existing golden fixtures; preserve fail-closed legal behavior. |
-| 2 | Explainable payslip | Deliver line-item provenance with a user-facing **«این عدد از کجا آمد؟»** explanation path. |
-| 3 | Karmand Iran + national government SSO | Establish authoritative employment/personnel identity and government authentication integrations through isolated adapters. |
-| 4 | Two pension funds + comparison reporting | Complete the shared adapter/data model while keeping each fund's legal treatment isolated and auditable. |
-| 5 | Teacher ranking + retroactive arrears | Connect approved rank decisions to payroll with snapshot-driven retrospective recalculation and automatic arrears/adjustment artifacts. |
-| 6 | Treasury/payment + three-way reconciliation | Separate entitlement, treasury instruction and actual settlement; automatically flag every mismatch. |
-| 7 | Security hardening + disaster recovery + pilot | Complete production security controls, restore drills and an authorized regional/organizational pilot. |
-| 8 | Gradual province-by-province rollout | Expand under controlled operational monitoring, preserving the same evidence and acceptance gates for every deployment scope. |
-
-### Current execution focus
-
-The current implementation has established major software-side foundations through M3.90 and the M4.1–M4.22 evidence/integration line, including authoritative intake, closure assessment, controlled submission, registry projection, lifecycle lineage, persisted lifecycle operations, role bindings, deterministic readiness/remediation visibility, a verified M3.84/M3.85/M3.86 staging-or-pilot evidence bridge with independent reconstruction, an integration-execution readiness composition layer, an independent verifier for that readiness assessment, and append-only persistence plus a read-only readiness API. These controls do not constitute legal, organizational or production certification on their own.
-
-The current implementation has established major software-side foundations through the M3.17–M3.26 governance tranches, including master-data integrity, personnel-order approval provenance, 1405 evidence governance, identity-directory reconciliation, authoritative population attestation, population-scoped ledger governance and snapshot-bound replay certification. These controls improve integrity and provenance but do not constitute legal, organizational or production certification on their own.
-
-The next execution queue is now focused on authorized staging/pilot integration and completion of the still-pending real-world legal, payroll-sample, reconciliation, DR, load, security and production-certification evidence, while keeping `main` continuously green and all external execution boundaries fail-closed.
-
-> **Important:** The roadmap is a target sequence, not a claim that every stage is already completed. Morva must remain fail-closed for real payroll and real payment until the applicable evidence and approvals are complete.
-
-## Canonical payroll lifecycle
-
-```text
-draft
-  -> data_received
-  -> calculating
-  -> validating
-  -> reviewed
-  -> approved
-  -> frozen
-  -> exported
-  -> submitted
-  -> payment_confirmed
-  -> reconciled
-```
-
-`src/morva/payroll/lifecycle.py` is the canonical state-machine implementation. Compatibility workflow code must not bypass this lifecycle.
-
-Critical state changes carry actor/role context, organization scope, reason, correlation information and audit evidence. Segregation of duties prevents a creator from approving the same payroll run.
-
-## Authoritative calculation boundary
-
-Production calculation does **not** accept arbitrary caller-created payroll lines as authoritative input.
-
-The required sequence is:
-
-1. create a persisted `PayrollRun` for the Jalali payroll period and organization scope;
-2. admit approved source data through the import contract;
-3. establish the effective employee/personnel snapshot;
-4. prove the required Rule Pack is approved/published for the applicable scope and effective dates;
-5. calculate from server-owned persisted records;
-6. persist the employee-level artifact and ordered payslip lines;
-7. validate, review, approve, freeze and only then prepare external payment/export.
-
-The application remains fail-closed when any authoritative prerequisite is missing.
-
-## Legal and payroll-rule governance
-
-Morva deliberately does not infer legal rates, coefficients, thresholds or contribution treatment from fixtures, examples or model guesses.
-
-Every authoritative Rule must have, at minimum:
-
-- a primary legal/administrative source;
-- article/section reference where applicable;
-- effective dates and population scope;
-- review/approval evidence;
-- regression coverage before activation.
-
-Where the authoritative source is unavailable, the project uses the explicit marker:
-
-```text
-TODO: NEEDS-LEGAL-SOURCE
-```
-
-## Release posture
-
-`v1.0.1` is a security and CI patch release. It improves dependency hygiene and release reliability but does **not** authorize real payroll execution or payment release.
-
-The following production gates remain mandatory:
-
-- approved 1405 legal/rule pack;
-- authoritative payroll samples reconciled line-by-line for each employee population;
-- real non-production external integration tests;
-- independent security acceptance;
-- backup/restore and DR evidence;
-- three-way Morva/Treasury/bank reconciliation with no unresolved mismatches.
-
-See:
-
-- [`docs/PRODUCTION_READINESS.md`](docs/PRODUCTION_READINESS.md)
-- [`docs/RELEASE_1_0.md`](docs/RELEASE_1_0.md)
-- [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md)
-- [`docs/ROADMAP.md`](docs/ROADMAP.md)
-
-> **Security:** Never commit credentials, tokens, payroll records, national identifiers or bank data to Git.

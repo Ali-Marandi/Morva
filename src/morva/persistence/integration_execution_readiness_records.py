@@ -19,6 +19,12 @@ from morva.runtime.independent_integration_execution_readiness_verifier_m4_21 im
 from morva.runtime.integration_execution_readiness_assessment import (
     IntegrationExecutionReadinessAssessment,
 )
+from morva.runtime.readiness_scope_binding_m4_25 import (
+    ReadinessScopeBindingError,
+    normalize_readiness_scope,
+    readiness_scope_binding_fingerprint,
+    verify_readiness_scope_binding,
+)
 
 from .models import Base
 
@@ -39,6 +45,11 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
         Index(
             "ix_integ_readiness_binding_verification_fp",
             "binding_verification_fingerprint",
+        ),
+        Index(
+            "ix_integration_readiness_verification_scope_binding_fingerprint",
+            "scope_binding_fingerprint",
+            unique=True,
         ),
     )
 
@@ -68,9 +79,37 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
     verification_fingerprint: Mapped[str] = mapped_column(
         String(64), index=True
     )
+    organization_scope: Mapped[str] = mapped_column(
+        String(20), index=True
+    )
+    organization_scope_id: Mapped[str] = mapped_column(
+        String(100), index=True
+    )
+    scope_binding_fingerprint: Mapped[str] = mapped_column(
+        String(64), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+
+    def verify_scope_binding(self) -> None:
+        try:
+            scope, scope_id = normalize_readiness_scope(
+                self.organization_scope,
+                self.organization_scope_id,
+            )
+            if scope != self.organization_scope or scope_id != self.organization_scope_id:
+                raise ReadinessScopeBindingError(
+                    "persisted readiness organization scope is not normalized"
+                )
+            verify_readiness_scope_binding(
+                verification_fingerprint=self.verification_fingerprint,
+                organization_scope=scope,
+                organization_scope_id=scope_id,
+                scope_binding_fingerprint=self.scope_binding_fingerprint,
+            )
+        except ReadinessScopeBindingError as exc:
+            raise IntegrationExecutionReadinessPersistenceError(str(exc)) from exc
 
     def to_verification(self) -> IndependentIntegrationExecutionReadinessVerification:
         try:
@@ -97,6 +136,7 @@ class IntegrationExecutionReadinessVerificationRecord(Base):
                 raise IntegrationExecutionReadinessPersistenceError(
                     "persisted integration readiness verification fingerprint mismatch"
                 )
+            self.verify_scope_binding()
             if verification.assessment.checked_at > verification.verified_at:
                 raise IntegrationExecutionReadinessPersistenceError(
                     "persisted verification timestamp precedes assessment check time"
@@ -119,6 +159,9 @@ class IntegrationExecutionReadinessVerificationRepository:
     def record(
         self,
         verification: IndependentIntegrationExecutionReadinessVerification,
+        *,
+        organization_scope: str,
+        organization_scope_id: str,
     ) -> IntegrationExecutionReadinessVerificationRecord:
         if verification.assessment.repository != "Ali-Marandi/Morva":
             raise IntegrationExecutionReadinessPersistenceError(
@@ -126,6 +169,13 @@ class IntegrationExecutionReadinessVerificationRepository:
             )
 
         assessment = verification.assessment
+        try:
+            organization_scope, organization_scope_id = normalize_readiness_scope(
+                organization_scope,
+                organization_scope_id,
+            )
+        except ReadinessScopeBindingError as exc:
+            raise IntegrationExecutionReadinessPersistenceError(str(exc)) from exc
         assessment_checked_at = _ensure_timezone(
             assessment.checked_at, "assessment_checked_at"
         )
@@ -142,9 +192,26 @@ class IntegrationExecutionReadinessVerificationRepository:
                 == verification_fingerprint
             )
         )
+        scope_binding_fingerprint = readiness_scope_binding_fingerprint(
+            verification_fingerprint=verification_fingerprint,
+            organization_scope=organization_scope,
+            organization_scope_id=organization_scope_id,
+        )
         if existing is not None:
+            self._normalize_loaded_record(existing)
             try:
                 existing.to_verification()
+                if (
+                    existing.organization_scope != organization_scope
+                    or existing.organization_scope_id != organization_scope_id
+                ):
+                    raise IntegrationExecutionReadinessPersistenceError(
+                        "verification is already bound to a different organization scope"
+                    )
+                if existing.scope_binding_fingerprint != scope_binding_fingerprint:
+                    raise IntegrationExecutionReadinessPersistenceError(
+                        "existing readiness scope binding fingerprint mismatch"
+                    )
             except IntegrationExecutionReadinessPersistenceError:
                 raise
             return existing
@@ -163,9 +230,31 @@ class IntegrationExecutionReadinessVerificationRepository:
             blockers=list(assessment.blockers),
             assessment_fingerprint=assessment.fingerprint.lower(),
             verification_fingerprint=verification_fingerprint,
+            organization_scope=organization_scope,
+            organization_scope_id=organization_scope_id,
+            scope_binding_fingerprint=scope_binding_fingerprint,
         )
         self.session.add(record)
         self.session.flush()
+        return record
+
+
+
+
+    def _normalize_loaded_record(
+        self,
+        record: IntegrationExecutionReadinessVerificationRecord,
+    ) -> IntegrationExecutionReadinessVerificationRecord:
+        bind = self.session.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            for field_name in (
+                "assessment_checked_at",
+                "verified_at",
+                "created_at",
+            ):
+                value = getattr(record, field_name)
+                if value is not None and value.tzinfo is None:
+                    setattr(record, field_name, value.replace(tzinfo=timezone.utc))
         return record
 
     def latest(
@@ -174,7 +263,55 @@ class IntegrationExecutionReadinessVerificationRepository:
         repository: str = "Ali-Marandi/Morva",
         candidate_sha: str | None = None,
         target_environment: str | None = None,
+        organization_scope: str | None = None,
+        organization_scope_id: str | None = None,
     ) -> IntegrationExecutionReadinessVerificationRecord | None:
+        records = self.list_verified(
+            repository=repository,
+            candidate_sha=candidate_sha,
+            target_environment=target_environment,
+            organization_scope=organization_scope,
+            organization_scope_id=organization_scope_id,
+            limit=1,
+        )
+        return records[0] if records else None
+
+    def list_verified(
+        self,
+        *,
+        repository: str = "Ali-Marandi/Morva",
+        candidate_sha: str | None = None,
+        target_environment: str | None = None,
+        organization_scope: str | None = None,
+        organization_scope_id: str | None = None,
+        verified_before: datetime | None = None,
+        before_id: UUID | None = None,
+        limit: int = 100,
+    ) -> list[IntegrationExecutionReadinessVerificationRecord]:
+        if limit < 1 or limit > 101:
+            raise IntegrationExecutionReadinessPersistenceError(
+                "readiness history query limit must be between 1 and 101"
+            )
+        if (organization_scope is None) != (organization_scope_id is None):
+            raise IntegrationExecutionReadinessPersistenceError(
+                "organization_scope and organization_scope_id must be supplied together"
+            )
+        if organization_scope is not None and organization_scope_id is not None:
+            try:
+                organization_scope, organization_scope_id = normalize_readiness_scope(
+                    organization_scope,
+                    organization_scope_id,
+                )
+            except ReadinessScopeBindingError as exc:
+                raise IntegrationExecutionReadinessPersistenceError(str(exc)) from exc
+
+        if (verified_before is None) != (before_id is None):
+            raise IntegrationExecutionReadinessPersistenceError(
+                "verified_before and before_id must be supplied together"
+            )
+        if verified_before is not None:
+            verified_before = _ensure_timezone(verified_before, "verified_before")
+
         query = select(IntegrationExecutionReadinessVerificationRecord).where(
             IntegrationExecutionReadinessVerificationRecord.repository == repository
         )
@@ -188,14 +325,40 @@ class IntegrationExecutionReadinessVerificationRepository:
                 IntegrationExecutionReadinessVerificationRecord.target_environment
                 == target_environment
             )
-        record = self.session.scalar(
+        if organization_scope is not None and organization_scope_id is not None:
+            query = query.where(
+                IntegrationExecutionReadinessVerificationRecord.organization_scope
+                == organization_scope,
+                IntegrationExecutionReadinessVerificationRecord.organization_scope_id
+                == organization_scope_id,
+            )
+        if verified_before is not None and before_id is not None:
+            query = query.where(
+                (
+                    IntegrationExecutionReadinessVerificationRecord.verified_at
+                    < verified_before
+                )
+                | (
+                    (
+                        IntegrationExecutionReadinessVerificationRecord.verified_at
+                        == verified_before
+                    )
+                    & (
+                        IntegrationExecutionReadinessVerificationRecord.id
+                        < before_id
+                    )
+                )
+            )
+
+        records = self.session.scalars(
             query.order_by(
                 IntegrationExecutionReadinessVerificationRecord.verified_at.desc(),
                 IntegrationExecutionReadinessVerificationRecord.id.desc(),
-            ).limit(1)
-        )
-        if record is not None:
-            bind = self.session.get_bind()
+            ).limit(limit)
+        ).all()
+
+        bind = self.session.get_bind()
+        for record in records:
             if bind is not None and bind.dialect.name == "sqlite":
                 for field_name in (
                     "assessment_checked_at",
@@ -211,7 +374,8 @@ class IntegrationExecutionReadinessVerificationRepository:
             record.verified_at = _ensure_timezone(record.verified_at, "verified_at")
             record.created_at = _ensure_timezone(record.created_at, "created_at")
             record.to_verification()
-        return record
+
+        return records
 
 
 def _ensure_timezone(value: datetime, name: str) -> datetime:

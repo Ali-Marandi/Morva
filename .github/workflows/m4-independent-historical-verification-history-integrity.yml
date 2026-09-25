@@ -1,0 +1,59 @@
+name: M4.48 Independent Historical Verification History Integrity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-independent-historical-verification-history-integrity.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_freshness_verification_history_integrity_m4_47.py"
+      - "src/morva/persistence/independent_historical_freshness_receipt_verifications_m4_46.py"
+      - "src/morva/runtime/independent_historical_freshness_verification_history_integrity_verifier_m4_48.py"
+      - "tests/test_independent_historical_freshness_verification_history_integrity_m4_48.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-independent-historical-verification-history-integrity.yml"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_freshness_verification_history_integrity_m4_47.py"
+      - "src/morva/persistence/independent_historical_freshness_receipt_verifications_m4_46.py"
+      - "src/morva/runtime/independent_historical_freshness_verification_history_integrity_verifier_m4_48.py"
+      - "tests/test_independent_historical_freshness_verification_history_integrity_m4_48.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  independent-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/runtime/independent_historical_freshness_verification_history_integrity_verifier_m4_48.py
+          tests/test_independent_historical_freshness_verification_history_integrity_m4_48.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_independent_historical_freshness_verification_history_integrity_m4_48.py
+          tests/test_historical_freshness_verification_history_integrity_m4_47.py
+          tests/test_independent_historical_freshness_receipt_verifications_m4_46.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_48.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.48 independently reconstructs and verifies M4.47 history-integrity snapshots." >> "$GITHUB_STEP_SUMMARY"
+          echo "No provider execution, production credentials or payment mutation are introduced." >> "$GITHUB_STEP_SUMMARY"

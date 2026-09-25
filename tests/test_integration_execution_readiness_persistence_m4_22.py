@@ -94,12 +94,18 @@ def test_persists_and_reloads_independently_verified_receipt(session):
     verification = _verified()
     repository = IntegrationExecutionReadinessVerificationRepository(session)
 
-    record = repository.record(verification)
+    record = repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
     session.commit()
 
     loaded = repository.latest(
         candidate_sha=SHA,
         target_environment="staging",
+        organization_scope="ministry",
+        organization_scope_id="ministry",
     )
     assert loaded is not None
     assert loaded.id == record.id
@@ -112,8 +118,16 @@ def test_duplicate_verification_is_idempotent_by_fingerprint(session):
     verification = _verified()
     repository = IntegrationExecutionReadinessVerificationRepository(session)
 
-    first = repository.record(verification)
-    second = repository.record(verification)
+    first = repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
+    second = repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
 
     assert second.id == first.id
     assert len(session.scalars(select(IntegrationExecutionReadinessVerificationRecord)).all()) == 1
@@ -125,9 +139,18 @@ def test_blocked_assessment_remains_blocked_after_persistence(session):
         blockers=("AUTHORITATIVE_EVIDENCE_CLOSURE_INCOMPLETE",),
     )
     repository = IntegrationExecutionReadinessVerificationRepository(session)
-    repository.record(verification)
+    repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
 
-    loaded = repository.latest(candidate_sha=SHA, target_environment="staging")
+    loaded = repository.latest(
+        candidate_sha=SHA,
+        target_environment="staging",
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
     assert loaded is not None
     restored = loaded.to_verification()
     assert restored.assessment.state == "blocked"
@@ -136,7 +159,11 @@ def test_blocked_assessment_remains_blocked_after_persistence(session):
 
 def test_candidate_filter_does_not_return_other_candidate(session):
     repository = IntegrationExecutionReadinessVerificationRepository(session)
-    repository.record(_verified())
+    repository.record(
+        _verified(),
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
 
     assert (
         repository.latest(
@@ -150,7 +177,11 @@ def test_candidate_filter_does_not_return_other_candidate(session):
 def test_tampered_persisted_verification_fails_closed(session):
     verification = _verified()
     repository = IntegrationExecutionReadinessVerificationRepository(session)
-    record = repository.record(verification)
+    record = repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
     session.flush()
     record.verification_fingerprint = "f" * 64
 
@@ -158,12 +189,21 @@ def test_tampered_persisted_verification_fails_closed(session):
         IntegrationExecutionReadinessPersistenceError,
         match="verification fingerprint mismatch",
     ):
-        repository.latest(candidate_sha=SHA, target_environment="staging")
+        repository.latest(
+            candidate_sha=SHA,
+            target_environment="staging",
+            organization_scope="ministry",
+            organization_scope_id="ministry",
+        )
 
 def test_malformed_blocker_payload_fails_closed(session):
     verification = _verified()
     repository = IntegrationExecutionReadinessVerificationRepository(session)
-    record = repository.record(verification)
+    record = repository.record(
+        verification,
+        organization_scope="ministry",
+        organization_scope_id="ministry",
+    )
     session.flush()
     record.blockers = None
 
@@ -171,5 +211,10 @@ def test_malformed_blocker_payload_fails_closed(session):
         IntegrationExecutionReadinessPersistenceError,
         match="structurally invalid",
     ):
-        repository.latest(candidate_sha=SHA, target_environment="staging")
+        repository.latest(
+            candidate_sha=SHA,
+            target_environment="staging",
+            organization_scope="ministry",
+            organization_scope_id="ministry",
+        )
 

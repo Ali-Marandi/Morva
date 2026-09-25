@@ -260,6 +260,28 @@ def build_readiness_assessment(
     )
 
 
+def replay_readiness_fingerprint(
+    assessment: EvidenceReadinessAssessment,
+    *,
+    checked_at: datetime,
+) -> str:
+    """Recompute a readiness fingerprint at a specific observation timestamp."""
+    if checked_at.tzinfo is None:
+        raise EvidenceReadinessError(
+            "checked_at must be timezone-aware"
+        )
+    return _readiness_fingerprint(
+        repository=assessment.repository,
+        checked_at=checked_at,
+        registry_fingerprint=assessment.registry_fingerprint,
+        convergence_fingerprint=assessment.convergence_fingerprint,
+        lifecycle_fingerprint=assessment.lifecycle_fingerprint,
+        ready_roles=assessment.ready_roles,
+        blocked_roles=assessment.blocked_roles,
+        remediation=assessment.remediation,
+    )
+
+
 def _readiness_fingerprint(
     *,
     repository: str,

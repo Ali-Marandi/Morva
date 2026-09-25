@@ -265,12 +265,13 @@ class EvidenceRoleBindingRepository:
         principal_scope,
         principal_scope_id: str,
         checked_at: datetime,
+        exact_scope: bool = False,
     ) -> tuple[list[EvidenceRoleBindingRecord], object]:
         now = _ensure_timezone(checked_at, "checked_at")
         accepted_query = select(AuthoritativeEvidenceSubmissionRecord).where(
             AuthoritativeEvidenceSubmissionRecord.status == "accepted"
         )
-        if principal_scope.value != "ministry":
+        if exact_scope or principal_scope.value != "ministry":
             accepted_query = accepted_query.where(
                 AuthoritativeEvidenceSubmissionRecord.submission_scope
                 == principal_scope.value,
@@ -294,7 +295,7 @@ class EvidenceRoleBindingRepository:
         query = select(EvidenceRoleBindingRecord).where(
             EvidenceRoleBindingRecord.registry_fingerprint == registry.fingerprint
         )
-        if principal_scope.value != "ministry":
+        if exact_scope or principal_scope.value != "ministry":
             query = query.where(
                 EvidenceRoleBindingRecord.submission_scope
                 == principal_scope.value,
