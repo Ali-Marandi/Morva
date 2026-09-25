@@ -40,13 +40,17 @@ M4.56 independently verifies persisted M4.55 verification receipts by reconstruc
 
 M4.57 adds append-only persistence for M4.56 independent verification results. Recording, history listing and direct verification revalidate the M4.55 source receipt, the M4.53 snapshot and the point-in-time M4.52 verification-receipt history while preserving the deterministic M4.56 verification fingerprint.
 
+## M4.58 implementation position
+
+M4.58 adds append-only point-in-time integrity snapshots over the complete persisted M4.57 independent verification receipt history. Capture validates every M4.57 receipt before building a deterministic aggregate identity; later history listing and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify each source before comparing history and aggregate fingerprints.
+
 ## Validation boundary
 
-M4.48–M4.57 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.58 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
-The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. M4.54 adds a dedicated independent-reconstruction gate over the M4.53 snapshot layer. M4.55 adds append-only receipt persistence with source re-verification and cursor-history regression coverage. M4.56 adds independent receipt-level reconstruction of the M4.54 result. M4.57 adds append-only persistence of those independent M4.56 results with source re-verification and cursor-history coverage. M4.49 adds persisted independent verification receipts, and M4.50 adds point-in-time receipt-history integrity snapshots with the same fail-closed source-reverification boundary. The cumulative repository checks for the M4.52 merge were completed successfully on its pre-merge head `ed471506e4d812fbe27538b1cc4af46b6a9728a5`: 58/58 workflow runs completed successfully with no failed or active runs before merge. Post-merge main workflows are tracked separately.
+The M4.48 gate covers Ruff, focused pytest execution, Alembic head migration and the explicit governance boundary. M4.54 adds a dedicated independent-reconstruction gate over the M4.53 snapshot layer. M4.55 adds append-only receipt persistence with source re-verification and cursor-history regression coverage. M4.56 adds independent receipt-level reconstruction of the M4.54 result. M4.57 adds append-only persistence of those independent M4.56 results with source re-verification and cursor-history coverage. M4.58 adds point-in-time integrity snapshots over the resulting M4.57 receipt history. M4.49 adds persisted independent verification receipts, and M4.50 adds point-in-time receipt-history integrity snapshots with the same fail-closed source-reverification boundary. The cumulative repository checks for the M4.52 merge were completed successfully on its pre-merge head `ed471506e4d812fbe27538b1cc4af46b6a9728a5`: 58/58 workflow runs completed successfully with no failed or active runs before merge. Post-merge main workflows are tracked separately.
 
 ## External evidence still required
 
