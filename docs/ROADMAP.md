@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.56 independently verifies persisted M4.55 receipts against a separately reconstructed M4.54 result from M4.53/M4.52 evidence while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.57 persists M4.56 independent receipt-verification results while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
