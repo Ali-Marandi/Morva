@@ -69,6 +69,7 @@
 | 55 | Independent M4.58 Receipt-History Verification | **M4.59 independently reconstructs the point-in-time M4.57 receipt history behind each M4.58 snapshot, compares deterministic counts/fingerprints and emits blocker codes plus a verification fingerprint; no production authority is introduced** |
 | 56 | M4.59 Verification Result Persistence | **M4.60 persists M4.59 independent receipt-history verification results as append-only, fingerprint-idempotent receipts with M4.58 snapshot and M4.57 source re-verification; no production authority is introduced** |
 | 57 | M4.60 Receipt-History Integrity Snapshot | **M4.61 captures deterministic point-in-time integrity snapshots over the complete M4.60 receipt history, re-verifies every source receipt on capture/list/verify, supports ministry-managed cursor history and preserves the governance/readiness-only boundary** |
+| 58 | Independent M4.61 Receipt-History Verification | **M4.62 independently reconstructs the point-in-time M4.60 receipt history behind each M4.61 snapshot, compares deterministic counts/fingerprints and emits blocker codes plus a verification fingerprint; no production authority is introduced** |
 
 ## Canonical payroll lifecycle
 
