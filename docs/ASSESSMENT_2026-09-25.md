@@ -32,6 +32,10 @@ M4.54 adds an independent verifier for M4.53 point-in-time receipt-history integ
 
 M4.55 adds append-only persistence for M4.54 independent verification results. Recording, history listing and direct verification revalidate the M4.53 snapshot, reconstruct the point-in-time M4.52 verification-receipt history, re-verify every M4.52 source receipt and preserve the deterministic M4.54 verification fingerprint.
 
+## M4.56 implementation position
+
+M4.56 independently verifies persisted M4.55 verification receipts by reconstructing the M4.54 result from the M4.53 point-in-time snapshot and the separately revalidated M4.52 verification-receipt history. The verifier compares the persisted and reconstructed identities and emits deterministic blockers plus a verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.55 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
