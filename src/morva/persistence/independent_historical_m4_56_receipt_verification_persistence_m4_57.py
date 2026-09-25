@@ -18,6 +18,7 @@ from morva.persistence.independent_historical_m4_53_receipt_history_verification
     IndependentHistoricalM453ReceiptHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
+    IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord,
     IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRepository,
 )
@@ -243,7 +244,7 @@ class IndependentHistoricalM455ReceiptVerificationRepository:
         try:
             for source in records:
                 repo.verify(source.id)
-        except Exception as exc:
+        except IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptPersistenceError as exc:
             raise IndependentHistoricalM455ReceiptVerificationPersistenceError(
                 "M4.52 source verification history failed verification"
             ) from exc
