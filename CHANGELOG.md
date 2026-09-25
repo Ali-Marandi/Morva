@@ -1,3 +1,12 @@
+## Unreleased — M4.51 Independent Historical Verification Receipt History Integrity
+
+### Readiness policy governance
+- Independently reconstruct the point-in-time M4.49 receipt history behind each M4.50 snapshot.
+- Reverify source receipts and compare deterministic counts, history fingerprint and integrity fingerprint with blocker codes and a verification fingerprint.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.50 Historical Independent Verification Receipt History Integrity
 
 ### Readiness policy governance
