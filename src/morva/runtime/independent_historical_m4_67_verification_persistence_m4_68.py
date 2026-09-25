@@ -6,7 +6,6 @@ import json
 from uuid import UUID
 
 from morva.runtime.independent_historical_m4_66_receipt_verifier_m4_67 import (
-    IndependentHistoricalM466ReceiptVerification,
     IndependentHistoricalM466ReceiptVerificationError,
     independently_verify_historical_m4_66_receipt,
 )
