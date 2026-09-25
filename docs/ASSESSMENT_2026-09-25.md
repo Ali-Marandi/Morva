@@ -30,7 +30,7 @@ M4.54 adds an independent verifier for M4.53 point-in-time receipt-history integ
 
 ## Validation boundary
 
-M4.48–M4.52 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.54 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
