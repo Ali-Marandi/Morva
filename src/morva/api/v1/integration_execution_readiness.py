@@ -100,9 +100,17 @@ from morva.persistence.historical_m4_57_verification_receipt_history_integrity_m
     HistoricalM457VerificationReceiptHistoryIntegrityRecord,
     HistoricalM457VerificationReceiptHistoryIntegrityRepository,
 )
+from morva.persistence.historical_m4_57_verification_receipt_history_integrity_m4_58 import (
+    HistoricalM457VerificationReceiptHistoryIntegrityRecord,
+)
+from morva.persistence.independent_historical_m4_56_receipt_verification_persistence_m4_57 import (
+    IndependentHistoricalM455ReceiptVerificationPersistenceError,
+    IndependentHistoricalM455ReceiptVerificationRecord,
+    IndependentHistoricalM455ReceiptVerificationRepository,
+)
 from morva.persistence.independent_historical_m4_58_receipt_history_verification_m4_60 import (
     IndependentHistoricalM458ReceiptHistoryIntegrityReceiptPersistenceError,
-    IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRepository,
+    IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRecord,
 )
 from morva.runtime.independent_historical_m4_60_verifier_m4_61 import (
     IndependentHistoricalM460VerificationError,
@@ -3746,13 +3754,40 @@ def independently_verify_historical_m4_60_verification_receipt(
                 status_code=404,
                 detail="M4.60 independent verification receipt not found",
             )
-        repository = IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRepository(
-            session
-        )
         try:
-            persisted = receipt.to_verification()
-            snapshot = repository._get_snapshot(receipt.snapshot_id)
-            source_records = repository._source_records(snapshot)
+            receipt.to_verification()
+            snapshot = session.get(
+                HistoricalM457VerificationReceiptHistoryIntegrityRecord,
+                receipt.snapshot_id,
+            )
+            if snapshot is None:
+                raise IndependentHistoricalM458ReceiptHistoryIntegrityReceiptPersistenceError(
+                    "M4.58 history integrity snapshot not found"
+                )
+            from morva.persistence.historical_m4_57_verification_receipt_history_integrity_m4_58 import (
+                HistoricalM457VerificationReceiptHistoryIntegrityRepository,
+            )
+            HistoricalM457VerificationReceiptHistoryIntegrityRepository(session).verify(
+                snapshot.id
+            )
+            source_records = list(
+                session.scalars(
+                    select(IndependentHistoricalM455ReceiptVerificationRecord)
+                    .where(
+                        IndependentHistoricalM455ReceiptVerificationRecord.created_at
+                        < snapshot.created_at
+                    )
+                    .order_by(
+                        IndependentHistoricalM455ReceiptVerificationRecord.created_at.asc(),
+                        IndependentHistoricalM455ReceiptVerificationRecord.id.asc(),
+                    )
+                ).all()
+            )
+            source_repository = IndependentHistoricalM455ReceiptVerificationRepository(
+                session
+            )
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
             verification = independently_verify_historical_m4_60_result(
                 receipt=receipt,
                 snapshot=snapshot,
