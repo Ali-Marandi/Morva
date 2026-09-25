@@ -44,6 +44,10 @@ M4.57 adds append-only persistence for M4.56 independent verification results. R
 
 M4.58 adds append-only point-in-time integrity snapshots over the complete persisted M4.57 independent verification receipt history. Capture validates every M4.57 receipt before building a deterministic aggregate identity; later history listing and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify each source before comparing history and aggregate fingerprints.
 
+## M4.59 implementation position
+
+M4.59 adds an independent verifier for M4.58 point-in-time receipt-history integrity snapshots. It separately reconstructs the point-in-time M4.57 independent verification-receipt history, revalidates source receipts, compares deterministic count/fingerprint identities and emits blocker codes plus a verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.58 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
