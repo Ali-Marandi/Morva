@@ -60,13 +60,13 @@ def test_m4_57_records_and_reverifies_m4_56_result():
 def test_m4_57_is_cursor_paginated():
     engine, session = _session_m4_57()
     try:
-        _persist_m4_52_receipt(session)
+        _persist_m4_52_receipt(session, "a" * 64)
         first_receipt = _persist_m4_55_receipt(session)
         first = IndependentHistoricalM455ReceiptVerificationRepository(session).record(
             receipt_id=first_receipt.id,
             recorded_by="ministry",
         )
-        _persist_m4_52_receipt(session)
+        _persist_m4_52_receipt(session, "b" * 64)
         second_receipt = _persist_m4_55_receipt(session)
         second = IndependentHistoricalM455ReceiptVerificationRepository(session).record(
             receipt_id=second_receipt.id,
@@ -99,7 +99,7 @@ def test_m4_57_fails_closed_on_tampered_receipt():
         session.flush()
         with pytest.raises(
             IndependentHistoricalM455ReceiptVerificationPersistenceError,
-            match="persisted M4.57 blockers payload is invalid",
+            match="persisted M4.57 independent verification result is structurally invalid",
         ):
             repository.verify(record.id)
     finally:
