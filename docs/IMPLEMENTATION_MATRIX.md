@@ -58,7 +58,9 @@
 
 | 45 | Independent Historical Verification Receipts | **M4.49 persists M4.48 independent history-integrity verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history and direct re-verification; no production authority is introduced** |
 | 46 | Historical Independent Verification Receipt History Integrity | **M4.50 persists append-only point-in-time integrity snapshots over the complete M4.49 receipt history with deterministic fingerprinting, cursor history and source re-verification; no production authority is introduced** |
-| 47 | Independent Historical Verification Receipt History Integrity | **M4.51 independently reconstructs the point-in-time M4.49 receipt history behind each M4.50 snapshot, compares deterministic counts/fingerprints and emits blocker codes plus a verification fingerprint; no production authority is introduced** |\n\n## Canonical payroll lifecycle
+| 47 | Independent Historical Verification Receipt History Integrity | **M4.51 independently reconstructs the point-in-time M4.49 receipt history behind each M4.50 snapshot, compares deterministic counts/fingerprints and emits blocker codes plus a verification fingerprint; no production authority is introduced** |
+
+## Canonical payroll lifecycle
 
 `draft -> data_received -> calculating -> validating -> reviewed -> approved -> frozen -> exported -> submitted -> payment_confirmed -> reconciled`
 
