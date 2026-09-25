@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from sqlalchemy import select
 
 from morva.persistence.historical_m4_52_verification_receipt_history_integrity_m4_53 import (
     HistoricalM452VerificationReceiptHistoryIntegrityPersistenceError,
@@ -81,18 +82,12 @@ def test_m4_53_detects_tampered_m4_52_receipt():
         )
         snapshot = repository.capture(captured_by="ministry")
 
+        from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
+            IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord,
+        )
+
         source_records = repository.session.scalars(
-            __import__(
-                "sqlalchemy",
-                fromlist=["select"],
-            ).select(
-                __import__(
-                    "morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52",
-                    fromlist=[
-                        "IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord"
-                    ],
-                ).IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord
-            )
+            select(IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord)
         ).all()
         source_records[0].blockers_json = '["TAMPERED"]'
         session.flush()
