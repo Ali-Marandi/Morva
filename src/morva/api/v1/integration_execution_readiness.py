@@ -83,7 +83,6 @@ from morva.runtime.independent_historical_m4_53_receipt_history_verifier_m4_54 i
 )
 from morva.persistence.independent_historical_m4_53_receipt_history_verification_m4_55 import (
     IndependentHistoricalM453ReceiptHistoryIntegrityReceiptPersistenceError,
-    IndependentHistoricalM453ReceiptHistoryIntegrityReceiptRecord,
     IndependentHistoricalM453ReceiptHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.scoped_evidence_readiness_m4_26 import (
