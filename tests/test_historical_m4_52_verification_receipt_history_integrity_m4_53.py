@@ -11,6 +11,7 @@ from morva.persistence.historical_m4_52_verification_receipt_history_integrity_m
     HistoricalM452VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
+    IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord,
     IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRepository,
 )
 from tests.test_independent_historical_verification_receipt_history_integrity_m4_52 import (
@@ -81,10 +82,6 @@ def test_m4_53_detects_tampered_m4_52_receipt():
             session
         )
         snapshot = repository.capture(captured_by="ministry")
-
-        from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
-            IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord,
-        )
 
         source_records = repository.session.scalars(
             select(IndependentHistoricalVerificationReceiptHistoryIntegrityReceiptRecord)
