@@ -87,7 +87,9 @@ def test_m4_52_preserves_snapshot_point_in_time_boundary():
         first_receipt = repository.record(snapshot_id=first.id, recorded_by="ministry")
         _persist_m4_50_snapshot(session, "b" * 64)
         assert repository.verify(first_receipt.id).id == first_receipt.id
-        assert repository.list(snapshot_id=first.id)[0].id == first_receipt.id
+        records, has_more = repository.list(snapshot_id=first.id)
+        assert has_more is False
+        assert records[0].id == first_receipt.id
     finally:
         session.close()
         engine.dispose()
