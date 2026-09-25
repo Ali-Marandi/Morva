@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
-
 from morva.persistence.historical_m4_60_receipt_history_integrity_m4_61 import (
     HistoricalM460ReceiptHistoryIntegrityPersistenceError,
     HistoricalM460ReceiptHistoryIntegrityRecord,
