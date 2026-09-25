@@ -76,6 +76,10 @@ M4.65 adds an independent verifier for M4.64 point-in-time receipt-history integ
 
 M4.66 adds append-only persistence for the M4.65 independent verification result. Recording, history listing and direct verification re-validate the M4.64 snapshot, reconstruct the point-in-time M4.63 receipt history, re-verify every source receipt and preserve the deterministic M4.65 verification fingerprint. Receipt history is ministry-managed with timestamp+UUID cursor pagination and remains verification-only.
 
+## M4.67 implementation position
+
+M4.67 adds independent receipt-level verification for persisted M4.66 results. It reconstructs the M4.65 result from the M4.64 point-in-time snapshot and M4.63 source history, compares persisted and reconstructed verification identities, and emits deterministic blocker codes plus a verification fingerprint.
+
 ## Validation boundary
 
 M4.48–M4.66 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
