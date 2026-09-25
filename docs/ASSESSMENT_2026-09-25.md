@@ -52,9 +52,13 @@ M4.59 adds an independent verifier for M4.58 point-in-time receipt-history integ
 
 M4.60 adds append-only persistence for M4.59 independent receipt-history verification results. Recording, history listing and direct verification revalidate the M4.58 snapshot and the point-in-time M4.57 verification-receipt history while preserving the deterministic M4.59 verification fingerprint.
 
+## M4.61 implementation position
+
+M4.61 adds append-only point-in-time integrity snapshots over the persisted M4.60 independent verification receipt history. Capture validates every source receipt before building a deterministic aggregate identity; later history listing and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify each source before comparing history and aggregate fingerprints.
+
 ## Validation boundary
 
-M4.48–M4.60 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.61 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
