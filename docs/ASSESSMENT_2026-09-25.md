@@ -70,7 +70,7 @@ M4.64 adds append-only point-in-time integrity snapshots over the persisted M4.6
 
 ## Validation boundary
 
-M4.48–M4.63 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.64 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
