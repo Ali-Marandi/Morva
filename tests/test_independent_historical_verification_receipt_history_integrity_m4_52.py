@@ -5,7 +5,6 @@ from datetime import datetime
 import pytest
 
 from morva.persistence.historical_independent_verification_receipt_history_integrity_m4_50 import (
-    HistoricalIndependentVerificationReceiptHistoryIntegrityRecord,
     HistoricalIndependentVerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_verification_receipt_history_integrity_m4_52 import (
