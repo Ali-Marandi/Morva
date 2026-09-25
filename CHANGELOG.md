@@ -1,3 +1,12 @@
+## Unreleased — M4.61 Independent M4.60 Verification
+
+### Readiness policy governance
+- Independently verify persisted M4.60 results by reconstructing the M4.59 result from the M4.58 snapshot and point-in-time M4.57 source history.
+- Emit deterministic mismatch blockers and a verification fingerprint through an authenticated read-only endpoint.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.60 Independent M4.59 Verification Persistence
 
 ### Readiness policy governance
