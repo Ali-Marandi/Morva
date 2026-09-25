@@ -104,6 +104,10 @@ from morva.persistence.independent_historical_m4_58_receipt_history_verification
     IndependentHistoricalM458ReceiptHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRepository,
 )
+from morva.runtime.independent_historical_m4_60_verifier_m4_61 import (
+    IndependentHistoricalM460VerificationError,
+    independently_verify_historical_m4_60_result,
+)
 from morva.runtime.independent_historical_m4_58_receipt_history_verifier_m4_59 import (
     IndependentHistoricalM458ReceiptHistoryIntegrityError,
     independently_verify_historical_m4_58_receipt_history_integrity,
@@ -2595,6 +2599,10 @@ class IndependentHistoricalM458ReceiptHistoryIntegrityReceiptHistoryResponse(Bas
     next_before_id: UUID | None = None
 
 
+class IndependentHistoricalM460VerificationResponse(BaseModel):
+    verification: dict[str, object]
+
+
 @router.post(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/snapshots",
@@ -3714,6 +3722,50 @@ def independently_verify_historical_m4_55_receipt(
         verification=verification.to_payload(),
     )
 
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-58-verification-receipts/verification-receipts/"
+    "{verification_receipt_id}/verify-independent",
+    response_model=IndependentHistoricalM460VerificationResponse,
+)
+def independently_verify_historical_m4_60_verification_receipt(
+    verification_receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM460VerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        receipt = session.get(
+            IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRecord,
+            verification_receipt_id,
+        )
+        if receipt is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.60 independent verification receipt not found",
+            )
+        repository = IndependentHistoricalM458ReceiptHistoryIntegrityReceiptRepository(
+            session
+        )
+        try:
+            persisted = receipt.to_verification()
+            snapshot = repository._get_snapshot(receipt.snapshot_id)
+            source_records = repository._source_records(snapshot)
+            verification = independently_verify_historical_m4_60_result(
+                receipt=receipt,
+                snapshot=snapshot,
+                source_records=source_records,
+            )
+        except (
+            IndependentHistoricalM458ReceiptHistoryIntegrityReceiptPersistenceError,
+            IndependentHistoricalM460VerificationError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return IndependentHistoricalM460VerificationResponse(
+        verification=verification.to_payload(),
+    )
 
 
 @router.post(
