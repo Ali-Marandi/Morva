@@ -42,7 +42,7 @@ M4.57 adds append-only persistence for M4.56 independent verification results. R
 
 ## Validation boundary
 
-M4.48–M4.56 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.57 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
