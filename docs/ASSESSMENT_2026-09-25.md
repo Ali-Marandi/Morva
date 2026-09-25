@@ -38,7 +38,7 @@ M4.56 independently verifies persisted M4.55 verification receipts by reconstruc
 
 ## Validation boundary
 
-M4.48–M4.55 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.56 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
