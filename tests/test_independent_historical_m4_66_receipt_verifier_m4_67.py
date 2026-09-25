@@ -4,15 +4,10 @@ from uuid import uuid4
 
 import pytest
 
-from morva.persistence.historical_m4_63_receipt_history_integrity_m4_64 import (
-    HistoricalM463ReceiptHistoryIntegrityRepository,
-)
 from morva.persistence.independent_historical_m4_61_receipt_history_verification_m4_63 import (
     IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord,
-    IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.independent_historical_m4_64_verification_receipts_m4_66 import (
-    IndependentHistoricalM464ReceiptHistoryIntegrityReceiptRecord,
     IndependentHistoricalM464ReceiptHistoryIntegrityReceiptRepository,
 )
 from morva.runtime.independent_historical_m4_66_receipt_verifier_m4_67 import (
