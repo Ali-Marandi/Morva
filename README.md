@@ -20,7 +20,7 @@ Morva has real persisted application paths today for:
 
 The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
 
-**Current development baseline (2026-09-24):**
+**Current development baseline (2026-09-25):**
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
 - M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
@@ -30,6 +30,9 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.44 persists those chain-verification results as fingerprint-idempotent receipts, provides ministry-managed cursor history and a direct receipt re-verification API.
 - M4.45 independently compares persisted M4.44 receipt identity with a separately reconstructed historical chain and exposes a deterministic verification fingerprint.
 - M4.46 persists those independent-verification results as fingerprint-idempotent evidence with ministry-managed history and re-verification.
+- M4.47 captures deterministic point-in-time integrity snapshots over the complete M4.46 verification history, with source-record revalidation and historical verification support.
+- M4.48 independently reconstructs the point-in-time M4.46 history behind each M4.47 snapshot, applies the snapshot timestamp as a source-history boundary, and emits deterministic mismatch blockers plus a verification fingerprint.
+- Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
 - This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.
 - CI and release gates remain fail-closed for any real payroll/payment authority.
