@@ -15,7 +15,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49",
+        "independent_historical_verification_receipts_m4_49",
         sa.Column("id", sa.Uuid(), primary_key=True, nullable=False),
         sa.Column(
             "snapshot_id",
@@ -42,22 +42,22 @@ def upgrade() -> None:
     )
     op.create_index(
         "ix_m4_49_verification_snapshot_id",
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49",
+        "independent_historical_verification_receipts_m4_49",
         ["snapshot_id"],
     )
     op.create_index(
         "ix_m4_49_verification_valid",
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49",
+        "independent_historical_verification_receipts_m4_49",
         ["valid"],
     )
     op.create_index(
         "ix_m4_49_verification_created_at",
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49",
+        "independent_historical_verification_receipts_m4_49",
         ["created_at"],
     )
     op.create_index(
         "ix_m4_49_verification_fingerprint",
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49",
+        "independent_historical_verification_receipts_m4_49",
         ["verification_fingerprint"],
         unique=True,
     )
@@ -65,5 +65,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table(
-        "independent_historical_freshness_verification_history_integrity_receipts_m4_49"
+        "independent_historical_verification_receipts_m4_49"
     )
