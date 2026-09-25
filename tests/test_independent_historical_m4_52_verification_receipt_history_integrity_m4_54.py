@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import pytest
 
+from morva.runtime.historical_m4_52_verification_receipt_history_integrity_m4_53 import (
+    _fingerprint,
+)
+
 from morva.persistence.historical_m4_52_verification_receipt_history_integrity_m4_53 import (
     HistoricalM452VerificationReceiptHistoryIntegrityRecord,
     HistoricalM452VerificationReceiptHistoryIntegrityRepository,
@@ -113,15 +117,10 @@ def test_m4_54_emits_deterministic_blockers_for_snapshot_mismatch():
             session
         ).capture(captured_by="ministry")
         snapshot.history_fingerprint = "f" * 64
-        snapshot.fingerprint = (
-            __import__(
-                "morva.runtime.historical_m4_52_verification_receipt_history_integrity_m4_53",
-                fromlist=["_fingerprint"],
-            )._fingerprint(
-                record_count=snapshot.record_count,
-                valid_count=snapshot.valid_count,
-                history_fingerprint=snapshot.history_fingerprint,
-            )
+        snapshot.fingerprint = _fingerprint(
+            record_count=snapshot.record_count,
+            valid_count=snapshot.valid_count,
+            history_fingerprint=snapshot.history_fingerprint,
         )
         session.flush()
         source_records = list(
