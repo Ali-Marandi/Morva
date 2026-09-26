@@ -67,6 +67,10 @@ def _read(principal: Principal) -> None:
     authorize(principal, "admin", Scope.MINISTRY, privileged=True)
 
 
+def _status_change_payload(*, before: str, after: str, **extra: object) -> dict[str, object]:
+    return {"before": before, "after": after, **extra}
+
+
 @router.post("/legal-sources", status_code=201)
 def create_legal_source(payload: LegalSourceInput, principal: Principal = Depends(get_current_principal)) -> dict[str, object]:
     _write(principal)
@@ -98,11 +102,12 @@ def review_source(source_id: UUID, principal: Principal = Depends(get_current_pr
         source = session.get(LegalSourceRecord, source_id)
         if source is None:
             raise HTTPException(status_code=404, detail="legal source not found")
+        before_status = source.status
         try:
             review_legal_source(source)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        append_audit_event(event_type="legal.source.reviewed", entity_type="legal_source", entity_id=str(source.id), actor_id=principal.user_id, payload={"document_hash": source.document_hash}, reason="review legal source", session=session)
+        append_audit_event(event_type="legal.source.reviewed", entity_type="legal_source", entity_id=str(source.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=source.status, document_hash=source.document_hash), reason="review legal source", session=session)
         session.commit()
         return {"id": str(source.id), "status": source.status, "reviewed_by": principal.user_id}
 
@@ -122,11 +127,12 @@ def approve_source(source_id: UUID, principal: Principal = Depends(get_current_p
             )
             .order_by(AuditEventRecord.sequence_no.desc())
         )
+        before_status = source.status
         try:
             approve_legal_source(source, principal.user_id, review.actor_id if review else None)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        append_audit_event(event_type="legal.source.approved", entity_type="legal_source", entity_id=str(source.id), actor_id=principal.user_id, payload={"document_hash": source.document_hash}, reason="approve legal source", session=session)
+        append_audit_event(event_type="legal.source.approved", entity_type="legal_source", entity_id=str(source.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=source.status, document_hash=source.document_hash), reason="approve legal source", session=session)
         session.commit()
         return {"id": str(source.id), "status": source.status, "approved_by": principal.user_id}
 
@@ -154,12 +160,13 @@ def review_pack(version: str, principal: Principal = Depends(get_current_princip
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == version))
         if pack is None:
             raise HTTPException(status_code=404, detail="rule pack not found")
+        before_status = pack.status
         try:
             review_rule_pack(pack)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         pack.reviewed_by = principal.user_id
-        append_audit_event(event_type="rule.pack.reviewed", entity_type="rule_pack", entity_id=str(pack.id), actor_id=principal.user_id, payload={"version": version}, reason="review rule pack", session=session)
+        append_audit_event(event_type="rule.pack.reviewed", entity_type="rule_pack", entity_id=str(pack.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=pack.status, version=version), reason="review rule pack", session=session)
         session.commit()
         return {"version": version, "status": pack.status, "reviewed_by": pack.reviewed_by}
 
@@ -171,10 +178,11 @@ def approve_pack(version: str, principal: Principal = Depends(get_current_princi
         pack = session.scalar(select(RulePackRecord).where(RulePackRecord.version == version))
         if pack is None:
             raise HTTPException(status_code=404, detail="rule pack not found")
+        before_status = pack.status
         result = approve_rule_pack(session, pack, principal.user_id)
         if not result["ready"]:
             raise HTTPException(status_code=409, detail={"message": "rule pack is not legally ready", "blockers": result["blockers"]})
-        append_audit_event(event_type="rule.pack.approved", entity_type="rule_pack", entity_id=str(pack.id), actor_id=principal.user_id, payload={"version": version}, reason="approve rule pack", session=session)
+        append_audit_event(event_type="rule.pack.approved", entity_type="rule_pack", entity_id=str(pack.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=pack.status, version=version), reason="approve rule pack", session=session)
         session.commit()
         return {"version": version, "status": pack.status, "approved_by": pack.approved_by, "approved_at": pack.approved_at.isoformat() if pack.approved_at else None}
 
@@ -217,11 +225,12 @@ def review_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_c
         evidence = session.get(RuleEvidenceRecord, evidence_id)
         if evidence is None:
             raise HTTPException(status_code=404, detail="rule evidence not found")
+        before_status = evidence.status
         try:
             review_evidence(evidence, principal.user_id)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        append_audit_event(event_type="rule.evidence.reviewed", entity_type="rule_evidence", entity_id=str(evidence.id), actor_id=principal.user_id, payload={"component_code": evidence.component_code}, reason="review rule evidence", session=session)
+        append_audit_event(event_type="rule.evidence.reviewed", entity_type="rule_evidence", entity_id=str(evidence.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=evidence.status, component_code=evidence.component_code), reason="review rule evidence", session=session)
         session.commit()
         return {"id": str(evidence.id), "status": evidence.status, "reviewed_by": evidence.reviewed_by}
 
@@ -236,11 +245,12 @@ def approve_rule_evidence(evidence_id: UUID, principal: Principal = Depends(get_
         source = session.get(LegalSourceRecord, evidence.legal_source_id)
         if source is None or source.status != "approved":
             raise HTTPException(status_code=409, detail="legal source must be approved before evidence approval")
+        before_status = evidence.status
         try:
             approve_evidence(evidence, principal.user_id)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-        append_audit_event(event_type="rule.evidence.approved", entity_type="rule_evidence", entity_id=str(evidence.id), actor_id=principal.user_id, payload={"component_code": evidence.component_code}, reason="approve rule evidence", session=session)
+        append_audit_event(event_type="rule.evidence.approved", entity_type="rule_evidence", entity_id=str(evidence.id), actor_id=principal.user_id, payload=_status_change_payload(before=before_status, after=evidence.status, component_code=evidence.component_code), reason="approve rule evidence", session=session)
         session.commit()
         return {"id": str(evidence.id), "status": evidence.status, "approved_by": evidence.approved_by, "approved_at": evidence.approved_at.isoformat() if evidence.approved_at else None}
 
