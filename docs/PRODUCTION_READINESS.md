@@ -61,9 +61,11 @@
 3. [x] Persistent audit-chain primitives and verification support exist.
 4. [x] AES-GCM field encryption and versioned key derivation exist.
 5. [x] Production configuration rejects demo policies and unmanaged schema state.
-6. [ ] Target-environment KMS/HSM custody and key rotation are evidenced.
-7. [ ] Database and backup encryption-at-rest are verified in the target environment.
-8. [ ] Independent security assessment and target-scale abuse/security testing are complete.
+6. [x] Every `/api/v1` route is covered by an authenticated-principal regression guard.
+7. [x] Rule-governance state changes record explicit before/after status, actor and reason in the persistent audit trail.
+8. [ ] Target-environment KMS/HSM custody and key rotation are evidenced.
+9. [ ] Database and backup encryption-at-rest are verified in the target environment.
+10. [ ] Independent security assessment and target-scale abuse/security testing are complete.
 
 **Release criterion:** independent security acceptance with target-environment evidence.
 
@@ -74,9 +76,10 @@
 1. [x] Population/component reconciliation foundations exist.
 2. [x] Payroll artifacts carry deterministic fingerprints and replay provenance.
 3. [x] Payment/reconciliation lifecycle boundaries and fail-closed exception guards exist.
-4. [ ] Authoritative Morva ↔ Treasury ↔ Bank three-way reconciliation has zero unresolved critical mismatches.
-5. [ ] Pension/insurance reconciliation is evidenced against external settlement data.
-6. [ ] Payment return/reversal/exception cases are exercised and accepted.
+4. [x] Statutory-fund settlement reconciliation has an independent exact-match hard stop for batch, population and amount.
+5. [ ] Authoritative Morva ↔ Treasury ↔ Bank three-way reconciliation has zero unresolved critical mismatches.
+6. [ ] Pension/insurance reconciliation is evidenced against external settlement data.
+7. [ ] Payment return/reversal/exception cases are exercised and accepted.
 
 **Release criterion:** zero unresolved critical reconciliation mismatches with retained evidence.
 
@@ -87,10 +90,11 @@
 1. [x] PostgreSQL production topology and migration gates are defined.
 2. [x] DR runbook/scripts exist under `ops/`.
 3. [x] Backup/WAL/PITR verification is modeled as a fail-closed release boundary.
-4. [ ] Target-environment backup restore and PITR drill are demonstrated.
-5. [ ] RPO/RTO targets are measured and met.
-6. [ ] DR drill evidence is retained and tied to the release evidence bundle.
-7. [ ] Target-scale load/concurrency testing is complete.
+4. [x] DR runbook/script contract and credential-placeholder hygiene are regression-tested.
+5. [ ] Target-environment backup restore and PITR drill are demonstrated.
+6. [ ] RPO/RTO targets are measured and met.
+7. [ ] DR drill evidence is retained and tied to the release evidence bundle.
+8. [ ] Target-scale load/concurrency testing is complete.
 
 **Release criterion:** successful restore/DR drills with measured RPO/RTO and target-scale performance evidence.
 
