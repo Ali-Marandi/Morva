@@ -26,7 +26,7 @@ _EXPORTS = {
     "PayrollService": (".service", "PayrollService"),
     "PayrollSnapshot": (".snapshot", "PayrollSnapshot"),
     "PopulationReconciliation": (".reconciliation_engine", "PopulationReconciliation"),
-    "RetroActiveGap": (".retro_gap", "RetroactiveGap"),
+    "RetroactiveGap": (".retro_gap", "RetroactiveGap"),
     "RetroArrearsResult": (".retro_gap", "RetroArrearsResult"),
     "RetroAuditTrail": (".retro_gap", "RetroAuditTrail"),
     "RetroGapError": (".retro_gap", "RetroGapError"),
