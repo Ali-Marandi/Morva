@@ -99,6 +99,10 @@ Each registered personnel order receives a deterministic SHA-256 content fingerp
 
 Each executable component mapping is required to bind a Rule Pack and population scope to a safe expression, effective dates, legal source/article, tax/pension/insurance treatment and a regression-suite fingerprint. Legal source and rule evidence must already be approved, and matrix entries require distinct review and approval actors before the matrix readiness gate can pass.
 
+## Gate 1 Rule Activation
+
+**Gate 1 runtime enforcement is implemented:** production persisted payroll calculation now requires the Rule Pack activation boundary to pass in addition to the existing pack status/hash checks. The activation check binds the payroll date to the pack effective period, approved legal evidence and source effective dates, population-scoped calculation-matrix readiness, effective matrix dates, regression evidence and distinct review/approval provenance. No legal rates or thresholds are inferred by this change; authoritative legal/source approval remains an external requirement.
+
 ## Ledger Treatment Governance
 
 `TAX`, `PENSION`, `INSURANCE`, `LOAN` and `COURT_ORDER` now have an explicit treatment-governance boundary. Classification flags are explicit rather than inferred, and approval requires primary-source metadata, effective dates, independent review/approval and regression evidence. Missing approval leaves execution fail-closed. This does not constitute legal approval or populate rates/thresholds.
