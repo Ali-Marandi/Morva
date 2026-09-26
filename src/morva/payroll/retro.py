@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from typing import Mapping
 from uuid import UUID
@@ -9,6 +10,45 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import PayrollArtifactRecord
 from morva.persistence.models import PersonnelSnapshotRecord
+
+
+@dataclass(frozen=True, slots=True)
+class ArrearsGap:
+    """Detected administrative gap between legal effect and order issuance."""
+
+    employee_no: str
+    order_no: str
+    effective_from: date
+    issue_date: date
+    gap_days: int
+
+    @property
+    def is_retroactive(self) -> bool:
+        return self.issue_date > self.effective_from
+
+
+def detect_arrears_gap(
+    *,
+    employee_no: str,
+    order_no: str,
+    effective_from: date,
+    issue_date: date,
+) -> ArrearsGap:
+    # در حکم اصلاحی/بازگشت‌به‌کار، تاریخ اثر قانونی و تاریخ صدور اداری مستقل‌اند.
+    # مثبت بودن فاصله نشان می‌دهد بازه‌ای برای بررسی مابه‌التفاوت وجود دارد؛ مبلغ از این تابع استنتاج نمی‌شود.
+    if not employee_no.strip():
+        raise ValueError("employee_no is required")
+    if not order_no.strip():
+        raise ValueError("order_no is required")
+    if issue_date < effective_from:
+        raise ValueError("issue_date cannot precede effective_from")
+    return ArrearsGap(
+        employee_no=employee_no,
+        order_no=order_no,
+        effective_from=effective_from,
+        issue_date=issue_date,
+        gap_days=(issue_date - effective_from).days,
+    )
 
 
 @dataclass(frozen=True, slots=True)
