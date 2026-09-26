@@ -29,6 +29,12 @@ Source reports supplied by the project owner:
 - Social employee premium: 15,492,415,986
 - Social employer premium: 45,669,023,616
 
+## Golden-fixture controls
+
+The anonymized `fixtures/1405-05` bundle is treated as regression input, not as a source of legal authority. Tests validate JSON shape, period identity, arithmetic identity of the supplied net field, and the presence of separate order effective/issue dates.
+
+این کنترل‌ها صرفاً تمامیت و تکرارپذیری داده‌ی آزمون را بررسی می‌کنند و هیچ ضریب یا استحقاق قانونی را از داده استخراج نمی‌کنند.
+
 ## Import policy
 
 The first Morva fixture is intentionally anonymized. Raw names and national IDs are not committed to GitHub. Surrogate identifiers are derived from SHA-256 hashes.
