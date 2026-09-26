@@ -21,9 +21,26 @@ class RuleDefinition:
     formula: Callable[[Mapping[str, Decimal]], Decimal] | None = None
     expression: Mapping[str, object] | None = None
     legal_reference: str | None = None
+    rule_version: str | None = None
+    review_status: str = "review_required"
+    regression_case_ids: tuple[str, ...] = ()
 
     def is_active(self, on: date) -> bool:
         return self.effective_from <= on and (self.effective_to is None or on <= self.effective_to)
+
+    def assert_production_ready(self, *, rule_pack_version: str) -> None:
+        # در production هر Rule باید به نسخه Rule Pack، وضعیت تأیید، منبع حقوقی و تست رگرسیون متصل باشد.
+        if not self.rule_version or self.rule_version.strip() != rule_pack_version.strip():
+            raise ValueError(
+                f"rule {self.code} must declare rule_version matching rule pack "
+                f"{rule_pack_version!r}"
+            )
+        if self.review_status not in {"approved", "active"}:
+            raise ValueError(f"rule {self.code} is not approved for production")
+        if not self.legal_reference or not self.legal_reference.strip():
+            raise ValueError(f"rule {self.code} is missing legal_reference")
+        if not self.regression_case_ids:
+            raise ValueError(f"rule {self.code} is missing regression_case_ids")
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +58,7 @@ class RuleResult:
     taxable: bool = False
     pensionable: bool = False
     insurable: bool = False
+    rule_version: str | None = None
 
 
 class RuleNotFoundError(LookupError):
@@ -74,9 +92,12 @@ class RuleEngine:
         code: str,
         context: RuleContext,
         legacy_formula: Callable[[Mapping[str, Decimal]], Decimal] | None = None,
+        *,
+        production: bool = False,
+        rule_pack_version: str | None = None,
     ) -> RuleResult:
         if legacy_formula is not None:
-            if settings.production:
+            if settings.production or production:
                 raise ValueError("callable rule formulas are forbidden in production; use the safe expression DSL")
             amount = legacy_formula(context.values)
             if amount < 0:
@@ -85,6 +106,10 @@ class RuleEngine:
             return RuleResult(code, amount, explanation)
 
         definition = self.resolve(code, context.effective_date)
+        if production:
+            if not rule_pack_version:
+                raise ValueError("rule_pack_version is required for production rule evaluation")
+            definition.assert_production_ready(rule_pack_version=rule_pack_version)
         if definition.formula is not None and definition.expression is not None:
             raise ValueError(f"Rule {code} cannot define both formula and expression")
         if definition.formula is not None:
@@ -104,4 +129,5 @@ class RuleEngine:
             definition.taxable,
             definition.pensionable,
             definition.insurable,
+            definition.rule_version,
         )
