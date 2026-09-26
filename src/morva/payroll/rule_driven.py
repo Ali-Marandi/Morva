@@ -45,7 +45,12 @@ class RuleDrivenPayroll:
         lines: list[PayrollLine] = []
         for component in components:
             rule = self.engine.resolve(component.code, effective_date)
-            result = self.engine.calculate(component.code, RuleContext(effective_date, working))
+            result = self.engine.calculate(
+                component.code,
+                RuleContext(effective_date, working),
+                production=production,
+                rule_pack_version=self.manifest.version if production else None,
+            )
             amount = result.amount.quantize(Decimal("0.01"))
             lines.append(
                 PayrollLine(
