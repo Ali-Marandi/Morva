@@ -1,0 +1,62 @@
+name: Gate 1 Rule and Retro Readiness
+
+on:
+  push:
+    branches: [main, feat/gate1-retro-gap]
+    paths:
+      - "src/morva/rules/**"
+      - "src/morva/payroll/**"
+      - "tests/test_gate1_retro_gap.py"
+      - "tests/test_calculation_matrix.py"
+      - "tests/test_calculator.py"
+      - "tests/test_m3_13_snapshot_retro_replay.py"
+      - "docs/legal/**"
+      - "docs/production-readiness.md"
+      - "fixtures/1405-05/**"
+      - ".github/workflows/gate1-rule-retro.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/morva/rules/**"
+      - "src/morva/payroll/**"
+      - "tests/test_gate1_retro_gap.py"
+      - "tests/test_calculation_matrix.py"
+      - "tests/test_calculator.py"
+      - "tests/test_m3_13_snapshot_retro_replay.py"
+      - "docs/legal/**"
+      - "docs/production-readiness.md"
+      - "fixtures/1405-05/**"
+      - ".github/workflows/gate1-rule-retro.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rule-and-retro-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/rules
+          src/morva/payroll/retro_gap.py
+          tests/test_gate1_retro_gap.py
+      - name: Focused pytest
+        run: >
+          pytest -q
+          tests/test_gate1_retro_gap.py
+          tests/test_calculation_matrix.py
+          tests/test_calculator.py
+          tests/test_m3_13_snapshot_retro_replay.py
+      - name: Golden case repository
+        run: python -c "from morva.rules.regression_cases import validate_repository; raise SystemExit(1 if validate_repository('1405.0') else 0)"
+      - name: Boundary
+        run: |
+          echo "Gate 1 is evidence-driven and fail-closed."
+          echo "No legal rate, threshold, production credential or payment authority is activated."
