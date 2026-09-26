@@ -25,7 +25,7 @@ def test_rule_result_fingerprint_is_stable() -> None:
         {"amount": Decimal("123.45")}
     )
     assert fingerprint_rule_result(result) == (
-        "039154840b2c09f6363ac29ea847f19e395269a4f8b12ae17ed86487eb5d0a18"
+        "acb898fb72c647efe0067bb31c40b30b8e51e46fbccb77ef4a9704617d541736"
     )
 
 
@@ -55,5 +55,24 @@ def test_classification_changes_fingerprint() -> None:
         True,
         False,
         False,
+        result.rule_version,
     )
     assert fingerprint_rule_result(result) != fingerprint_rule_result(classified)
+
+
+def test_rule_version_changes_fingerprint() -> None:
+    base = RuleResultForTest(
+        code="RULE",
+        amount=Decimal("10"),
+        explanation="explanation",
+        legal_reference="LAW",
+        rule_version="1405.1",
+    )
+    changed = RuleResultForTest(
+        code="RULE",
+        amount=Decimal("10"),
+        explanation="explanation",
+        legal_reference="LAW",
+        rule_version="1405.2",
+    )
+    assert fingerprint_rule_result(base) != fingerprint_rule_result(changed)
