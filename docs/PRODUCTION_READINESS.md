@@ -17,6 +17,10 @@ Morva is not production payroll-ready until all of the following are true:
 11. Load tests meet the agreed throughput and latency target for the expected employee population.
 12. Security review, MFA, RBAC, audit logging and secrets management are enabled.
 
+## Rule activation runtime gate
+
+Production payroll calculation must pass the governed Rule Pack activation boundary, not only the pack status/hash check. The gate requires an approved or published pack with an effective period, approved legal evidence for every executable component, population-scoped calculation-matrix readiness, regression evidence, distinct review/approval actors, and source/matrix effective dates covering the payroll period. Development and research fixtures are not promoted by this gate.
+
 ## Real-data admission
 
 Real employee or payroll data must enter through an approved import contract with validation, checksum, provenance and audit metadata. No real sample is committed to Git.

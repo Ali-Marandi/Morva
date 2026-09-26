@@ -1,3 +1,13 @@
+## Unreleased — M4.69 M4.68 Verification-History Integrity Snapshot
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.68 verification-result history.
+- Re-verify every M4.68 source result before capture, history exposure and direct snapshot verification.
+- Preserve timestamp+UUID cursor history and append-only fingerprint-idempotent snapshots.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.68 M4.67 Independent Verification Persistence
 
 ### Readiness policy governance

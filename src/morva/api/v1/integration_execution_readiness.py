@@ -117,6 +117,10 @@ from morva.persistence.independent_historical_m4_67_verification_persistence_m4_
     IndependentHistoricalM466VerificationPersistenceReceiptPersistenceError,
     IndependentHistoricalM466VerificationPersistenceReceiptRepository,
 )
+from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 import (
+    HistoricalM468VerificationHistoryIntegrityPersistenceError,
+    HistoricalM468VerificationHistoryIntegrityRepository,
+)
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
     IndependentHistoricalM455ReceiptVerificationError,
     independently_verify_historical_m4_55_receipt as reconstruct_m4_55_receipt_verification,
@@ -2684,6 +2688,20 @@ class IndependentHistoricalM466VerificationPersistenceReceiptHistoryResponse(Bas
     next_before_id: UUID | None = None
 
 
+class HistoricalM468VerificationHistoryIntegritySnapshotResponse(BaseModel):
+    id: UUID
+    integrity: dict[str, object]
+    captured_by: str
+    created_at: datetime
+
+
+class HistoricalM468VerificationHistoryIntegrityHistoryResponse(BaseModel):
+    items: list[HistoricalM468VerificationHistoryIntegritySnapshotResponse]
+    has_more: bool
+    next_before_created_at: datetime | None = None
+    next_before_id: UUID | None = None
+
+
 class HistoricalM457VerificationReceiptHistoryIntegritySnapshotResponse(BaseModel):
     id: UUID
     integrity: dict[str, object]
@@ -5235,5 +5253,138 @@ def verify_independent_historical_m4_67_verification_result(
         verification_receipt_id=record.verification_receipt_id,
         verification=record.to_verification().to_payload(),
         recorded_by=record.recorded_by,
+        created_at=record.created_at,
+    )
+
+
+@router.post(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-68-verification-history-integrity-snapshots",
+    response_model=HistoricalM468VerificationHistoryIntegritySnapshotResponse,
+)
+def capture_historical_m4_68_verification_history_integrity_snapshot(
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalM468VerificationHistoryIntegritySnapshotResponse:
+    authorize(
+        principal,
+        "evidence.binding.write",
+        principal.scope,
+        privileged=True,
+    )
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="M4.69 history integrity is ministry-managed",
+        )
+    with SessionLocal() as session:
+        repository = HistoricalM468VerificationHistoryIntegrityRepository(session)
+        try:
+            record = repository.capture(captured_by=principal.user_id)
+            integrity = record.to_integrity()
+            append_audit_event(
+                event_type=(
+                    "integration.readiness."
+                    "historical_m4_68_verification_history_integrity."
+                    "snapshot.recorded"
+                ),
+                entity_type="historical_m4_68_verification_history_integrity_snapshot",
+                entity_id=str(record.id),
+                actor_id=principal.user_id,
+                payload={
+                    "record_count": record.record_count,
+                    "valid_count": record.valid_count,
+                    "history_fingerprint": record.history_fingerprint,
+                    "fingerprint": record.fingerprint,
+                },
+                reason="M4.69 point-in-time M4.68 verification-history integrity snapshot persisted",
+                session=session,
+            )
+            session.commit()
+        except HistoricalM468VerificationHistoryIntegrityPersistenceError as exc:
+            session.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return HistoricalM468VerificationHistoryIntegritySnapshotResponse(
+        id=record.id,
+        integrity=integrity.to_payload(),
+        captured_by=record.captured_by,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-68-verification-history-integrity-snapshots",
+    response_model=HistoricalM468VerificationHistoryIntegrityHistoryResponse,
+)
+def list_historical_m4_68_verification_history_integrity_snapshots(
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalM468VerificationHistoryIntegrityHistoryResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="M4.69 history integrity is ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+    with SessionLocal() as session:
+        repository = HistoricalM468VerificationHistoryIntegrityRepository(session)
+        try:
+            records, has_more = repository.list(
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except HistoricalM468VerificationHistoryIntegrityPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        HistoricalM468VerificationHistoryIntegritySnapshotResponse(
+            id=record.id,
+            integrity=record.to_integrity().to_payload(),
+            captured_by=record.captured_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return HistoricalM468VerificationHistoryIntegrityHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-68-verification-history-integrity-snapshots/{snapshot_id}/verify",
+    response_model=HistoricalM468VerificationHistoryIntegritySnapshotResponse,
+)
+def verify_historical_m4_68_verification_history_integrity_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> HistoricalM468VerificationHistoryIntegritySnapshotResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = HistoricalM468VerificationHistoryIntegrityRepository(session)
+        try:
+            record = repository.verify(snapshot_id)
+        except HistoricalM468VerificationHistoryIntegrityPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return HistoricalM468VerificationHistoryIntegritySnapshotResponse(
+        id=record.id,
+        integrity=record.to_integrity().to_payload(),
+        captured_by=record.captured_by,
         created_at=record.created_at,
     )

@@ -76,6 +76,7 @@
 | 62 | M4.65 Verification Receipt Persistence | **M4.66 persists M4.65 independent verification results as append-only, fingerprint-idempotent receipts with M4.64 snapshot and M4.63 source re-verification, ministry-managed cursor history and direct verification; no production authority is introduced** |
 | 63 | Independent M4.66 Receipt Verification | **M4.67 independently verifies each persisted M4.66 receipt against a fresh M4.65 reconstruction from the M4.64 snapshot and point-in-time M4.63 source history with deterministic blockers and verification fingerprint; no production authority is introduced** |
 | 64 | M4.67 Verification Result Persistence | **M4.68 persists M4.67 independent verification results as append-only, fingerprint-idempotent records with M4.66 receipt, M4.64 snapshot and M4.63 source re-verification, ministry-managed cursor history and direct verification; no production authority is introduced** |
+| 65 | M4.68 Verification-History Integrity Snapshot | **M4.69 captures deterministic point-in-time integrity snapshots over the complete M4.68 verification-result history, re-verifies every source result on capture/list/verify, supports ministry-managed cursor history and preserves the governance/readiness-only boundary; no production authority is introduced** |
 
 
 ## Canonical payroll lifecycle
@@ -97,6 +98,10 @@ Each registered personnel order receives a deterministic SHA-256 content fingerp
 ## Calculation Matrix Governance
 
 Each executable component mapping is required to bind a Rule Pack and population scope to a safe expression, effective dates, legal source/article, tax/pension/insurance treatment and a regression-suite fingerprint. Legal source and rule evidence must already be approved, and matrix entries require distinct review and approval actors before the matrix readiness gate can pass.
+
+## Gate 1 Rule Activation
+
+**Gate 1 runtime enforcement is implemented:** production persisted payroll calculation now requires the Rule Pack activation boundary to pass in addition to the existing pack status/hash checks. The activation check binds the payroll date to the pack effective period, approved legal evidence and source effective dates, population-scoped calculation-matrix readiness, effective matrix dates, regression evidence and distinct review/approval provenance. No legal rates or thresholds are inferred by this change; authoritative legal/source approval remains an external requirement.
 
 ## Ledger Treatment Governance
 
