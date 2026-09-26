@@ -20,6 +20,7 @@ def canonical_result_payload(result: RuleResult) -> dict[str, object]:
         "code": result.code,
         "amount": _canonical_decimal(result.amount),
         "legal_reference": result.legal_reference,
+        "rule_version": result.rule_version,
         "taxable": result.taxable,
         "pensionable": result.pensionable,
         "insurable": result.insurable,
