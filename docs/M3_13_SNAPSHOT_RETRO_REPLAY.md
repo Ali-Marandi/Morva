@@ -4,7 +4,13 @@
 
 M3.13 hardens the historical payroll boundary around the immutable `PersonnelSnapshotRecord` already present in Morva. A historical payroll artifact must be replayable only when its employee, period and snapshot identity/hash remain consistent with the persisted snapshot.
 
-Retroactive reconciliation now requires a persisted original artifact and revised artifact for every requested period. Both artifacts must reference the **same immutable personnel snapshot** for that period. Their persisted net outputs are compared deterministically; no current HR state, current personnel record, or unapproved legal rule is substituted silently.
+Retroactive reconciliation requires a persisted original artifact and revised artifact for every requested period. Both artifacts must reference the **same immutable personnel snapshot** for that period. Their persisted net outputs are compared deterministically; no current HR state, current personnel record, or unapproved legal rule is substituted silently.
+
+## Administrative arrears-gap detection
+
+A personnel order keeps its administrative `issue_date` separate from its legal `effective_from` date. `detect_arrears_gap()` is a deterministic domain helper that reports the calendar-day gap when issuance occurs after legal effect.
+
+این تشخیص فقط وجود و طول شکاف را مشخص می‌کند؛ مبلغ مابه‌التفاوت، نرخ قانونی یا استحقاق پرداخت از تاریخ‌ها استنتاج نمی‌شود و باید از artifactهای اصلی/اصلاحی و Rule Pack معتبر به دست آید.
 
 ## Fail-closed invariants
 
@@ -14,15 +20,16 @@ Retroactive reconciliation now requires a persisted original artifact and revise
 4. A retro period missing either the original or revised persisted artifact is rejected.
 5. Original and revised artifacts for a historical period must share one immutable snapshot.
 6. Period keys are validated as `YYYY-MM` with months `01..12`.
-7. No legal rate, threshold or formula is inferred or activated by M3.13.
+7. An issue date earlier than the effective date is rejected by arrears-gap detection.
+8. No legal rate, threshold or formula is inferred or activated by M3.13.
 
 ## Historical replay
 
-`replay_artifact()` now proves snapshot provenance before reconstructing the persisted payslip lines and recalculating the fingerprint/output hash. The returned evidence includes the historical snapshot id/hash and rule-pack version.
+`replay_artifact()` proves snapshot provenance before reconstructing persisted payslip lines and recalculating the fingerprint/output hash. Returned evidence includes the historical snapshot identity and rule-pack version.
 
 ## Snapshot-driven retro
 
-`calculate_snapshot_driven_retro()` is a provenance/reconciliation boundary over persisted payroll artifacts. It intentionally consumes persisted original/revised outputs rather than recalculating against today's personnel state. The resulting periods retain both artifact snapshot ids and rule-pack versions for auditability.
+`calculate_snapshot_driven_retro()` is a provenance/reconciliation boundary over persisted payroll artifacts. It intentionally consumes persisted original/revised outputs rather than recalculating against today's personnel state. Result periods retain both artifact snapshot ids and rule-pack versions for auditability.
 
 ## Certification boundary
 
