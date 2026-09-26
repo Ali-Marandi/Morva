@@ -119,7 +119,6 @@ from morva.persistence.independent_historical_m4_67_verification_persistence_m4_
 )
 from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 import (
     HistoricalM468VerificationHistoryIntegrityPersistenceError,
-    HistoricalM468VerificationHistoryIntegrityRecord,
     HistoricalM468VerificationHistoryIntegrityRepository,
 )
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
