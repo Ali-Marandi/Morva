@@ -55,7 +55,7 @@ jobs:
           tests/test_calculator.py
           tests/test_m3_13_snapshot_retro_replay.py
       - name: Golden case repository
-        run: python -c "from morva.rules.regression_cases import validate_repository; raise SystemExit(1 if validate_repository('1405.0') else 0)"
+        run: python -c "from morva.rules.regression_cases import validate_repository; raise SystemExit(1 if validate_repository('1405.1') else 0)"
       - name: Boundary
         run: |
           echo "Gate 1 is evidence-driven and fail-closed."
