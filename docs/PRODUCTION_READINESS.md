@@ -27,9 +27,12 @@
 2. [x] Immutable personnel snapshots exist.
 3. [x] The anonymized `fixtures/1405-05` fixture is available for regression/integration work.
 4. [x] Missing or unmapped source data is quarantined/fail-closed.
-5. [ ] Authoritative organization/personnel master hierarchy has formal acceptance.
-6. [ ] Complete approved population, attendance and personnel-order data is available.
-7. [ ] Payroll sample outputs are formally accepted as golden references.
+5. [x] 1405-05 golden-fixture shape and supplied net arithmetic identity are regression-tested.
+6. [x] Personnel-order effective/issue dates remain separate in the golden fixture.
+7. [x] Explicit arrears-gap detection is covered by automated edge-case tests.
+8. [ ] Authoritative organization/personnel master hierarchy has formal acceptance.
+9. [ ] Complete approved population, attendance and personnel-order data is available.
+10. [ ] Payroll sample outputs are formally accepted as golden references.
 
 **Release criterion:** complete authoritative data contracts plus retained acceptance evidence.
 
@@ -40,11 +43,12 @@
 1. [x] External systems are isolated behind adapter boundaries.
 2. [x] Unapproved external execution is fail-closed.
 3. [x] Official adapter evidence is represented by the existing governed evidence boundary.
-4. [ ] The six-layer architecture from the feasibility study is available in repository documentation or formally supplied for implementation.
-5. [ ] Official Central Civil Servants Pension Fund schema/endpoint contract is accepted.
-6. [ ] Official Social Security Organization schema/endpoint contract is accepted.
-7. [ ] Non-production staging acknowledgements, retries and idempotency are evidenced.
-8. [ ] Production credentials are provisioned through external secret management.
+4. [x] Separate integration ports and treatment catalogs exist for the Central Civil Servants Pension Fund and Social Security Organization.
+5. [ ] The six-layer architecture from the feasibility study is available in repository documentation or formally supplied for implementation.
+6. [ ] Official Central Civil Servants Pension Fund schema/endpoint contract is accepted.
+7. [ ] Official Social Security Organization schema/endpoint contract is accepted.
+8. [ ] Non-production staging acknowledgements, retries and idempotency are evidenced.
+9. [ ] Production credentials are provisioned through external secret management.
 
 **Release criterion:** official contracts + authorized staging/pilot evidence + idempotent integration/reconciliation evidence.
 
