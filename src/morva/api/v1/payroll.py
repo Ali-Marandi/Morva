@@ -14,6 +14,7 @@ from morva.persistence.database import SessionLocal
 from morva.persistence.enterprise_models import LifecycleEventRecord, PayrollArtifactRecord
 from morva.persistence.models import ImportBatchRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord, RulePackRecord
 from morva.payroll import PayrollCalculator, PayrollLine
+from morva.rules.activation import RuleActivationBlocked, require_production_rule_pack
 from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.lifecycle import PayrollStatus, transition
 from morva.runtime.config import settings
@@ -135,6 +136,16 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
         if not run.ruleset_hash or not pack.rules_hash or run.ruleset_hash != pack.rules_hash:
             raise HTTPException(status_code=423, detail="payroll calculation is blocked: immutable Rule Pack hash evidence is required")
         lines = session.scalars(select(PayrollLineRecord).where(PayrollLineRecord.payroll_run_id == run.id)).all()
+        if settings.production:
+            try:
+                require_production_rule_pack(
+                    session,
+                    pack=pack,
+                    as_of=datetime.strptime(f"{run.period}-01", "%Y-%m-%d").date(),
+                    component_codes={line.code for line in lines},
+                )
+            except RuleActivationBlocked as exc:
+                raise HTTPException(status_code=423, detail=f"payroll calculation is blocked: {exc}") from exc
         if not lines:
             raise HTTPException(status_code=409, detail="payroll run contains no projected payroll lines")
         if any(line.mapping_status != "approved" for line in lines):
