@@ -78,6 +78,18 @@ def require_production_rule_pack(
     readiness = matrix_readiness(session, pack.version)
     if not readiness.ready:
         raise RuleActivationBlocked("Rule Pack calculation-matrix readiness is blocked: " + "; ".join(readiness.blockers))
+    from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
+    matrix_entries = session.scalars(
+        select(CalculationMatrixRecord).where(
+            CalculationMatrixRecord.rule_pack_version == pack.version,
+            CalculationMatrixRecord.component_code.in_(component_codes),
+        )
+    ).all()
+    for entry in matrix_entries:
+        if as_of < entry.effective_from or (entry.effective_to is not None and as_of > entry.effective_to):
+            raise RuleActivationBlocked(
+                f"calculation matrix for component {entry.component_code} is not effective on {as_of.isoformat()}"
+            )
     evidences = session.scalars(select(RuleEvidenceRecord).where(
         RuleEvidenceRecord.rule_pack_version == pack.version,
         RuleEvidenceRecord.component_code.in_(component_codes),
