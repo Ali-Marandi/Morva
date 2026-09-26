@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from morva.rules.engine import RuleContext, RuleDefinition, RuleEngine
+from morva.rules.engine import RuleContext, RuleDefinition, RuleEngine, RuleResult
 from morva.rules.regression import fingerprint_rule_result, fingerprint_values
 
 
@@ -61,14 +61,14 @@ def test_classification_changes_fingerprint() -> None:
 
 
 def test_rule_version_changes_fingerprint() -> None:
-    base = RuleResultForTest(
+    base = RuleResult(
         code="RULE",
         amount=Decimal("10"),
         explanation="explanation",
         legal_reference="LAW",
         rule_version="1405.1",
     )
-    changed = RuleResultForTest(
+    changed = RuleResult(
         code="RULE",
         amount=Decimal("10"),
         explanation="explanation",
