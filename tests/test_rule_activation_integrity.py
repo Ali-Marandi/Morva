@@ -5,7 +5,7 @@ import pytest
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.persistence.models import RulePackRecord
-from morva.rules.activation import RuleActivationBlocked, require_authoritative_pack
+from morva.rules.activation import RuleActivationBlocked, require_authoritative_pack, require_production_rule_pack
 
 
 class _ScalarResult:
