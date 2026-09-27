@@ -113,3 +113,8 @@ Production release remains blocked by any unresolved item below:
 ## Evidence discipline
 
 Fixtures, demo policies, UI screens, adapter interfaces, CI success and engineering rehearsals are evidence of software behavior only. They do not constitute legal, financial, organizational or production authorization.
+
+
+## Runtime activation enforcement
+
+Production payroll calculation now revalidates the selected Rule Pack at runtime. In addition to immutable pack/evidence hashes, the calculation path requires the pack and every executable component's calculation-matrix/legal evidence to be effective on the payroll period, and fails closed when the requested component matrix evidence is missing. Payroll periods are interpreted as Jalali YYYY-MM and converted to the Gregorian first day before effective-date checks. This is an engineering control; legal/finance approval remains external.
