@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import uuid4
 
 import pytest
@@ -124,3 +124,121 @@ def test_activation_requires_approval_timestamp() -> None:
             pack=pack,
             component_codes={"TAX"},
         )
+
+
+def _production_session():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from morva.persistence.models import Base
+
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(bind=engine)
+    return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)()
+
+
+def _production_fixture(session, *, include_matrix: bool = True):
+    from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
+
+    pack = RulePackRecord(
+        version="GATE1-1.0",
+        status="approved",
+        legal_source_hash="c" * 64,
+        rules_hash="d" * 64,
+        effective_from=date(2026, 7, 23),
+        effective_to=date(2027, 3, 20),
+    )
+    source = LegalSourceRecord(
+        citation="source",
+        issuer="issuer",
+        adoption_date="2026-07-23",
+        effective_from="2026-07-23",
+        effective_to="2027-03-20",
+        document_hash="a" * 64,
+        status="approved",
+    )
+    session.add_all([pack, source])
+    session.flush()
+
+    evidence = RuleEvidenceRecord(
+        rule_pack_version=pack.version,
+        component_code="TAX",
+        legal_source_id=source.id,
+        issuer=source.issuer,
+        article="1",
+        population_scope="public-sector",
+        source_hash=source.document_hash,
+        regression_suite_hash="b" * 64,
+        status="approved",
+        reviewed_by="legal-reviewer",
+        approved_by="finance-approver",
+        approved_at=datetime(2026, 7, 24),
+    )
+    session.add(evidence)
+    if include_matrix:
+        session.add(
+            CalculationMatrixRecord(
+                rule_pack_version=pack.version,
+                component_code="TAX",
+                population_scope="public-sector",
+                treatment="deduction",
+                expression={"op": "value", "name": "taxable"},
+                effective_from=date(2026, 7, 23),
+                effective_to=date(2027, 3, 20),
+                legal_source_id=source.id,
+                legal_article="1",
+                taxable=False,
+                pensionable=False,
+                insurable=False,
+                regression_suite_hash="b" * 64,
+                status="approved",
+                reviewed_by="matrix-reviewer",
+                reviewed_at=datetime(2026, 7, 24),
+                approved_by="matrix-approver",
+                approved_at=datetime(2026, 7, 25),
+            )
+        )
+    session.commit()
+    return pack
+
+
+def test_jalali_period_is_converted_before_production_activation() -> None:
+    from morva.calendar.jalali import jalali_month_start
+
+    assert jalali_month_start("1405-01") == date(2026, 3, 21)
+    assert jalali_month_start("1405-05") == date(2026, 7, 23)
+
+
+def test_production_activation_accepts_effective_jalali_period() -> None:
+    with _production_session() as session:
+        pack = _production_fixture(session)
+        require_production_rule_pack(
+            session,
+            pack=pack,
+            as_of=date(2026, 7, 23),
+            component_codes={"TAX"},
+        )
+
+
+def test_production_activation_blocks_outside_rule_pack_effective_period() -> None:
+    with _production_session() as session:
+        pack = _production_fixture(session)
+        with pytest.raises(RuleActivationBlocked, match="not effective"):
+            require_production_rule_pack(
+                session,
+                pack=pack,
+                as_of=date(2027, 3, 21),
+                component_codes={"TAX"},
+            )
+
+
+def test_production_activation_blocks_missing_component_matrix() -> None:
+    with _production_session() as session:
+        pack = _production_fixture(session, include_matrix=False)
+        with pytest.raises(RuleActivationBlocked, match="calculation-matrix evidence is incomplete"):
+            require_production_rule_pack(
+                session,
+                pack=pack,
+                as_of=date(2026, 7, 23),
+                component_codes={"TAX"},
+            )
