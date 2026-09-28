@@ -143,10 +143,11 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
             raise HTTPException(status_code=423, detail="calculation is blocked: one or more payroll-line mappings require review")
         if settings.production:
             try:
+                activation_date = jalali_month_start(run.period)
                 require_production_rule_pack(
                     session,
                     pack=pack,
-                    as_of=jalali_month_start(run.period),
+                    as_of=activation_date,
                     component_codes={line.code for line in lines},
                 )
             except (RuleActivationBlocked, ValueError) as exc:
