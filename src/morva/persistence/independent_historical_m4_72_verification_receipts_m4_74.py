@@ -42,7 +42,7 @@ class IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     snapshot_id: Mapped[UUID] = mapped_column(
-        ForeignKey("historical_m4_68_verification_history_integrity_m4_69.id"),
+        ForeignKey("historical_m4_71_verification_history_integrity_m4_72.id"),
         nullable=False,
     )
     persisted_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
