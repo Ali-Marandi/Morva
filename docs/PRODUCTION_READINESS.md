@@ -118,3 +118,5 @@ Fixtures, demo policies, UI screens, adapter interfaces, CI success and engineer
 ## Runtime activation enforcement
 
 Production payroll calculation now revalidates the selected Rule Pack at runtime. In addition to immutable pack/evidence hashes, the calculation path requires the pack and every executable component's calculation-matrix/legal evidence to be effective on the payroll period, and fails closed when the requested component matrix evidence is missing. Payroll periods are interpreted as Jalali YYYY-MM and converted to the Gregorian first day before effective-date checks. This is an engineering control; legal/finance approval remains external.
+
+CI regression coverage explicitly loads the calculation-matrix persistence model before creating the isolated test schema and asserts the fail-closed missing-matrix readiness message. This keeps the runtime activation boundary test aligned with the migrated production schema without weakening the gate.
