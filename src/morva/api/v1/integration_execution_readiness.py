@@ -5745,7 +5745,9 @@ def verify_historical_m4_68_verification_history_integrity_snapshot(
         integrity=record.to_integrity().to_payload(),
         captured_by=record.captured_by,
         created_at=record.created_at,
-    
+    )
+
+
 
 @router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
