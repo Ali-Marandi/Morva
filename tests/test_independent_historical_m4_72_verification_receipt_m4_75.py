@@ -11,7 +11,6 @@ from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
-    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
 from morva.runtime.independent_historical_m4_72_verification_receipt_m4_75 import (
