@@ -12,10 +12,10 @@ The tranche adds the M4.74 Alembic migration, repository/persistence model, focu
 
 # Morva Technical Assessment — 2026-09-28
 
-**Assessed branch:** `feat/m4-69-mainline-refresh`  
-**Assessed commit:** `aa519bf04f79a8ad5b25dd9d7c1753375ec01211`  
+**Assessed branch:** `feat/m4-73-m4-72-independent-verification`  
+**Assessed commit:** `bc8e41c1acf0f9d3c54b4e8b8411a7fc880f4314`  
 **Base:** `main` at `663ce8d42154fa26fb3ff6206b2a8c498d25af82`  
-**PR:** #153 — M4.69 mainline refresh  
+**PR:** #154 — M4.73–M4.75 verification-history integrity expansion  
 **Production authority:** blocked
 
 ## Scope
@@ -54,4 +54,4 @@ The PR remains open. The GitHub connector exposes the branch/PR metadata, but do
 
 ## Next engineering boundary
 
-The natural follow-on is a point-in-time integrity snapshot over the M4.71 verification-receipt history, preserving the same fail-closed, independently reconstructable and governance-only boundary.
+The active engineering line now covers M4.69–M4.75; the next boundary is persistence of M4.75 independent verification results, followed by independent verification of that persisted receipt, while retaining the same fail-closed, independently reconstructable and governance-only boundary.
