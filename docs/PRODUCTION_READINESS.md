@@ -30,11 +30,9 @@
 5. [x] 1405-05 golden-fixture shape and supplied net arithmetic identity are regression-tested.
 6. [x] Personnel-order effective/issue dates remain separate in the golden fixture.
 7. [x] Explicit arrears-gap detection is covered by automated edge-case tests.
-8. [x] Gap arrears selection and Decimal difference calculation are implemented independently of legal-rate inference.
-9. [x] Persisted arrears cases record the period range, before/after totals, actor, reason and an immutable audit-chain event.
-10. [ ] Authoritative organization/personnel master hierarchy has formal acceptance.
-11. [ ] Complete approved population, attendance and personnel-order data is available.
-12. [ ] Payroll sample outputs are formally accepted as golden references.
+8. [ ] Authoritative organization/personnel master hierarchy has formal acceptance.
+9. [ ] Complete approved population, attendance and personnel-order data is available.
+10. [ ] Payroll sample outputs are formally accepted as golden references.
 
 **Release criterion:** complete authoritative data contracts plus retained acceptance evidence.
 
