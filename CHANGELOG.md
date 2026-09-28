@@ -1,3 +1,13 @@
+## Unreleased — M4.70 Independent M4.69 Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.69 M4.68 verification-history integrity snapshots without invoking the M4.69 builder.
+- Compare deterministic record counts, valid counts, history fingerprints and aggregate integrity fingerprints.
+- Emit deterministic mismatch blockers and verification fingerprints through a read-only verification path.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.69 M4.68 Verification-History Integrity Snapshot
 
 ### Readiness policy governance
