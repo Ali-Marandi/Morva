@@ -1,7 +1,7 @@
 # Morva Technical Assessment — 2026-09-28
 
 **Assessed branch:** `feat/m4-69-mainline-refresh`  
-**Assessed commit:** `07bf0a15b37bb88f6d1c9d08a0ffa80f7490b07`  
+**Assessed commit:** `aa519bf04f79a8ad5b25dd9d7c1753375ec01211`  
 **Base:** `main` at `663ce8d42154fa26fb3ff6206b2a8c498d25af82`  
 **PR:** #153 — M4.69 mainline refresh  
 **Production authority:** blocked
@@ -34,6 +34,12 @@ The GitHub connector currently exposes the PR and branch state but did not retur
 4. The API applies ministry scope checks and records the capture operation in the persistent audit trail.
 5. Production readiness remains blocked by the documented external legal, authoritative-data, integration, security, reconciliation, resilience and certification evidence requirements.
 
+## Extended implementation position
+
+M4.70 independently reconstructs persisted M4.69 snapshots with deterministic blocker codes and a verification fingerprint. M4.71 persists those independent results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct verification and audit events.
+
+The PR remains open. The GitHub connector exposes the branch/PR metadata, but does not expose workflow-run/status records for this head, so CI is not certified green by this assessment.
+
 ## Next engineering boundary
 
-The natural follow-on is independent verification of persisted M4.69 snapshots, preserving the same fail-closed, read-only and governance-only boundary before any further evidence chain is extended.
+The natural follow-on is a point-in-time integrity snapshot over the M4.71 verification-receipt history, preserving the same fail-closed, independently reconstructable and governance-only boundary.
