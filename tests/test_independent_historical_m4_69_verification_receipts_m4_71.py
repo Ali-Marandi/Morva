@@ -8,6 +8,9 @@ from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 imp
     HistoricalM468VerificationHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
+    IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord,
+)
+from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
@@ -17,6 +20,14 @@ from tests.test_historical_m4_68_verification_history_integrity_m4_69 import (
     _session_m4_69,
 )
 
+
+def _session_m4_71():
+    engine, session = _session_m4_71()
+    IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
+    return engine, session
 
 def test_m4_71_records_and_reverifies_independent_result():
     engine, session = _session_m4_69()
