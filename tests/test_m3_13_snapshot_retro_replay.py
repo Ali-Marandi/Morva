@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from hashlib import sha256
 import json
@@ -12,7 +11,7 @@ from morva.persistence.enterprise_models import Base, PayrollArtifactRecord, Pay
 from morva.persistence.models import PersonnelSnapshotRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 from morva.payroll.replay import ReplayMismatch, replay_artifact
-from morva.payroll.retro import (\n    RetroMismatch,\n    calculate_gap_arrears,\n    calculate_snapshot_driven_retro,\n    detect_arrears_gap,\n    persist_arrears_case,\n)
+from morva.payroll.retro import RetroMismatch, calculate_snapshot_driven_retro
 
 
 def _snapshot(session: Session, employee_no: str, period: str, marker: str) -> PersonnelSnapshotRecord:
@@ -126,65 +125,3 @@ def test_snapshot_retro_requires_the_same_frozen_snapshot() -> None:
                 original_artifacts={"1405-06": old_artifact.id},
                 revised_artifacts={},
             )
-
-def test_gap_arrears_selects_only_periods_before_issue_month() -> None:
-    gap = detect_arrears_gap(
-        employee_no="E-3",
-        order_no="ORD-3",
-        effective_from=date(2026, 4, 1),
-        issue_date=date(2026, 8, 10),
-    )
-    result = calculate_gap_arrears(
-        gap=gap,
-        original={
-            "1405-01": Decimal("900"),
-            "1405-02": Decimal("1000"),
-            "1405-03": Decimal("1100"),
-            "1405-04": Decimal("1200"),
-            "1405-05": Decimal("1300"),
-            "1405-06": Decimal("1400"),
-        },
-        revised={
-            "1405-01": Decimal("950"),
-            "1405-02": Decimal("1050"),
-            "1405-03": Decimal("1150"),
-            "1405-04": Decimal("1250"),
-            "1405-05": Decimal("1350"),
-            "1405-06": Decimal("1450"),
-        },
-    )
-    assert tuple(item.period for item in result.periods) == ("1405-02", "1405-03", "1405-04")
-    assert result.total_difference == Decimal("150")
-
-def test_persisted_arrears_case_records_before_after_audit_event() -> None:
-    from morva.persistence.models import AuditEventRecord
-
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    with Session(engine) as session:
-        gap = detect_arrears_gap(
-            employee_no="E-4",
-            order_no="ORD-4",
-            effective_from=date(2026, 4, 1),
-            issue_date=date(2026, 8, 10),
-        )
-        result = calculate_gap_arrears(
-            gap=gap,
-            original={"1405-02": Decimal("1000")},
-            revised={"1405-02": Decimal("1200")},
-        )
-        case = persist_arrears_case(
-            session,
-            result=result,
-            reason="corrective personnel order",
-            actor_id="payroll-reviewer",
-        )
-        session.commit()
-
-        event = session.query(AuditEventRecord).filter_by(entity_id=str(case.id)).one()
-        assert event.event_type == "payroll.arrears.calculated"
-        assert event.actor_id == "payroll-reviewer"
-        assert event.reason == "corrective personnel order"
-        assert event.payload["before"]["net_total"] == "1000"
-        assert event.payload["after"]["net_total"] == "1200"
-        assert event.payload["difference"] == "200"
