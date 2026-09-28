@@ -19,15 +19,16 @@ from tests.test_historical_m4_68_verification_history_integrity_m4_69 import (
 
 
 def _session_m4_71():
-    engine, session = _session_m4_69()
+    engine, session = _session_m4_71()
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.__table__.create(
         bind=engine,
         checkfirst=True,
     )
     return engine, session
 
+
 def test_m4_71_records_and_reverifies_independent_result():
-    engine, session = _session_m4_69()
+    engine, session = _session_m4_71()
     try:
         _persist_m4_68_result(session)
         snapshot = HistoricalM468VerificationHistoryIntegrityRepository(session).capture(
@@ -46,7 +47,7 @@ def test_m4_71_records_and_reverifies_independent_result():
 
 
 def test_m4_71_rejects_second_actor_for_same_fingerprint():
-    engine, session = _session_m4_69()
+    engine, session = _session_m4_71()
     try:
         _persist_m4_68_result(session)
         snapshot = HistoricalM468VerificationHistoryIntegrityRepository(session).capture(
@@ -67,7 +68,7 @@ def test_m4_71_rejects_second_actor_for_same_fingerprint():
 
 
 def test_m4_71_cursor_history_and_invalid_cursor():
-    engine, session = _session_m4_69()
+    engine, session = _session_m4_71()
     try:
         _persist_m4_68_result(session, "a" * 64)
         first = HistoricalM468VerificationHistoryIntegrityRepository(session).capture(
@@ -108,7 +109,7 @@ def test_m4_71_cursor_history_and_invalid_cursor():
 
 
 def test_m4_71_detects_tampered_receipt():
-    engine, session = _session_m4_69()
+    engine, session = _session_m4_71()
     try:
         _persist_m4_68_result(session)
         snapshot = HistoricalM468VerificationHistoryIntegrityRepository(session).capture(
