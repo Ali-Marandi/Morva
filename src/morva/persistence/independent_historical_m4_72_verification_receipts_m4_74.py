@@ -114,8 +114,10 @@ class IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository:
         independent = self._reconstruct(snapshot)
         existing = self.session.scalar(
             select(IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord).where(
-                IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.verification_fingerprint
-                == independent.verification_fingerprint
+                (
+                    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.verification_fingerprint
+                    == independent.verification_fingerprint
+                )
             )
         )
         if existing is not None:
@@ -186,8 +188,10 @@ class IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository:
         elif before_created_at is not None and before_id is not None:
             query = query.where(
                 (
-                    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at
-                    < before_created_at
+                    (
+                        IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at
+                        < before_created_at
+                    )
                 )
                 | (
                     (
