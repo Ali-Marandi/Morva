@@ -78,20 +78,24 @@ def calculate_gap_arrears(
     original: Mapping[str, Decimal],
     revised: Mapping[str, Decimal],
 ) -> ArrearsResult:
-    """Calculate arrears only for payroll periods whose month starts fall inside the gap.
+    """Calculate arrears for complete payroll periods fully enclosed by the gap.
 
-    The function consumes already-calculated historical and revised values.
-    It does not infer legal rates, attendance, deductions, or fund treatment.
+    The function consumes already-calculated historical and revised values. A period is
+    selected only when its Jalali month start is on/after the effective date and the
+    following Jalali month starts on/before the issue date. This avoids treating a
+    partially covered payroll month as a complete arrears period.
     """
-    from morva.calendar.jalali import jalali_month_start
+    from morva.calendar.jalali import JalaliMonth, jalali_month_start
 
     periods: list[ArrearsPeriod] = []
     for period in sorted(set(original) | set(revised)):
         try:
             month_start = jalali_month_start(period)
-        except ValueError as exc:
+            year, month = map(int, period.split("-", 1))
+            next_month_start = jalali_month_start(JalaliMonth(year, month).next().key)
+        except (TypeError, ValueError) as exc:
             raise RetroMismatch(f"invalid payroll period: {period!r}") from exc
-        if gap.effective_from <= month_start < gap.issue_date:
+        if gap.effective_from <= month_start and next_month_start <= gap.issue_date:
             periods.append(
                 ArrearsPeriod(
                     period=period,
