@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timezone
 
 import pytest
@@ -85,6 +86,22 @@ def test_valid_supersession_produces_new_head():
     assert assessment.head_evidence_ids == ("E-NEW",)
     assert assessment.superseded_evidence_ids == ("E-OLD",)
     assert assessment.link_fingerprints == (link.fingerprint,)
+
+
+def test_assessment_fingerprint_tampering_is_rejected():
+    registry = _registry(_item("E-LEGAL"))
+    assessment = build_lifecycle_assessment(
+        registry,
+        repository="repo",
+        checked_at=NOW,
+        links=(),
+    )
+
+    with pytest.raises(
+        EvidenceLifecycleError,
+        match="assessment fingerprint mismatch",
+    ):
+        replace(assessment, fingerprint="f" * 64)
 
 
 def test_no_links_keep_all_accepted_items_as_heads():
