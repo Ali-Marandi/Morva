@@ -36,7 +36,7 @@ The GitHub connector currently exposes the PR and branch state but did not retur
 
 ## Extended implementation position
 
-M4.70 independently reconstructs persisted M4.69 snapshots with deterministic blocker codes and a verification fingerprint. M4.71 persists those independent results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct verification and audit events.
+M4.70 independently reconstructs persisted M4.69 snapshots with deterministic blocker codes and a verification fingerprint. M4.71 persists those independent results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct verification and audit events. M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 receipt history with source re-verification and cursor history.
 
 The PR remains open. The GitHub connector exposes the branch/PR metadata, but does not expose workflow-run/status records for this head, so CI is not certified green by this assessment.
 
