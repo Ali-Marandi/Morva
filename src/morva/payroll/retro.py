@@ -50,6 +50,56 @@ def detect_arrears_gap(
         gap_days=(issue_date - effective_from).days,
     )
 
+@dataclass(frozen=True, slots=True)
+class ArrearsPeriod:
+    period: str
+    old_net: Decimal
+    revised_net: Decimal
+
+    @property
+    def difference(self) -> Decimal:
+        return self.revised_net - self.old_net
+
+
+@dataclass(frozen=True, slots=True)
+class ArrearsResult:
+    gap: ArrearsGap
+    periods: tuple[ArrearsPeriod, ...]
+
+    @property
+    def total_difference(self) -> Decimal:
+        return sum((item.difference for item in self.periods), Decimal(0))
+
+
+def calculate_gap_arrears(
+    *,
+    gap: ArrearsGap,
+    original: Mapping[str, Decimal],
+    revised: Mapping[str, Decimal],
+) -> ArrearsResult:
+    """Calculate arrears only for payroll periods whose month starts fall inside the gap.
+
+    The function consumes already-calculated historical and revised values.
+    It does not infer legal rates, attendance, deductions, or fund treatment.
+    """
+    from morva.calendar.jalali import jalali_month_start
+
+    periods: list[ArrearsPeriod] = []
+    for period in sorted(set(original) | set(revised)):
+        try:
+            month_start = jalali_month_start(period)
+        except ValueError as exc:
+            raise RetroMismatch(f"invalid payroll period: {period!r}") from exc
+        if gap.effective_from <= month_start < gap.issue_date:
+            periods.append(
+                ArrearsPeriod(
+                    period=period,
+                    old_net=Decimal(original.get(period, Decimal(0))),
+                    revised_net=Decimal(revised.get(period, Decimal(0))),
+                )
+            )
+    return ArrearsResult(gap=gap, periods=tuple(periods))
+
 
 @dataclass(frozen=True, slots=True)
 class RetroPeriod:
