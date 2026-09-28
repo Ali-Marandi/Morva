@@ -71,7 +71,7 @@ class IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord(Base):
                 "persisted M4.74 blockers payload is invalid"
             ) from exc
         try:
-            from morva.runtime.independent_historical_m4_68_verification_history_integrity_m4_70 import (
+            from morva.runtime.independent_historical_m4_71_verification_history_integrity_m4_73 import (
                 IndependentHistoricalM471VerificationHistoryIntegrity,
             )
             return IndependentHistoricalM471VerificationHistoryIntegrity(
