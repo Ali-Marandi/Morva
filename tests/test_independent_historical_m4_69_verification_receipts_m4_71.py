@@ -19,7 +19,7 @@ from tests.test_historical_m4_68_verification_history_integrity_m4_69 import (
 
 
 def _session_m4_71():
-    engine, session = _session_m4_71()
+    engine, session = _session_m4_69()
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.__table__.create(
         bind=engine,
         checkfirst=True,
