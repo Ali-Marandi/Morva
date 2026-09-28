@@ -90,6 +90,7 @@ def independently_verify_historical_m4_72_verification_receipt(
     receipt: IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
     snapshot: HistoricalM471VerificationHistoryIntegrityRecord,
     source_records: list[IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord],
+    source_repository: IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
 ) -> IndependentHistoricalM472VerificationReceiptVerification:
     try:
         stored = receipt.to_verification()
@@ -118,14 +119,9 @@ def independently_verify_historical_m4_72_verification_receipt(
         point_in_time_records,
         key=lambda record: (_timestamp(record.created_at), str(record.id)),
     )
-    source_repository = IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository(
-        session=snapshot._sa_instance_state.session
-    ) if getattr(snapshot, "_sa_instance_state", None) is not None else None
-
     try:
-        if source_repository is not None:
-            for source_record in ordered:
-                source_repository.verify(source_record.id)
+        for source_record in ordered:
+            source_repository.verify(source_record.id)
         reconstructed = independently_verify_historical_m4_71_verification_history_integrity(
             snapshot=snapshot,
             source_records=ordered,
