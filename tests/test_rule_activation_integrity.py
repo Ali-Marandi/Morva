@@ -138,7 +138,13 @@ def _production_session():
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)()
 
 
-def _production_fixture(session, *, include_matrix: bool = True):
+def _production_fixture(
+    session,
+    *,
+    include_matrix: bool = True,
+    matrix_effective_from: date = date(2026, 7, 23),
+    source_effective_from: str = "2026-07-23",
+):
     from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 
     pack = RulePackRecord(
@@ -153,7 +159,7 @@ def _production_fixture(session, *, include_matrix: bool = True):
         citation="source",
         issuer="issuer",
         adoption_date="2026-07-23",
-        effective_from="2026-07-23",
+        effective_from=source_effective_from,
         effective_to="2027-03-20",
         document_hash="a" * 64,
         status="approved",
@@ -184,7 +190,7 @@ def _production_fixture(session, *, include_matrix: bool = True):
                 population_scope="public-sector",
                 treatment="deduction",
                 expression={"op": "value", "name": "taxable"},
-                effective_from=date(2026, 7, 23),
+                effective_from=matrix_effective_from,
                 effective_to=date(2027, 3, 20),
                 legal_source_id=source.id,
                 legal_article="1",
@@ -237,6 +243,36 @@ def test_production_activation_blocks_missing_component_matrix() -> None:
     with _production_session() as session:
         pack = _production_fixture(session, include_matrix=False)
         with pytest.raises(RuleActivationBlocked, match="no calculation-matrix entries are registered"):
+            require_production_rule_pack(
+                session,
+                pack=pack,
+                as_of=date(2026, 7, 23),
+                component_codes={"TAX"},
+            )
+
+
+def test_production_activation_blocks_matrix_before_effective_date() -> None:
+    with _production_session() as session:
+        pack = _production_fixture(
+            session,
+            matrix_effective_from=date(2026, 8, 1),
+        )
+        with pytest.raises(RuleActivationBlocked, match="calculation matrix.*not effective"):
+            require_production_rule_pack(
+                session,
+                pack=pack,
+                as_of=date(2026, 7, 23),
+                component_codes={"TAX"},
+            )
+
+
+def test_production_activation_blocks_source_before_effective_date() -> None:
+    with _production_session() as session:
+        pack = _production_fixture(
+            session,
+            source_effective_from="2026-08-01",
+        )
+        with pytest.raises(RuleActivationBlocked, match="legal source.*not effective"):
             require_production_rule_pack(
                 session,
                 pack=pack,
