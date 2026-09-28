@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from morva.calendar.jalali import jalali_month_start
 from morva.persistence.enterprise_models import Base, PayrollArtifactRecord, PayslipLineRecord
 from morva.persistence.models import PersonnelSnapshotRecord
 from morva.payroll import PayrollCalculator, PayrollLine
@@ -194,3 +195,14 @@ def test_persisted_arrears_case_records_before_after_audit_event() -> None:
         assert event.payload["before"]["net_total"] == "1000"
         assert event.payload["after"]["net_total"] == "1200"
         assert event.payload["difference"] == "200"
+
+    
+def test_jalali_month_start_uses_canonical_calendar_boundary() -> None:
+    assert jalali_month_start("1405-01").isoformat() == "2026-03-21"
+    assert jalali_month_start("1405-02").isoformat() == "2026-04-21"
+    assert jalali_month_start("1405-12").isoformat() == "2027-03-21"
+
+    with pytest.raises(ValueError, match="invalid Jalali period"):
+        jalali_month_start("1405-13")
+    with pytest.raises(ValueError, match="invalid Jalali period"):
+        jalali_month_start("1405/02")
