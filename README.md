@@ -20,7 +20,7 @@ Morva has real persisted application paths today for:
 
 The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
 
-**Current development baseline (2026-09-25):**
+**Current development baseline (2026-09-28):**
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
 - M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
