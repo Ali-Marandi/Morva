@@ -134,7 +134,7 @@ def test_snapshot_retro_requires_the_same_frozen_snapshot() -> None:
                 revised_artifacts={},
             )
 
-def test_gap_arrears_selects_only_periods_before_issue_month() -> None:
+def test_gap_arrears_selects_only_complete_periods_before_issue_date() -> None:
     gap = detect_arrears_gap(
         employee_no="E-3",
         order_no="ORD-3",
@@ -200,7 +200,7 @@ def test_persisted_arrears_case_records_before_after_audit_event() -> None:
 def test_jalali_month_start_uses_canonical_calendar_boundary() -> None:
     assert jalali_month_start("1405-01").isoformat() == "2026-03-21"
     assert jalali_month_start("1405-02").isoformat() == "2026-04-21"
-    assert jalali_month_start("1405-12").isoformat() == "2027-03-21"
+    assert jalali_month_start("1405-12").isoformat() == "2027-02-20"
 
     with pytest.raises(ValueError, match="invalid Jalali period"):
         jalali_month_start("1405-13")
