@@ -12,7 +12,13 @@ from morva.persistence.enterprise_models import Base, PayrollArtifactRecord, Pay
 from morva.persistence.models import PersonnelSnapshotRecord
 from morva.payroll import PayrollCalculator, PayrollLine
 from morva.payroll.replay import ReplayMismatch, replay_artifact
-from morva.payroll.retro import (\n    RetroMismatch,\n    calculate_gap_arrears,\n    calculate_snapshot_driven_retro,\n    detect_arrears_gap,\n    persist_arrears_case,\n)
+from morva.payroll.retro import (
+    RetroMismatch,
+    calculate_gap_arrears,
+    calculate_snapshot_driven_retro,
+    detect_arrears_gap,
+    persist_arrears_case,
+)
 
 
 def _snapshot(session: Session, employee_no: str, period: str, marker: str) -> PersonnelSnapshotRecord:
