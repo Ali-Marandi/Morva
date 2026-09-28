@@ -77,6 +77,19 @@ def test_m4_70_detects_tampered_snapshot():
             captured_by="ministry"
         )
         snapshot.record_count = 2
+        snapshot.fingerprint = __import__("hashlib").sha256(
+            __import__("json").dumps(
+                {
+                    "integrity_version": snapshot.integrity_version,
+                    "record_count": snapshot.record_count,
+                    "valid_count": snapshot.valid_count,
+                    "history_fingerprint": snapshot.history_fingerprint,
+                },
+                ensure_ascii=True,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
         session.flush()
         result = independently_verify_historical_m4_68_verification_history_integrity(
             snapshot=snapshot,
