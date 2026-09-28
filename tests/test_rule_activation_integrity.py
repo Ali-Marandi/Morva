@@ -130,6 +130,7 @@ def _production_session():
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
+    from morva.persistence.calculation_matrix_records import CalculationMatrixRecord  # noqa: F401
     from morva.persistence.models import Base
 
     engine = create_engine("sqlite://")
@@ -235,7 +236,7 @@ def test_production_activation_blocks_outside_rule_pack_effective_period() -> No
 def test_production_activation_blocks_missing_component_matrix() -> None:
     with _production_session() as session:
         pack = _production_fixture(session, include_matrix=False)
-        with pytest.raises(RuleActivationBlocked, match="calculation-matrix evidence is incomplete"):
+        with pytest.raises(RuleActivationBlocked, match="no calculation-matrix entries are registered"):
             require_production_rule_pack(
                 session,
                 pack=pack,
