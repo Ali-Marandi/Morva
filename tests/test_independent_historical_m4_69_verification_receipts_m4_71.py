@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime
 import pytest
-from sqlalchemy import select
 
 from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 import (
     HistoricalM468VerificationHistoryIntegrityRepository,
