@@ -396,3 +396,13 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 ### Safety
 - Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
 
+## Unreleased — M4.79 M4.78 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.78 independent M4.77 verification results as append-only, fingerprint-idempotent receipts.
+- Re-verify the M4.77 snapshot and independently reconstruct point-in-time M4.76 source history before persistence, history exposure and direct verification.
+- Add ministry-managed cursor history, authenticated APIs, migration and focused CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
