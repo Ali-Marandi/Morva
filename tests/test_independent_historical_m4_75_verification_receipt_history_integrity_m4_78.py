@@ -16,11 +16,8 @@ from morva.runtime.independent_historical_m4_75_verification_receipt_history_int
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
     independently_verify_historical_m4_75_verification_receipt_history_integrity,
 )
-from tests.test_historical_m4_75_verification_receipt_history_integrity_m4_77 import (
-    _session_m4_75,
-)
 from tests.test_historical_m4_72_verification_receipt_m4_75 import (
-    _session_m4_75 as _session_m4_75_result,
+    _session_m4_75,
 )
 from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
     _persist_m4_74_receipt,
@@ -28,7 +25,7 @@ from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
 
 
 def _session_m4_78():
-    engine, session = _session_m4_75_result()
+    engine, session = _session_m4_75()
     from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
         HistoricalM475VerificationReceiptHistoryIntegrityRecord,
     )
