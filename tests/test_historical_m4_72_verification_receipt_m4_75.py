@@ -12,9 +12,6 @@ from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475Record,
     HistoricalM472VerificationReceiptM475Repository,
 )
-from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
-    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
-)
 from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
     _persist_m4_74_receipt,
 )
