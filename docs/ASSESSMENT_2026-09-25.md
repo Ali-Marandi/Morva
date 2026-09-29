@@ -1,4 +1,21 @@
-# Technical Assessment — 2026-09-25
+# Technical Assessment — 2026-09-30
+
+## Current implementation position
+
+M4.73 independently reconstructs persisted M4.72 verification-receipt history integrity snapshots from the point-in-time M4.71 verification-receipt history. The verifier validates the persisted snapshot structure, applies the snapshot timestamp as the history boundary, independently rebuilds history and aggregate fingerprints, re-verifies source records through their persistence contract, and emits deterministic blocker codes plus a verification fingerprint.
+
+The tranche is verification/readiness-only. It adds no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
+## M4.73 verification controls
+
+- Persisted M4.72 fingerprints are structurally validated before comparison.
+- M4.71 source records are constrained to the snapshot's point-in-time boundary and ordered deterministically.
+- Source verification records are independently reconstructed rather than delegated to the M4.72 snapshot builder.
+- History-fingerprint, record-count, valid-count and aggregate-integrity mismatches are separately reported.
+- Invalid source or snapshot structures fail closed.
+
+---
+
 
 ## Current implementation position
 
