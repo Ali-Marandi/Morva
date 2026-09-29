@@ -203,17 +203,6 @@ def independently_verify_historical_m4_75_verification_receipt_history_integrity
             blockers=blocker_tuple,
         ),
     )
-def canonical_sha256(payload: object) -> str:
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
-
-
 def _aggregate_fingerprint(
     *,
     integrity_version: int,
