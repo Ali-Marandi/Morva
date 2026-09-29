@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — M4.83 Integrity Primitive Adoption
+
+### Engineering quality
+- Refactor M4.80 verification fingerprints to use the shared canonical SHA-256 JSON primitive introduced by M4.82.
+- Preserve the exact M4.80 verification-fingerprint payload and deterministic semantics.
+- Add regression coverage and a dedicated CI gate for the primitive adoption.
+
+### Safety
+- No production authority or provider execution boundary changed.
+
+
 ## Unreleased — M4.76 Persisted M4.75 Verification
 
 ### Readiness policy governance
