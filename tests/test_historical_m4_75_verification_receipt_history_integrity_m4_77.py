@@ -4,8 +4,14 @@ from datetime import datetime
 
 import pytest
 
+from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
+    HistoricalM471VerificationHistoryIntegrityRepository,
+)
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475Repository,
+)
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
+    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
     HistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
@@ -13,11 +19,11 @@ from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m
     HistoricalM475VerificationReceiptHistoryIntegrityRepository,
 )
 from tests.test_historical_m4_72_verification_receipt_m4_75 import _session_m4_75
+from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
+    _persist_m4_71_receipt,
+)
 from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
     _persist_m4_74_receipt,
-)
-from tests.test_historical_m4_72_verification_receipt_m4_75 import (
-    _session_m4_75,
 )
 
 
@@ -62,20 +68,50 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
     engine, session = _session_m4_75()
     try:
         result_repository = HistoricalM472VerificationReceiptM475Repository(session)
-        for fingerprint in ("a" * 64, "b" * 64):
-            _, receipt = _persist_m4_74_receipt(session)
-            result_repository.record(
-                verification_receipt_id=receipt.id,
-                recorded_by="ministry",
-            )
+        m4_74_repository = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
+            session
+        )
+        m4_72_repository = HistoricalM471VerificationHistoryIntegrityRepository(session)
+
+        _persist_m4_71_receipt(session, "a" * 64)
+        first_m4_72 = m4_72_repository.capture(captured_by="ministry")
+        first_m4_74 = m4_74_repository.record(
+            snapshot_id=first_m4_72.id,
+            recorded_by="ministry",
+        )
+        result_repository.record(
+            verification_receipt_id=first_m4_74.id,
+            recorded_by="ministry",
+        )
+
         repository = HistoricalM475VerificationReceiptHistoryIntegrityRepository(session)
         first = repository.capture(captured_by="ministry")
-        snapshot = repository.capture(captured_by="ministry")
-        assert snapshot.id == first.id
+
+        _persist_m4_71_receipt(session, "b" * 64)
+        second_m4_72 = m4_72_repository.capture(captured_by="ministry")
+        second_m4_74 = m4_74_repository.record(
+            snapshot_id=second_m4_72.id,
+            recorded_by="ministry",
+        )
+        result_repository.record(
+            verification_receipt_id=second_m4_74.id,
+            recorded_by="ministry",
+        )
+
+        second = repository.capture(captured_by="ministry")
+        assert second.id != first.id
 
         page, has_more = repository.list(limit=1)
-        assert has_more is False
-        assert page[0].id == first.id
+        assert has_more is True
+        assert page[0].id == second.id
+
+        next_page, next_has_more = repository.list(
+            before_created_at=page[0].created_at,
+            before_id=page[0].id,
+            limit=1,
+        )
+        assert next_has_more is False
+        assert next_page[0].id == first.id
 
         with pytest.raises(
             HistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
