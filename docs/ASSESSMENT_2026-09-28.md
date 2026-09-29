@@ -12,6 +12,12 @@ The tranche adds the M4.74 Alembic migration, repository/persistence model, focu
 
 # Morva Technical Assessment — 2026-09-28
 
+## M4.82 — Historical integrity primitive consolidation
+
+M4.82 extracts canonical UTC timestamp normalization and canonical JSON SHA-256 hashing into a shared runtime primitive and refactors the M4.77/M4.78 integrity layers to use it. The refactor is semantics-preserving and intended to limit further duplication in the historical verification chain.
+
+
+
 ## M4.81 — Persisted M4.80 independent verification receipts
 
 M4.81 persists M4.80 results only after reloading the M4.79 receipt, validating its M4.77 binding and independently reconstructing the M4.80 result from the M4.77 snapshot plus point-in-time M4.76 history. Idempotent fingerprint persistence, actor binding, cursor history and direct re-verification are enforced.
