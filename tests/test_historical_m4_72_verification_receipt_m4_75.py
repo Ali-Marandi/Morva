@@ -4,8 +4,11 @@ from datetime import datetime
 
 import pytest
 
-from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
-    HistoricalM471VerificationHistoryIntegrityRepository,
+from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
+    IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
+)
+from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
+    _persist_m4_71_receipt,
 )
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475PersistenceError,
@@ -77,16 +80,28 @@ def test_m4_76_rejects_second_actor_for_same_fingerprint() -> None:
 def test_m4_76_cursor_history_and_invalid_cursor() -> None:
     engine, session = _session_m4_75()
     try:
-        _, first = _persist_m4_74_receipt(session)
+        _persist_m4_71_receipt(session, "a" * 64)
+        first_snapshot = HistoricalM471VerificationHistoryIntegrityRepository(session).capture(
+            captured_by="ministry"
+        )
         repository = HistoricalM472VerificationReceiptM475Repository(session)
+        first_receipt = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
+            session
+        ).record(snapshot_id=first_snapshot.id, recorded_by="ministry")
         first_result = repository.record(
-            verification_receipt_id=first.id,
+            verification_receipt_id=first_receipt.id,
             recorded_by="ministry",
         )
 
-        _, second = _persist_m4_74_receipt(session)
+        _persist_m4_71_receipt(session, "b" * 64)
+        second_snapshot = HistoricalM471VerificationHistoryIntegrityRepository(session).capture(
+            captured_by="ministry"
+        )
+        second_receipt = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
+            session
+        ).record(snapshot_id=second_snapshot.id, recorded_by="ministry")
         second_result = repository.record(
-            verification_receipt_id=second.id,
+            verification_receipt_id=second_receipt.id,
             recorded_by="ministry",
         )
 
