@@ -5,8 +5,8 @@ from pathlib import Path
 
 RUNTIME_PATHS = (
     Path("src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"),
-    PurePosixPath("src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"),
-    PurePosixPath("src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"),
+    Path("src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"),
+    Path("src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"),
 )
 
 
