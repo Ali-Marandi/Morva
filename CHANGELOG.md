@@ -1,3 +1,13 @@
+## Unreleased — M4.78 Independent M4.77 History-Integrity Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.77 history-integrity snapshots from the point-in-time M4.76 result history.
+- Compare deterministic history fingerprints, record counts, valid counts and aggregate integrity fingerprints.
+- Emit deterministic blocker codes and a verification fingerprint without invoking the M4.77 snapshot builder.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.77 M4.76 Verification-Result History Integrity
 
 ### Readiness policy governance
