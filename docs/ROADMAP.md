@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.75 independently verifies persisted M4.74 verification receipts against the M4.72 snapshot and point-in-time M4.71 receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.76 persists independent M4.75 verification results with point-in-time source re-verification while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -80,7 +80,7 @@
 - M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 verification-receipt history with source re-verification and cursor history.
 - M4.73 independently reconstructs persisted M4.72 verification-receipt history integrity snapshots against the point-in-time M4.71 receipt history, with deterministic blocker codes and a verification fingerprint.
 - M4.74 persists M4.73 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history and direct re-verification.
-- M4.75 independently verifies persisted M4.74 receipts by reconstructing M4.73 from the M4.72 snapshot and point-in-time M4.71 receipt history.
+- M4.75 independently verifies persisted M4.74 receipts by reconstructing M4.73 from the M4.72 snapshot and point-in-time M4.71 receipt history.\n- M4.76 persists M4.75 independent verification results as append-only, fingerprint-idempotent records with ministry-managed cursor history, source re-verification and direct verification.
 \n## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.75 independent verification of persisted M4.74 receipts.
