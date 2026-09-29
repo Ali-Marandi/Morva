@@ -8,6 +8,7 @@ from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475Repository,
 )
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord,
     HistoricalM475VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
@@ -25,6 +26,10 @@ from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
 
 def _session_m4_79():
     engine, session = _session_m4_75()
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
     IndependentM477VerificationReceiptM479Record.__table__.create(
         bind=engine,
         checkfirst=True,
