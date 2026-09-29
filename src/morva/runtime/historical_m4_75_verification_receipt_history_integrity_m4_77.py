@@ -122,17 +122,6 @@ def build_historical_m4_75_verification_receipt_history_integrity(
             history_fingerprint=history_fingerprint,
         ),
     )
-def canonical_sha256(payload: object) -> str:
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
-
-
 def _snapshot_fingerprint(
     *,
     integrity_version: int,
