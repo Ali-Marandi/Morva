@@ -1,3 +1,15 @@
+# Changelog
+
+## Unreleased — M4.76 Persisted M4.75 Verification
+
+### Readiness policy governance
+- Persist independent M4.75 verification results as append-only, fingerprint-idempotent records.
+- Re-verify the persisted M4.74 receipt and reconstruct M4.75 from the M4.72 snapshot and point-in-time M4.71 receipt history before acceptance.
+- Add ministry-managed cursor history, direct verification, migration, focused regression coverage and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.75 Independent M4.74 Verification
 
 ### Readiness policy governance
