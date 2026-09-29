@@ -1,0 +1,43 @@
+name: M4.84 Integrity Primitive Adoption Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/m4-84-integrity-primitive-adoption-guard.yml"
+      - "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"
+      - "tests/test_historical_integrity_primitive_adoption_guard_m4_84.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.84-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity-primitives:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          tests/test_historical_integrity_primitive_adoption_guard_m4_84.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_historical_integrity_primitives.py
+          tests/test_historical_integrity_primitive_adoption_guard_m4_84.py
+      - name: Boundary
+        run: |
+          echo "M4.84 prevents regression from the shared historical-integrity SHA-256 primitive back to local hashing implementations." >> "$GITHUB_STEP_SUMMARY"
+          echo "Architecture/readiness guard only; no provider execution, credentials, payment mutation or production authorization." >> "$GITHUB_STEP_SUMMARY"
