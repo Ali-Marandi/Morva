@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import ast
-from pathlib import PurePosixPath
+from pathlib import Path
 
 RUNTIME_PATHS = (
-    PurePosixPath("src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"),
+    Path("src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"),
     PurePosixPath("src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"),
     PurePosixPath("src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"),
 )
 
 
-def _source(path: PurePosixPath) -> str:
+def _source(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _tree(path: PurePosixPath) -> ast.Module:
+def _tree(path: Path) -> ast.Module:
     return ast.parse(_source(path), filename=str(path))
 
 
