@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from hashlib import sha256
-import json
+from dataclasses import dataclassfrom datetime import datetime
+
+from morva.runtime.historical_integrity_primitives import (
+    canonical_sha256,
+    canonical_utc_timestamp,
+)
 from uuid import UUID
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
@@ -73,7 +75,7 @@ def build_historical_m4_75_verification_receipt_history_integrity(
 ) -> HistoricalM475VerificationReceiptHistoryIntegrity:
     ordered = sorted(
         records,
-        key=lambda record: (_timestamp(record.created_at), str(record.id)),
+        key=lambda record: (canonical_utc_timestamp(record.created_at), str(record.id)),
     )
     canonical_records: list[dict[str, object]] = []
     valid_count = 0
@@ -101,18 +103,11 @@ def build_historical_m4_75_verification_receipt_history_integrity(
                 "blockers": list(verification.blockers),
                 "verification_fingerprint": verification.verification_fingerprint.lower(),
                 "recorded_by": record.recorded_by,
-                "created_at": _timestamp(record.created_at),
+                "created_at": canonical_utc_timestamp(record.created_at),
             }
         )
 
-    history_fingerprint = sha256(
-        json.dumps(
-            canonical_records,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    history_fingerprint = canonical_sha256(canonical_records)
 
     return HistoricalM475VerificationReceiptHistoryIntegrity(
         integrity_version=1,
@@ -126,13 +121,6 @@ def build_historical_m4_75_verification_receipt_history_integrity(
             history_fingerprint=history_fingerprint,
         ),
     )
-
-
-def _timestamp(value: datetime) -> str:
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).isoformat()
-
 
 def _snapshot_fingerprint(
     *,
