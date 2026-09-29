@@ -12,6 +12,12 @@ The tranche adds the M4.74 Alembic migration, repository/persistence model, focu
 
 # Morva Technical Assessment — 2026-09-28
 
+## M4.79 — Persisted M4.78 independent verification receipts
+
+M4.79 closes the persistence boundary after M4.78. Each persisted receipt is reconstructed from the M4.77 snapshot and point-in-time M4.76 verification-result history before persistence or exposure. Fingerprint idempotency, actor binding, cursor history and direct re-verification are enforced. This remains a verification/readiness mechanism only.
+
+
+
 ## M4.78 — Independent M4.77 history-integrity verification
 
 M4.78 adds an independent verification layer over M4.77 snapshots. The verifier does not invoke the M4.77 snapshot builder or use its repository for reconstruction; it canonicalizes point-in-time M4.76 verification results directly, independently recomputes history and aggregate fingerprints, checks counts, emits deterministic blockers and produces a verification fingerprint. The endpoint remains authenticated, read-only and governance-bound.
