@@ -143,7 +143,7 @@ def independently_verify_historical_m4_72_verification_receipt(
         blockers.append("M474_PERSISTED_FINGERPRINT_MISMATCH")
     if stored.reconstructed_fingerprint.lower() != reconstructed.reconstructed_fingerprint.lower():
         blockers.append("M474_RECONSTRUCTED_FINGERPRINT_MISMATCH")
-    if stored.persisted_valid != reconstructed.valid:
+    if stored.valid != reconstructed.valid:
         blockers.append("M474_VALIDITY_MISMATCH")
 
     blocker_tuple = tuple(blockers)
