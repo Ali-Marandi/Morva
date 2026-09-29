@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.82 consolidates the historical-integrity primitives used by the M4.77/M4.78 verification layers without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.83 extends the M4.82 historical-integrity primitive consolidation into the M4.80 verifier without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
