@@ -216,14 +216,7 @@ def _aggregate_fingerprint(
         "valid_count": valid_count,
         "history_fingerprint": history_fingerprint.lower(),
     }
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    return canonical_sha256(payload)
 
 
 def _verification_fingerprint(
@@ -254,11 +247,4 @@ def _verification_fingerprint(
         "valid": valid,
         "blockers": list(blockers),
     }
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    return canonical_sha256(payload)
