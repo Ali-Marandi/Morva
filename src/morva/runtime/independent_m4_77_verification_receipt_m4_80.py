@@ -4,11 +4,9 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
-    HistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
     HistoricalM475VerificationReceiptHistoryIntegrityRecord,
 )
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
-    HistoricalM472VerificationReceiptM475PersistenceError,
     HistoricalM472VerificationReceiptM475Record,
 )
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
@@ -17,7 +15,6 @@ from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
 )
 from morva.runtime.historical_integrity_primitives import canonical_sha256
 from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
-    IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
     independently_verify_historical_m4_75_verification_receipt_history_integrity,
 )
 
