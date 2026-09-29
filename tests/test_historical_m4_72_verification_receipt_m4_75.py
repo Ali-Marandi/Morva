@@ -4,16 +4,19 @@ from datetime import datetime
 
 import pytest
 
+from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
+    HistoricalM472VerificationReceiptM475PersistenceError,
+    HistoricalM472VerificationReceiptM475Record,
+    HistoricalM472VerificationReceiptM475Repository,
+)
+from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
+    HistoricalM471VerificationHistoryIntegrityRepository,
+)
 from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
 )
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
     _persist_m4_71_receipt,
-)
-from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
-    HistoricalM472VerificationReceiptM475PersistenceError,
-    HistoricalM472VerificationReceiptM475Record,
-    HistoricalM472VerificationReceiptM475Repository,
 )
 from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
     _persist_m4_74_receipt,
@@ -21,6 +24,7 @@ from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
 from tests.test_independent_historical_m4_72_verification_receipts_m4_74 import (
     _session_m4_74,
 )
+
 
 
 def _session_m4_75():
