@@ -88,9 +88,11 @@
 - M4.80 independently verifies each persisted M4.79 receipt against the M4.77 snapshot and point-in-time M4.76 result history with deterministic mismatch blockers and a verification fingerprint.
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79/M4.77 source re-verification, ministry-managed cursor history and direct verification.
 - M4.82 centralizes canonical UTC timestamp and SHA-256 JSON integrity primitives and refactors M4.77/M4.78 runtimes without changing fingerprint semantics or production authority boundaries.
+- M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
+
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.75 independent verification of persisted M4.74 receipts.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the historical verification-integrity chain through M4.83 shared-primitive adoption, while authoritative external evidence and production certification remain pending.
 2. Maintain the exact `main` head as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`; M4.19–M4.43 refresh recorded in `docs/ASSESSMENT_2026-09-24.md`; the M4.47–M4.73 verification-history integrity tranche is recorded in `docs/ASSESSMENT_2026-09-25.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
