@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — M4.79 Persisted M4.78 Verification
+
+### Readiness policy governance
+- Persist independent M4.78 verification results as append-only, fingerprint-idempotent records bound to M4.77 snapshot identities.
+- Re-verify M4.77 snapshot structure and every point-in-time M4.76 source result before persistence and direct verification.
+- Add cursor history, authenticated APIs, Alembic migration, focused regression coverage and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+
 ## Unreleased — M4.76 Persisted M4.75 Verification
 
 ### Readiness policy governance
