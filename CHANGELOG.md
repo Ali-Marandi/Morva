@@ -1,3 +1,75 @@
+# Changelog
+
+## Unreleased — M4.76 Persisted M4.75 Verification
+
+### Readiness policy governance
+- Persist independent M4.75 verification results as append-only, fingerprint-idempotent records.
+- Re-verify the persisted M4.74 receipt and reconstruct M4.75 from the M4.72 snapshot and point-in-time M4.71 receipt history before acceptance.
+- Add ministry-managed cursor history, direct verification, migration, focused regression coverage and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.75 Independent M4.74 Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.74 verification receipts without trusting the receipt persistence repository.
+- Re-verify the bound M4.72 snapshot and point-in-time M4.71 receipt history before comparing receipt identity fields.
+- Emit deterministic mismatch blockers and a verification fingerprint through an authenticated read-only API.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.73 Independent M4.72 Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.72 verification-receipt history integrity snapshots without invoking the M4.72 snapshot builder.
+- Re-verify the point-in-time M4.71 verification-receipt history and compare record counts, valid counts, history fingerprints and aggregate integrity fingerprints.
+- Emit deterministic blocker codes and a verification fingerprint through an authenticated read-only API.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.72 M4.71 Verification-Receipt History Integrity
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.71 verification-receipt history.
+- Re-verify every M4.71 source receipt before capture, history exposure and direct snapshot verification.
+- Preserve timestamp+UUID cursor history and append-only fingerprint-idempotent snapshots.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.71 Independent M4.70 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist independent M4.70 verification results as append-only, fingerprint-idempotent receipts.
+- Re-verify the M4.69 source snapshot and the point-in-time M4.68 source history before recording, listing or directly verifying results.
+- Expose ministry-managed cursor history and direct receipt verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.70 Independent M4.69 Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.69 M4.68 verification-history integrity snapshots without invoking the M4.69 builder.
+- Compare deterministic record counts, valid counts, history fingerprints and aggregate integrity fingerprints.
+- Emit deterministic mismatch blockers and verification fingerprints through a read-only verification path.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.69 M4.68 Verification-History Integrity Snapshot
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.68 verification-result history.
+- Re-verify every M4.68 source result before capture, history exposure and direct snapshot verification.
+- Preserve timestamp+UUID cursor history and append-only fingerprint-idempotent snapshots.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.68 M4.67 Independent Verification Persistence
 
 ### Readiness policy governance
@@ -304,4 +376,63 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 
 ### Readiness policy governance
 - Evaluate convergence freshness using a policy resolved only from an independently reconstructed historical registry snapshot.
-- Bind the result to the exact snapshot and registry identities with deterministic SHA-256.
+- Bind the result to the exact snapshot and registry identities with deterministic SHA-256.## Unreleased — M4.77 M4.76 Verification-Result History Integrity
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.76 verification-result history.
+- Re-verify every M4.76 result before capture, history exposure and direct snapshot verification.
+- Add ministry-managed cursor history, migration, focused regression coverage and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.78 Independent M4.77 History-Integrity Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.77 snapshots against the point-in-time M4.76 result history.
+- Compare deterministic history fingerprints, record counts, valid counts and aggregate fingerprints.
+- Add deterministic blocker codes, verification fingerprint, authenticated read-only API and dedicated CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.79 M4.78 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.78 independent M4.77 verification results as append-only, fingerprint-idempotent receipts.
+- Re-verify the M4.77 snapshot and independently reconstruct point-in-time M4.76 source history before persistence, history exposure and direct verification.
+- Add ministry-managed cursor history, authenticated APIs, migration and focused CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.80 Independent M4.79 Verification
+
+### Readiness policy governance
+- Independently re-verify persisted M4.79 receipts against the M4.77 snapshot and point-in-time M4.76 result history.
+- Compare snapshot identity, verification fingerprint, persisted/reconstructed fingerprints and validity.
+- Add deterministic blocker codes, authenticated read-only API and focused CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.81 M4.80 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.80 independent M4.79 verification results as append-only, fingerprint-idempotent receipts.
+- Re-verify the M4.79 source receipt and reconstruct M4.80 from the M4.77 snapshot and point-in-time M4.76 result history before persistence, history exposure and direct verification.
+- Add ministry-managed cursor history, authenticated APIs, migration and focused CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+## Unreleased — M4.82 Historical Integrity Primitive Consolidation
+
+### Engineering quality
+- Added shared deterministic UTC timestamp and SHA-256 canonicalization primitives.
+- Refactored the M4.77/M4.78 runtime integrity layers to use the shared primitives without changing their fingerprint contracts.
+- Added focused regression coverage for canonicalization behavior.
+
+### Safety
+- No production authority or provider execution boundary changed.
+

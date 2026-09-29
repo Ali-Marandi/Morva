@@ -1,0 +1,64 @@
+name: M4.69 M4.68 Verification-History Integrity Snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-69-m4-68-verification-history-integrity-snapshot.yml"
+      - "alembic/versions/0050_historical_m4_68_verification_history_integrity_m4_69.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_m4_67_verification_persistence_m4_68.py"
+      - "src/morva/persistence/historical_m4_68_verification_history_integrity_m4_69.py"
+      - "src/morva/runtime/historical_m4_68_verification_history_integrity_m4_69.py"
+      - "tests/test_independent_historical_m4_67_verification_persistence_m4_68.py"
+      - "tests/test_historical_m4_68_verification_history_integrity_m4_69.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-69-m4-68-verification-history-integrity-snapshot.yml"
+      - "alembic/versions/0050_historical_m4_68_verification_history_integrity_m4_69.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/independent_historical_m4_67_verification_persistence_m4_68.py"
+      - "src/morva/persistence/historical_m4_68_verification_history_integrity_m4_69.py"
+      - "src/morva/runtime/historical_m4_68_verification_history_integrity_m4_69.py"
+      - "tests/test_independent_historical_m4_67_verification_persistence_m4_68.py"
+      - "tests/test_historical_m4_68_verification_history_integrity_m4_69.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.69-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  m4-68-verification-history-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/persistence/historical_m4_68_verification_history_integrity_m4_69.py
+          src/morva/runtime/historical_m4_68_verification_history_integrity_m4_69.py
+          tests/test_historical_m4_68_verification_history_integrity_m4_69.py
+          tests/test_independent_historical_m4_67_verification_persistence_m4_68.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_historical_m4_68_verification_history_integrity_m4_69.py
+          tests/test_independent_historical_m4_67_verification_persistence_m4_68.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_69.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.69 captures point-in-time integrity snapshots over persisted M4.68 independent verification results with source re-verification." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "${GITHUB_STEP_SUMMARY}"
