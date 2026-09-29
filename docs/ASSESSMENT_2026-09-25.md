@@ -1,5 +1,17 @@
 # Technical Assessment — 2026-09-30
 
+## M4.79 — persisted M4.78 independent verification receipts
+
+M4.79 persists the M4.78 independent verification result for each M4.77 history-integrity snapshot as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification re-validate the M4.77 snapshot and reconstruct M4.78 from the point-in-time M4.76 verification-result history before trusting persisted metadata.
+
+### M4.79 controls
+
+- Exact M4.77 snapshot binding and deterministic M4.78 verification identity are persisted.
+- Duplicate verification fingerprints are idempotent for the same actor and rejected for a different actor.
+- History supports snapshot/validity filters with timestamp+UUID cursor pagination.
+- Persisted receipts are structurally revalidated and compared with a fresh independent M4.78 reconstruction.
+- The API is authenticated and ministry-managed for writes/history while remaining verification/readiness-only.
+
 ## M4.78 — independent M4.77 history-integrity verification
 
 M4.78 independently reconstructs each persisted M4.77 point-in-time history-integrity snapshot from the M4.76 verification-result history without invoking the M4.77 builder or repository as the reconstruction source of truth.
