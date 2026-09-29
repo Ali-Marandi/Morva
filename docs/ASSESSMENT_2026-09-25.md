@@ -1,5 +1,21 @@
 # Technical Assessment — 2026-09-30
 
+## M4.75 — Independent M4.74 receipt verification
+
+M4.75 independently verifies persisted M4.74 receipts without invoking the M4.74 receipt repository as the source of truth. It reconstructs the M4.73 result directly from the M4.72 snapshot and point-in-time M4.71 receipt history, compares receipt/snapshot/verification identities, and emits deterministic mismatch blockers plus a verification fingerprint.
+
+The implementation remains verification/readiness-only and does not add provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
+### M4.75 verification controls
+
+- Persisted M4.74 receipt structure and fingerprint are validated before comparison.
+- Exact M4.72 snapshot binding is checked.
+- M4.71 source receipts are independently re-verified within the snapshot's point-in-time boundary.
+- Snapshot ID, verification fingerprint, persisted fingerprint, reconstructed fingerprint and validity mismatches are separately reported.
+
+---
+
+
 ## M4.74 — M4.73 verification-receipt persistence
 
 M4.74 persists the independent M4.73 verification result for an M4.72 history-integrity snapshot as append-only, fingerprint-idempotent evidence. Recording, listing and direct verification reconstruct the M4.73 result from the M4.72 snapshot and the point-in-time M4.71 receipt history before trusting persisted verification metadata.
