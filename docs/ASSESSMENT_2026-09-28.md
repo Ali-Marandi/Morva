@@ -12,6 +12,12 @@ The tranche adds the M4.74 Alembic migration, repository/persistence model, focu
 
 # Morva Technical Assessment — 2026-09-28
 
+## M4.76 — Persisted independent M4.75 verification results
+
+M4.76 closes the persistence boundary after M4.75. The repository stores the complete independent verification identity append-only, keys idempotency to the verification fingerprint, re-verifies the M4.74 source receipt, validates the M4.72 snapshot and reconstructs the M4.73 result from the point-in-time M4.71 receipt history before accepting a persisted result. Ministry-managed cursor history and direct re-verification are exposed through authenticated APIs. This remains a governance/readiness integrity mechanism and does not execute providers, introduce credentials, mutate payments or confer production authority.
+
+
+
 **Assessed branch:** `feat/m4-73-m4-72-independent-verification`  
 **Assessed commit:** `bc8e41c1acf0f9d3c54b4e8b8411a7fc880f4314`  
 **Base:** `main` at `663ce8d42154fa26fb3ff6206b2a8c498d25af82`  
