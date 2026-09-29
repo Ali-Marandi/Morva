@@ -426,3 +426,13 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 ### Safety
 - Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
 
+## Unreleased — M4.82 Historical Integrity Primitive Consolidation
+
+### Engineering quality
+- Added shared deterministic UTC timestamp and SHA-256 canonicalization primitives.
+- Refactored the M4.77/M4.78 runtime integrity layers to use the shared primitives without changing their fingerprint contracts.
+- Added focused regression coverage for canonicalization behavior.
+
+### Safety
+- No production authority or provider execution boundary changed.
+
