@@ -1,5 +1,17 @@
 # Technical Assessment — 2026-09-30
 
+## M4.81 — persisted M4.80 independent verification receipts
+
+M4.81 persists the M4.80 independent verification result for each M4.79 receipt as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification re-validate the M4.79 receipt and bound M4.77 snapshot, then reconstruct M4.80 independently from point-in-time M4.76 verification-result history.
+
+### M4.81 controls
+
+- Exact M4.79 receipt binding is persisted.
+- Duplicate M4.80 verification fingerprints are idempotent for the same actor and rejected for a different actor.
+- History supports receipt/validity filters with timestamp+UUID cursor pagination.
+- Persisted results are structurally revalidated and compared with a fresh M4.80 reconstruction.
+- The API is authenticated and ministry-managed for writes/history while remaining verification/readiness-only.
+
 ## M4.80 — independent verification of persisted M4.79 receipts
 
 M4.80 independently verifies each persisted M4.79 receipt without using the M4.79 persistence repository as the reconstruction source. It validates the receipt structure and exact M4.77 snapshot binding, then reconstructs M4.78 directly from the point-in-time M4.76 verification-result history and compares the persisted and reconstructed verification identities.
