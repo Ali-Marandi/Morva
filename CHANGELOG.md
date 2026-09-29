@@ -386,3 +386,13 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 ### Safety
 - Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
 
+## Unreleased — M4.78 Independent M4.77 History-Integrity Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.77 snapshots against the point-in-time M4.76 result history.
+- Compare deterministic history fingerprints, record counts, valid counts and aggregate fingerprints.
+- Add deterministic blocker codes, verification fingerprint, authenticated read-only API and dedicated CI coverage.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
