@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+
 import pytest
-from sqlalchemy import select
 
 from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 import (
     HistoricalM468VerificationHistoryIntegrityRepository,
@@ -14,12 +14,11 @@ from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 
 )
 from tests.test_historical_m4_68_verification_history_integrity_m4_69 import (
     _persist_m4_68_result,
-    _session_m4_69,
 )
 
 
 def _session_m4_71():
-    engine, session = _session_m4_71()
+    engine, session = _session_m4_70()
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.__table__.create(
         bind=engine,
         checkfirst=True,
