@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from uuid import UUID
+
 import pytest
 from sqlalchemy import select
 
