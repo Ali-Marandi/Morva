@@ -15,9 +15,6 @@ from morva.persistence.independent_m4_79_verification_receipts_m4_81 import (
 from tests.test_independent_m4_77_verification_receipts_m4_79 import (
     _persist_m4_77_snapshot,
 )
-from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
-    _persist_m4_74_receipt,
-)
 from tests.test_historical_m4_72_verification_receipt_m4_75 import _session_m4_75
 
 
