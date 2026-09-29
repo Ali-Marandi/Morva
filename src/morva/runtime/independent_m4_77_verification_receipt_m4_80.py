@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from morva.runtime.historical_integrity_primitives import canonical_sha256
 from uuid import UUID
+
+from morva.runtime.historical_integrity_primitives import canonical_sha256
 
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
     HistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
