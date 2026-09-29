@@ -139,7 +139,7 @@ def independently_verify_historical_m4_71_verification_history_integrity(
         canonical_records.append(
             {
                 "id": str(record.id),
-                "verification_receipt_id": str(record.verification_receipt_id),
+                "snapshot_id": str(record.snapshot_id),
                 "persisted_snapshot_id": str(record.persisted_snapshot_id),
                 "reconstructed_snapshot_id": str(record.reconstructed_snapshot_id),
                 "persisted_verification_fingerprint": (
