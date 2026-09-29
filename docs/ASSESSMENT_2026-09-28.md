@@ -12,6 +12,12 @@ The tranche adds the M4.74 Alembic migration, repository/persistence model, focu
 
 # Morva Technical Assessment — 2026-09-28
 
+## M4.77 — M4.76 verification-result history integrity
+
+M4.77 adds a point-in-time aggregate integrity layer over the persisted M4.76 independent-verification results. Every source result is structurally revalidated and independently reconstructed through the M4.76 repository before the snapshot is captured, listed or verified. The snapshot records deterministic record/valid counts and SHA-256 history and aggregate fingerprints, with ministry-managed cursor history and direct verification. The feature remains governance/readiness-only.
+
+
+
 ## M4.76 — Persisted independent M4.75 verification results
 
 M4.76 closes the persistence boundary after M4.75. The repository stores the complete independent verification identity append-only, keys idempotency to the verification fingerprint, re-verifies the M4.74 source receipt, validates the M4.72 snapshot and reconstructs the M4.73 result from the point-in-time M4.71 receipt history before accepting a persisted result. Ministry-managed cursor history and direct re-verification are exposed through authenticated APIs. This remains a governance/readiness integrity mechanism and does not execute providers, introduce credentials, mutate payments or confer production authority.
