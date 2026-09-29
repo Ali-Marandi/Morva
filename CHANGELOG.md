@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — M4.82 Independent M4.81 Verification
+
+### Readiness policy governance
+- Independently verify persisted M4.81 verification receipts against a reconstructed M4.80 result.
+- Bind the reconstruction to the M4.79 receipt, M4.77 point-in-time snapshot and M4.76 source history with deterministic blocker codes and a verification fingerprint.
+- Add authenticated read-only verification API coverage, focused tamper tests and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
+
 ## Unreleased — M4.76 Persisted M4.75 Verification
 
 ### Readiness policy governance
