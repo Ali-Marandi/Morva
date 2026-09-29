@@ -5764,4 +5764,3 @@ def independently_verify_historical_m4_68_verification_history_integrity_snapsho
     return IndependentHistoricalM468VerificationHistoryIntegrityResponse(
         verification=verification.to_payload(),
     )
-)
