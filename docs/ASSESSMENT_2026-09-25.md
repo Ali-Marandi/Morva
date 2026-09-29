@@ -1,5 +1,22 @@
 # Technical Assessment — 2026-09-30
 
+## M4.78 — independent M4.77 history-integrity verification
+
+M4.78 independently reconstructs each persisted M4.77 point-in-time history-integrity snapshot from the M4.76 verification-result history without invoking the M4.77 builder or repository as the reconstruction source of truth.
+
+The verifier validates the persisted snapshot structure, applies the snapshot timestamp as the source-history boundary, reconstructs deterministic history/aggregate identities and emits separate blocker codes plus a verification fingerprint. The runtime is intentionally self-contained and does not depend on the later M4.82 historical-integrity primitive consolidation.
+
+### M4.78 controls
+
+- M4.77 persisted identity is structurally validated before comparison.
+- M4.76 source results are independently canonicalized and ordered by UTC timestamp/UUID.
+- History, count, valid-count and aggregate-integrity mismatches are separately reported.
+- Invalid M4.76 source records fail closed.
+- The API is authenticated, read-only and verification-only.
+
+---
+
+
 ## M4.77 — M4.76 verification-result history integrity
 
 M4.77 captures deterministic point-in-time integrity snapshots over the complete persisted M4.76 independent-verification result history. Capture, listing and direct verification re-verify every source result and apply the snapshot timestamp as the source-history boundary.
