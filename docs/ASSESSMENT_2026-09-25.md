@@ -1,5 +1,17 @@
 # Technical Assessment — 2026-09-30
 
+## M4.80 — independent verification of persisted M4.79 receipts
+
+M4.80 independently verifies each persisted M4.79 receipt without using the M4.79 persistence repository as the reconstruction source. It validates the receipt structure and exact M4.77 snapshot binding, then reconstructs M4.78 directly from the point-in-time M4.76 verification-result history and compares the persisted and reconstructed verification identities.
+
+### M4.80 controls
+
+- Persisted M4.79 receipt structure and fingerprint are validated before comparison.
+- Exact M4.77 snapshot binding is checked.
+- M4.76 source records are independently reconstructed within the M4.77 point-in-time boundary.
+- Deterministic snapshot, verification-fingerprint, persisted/reconstructed-fingerprint and validity mismatches are reported separately.
+- The API is authenticated, read-only and verification-only.
+
 ## M4.79 — persisted M4.78 independent verification receipts
 
 M4.79 persists the M4.78 independent verification result for each M4.77 history-integrity snapshot as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification re-validate the M4.77 snapshot and reconstruct M4.78 from the point-in-time M4.76 verification-result history before trusting persisted metadata.
