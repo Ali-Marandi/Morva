@@ -15,9 +15,6 @@ from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
 from tests.test_historical_m4_72_verification_receipt_m4_75 import (
     _session_m4_75,
 )
-from tests.test_historical_m4_75_verification_receipt_history_integrity_m4_77 import (
-    _persist_m4_76_result,
-)
 from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
     _persist_m4_74_receipt,
 )
@@ -34,7 +31,10 @@ def _session_m4_79():
 
 def _persist_m4_77_snapshot(session):
     _, receipt = _persist_m4_74_receipt(session)
-    _persist_m4_76_result(session, receipt.id)
+    HistoricalM472VerificationReceiptM475Repository(session).record(
+        verification_receipt_id=receipt.id,
+        recorded_by="ministry",
+    )
     return HistoricalM475VerificationReceiptHistoryIntegrityRepository(session).capture(
         captured_by="ministry"
     )
