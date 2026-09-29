@@ -1,5 +1,22 @@
 # Technical Assessment — 2026-09-30
 
+## M4.76 — persisted M4.75 verification results
+
+M4.76 persists the independent M4.75 verification result for each M4.74 verification receipt as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification revalidate the M4.74 source receipt, validate the M4.72 snapshot and reconstruct M4.75 from the point-in-time M4.71 receipt history before trusting persisted verification metadata.
+
+The tranche adds the persistence model/repository, focused regression coverage, authenticated API endpoints and a dedicated CI workflow. The migration used is the already-established M4.75 result table migration (`0054_historical_m4_72_verification_receipt_m4_75.py`); M4.76 does not introduce a second physical table for the same evidence.
+
+### M4.76 controls
+
+- Exact M4.74 receipt binding is persisted.
+- Duplicate verification fingerprints are idempotent for the same actor and rejected for a different actor.
+- Cursor history supports verification-receipt and validity filtering with timestamp+UUID pagination.
+- Stored results are structurally revalidated and compared with a fresh M4.75 reconstruction.
+- Missing or structurally invalid M4.74 sources fail closed.
+
+---
+
+
 ## M4.75 — Independent M4.74 receipt verification
 
 M4.75 independently verifies persisted M4.74 receipts without invoking the M4.74 receipt repository as the source of truth. It reconstructs the M4.73 result directly from the M4.72 snapshot and point-in-time M4.71 receipt history, compares receipt/snapshot/verification identities, and emits deterministic mismatch blockers plus a verification fingerprint.
