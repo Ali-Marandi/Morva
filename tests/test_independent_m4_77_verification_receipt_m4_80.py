@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 import pytest
 from sqlalchemy import select
 
@@ -10,6 +12,7 @@ from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
 )
+from morva.runtime.historical_integrity_primitives import canonical_sha256
 from morva.runtime.independent_m4_77_verification_receipt_m4_80 import (
     IndependentM477VerificationReceiptM480Error,
     independently_verify_m4_79_verification_receipt,
@@ -127,3 +130,34 @@ def test_m4_80_openapi_route_is_registered() -> None:
         "verification-receipts/{verification_id}/verify-independent"
     )
     assert "get" in app.openapi()["paths"][path]
+
+
+def test_m4_80_verification_fingerprint_matches_canonical_sha256() -> None:
+    from morva.runtime.independent_m4_77_verification_receipt_m4_80 import (
+        _verification_fingerprint,
+    )
+
+    kwargs = {
+        "verification_receipt_id": UUID("00000000-0000-0000-0000-000000000001"),
+        "persisted_fingerprint": "1" * 64,
+        "reconstructed_fingerprint": "2" * 64,
+        "persisted_snapshot_id": UUID("00000000-0000-0000-0000-000000000002"),
+        "reconstructed_snapshot_id": UUID("00000000-0000-0000-0000-000000000003"),
+        "persisted_valid": True,
+        "reconstructed_valid": True,
+        "valid": True,
+        "blockers": (),
+    }
+    payload = {
+        "verification_version": 1,
+        "verification_receipt_id": str(kwargs["verification_receipt_id"]),
+        "persisted_fingerprint": kwargs["persisted_fingerprint"],
+        "reconstructed_fingerprint": kwargs["reconstructed_fingerprint"],
+        "persisted_snapshot_id": str(kwargs["persisted_snapshot_id"]),
+        "reconstructed_snapshot_id": str(kwargs["reconstructed_snapshot_id"]),
+        "persisted_valid": kwargs["persisted_valid"],
+        "reconstructed_valid": kwargs["reconstructed_valid"],
+        "valid": kwargs["valid"],
+        "blockers": list(kwargs["blockers"]),
+    }
+    assert _verification_fingerprint(**kwargs) == canonical_sha256(payload)
