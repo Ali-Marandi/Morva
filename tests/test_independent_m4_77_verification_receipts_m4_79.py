@@ -136,6 +136,6 @@ def test_m4_79_openapi_routes_are_registered() -> None:
         "verification-receipts"
     )
     paths = app.openapi()["paths"]
-    assert "post" in paths[prefix + "/{snapshot_id}"]
+    assert "post" in paths[prefix]
     assert "get" in paths[prefix]
     assert "get" in paths[prefix + "/{verification_id}/verify"]
