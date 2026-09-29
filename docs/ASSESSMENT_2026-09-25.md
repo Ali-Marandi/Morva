@@ -1,5 +1,22 @@
 # Technical Assessment — 2026-09-30
 
+## M4.77 — M4.76 verification-result history integrity
+
+M4.77 captures deterministic point-in-time integrity snapshots over the complete persisted M4.76 independent-verification result history. Capture, listing and direct verification re-verify every source result and apply the snapshot timestamp as the source-history boundary.
+
+The tranche adds migration 0055, the snapshot persistence repository/model, deterministic runtime reconstruction, focused regression coverage, authenticated API endpoints and a dedicated CI workflow. The runtime is intentionally self-contained and does not depend on the later M4.82 historical-integrity primitive consolidation.
+
+### M4.77 controls
+
+- Source M4.76 results are verified before inclusion in the snapshot.
+- History identity is deterministic and binds timestamp/UUID ordering plus the complete verification-result payload.
+- Duplicate fingerprints are idempotent for the same capture actor and rejected for a different actor.
+- Point-in-time verification excludes source records created at or after the snapshot timestamp.
+- Cursor history uses timestamp+UUID pagination and direct verification reconstructs the source history.
+
+---
+
+
 ## M4.76 — persisted M4.75 verification results
 
 M4.76 persists the independent M4.75 verification result for each M4.74 verification receipt as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification revalidate the M4.74 source receipt, validate the M4.72 snapshot and reconstruct M4.75 from the point-in-time M4.71 receipt history before trusting persisted verification metadata.
