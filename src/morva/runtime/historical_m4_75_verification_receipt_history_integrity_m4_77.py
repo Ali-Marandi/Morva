@@ -135,11 +135,4 @@ def _snapshot_fingerprint(
         "valid_count": valid_count,
         "history_fingerprint": history_fingerprint.lower(),
     }
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    return canonical_sha256(payload)
