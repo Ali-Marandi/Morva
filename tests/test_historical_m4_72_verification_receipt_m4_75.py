@@ -26,7 +26,6 @@ from tests.test_independent_historical_m4_72_verification_receipts_m4_74 import 
 )
 
 
-
 def _session_m4_75():
     engine, session = _session_m4_74()
     HistoricalM472VerificationReceiptM475Record.__table__.create(
