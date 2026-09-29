@@ -376,4 +376,13 @@ The canonical distribution identifier remains `1.0.1`, matching the published Gi
 
 ### Readiness policy governance
 - Evaluate convergence freshness using a policy resolved only from an independently reconstructed historical registry snapshot.
-- Bind the result to the exact snapshot and registry identities with deterministic SHA-256.
+- Bind the result to the exact snapshot and registry identities with deterministic SHA-256.## Unreleased — M4.77 M4.76 Verification-Result History Integrity
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.76 verification-result history.
+- Re-verify every M4.76 result before capture, history exposure and direct snapshot verification.
+- Add ministry-managed cursor history, migration, focused regression coverage and a dedicated CI workflow.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
