@@ -1,3 +1,13 @@
+## Unreleased — M4.84 Integrity Primitive Adoption Guard
+
+### Engineering quality
+- Add an AST-based regression guard for the M4.77/M4.78/M4.80 historical-integrity runtimes.
+- Prevent reintroduction of local SHA-256 hashing or canonical fingerprint JSON serialization.
+- Add a focused CI gate for the adoption contract.
+
+### Safety
+- No persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.83 Integrity Primitive Adoption
 
 ### Engineering quality
