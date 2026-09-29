@@ -75,7 +75,10 @@
 - M4.67 independent verification of M4.66 persisted receipts against fresh M4.65 reconstruction with deterministic blocker codes and verification fingerprint
 - M4.68 append-only, fingerprint-idempotent persistence of M4.67 independent verification results with M4.66 receipt, M4.64 snapshot and M4.63 source re-verification
 - M4.69 point-in-time integrity snapshots over the complete M4.68 verification-result history with deterministic fingerprinting, cursor history and source re-verification
-## Current execution queue
+- M4.70 independently verifies persisted M4.69 verification-history integrity snapshots against a separately reconstructed point-in-time M4.68 source history with deterministic blockers and a verification fingerprint.
+- M4.71 persists those M4.70 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history and direct re-verification.
+- M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 verification-receipt history with source re-verification and cursor history.
+\n## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.69 point-in-time integrity snapshots over the M4.68 verification-result history.
 2. Maintain the exact `main` head as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
