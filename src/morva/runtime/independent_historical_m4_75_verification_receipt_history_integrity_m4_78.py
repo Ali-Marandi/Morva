@@ -262,4 +262,4 @@ def _verification_fingerprint(
         "valid": valid,
         "blockers": list(blockers),
     }
-    return canonical_sha256(payload)
+    return _canonical_sha256(payload)
