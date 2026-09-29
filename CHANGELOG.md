@@ -1,3 +1,13 @@
+## Unreleased — M4.81 Persisted M4.80 Independent Verification Receipts
+
+### Readiness policy governance
+- Persist M4.80 independent verification results as append-only, fingerprint-idempotent receipts.
+- Re-verify the M4.79 source receipt and its bound M4.77 snapshot while independently reconstructing M4.80 from point-in-time M4.76 result history before recording, listing or verifying.
+- Expose ministry-managed history with receipt/valid filters, timestamp+UUID cursors and direct verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.80 Independent M4.79 Receipt Verification
 
 ### Readiness policy governance
