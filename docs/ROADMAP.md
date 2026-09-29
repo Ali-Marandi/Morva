@@ -86,6 +86,7 @@
 - M4.79 persists M4.78 independent verification results as append-only, fingerprint-idempotent receipts with M4.77 source re-verification, ministry-managed cursor history and direct verification.
 - M4.80 independently verifies persisted M4.79 receipts by reconstructing M4.78 from the M4.77 snapshot and point-in-time M4.76 result history, with deterministic blocker codes and a verification fingerprint.
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79/M4.77 source re-verification, ministry-managed cursor history and direct verification.
+- M4.82 consolidates canonical historical-integrity timestamp and SHA-256 primitives for the newer verification layers without changing fingerprint semantics or authority boundaries.
 \n## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.75 independent verification of persisted M4.74 receipts.
