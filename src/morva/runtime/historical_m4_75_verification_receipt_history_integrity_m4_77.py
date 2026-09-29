@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from hashlib import sha256
-import json
+from datetime import datetime
 from uuid import UUID
+
+from morva.runtime.historical_integrity_primitives import (
+    canonical_sha256,
+    canonical_utc_timestamp,
+)
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475PersistenceError,
@@ -73,7 +76,7 @@ def build_historical_m4_75_verification_receipt_history_integrity(
 ) -> HistoricalM475VerificationReceiptHistoryIntegrity:
     ordered = sorted(
         records,
-        key=lambda record: (_timestamp(record.created_at), str(record.id)),
+        key=lambda record: (canonical_utc_timestamp(record.created_at), str(record.id)),
     )
     canonical_records: list[dict[str, object]] = []
     valid_count = 0
@@ -101,11 +104,11 @@ def build_historical_m4_75_verification_receipt_history_integrity(
                 "blockers": list(verification.blockers),
                 "verification_fingerprint": verification.verification_fingerprint.lower(),
                 "recorded_by": record.recorded_by,
-                "created_at": _timestamp(record.created_at),
+                "created_at": canonical_utc_timestamp(record.created_at),
             }
         )
 
-    history_fingerprint = _canonical_sha256(canonical_records)
+    history_fingerprint = canonical_sha256(canonical_records)
 
     return HistoricalM475VerificationReceiptHistoryIntegrity(
         integrity_version=1,
@@ -119,14 +122,7 @@ def build_historical_m4_75_verification_receipt_history_integrity(
             history_fingerprint=history_fingerprint,
         ),
     )
-
-def _timestamp(value: datetime) -> str:
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).isoformat()
-
-
-def _canonical_sha256(payload: object) -> str:
+def canonical_sha256(payload: object) -> str:
     return sha256(
         json.dumps(
             payload,
@@ -150,4 +146,4 @@ def _snapshot_fingerprint(
         "valid_count": valid_count,
         "history_fingerprint": history_fingerprint.lower(),
     }
-    return _canonical_sha256(payload)
+    return canonical_sha256(payload)
