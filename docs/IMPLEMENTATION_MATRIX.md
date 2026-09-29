@@ -89,6 +89,7 @@
 | 75 | M4.79 M4.78 Verification Receipt Persistence | **M4.79 persists M4.78 independent verification results as append-only, fingerprint-idempotent receipts with M4.77 snapshot re-verification, M4.76 source-history re-verification, ministry-managed cursor history and direct verification; no production authority is introduced** |
 | 76 | M4.80 Independent M4.79 Verification | **M4.80 independently reconstructs M4.78 from the M4.77 snapshot and point-in-time M4.76 result history, compares persisted M4.79 receipt identity and validity with the reconstructed result, and emits deterministic blockers plus a verification fingerprint; no production authority is introduced** |
 | 77 | M4.81 M4.80 Verification Receipt Persistence | **M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79 receipt and M4.77 snapshot/source-history re-verification, ministry-managed cursor history and direct verification; no production authority is introduced** |
+| 78 | M4.82 Historical Integrity Primitive Consolidation | **M4.82 centralizes deterministic UTC timestamp normalization and canonical SHA-256 JSON hashing for the newer historical-integrity layers, preserving existing fingerprints and verification semantics; no production authority is introduced** |
 
 
 ## Canonical payroll lifecycle
