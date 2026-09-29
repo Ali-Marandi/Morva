@@ -1,3 +1,13 @@
+## Unreleased — M4.82 Historical Integrity Primitive Consolidation
+
+### Readiness policy governance
+- Centralize canonical UTC timestamp normalization and canonical SHA-256 JSON serialization.
+- Refactor M4.77/M4.78 integrity runtimes to use the shared primitives while preserving existing fingerprint schemas and verification semantics.
+- Add focused regression tests for timezone normalization and key-order-independent hashing.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.81 Persisted M4.80 Independent Verification Receipts
 
 ### Readiness policy governance
