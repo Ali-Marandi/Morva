@@ -160,6 +160,10 @@ from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479Repository,
     IndependentM477VerificationReceiptM479Record,
 )
+from morva.runtime.independent_m4_77_verification_receipt_m4_80 import (
+    IndependentM477VerificationReceiptM480Error,
+    independently_verify_m4_79_verification_receipt,
+)
 from morva.runtime.independent_historical_m4_72_verification_receipt_m4_75 import (
     IndependentHistoricalM472VerificationReceiptVerificationError,
     independently_verify_historical_m4_72_verification_receipt,
@@ -5875,6 +5879,10 @@ def independently_verify_historical_m4_71_verification_history_integrity_snapsho
 
 
 
+class IndependentM477VerificationReceiptM480Response(BaseModel):
+    verification: dict[str, object]
+
+
 class IndependentM477VerificationReceiptM479Response(BaseModel):
     id: UUID
     snapshot_id: UUID
@@ -6606,5 +6614,63 @@ def verify_independent_m4_77_verification_receipt_m4_79(
         verification=record.to_verification().to_payload(),
         recorded_by=record.recorded_by,
         created_at=record.created_at,
+    )
+
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-76-verification-receipt-history-integrity-snapshots/"
+    "verification-receipts/{verification_id}/verify-independent",
+    response_model=IndependentM477VerificationReceiptM480Response,
+)
+def independently_verify_m4_79_verification_receipt(
+    verification_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentM477VerificationReceiptM480Response:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        receipt = session.get(
+            IndependentM477VerificationReceiptM479Record,
+            verification_id,
+        )
+        if receipt is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.79 independent verification receipt not found",
+            )
+        snapshot = session.get(
+            HistoricalM475VerificationReceiptHistoryIntegrityRecord,
+            receipt.snapshot_id,
+        )
+        if snapshot is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.77 receipt-history integrity snapshot not found",
+            )
+        source_query = (
+            select(HistoricalM472VerificationReceiptM475Record)
+            .where(
+                HistoricalM472VerificationReceiptM475Record.created_at
+                < snapshot.created_at
+            )
+            .order_by(
+                HistoricalM472VerificationReceiptM475Record.created_at.asc(),
+                HistoricalM472VerificationReceiptM475Record.id.asc(),
+            )
+        )
+        source_records = list(session.scalars(source_query).all())
+        try:
+            verification = independently_verify_m4_79_verification_receipt(
+                receipt=receipt,
+                snapshot=snapshot,
+                source_records=source_records,
+            )
+        except IndependentM477VerificationReceiptM480Error as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentM477VerificationReceiptM480Response(
+        verification=verification.to_payload(),
     )
 
