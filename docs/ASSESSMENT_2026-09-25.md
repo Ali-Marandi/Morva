@@ -1,5 +1,17 @@
 # Technical Assessment — 2026-09-30
 
+## M4.82 — historical integrity primitive consolidation
+
+M4.82 centralizes canonical UTC timestamp normalization and key-order-independent SHA-256 JSON serialization in a shared runtime module. The M4.77 and M4.78 integrity layers are refactored to use those primitives while keeping their fingerprint payloads, blocker semantics and verification boundaries unchanged.
+
+### M4.82 controls
+
+- Canonical UTC timestamps preserve timezone-normalized ordering semantics.
+- Canonical SHA-256 serialization preserves deterministic key ordering and separators.
+- M4.77 and M4.78 no longer carry duplicate local primitive implementations.
+- Focused primitive regression tests cover timezone normalization and order-independent hashing.
+- No persistence schema, provider execution or production authorization behavior changes.
+
 ## M4.81 — persisted M4.80 independent verification receipts
 
 M4.81 persists the M4.80 independent verification result for each M4.79 receipt as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification re-validate the M4.79 receipt and bound M4.77 snapshot, then reconstruct M4.80 independently from point-in-time M4.76 verification-result history.
