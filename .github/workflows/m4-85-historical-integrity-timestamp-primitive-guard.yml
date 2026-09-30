@@ -1,0 +1,42 @@
+name: M4.85 Historical Integrity Timestamp Primitive Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/m4-85-historical-integrity-timestamp-primitive-guard.yml"
+      - "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "tests/test_historical_integrity_timestamp_primitive_guard_m4_85.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.85-\${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  timestamp-primitive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          tests/test_historical_integrity_timestamp_primitive_guard_m4_85.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_historical_integrity_primitives.py
+          tests/test_historical_integrity_timestamp_primitive_guard_m4_85.py
+      - name: Boundary
+        run: |
+          echo "M4.85 prevents regression from the shared canonical UTC timestamp primitive back to local timestamp normalization." >> "$GITHUB_STEP_SUMMARY"
+          echo "Architecture/readiness regression guard only; no provider execution, credentials, payment mutation or production authorization." >> "$GITHUB_STEP_SUMMARY"
