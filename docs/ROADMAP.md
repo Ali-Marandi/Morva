@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.86 centralizes the M4.77–M4.81 repository-wide integrity contract in a machine-readable manifest, with M4.84/M4.85 guards consuming the same source; runtime semantics, fingerprint semantics and the governance/readiness-only boundary remain unchanged; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.87 validates the M4.86 machine-readable M4.77–M4.81 integrity graph for completeness, acyclicity and backward-only dependency ordering; runtime semantics, fingerprint semantics and the governance/readiness-only boundary remain unchanged; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
