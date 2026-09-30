@@ -22,6 +22,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 
 **Current development baseline (2026-09-30):**
 - M4.85 adds an executable repository-wide integrity contract across the M4.77–M4.81 dependency chain, rejects forward dependencies, and keeps runtime/persistence/test layers structurally aligned.
+- M4.86 centralizes that contract in a machine-readable manifest consumed by the M4.84/M4.85 guards and dedicated CI, eliminating duplicated hard-coded contract tables.
 
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
