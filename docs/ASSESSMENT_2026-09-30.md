@@ -112,9 +112,21 @@ M4.74 persists the M4.73 independent verification result for each M4.72 snapshot
 
 M4.75 adds independent reconstruction of each persisted M4.74 verification receipt. The verifier validates the receipt-to-M4.72 binding, revalidates the point-in-time M4.71 source receipts, reconstructs the M4.73 verification result and compares deterministic fingerprints and validity.
 
+## M4.76 implementation position
+
+M4.76 persists the independent M4.75 verification result for each M4.74 receipt as append-only, fingerprint-idempotent evidence. Recording, history listing and direct verification revalidate the exact M4.74 source receipt, validate the M4.72 snapshot and reconstruct M4.75 from the point-in-time M4.71 receipt history before trusting persisted metadata.
+
+### M4.76 controls
+
+- Exact M4.74 receipt binding is persisted.
+- Duplicate verification fingerprints are idempotent for the same actor and rejected for another actor.
+- Cursor history supports verification-receipt and validity filters with timestamp-plus-UUID pagination.
+- Stored results are structurally revalidated and compared with a fresh M4.75 reconstruction.
+- Missing or structurally invalid M4.74 sources fail closed.
+
 ## Validation boundary
 
-M4.48–M4.75 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.76 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
