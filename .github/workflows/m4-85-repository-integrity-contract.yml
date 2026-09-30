@@ -1,5 +1,7 @@
 name: M4.85 Repository Integrity Contract
 
+# M4.85 repository-wide contract gate
+
 on:
   pull_request:
     branches:
