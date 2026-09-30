@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.85 adds an executable repository-wide integrity contract across the M4.77–M4.81 dependency chain without changing runtime semantics, fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.86 centralizes the M4.77–M4.81 repository-wide integrity contract in a machine-readable manifest, with M4.84/M4.85 guards consuming the same source; runtime semantics, fingerprint semantics and the governance/readiness-only boundary remain unchanged; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -89,6 +89,9 @@
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79/M4.77 source re-verification, ministry-managed cursor history and direct verification.
 - M4.82 centralizes canonical UTC timestamp and SHA-256 JSON integrity primitives and refactors M4.77/M4.78 runtimes without changing fingerprint semantics or production authority boundaries.
 - M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
+- M4.84 adds an AST-based guard preventing historical-integrity runtimes from regressing to local SHA-256 or canonical JSON fingerprint implementations.
+- M4.85 adds an AST-checked repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies on unreached M4 layers.
+- M4.86 centralizes that contract in `contracts/historical_integrity_manifest_m4_86.json` and makes the M4.84/M4.85 guards manifest-driven.
 
 ## Current execution queue
 
