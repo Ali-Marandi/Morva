@@ -64,6 +64,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.79 persists M4.78 independent verification results as append-only, fingerprint-idempotent receipts with M4.77 source re-verification, ministry-managed cursor history and direct verification.
 - M4.80 independently verifies each persisted M4.79 receipt against the M4.77 snapshot and a fresh M4.78 reconstruction from point-in-time M4.76 result history, with deterministic mismatch blockers and a verification fingerprint.
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79 source re-verification, ministry-managed cursor history and direct verification.
+- M4.82 consolidates canonical UTC timestamp and SHA-256 JSON integrity primitives for the M4.77/M4.78 historical verification layers without changing their fingerprint semantics or authority boundary.
 - M4.75 independently verifies persisted M4.74 verification receipts by reconstructing M4.73 from the M4.72 snapshot and point-in-time M4.71 receipt history, with deterministic mismatch blockers and a verification fingerprint.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
