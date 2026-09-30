@@ -192,6 +192,6 @@ def test_m4_78_openapi_route_is_registered() -> None:
         "policy-registry-snapshot-bound/receipt-lineage/"
         "independent-verification-history-integrity/"
         "m4-72-verification-history-integrity-snapshots/"
-        "{snapshot_id}/verify-independent"
+        "{verification_id}/verify-independent"
     )
     assert "get" in app.openapi()["paths"][path]
