@@ -3,9 +3,6 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
-from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
-    HistoricalM475VerificationReceiptHistoryIntegrityRepository,
-)
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
@@ -17,7 +14,7 @@ from morva.runtime.independent_m4_77_verification_receipt_m4_80 import (
 from tests.test_historical_m4_72_verification_receipt_m4_75 import _session_m4_75
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
-    HistoricalM472VerificationReceiptM475Repository,
+    HistoricalM472VerificationReceiptM475Record,
 )
 from tests.test_independent_m4_77_verification_receipts_m4_79 import (
     _persist_m4_77_snapshot,
@@ -36,12 +33,11 @@ def _session_m4_80():
 def _source_records(session):
     return list(
         session.scalars(
-            HistoricalM472VerificationReceiptM475Record
-        )
-        .order_by(
+            select(HistoricalM472VerificationReceiptM475Record)
+        ).order_by(
             HistoricalM472VerificationReceiptM475Record.created_at.asc(),
             HistoricalM472VerificationReceiptM475Record.id.asc(),
-        )
+        ).all()
     )
 
 
