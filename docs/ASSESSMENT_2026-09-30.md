@@ -124,9 +124,21 @@ M4.76 persists the independent M4.75 verification result for each M4.74 receipt 
 - Stored results are structurally revalidated and compared with a fresh M4.75 reconstruction.
 - Missing or structurally invalid M4.74 sources fail closed.
 
+## M4.77 implementation position
+
+M4.77 captures deterministic point-in-time integrity snapshots over the complete persisted M4.76 verification-result history. Capture, history listing and direct verification revalidate every M4.76 source result and apply the snapshot timestamp as the source-history boundary.
+
+### M4.77 controls
+
+- Source M4.76 results are verified before inclusion.
+- History identity binds deterministic timestamp/UUID ordering and the complete verification-result payload.
+- Duplicate fingerprints are idempotent for the same capture actor and rejected for another actor.
+- Point-in-time verification excludes source records created at or after the snapshot timestamp.
+- Cursor history uses timestamp+UUID pagination.
+
 ## Validation boundary
 
-M4.48–M4.76 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.77 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
