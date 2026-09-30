@@ -32,6 +32,13 @@ def _session_m4_75():
         bind=engine,
         checkfirst=True,
     )
+    from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
+        HistoricalM475VerificationReceiptHistoryIntegrityRecord,
+    )
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
     return engine, session
 
 
