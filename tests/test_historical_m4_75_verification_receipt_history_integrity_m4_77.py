@@ -27,30 +27,20 @@ from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
 )
 
 
-
-def _session_m4_77():
-    engine, session = _session_m4_77()
-    HistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
-        bind=engine,
-        checkfirst=True,
-    )
-    return engine, session
-
-
-
 def test_m4_77_captures_and_reverifies_history() -> None:
-    engine, session = _session_m4_77()
+    engine, session = _session_m4_75()
     try:
         _, receipt = _persist_m4_74_receipt(session)
-        HistoricalM472VerificationReceiptM475Repository(session).record(
+        result_repository = HistoricalM472VerificationReceiptM475Repository(session)
+        result_repository.record(
             verification_receipt_id=receipt.id,
             recorded_by="ministry",
         )
+
         repository = HistoricalM475VerificationReceiptHistoryIntegrityRepository(session)
         snapshot = repository.capture(captured_by="ministry")
-        integrity = snapshot.to_integrity()
-        assert integrity.record_count == 1
-        assert integrity.valid_count == 1
+        assert snapshot.to_integrity().record_count == 1
+        assert snapshot.to_integrity().valid_count == 1
         assert repository.verify(snapshot.id).id == snapshot.id
     finally:
         session.close()
@@ -58,7 +48,7 @@ def test_m4_77_captures_and_reverifies_history() -> None:
 
 
 def test_m4_77_capture_is_fingerprint_idempotent() -> None:
-    engine, session = _session_m4_77()
+    engine, session = _session_m4_75()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         HistoricalM472VerificationReceiptM475Repository(session).record(
@@ -75,7 +65,7 @@ def test_m4_77_capture_is_fingerprint_idempotent() -> None:
 
 
 def test_m4_77_cursor_history_and_invalid_cursor() -> None:
-    engine, session = _session_m4_77()
+    engine, session = _session_m4_75()
     try:
         result_repository = HistoricalM472VerificationReceiptM475Repository(session)
         m4_74_repository = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
@@ -85,7 +75,10 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
 
         _persist_m4_71_receipt(session, "a" * 64)
         first_m4_72 = m4_72_repository.capture(captured_by="ministry")
-        first_m4_74 = m4_74_repository.record(snapshot_id=first_m4_72.id, recorded_by="ministry")
+        first_m4_74 = m4_74_repository.record(
+            snapshot_id=first_m4_72.id,
+            recorded_by="ministry",
+        )
         result_repository.record(
             verification_receipt_id=first_m4_74.id,
             recorded_by="ministry",
@@ -96,7 +89,10 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
 
         _persist_m4_71_receipt(session, "b" * 64)
         second_m4_72 = m4_72_repository.capture(captured_by="ministry")
-        second_m4_74 = m4_74_repository.record(snapshot_id=second_m4_72.id, recorded_by="ministry")
+        second_m4_74 = m4_74_repository.record(
+            snapshot_id=second_m4_72.id,
+            recorded_by="ministry",
+        )
         result_repository.record(
             verification_receipt_id=second_m4_74.id,
             recorded_by="ministry",
@@ -133,7 +129,7 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
 
 
 def test_m4_77_detects_tampered_source() -> None:
-    engine, session = _session_m4_77()
+    engine, session = _session_m4_75()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         result_repository = HistoricalM472VerificationReceiptM475Repository(session)
@@ -156,7 +152,7 @@ def test_m4_77_detects_tampered_source() -> None:
 
 
 def test_m4_77_detects_tampered_snapshot() -> None:
-    engine, session = _session_m4_77()
+    engine, session = _session_m4_75()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         HistoricalM472VerificationReceiptM475Repository(session).record(
@@ -186,7 +182,6 @@ def test_m4_77_openapi_routes_are_registered() -> None:
         "independent-verification-history-integrity/"
         "m4-76-verification-receipt-history-integrity-snapshots"
     )
-    paths = app.openapi()["paths"]
-    assert "post" in paths[prefix]
-    assert "get" in paths[prefix]
-    assert "get" in paths[prefix + "/{snapshot_id}/verify"]
+    assert "post" in app.openapi()["paths"][prefix]
+    assert "get" in app.openapi()["paths"][prefix]
+    assert "get" in app.openapi()["paths"][prefix + "/{snapshot_id}/verify"]
