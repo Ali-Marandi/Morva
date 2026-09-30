@@ -71,10 +71,10 @@ class IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord(Base):
                 "persisted M4.71 blockers payload is invalid"
             ) from exc
         try:
-            from morva.runtime.independent_historical_m4_68_verification_history_integrity_m4_70 import (
+            from morva.runtime.independent_historical_m4_69_verification_m4_70 import (
                 IndependentHistoricalM469Verification,
             )
-            return IndependentHistoricalM468VerificationHistoryIntegrity(
+            return IndependentHistoricalM469Verification(
                 snapshot_id=self.snapshot_id,
                 persisted_fingerprint=self.persisted_fingerprint,
                 reconstructed_fingerprint=self.reconstructed_fingerprint,
@@ -91,7 +91,7 @@ class IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord(Base):
         except (
             TypeError,
             ValueError,
-            IndependentHistoricalM468VerificationHistoryIntegrityError,
+            IndependentHistoricalM469VerificationError,
         ) as exc:
             raise IndependentHistoricalM469VerificationHistoryIntegrityReceiptPersistenceError(
                 "persisted M4.71 independent verification receipt is structurally invalid"
@@ -275,7 +275,7 @@ class IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository:
             )
         except (
             IndependentHistoricalM466VerificationPersistenceReceiptPersistenceError,
-            IndependentHistoricalM468VerificationHistoryIntegrityError,
+            IndependentHistoricalM469VerificationError,
         ) as exc:
             raise IndependentHistoricalM469VerificationHistoryIntegrityReceiptPersistenceError(
                 f"M4.70 independent reconstruction failed: {exc}"
