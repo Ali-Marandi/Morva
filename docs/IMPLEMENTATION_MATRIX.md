@@ -79,6 +79,7 @@
 | 65 | M4.68 Verification-History Integrity Snapshot | **M4.69 captures deterministic point-in-time integrity snapshots over the complete M4.68 verification-result history, re-verifies every source result on capture/list/verify, supports ministry-managed cursor history and preserves the governance/readiness-only boundary; no production authority is introduced** |
 | 66 | Independent M4.69 Verification | **M4.70 independently reconstructs each persisted M4.69 integrity snapshot from point-in-time M4.68 verification-result history, compares deterministic integrity fields, emits blocker codes and a verification fingerprint through an authenticated read-only API; no production authority is introduced** |
 | 67 | M4.70 Verification Receipt Persistence | **M4.71 persists M4.70 independent verification results as append-only, fingerprint-idempotent receipts, re-verifies M4.69 snapshots and point-in-time M4.68 source results, exposes ministry-managed cursor history and direct verification; no production authority is introduced** |
+| 68 | M4.71 Verification-Receipt History Integrity Snapshot | **M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 verification-receipt history, re-verifies every source receipt on capture/list/verify, supports ministry-managed cursor history and preserves the governance/readiness-only boundary; no production authority is introduced** |
 
 
 ## Canonical payroll lifecycle
