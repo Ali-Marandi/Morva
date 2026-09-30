@@ -206,3 +206,5 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 80 | M4.84 Historical Integrity Primitive Adoption Guard | **M4.84 adds an AST-based regression guard preventing local SHA-256/canonical JSON fingerprint implementations from returning; focused CI is green** |
 | 81 | M4.85 Repository-Wide Historical Integrity Contract | **M4.85 adds an executable AST-checked dependency/test contract across M4.77–M4.81, rejects forward dependencies and binds focused tests to expected layer symbols; focused CI is green** |
 | 82 | M4.86 Machine-Readable Historical Integrity Manifest | **M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest and makes M4.84/M4.85 guards consume the same contract; dedicated manifest validation is implemented and awaiting CI validation** |
+
+| 83 | M4.87 Historical Integrity Graph Validation | **M4.87 validates the machine-readable M4.86 M4.77–M4.81 graph for completeness, acyclicity, backward-only dependency ordering and expected sequence; dedicated CI is implemented and awaiting validation** |
