@@ -1,0 +1,46 @@
+name: M4.86 Historical Integrity Manifest
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "contracts/historical_integrity_manifest_m4_86.json"
+      - "tests/test_historical_integrity_contract_m4_85.py"
+      - "tests/test_historical_integrity_primitive_adoption_guard_m4_84.py"
+      - "tests/test_historical_integrity_manifest_m4_86.py"
+      - ".github/workflows/m4-86-historical-integrity-manifest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.86-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manifest-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          tests/test_historical_integrity_contract_m4_85.py
+          tests/test_historical_integrity_primitive_adoption_guard_m4_84.py
+          tests/test_historical_integrity_manifest_m4_86.py
+      - name: Manifest contract
+        run: >
+          pytest -q
+          tests/test_historical_integrity_contract_m4_85.py
+          tests/test_historical_integrity_primitive_adoption_guard_m4_84.py
+          tests/test_historical_integrity_manifest_m4_86.py
+      - name: Boundary
+        run: |
+          echo "M4.86 makes the historical integrity dependency/test contract machine-readable and manifest-driven." >> "$GITHUB_STEP_SUMMARY"
+          echo "No persistence schema, API contract, fingerprint semantics or production authority changes." >> "$GITHUB_STEP_SUMMARY"
