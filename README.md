@@ -56,6 +56,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.70 independently reconstructs each M4.69 integrity snapshot from the point-in-time M4.68 source history, compares deterministic identity fields and emits blocker codes plus a verification fingerprint.
 - M4.71 persists M4.70 independent verification results as append-only, fingerprint-idempotent receipts with source re-verification, ministry-managed cursor history and direct verification.
 - M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 verification-receipt history with source re-verification, cursor history and fingerprint-idempotent persistence.
+- M4.73 independently reconstructs each persisted M4.72 history-integrity snapshot from the point-in-time M4.71 receipt history, compares deterministic identity fields and emits blocker codes plus a verification fingerprint.
 - M4.71 persists M4.70 independent verification results as append-only, fingerprint-idempotent receipts with source re-verification, ministry-managed cursor history and direct verification.
 - M4.63 persists those M4.62 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, M4.61 snapshot re-verification and M4.60 source re-verification.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
