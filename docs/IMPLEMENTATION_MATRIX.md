@@ -1,5 +1,11 @@
 # Morva Payroll Platform — Enterprise Implementation Matrix
 
+### M4.86 machine-readable integrity manifest
+
+- M4.86 centralizes the M4.77–M4.81 dependency/test contract in `contracts/historical_integrity_manifest_m4_86.json`.
+- M4.84/M4.85 guards consume the manifest rather than duplicating hard-coded contract tables; dedicated CI validates the manifest-driven contract.
+- No persistence schema, API contract or fingerprint semantics are changed.
+
 ### M4.85 integrity contract
 
 - M4.85 adds an AST-checked dependency graph over the M4.77–M4.81 historical-integrity runtime/persistence/test layers.
