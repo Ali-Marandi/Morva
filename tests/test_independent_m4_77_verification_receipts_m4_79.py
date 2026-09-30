@@ -88,10 +88,10 @@ def test_m4_79_rejects_second_actor_for_same_fingerprint() -> None:
 def test_m4_79_cursor_history_and_invalid_cursor() -> None:
     engine, session = _session_m4_79()
     try:
-        first = _persist_m4_77_snapshot(session)
+        first = _persist_m4_77_snapshot(session, "a" * 64)
         repository = IndependentM477VerificationReceiptM479Repository(session)
         first_result = repository.record(snapshot_id=first.id, recorded_by="ministry")
-        second = _persist_m4_77_snapshot(session)
+        second = _persist_m4_77_snapshot(session, "b" * 64)
         second_result = repository.record(snapshot_id=second.id, recorded_by="ministry")
 
         page, has_more = repository.list(limit=1)
