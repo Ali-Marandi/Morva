@@ -1,3 +1,13 @@
+## Unreleased — M4.76 Persisted M4.75 Verification Results
+
+### Readiness policy governance
+- Persist M4.75 independent verification results as append-only, fingerprint-idempotent records.
+- Bind each result to the exact M4.74 source receipt and reconstruct M4.75 through the M4.72 snapshot and point-in-time M4.71 history before persistence and verification.
+- Expose ministry-managed cursor history and direct persisted-result verification.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.75 Independent M4.74 Verification
 
 ### Readiness policy governance
