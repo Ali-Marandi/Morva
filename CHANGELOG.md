@@ -1,3 +1,13 @@
+## Unreleased — M4.86 Machine-Readable Historical Integrity Manifest
+
+### Engineering quality
+- Centralize the M4.77–M4.81 dependency and focused-test contract in a machine-readable JSON manifest.
+- Make the M4.84/M4.85 guards consume the manifest instead of maintaining duplicated hard-coded contract tables.
+- Add a dedicated manifest validation CI gate.
+
+### Safety
+- No persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.85 Repository-Wide Integrity Contract
 
 ### Engineering quality
