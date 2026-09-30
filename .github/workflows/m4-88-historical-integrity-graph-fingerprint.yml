@@ -9,6 +9,11 @@ on:
       - "contracts/historical_integrity_graph_m4_88.json"
       - "tests/test_historical_integrity_graph_fingerprint_m4_88.py"
       - "src/morva/runtime/historical_integrity_primitives.py"
+      - "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"
+      - "src/morva/persistence/independent_m4_77_verification_receipts_m4_79.py"
+      - "src/morva/persistence/independent_m4_79_verification_receipts_m4_81.py"
       - ".github/workflows/m4-88-historical-integrity-graph-fingerprint.yml"
   workflow_dispatch:
 
