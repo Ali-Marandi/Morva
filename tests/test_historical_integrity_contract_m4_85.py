@@ -8,6 +8,7 @@ CONTRACTS = {
         "path": Path("src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"),
         "required_modules": {
             "morva.persistence.historical_m4_72_verification_receipt_m4_75",
+            "morva.runtime.historical_integrity_primitives",
         },
         "forbidden_tokens": ("m4_82", "m4_83", "m4_84", "m4_85", "m4_86"),
     },
@@ -53,11 +54,36 @@ CONTRACTS = {
 }
 
 TEST_CONTRACTS = {
-    "m4_77_tests": "tests/test_historical_m4_75_verification_receipt_history_integrity_m4_77.py",
-    "m4_78_tests": "tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py",
-    "m4_79_tests": "tests/test_independent_m4_77_verification_receipts_m4_79.py",
-    "m4_80_tests": "tests/test_independent_m4_77_verification_receipt_m4_80.py",
-    "m4_81_tests": "tests/test_independent_m4_79_verification_receipts_m4_81.py",
+    "m4_77_tests": {
+        "path": "tests/test_historical_m4_75_verification_receipt_history_integrity_m4_77.py",
+        "required_modules": {
+            "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        },
+    },
+    "m4_78_tests": {
+        "path": "tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py",
+        "required_modules": {
+            "morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78",
+        },
+    },
+    "m4_79_tests": {
+        "path": "tests/test_independent_m4_77_verification_receipts_m4_79.py",
+        "required_modules": {
+            "morva.persistence.independent_m4_77_verification_receipts_m4_79",
+        },
+    },
+    "m4_80_tests": {
+        "path": "tests/test_independent_m4_77_verification_receipt_m4_80.py",
+        "required_modules": {
+            "morva.runtime.independent_m4_77_verification_receipt_m4_80",
+        },
+    },
+    "m4_81_tests": {
+        "path": "tests/test_independent_m4_79_verification_receipts_m4_81.py",
+        "required_modules": {
+            "morva.persistence.independent_m4_79_verification_receipts_m4_81",
+        },
+    },
 }
 
 
@@ -82,8 +108,8 @@ def _imported_modules(tree: ast.Module) -> set[str]:
 def test_integrity_contract_files_exist() -> None:
     for contract in CONTRACTS.values():
         assert contract["path"].is_file()
-    for path in TEST_CONTRACTS.values():
-        assert Path(path).is_file()
+    for contract in TEST_CONTRACTS.values():
+        assert Path(contract["path"]).is_file()
 
 
 def test_integrity_runtime_dependency_edges_are_explicit() -> None:
@@ -110,8 +136,8 @@ def test_integrity_runtime_tests_cover_their_expected_layer() -> None:
         "m4_80_tests": ("independently_verify_m4_79_verification_receipt",),
         "m4_81_tests": ("IndependentM479VerificationReceiptM481Repository",),
     }
-    for key, path in TEST_CONTRACTS.items():
-        tree = _tree(Path(path))
+    for key, contract in TEST_CONTRACTS.items():
+        tree = _tree(Path(contract["path"]))
         source_names = {
             node.id
             for node in ast.walk(tree)
@@ -121,8 +147,11 @@ def test_integrity_runtime_tests_cover_their_expected_layer() -> None:
             for node in ast.walk(tree)
             if isinstance(node, ast.FunctionDef)
         }
+        modules = _imported_modules(tree)
+        for required in contract["required_modules"]:
+            assert required in modules, f"{key} must import {required}"
         for symbol in expected_symbols[key]:
-            assert symbol in source_names or symbol in _source(Path(path))
+            assert symbol in source_names or symbol in _source(Path(contract["path"]))
 
 
 def test_integrity_contract_has_no_local_sha256_in_target_runtimes() -> None:
