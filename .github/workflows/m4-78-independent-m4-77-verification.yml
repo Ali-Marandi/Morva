@@ -8,8 +8,10 @@ on:
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/historical_m4_72_verification_receipt_m4_75.py"
       - "src/morva/persistence/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/runtime/historical_integrity_primitives.py"
       - "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
       - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "tests/test_historical_integrity_primitives.py"
       - "tests/test_historical_m4_75_verification_receipt_history_integrity_m4_77.py"
       - "tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
   pull_request:
@@ -45,11 +47,13 @@ jobs:
         run: >
           ruff check
           src/morva/api/v1/integration_execution_readiness.py
+          src/morva/runtime/historical_integrity_primitives.py
           src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py
           tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py
       - name: Pytest
         run: >
           pytest -q
+          tests/test_historical_integrity_primitives.py
           tests/test_historical_m4_75_verification_receipt_history_integrity_m4_77.py
           tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py
       - name: Migration
