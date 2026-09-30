@@ -1,4 +1,15 @@
+## Unreleased — M4.85 Repository-Wide Integrity Contract
+
+### Engineering quality
+- Add an AST-checked dependency contract spanning M4.77–M4.81 runtime, persistence and focused test layers.
+- Reject forward dependencies and verify expected layer/test symbols remain present.
+- Preserve the shared integrity primitive adoption boundary.
+
+### Safety
+- No persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.84 Integrity Primitive Adoption Guard
+
 
 ### Engineering quality
 - Add an AST-based regression guard for the M4.77/M4.78/M4.80 historical-integrity runtimes.
