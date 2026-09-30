@@ -1,3 +1,13 @@
+## Unreleased — M4.77 M4.76 Verification-Result History Integrity
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.76 verification-result history.
+- Re-verify every M4.76 source result before capture, history exposure and direct verification.
+- Preserve timestamp+UUID cursor history and append-only fingerprint-idempotent snapshots.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authorization.
+
 ## Unreleased — M4.76 Persisted M4.75 Verification Results
 
 ### Readiness policy governance
