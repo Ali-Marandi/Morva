@@ -69,6 +69,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.84 adds a structural AST guard preventing local SHA-256 or canonical fingerprint serialization from returning to the guarded runtimes.
 - M4.85 adds an executable repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies.
 - M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest consumed by the M4.84/M4.85 guards.
+- M4.87 validates that machine-readable manifest as a complete, acyclic, backward-ordered M4.77→M4.81 integrity graph.
 - M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
 - M4.84 adds a structural AST guard preventing local SHA-256 or canonical fingerprint serialization from returning to the guarded runtimes.
 - M4.85 adds an executable repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies.
