@@ -8,6 +8,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, selec
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
+    HistoricalM472VerificationReceiptM475PersistenceError,
     HistoricalM472VerificationReceiptM475Record,
 )
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
