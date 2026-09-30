@@ -1,7 +1,8 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.84 adds a structural regression guard over the M4.77/M4.78/M4.80 shared integrity primitive adoption without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.85 adds an executable repository-wide integrity contract over the M4.77–M4.81 historical-integrity chain without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+ a structural regression guard over the M4.77/M4.78/M4.80 shared integrity primitive adoption without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
