@@ -201,3 +201,8 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 77 | M4.81 Persisted M4.80 Independent Verification Receipts | **M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts, re-verifies the M4.79 source receipt and M4.77 snapshot, reconstructs M4.80 from point-in-time M4.76 results and exposes ministry-managed cursor history plus direct verification; no provider execution or production authority** |
 
 | 78 | M4.82 Historical Integrity Primitive Consolidation | **M4.82 centralizes canonical UTC timestamp normalization and SHA-256 JSON serialization and refactors the M4.77/M4.78 verification runtimes without changing fingerprint schemas, verification semantics or production-authority boundaries** |
+
+| 79 | M4.83 Historical Integrity Shared Primitive Adoption | **M4.83 refactors M4.80 verification fingerprints to use the shared canonical SHA-256 primitive while preserving fingerprint payload semantics; focused CI is green** |
+| 80 | M4.84 Historical Integrity Primitive Adoption Guard | **M4.84 adds an AST-based regression guard preventing local SHA-256/canonical JSON fingerprint implementations from returning; focused CI is green** |
+| 81 | M4.85 Repository-Wide Historical Integrity Contract | **M4.85 adds an executable AST-checked dependency/test contract across M4.77–M4.81, rejects forward dependencies and binds focused tests to expected layer symbols; focused CI is green** |
+| 82 | M4.86 Machine-Readable Historical Integrity Manifest | **M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest and makes M4.84/M4.85 guards consume the same contract; dedicated manifest validation is implemented and awaiting CI validation** |
