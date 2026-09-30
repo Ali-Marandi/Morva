@@ -40,13 +40,11 @@ def _source_records(session):
     from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
         HistoricalM472VerificationReceiptM475Record,
     )
-    return list(
-        session.scalars(select(HistoricalM472VerificationReceiptM475Record))
-        .order_by(
-            HistoricalM472VerificationReceiptM475Record.created_at.asc(),
-            HistoricalM472VerificationReceiptM475Record.id.asc(),
-        )
+    query = select(HistoricalM472VerificationReceiptM475Record).order_by(
+        HistoricalM472VerificationReceiptM475Record.created_at.asc(),
+        HistoricalM472VerificationReceiptM475Record.id.asc(),
     )
+    return list(session.scalars(query).all())
 
 
 def test_m4_78_independently_verifies_m4_77_snapshot() -> None:
@@ -193,7 +191,7 @@ def test_m4_78_openapi_route_is_registered() -> None:
         "/api/v1/integration-execution/readiness/convergence/freshness/"
         "policy-registry-snapshot-bound/receipt-lineage/"
         "independent-verification-history-integrity/"
-        "m4-76-verification-receipt-history-integrity-snapshots/"
+        "m4-72-verification-history-integrity-snapshots/"
         "{snapshot_id}/verify-independent"
     )
     assert "get" in app.openapi()["paths"][path]
