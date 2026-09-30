@@ -69,6 +69,10 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.84 adds a structural AST guard preventing local SHA-256 or canonical fingerprint serialization from returning to the guarded runtimes.
 - M4.85 adds an executable repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies.
 - M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest consumed by the M4.84/M4.85 guards.
+- M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
+- M4.84 adds a structural AST guard preventing local SHA-256 or canonical fingerprint serialization from returning to the guarded runtimes.
+- M4.85 adds an executable repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies.
+- M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest consumed by the M4.84/M4.85 guards.
 - M4.75 independently verifies persisted M4.74 verification receipts by reconstructing M4.73 from the M4.72 snapshot and point-in-time M4.71 receipt history, with deterministic mismatch blockers and a verification fingerprint.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
