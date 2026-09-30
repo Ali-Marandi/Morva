@@ -141,5 +141,16 @@
       "forbidden_import_name": "sha256",
       "forbidden_call_name": "sha256"
     }
+  },
+  "graph": {
+    "sequence": [
+      "m4_77_runtime",
+      "m4_78_runtime",
+      "m4_79_persistence",
+      "m4_80_runtime",
+      "m4_81_persistence"
+    ],
+    "cycle_policy": "acyclic",
+    "dependency_direction": "each contract layer may depend only on earlier contract layers or external shared modules"
   }
 }
