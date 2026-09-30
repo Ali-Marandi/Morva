@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclassfrom datetime import datetime
+from dataclasses import dataclass
+from datetime import datetime
+
+from uuid import UUID
 
 from morva.runtime.historical_integrity_primitives import (
     canonical_sha256,
     canonical_utc_timestamp,
 )
-from uuid import UUID
 
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
     HistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
