@@ -1,3 +1,13 @@
+## Unreleased — M4.87 Historical Integrity Graph Validation
+
+### Engineering quality
+- Validate the M4.86 manifest for completeness, acyclicity and backward-only dependency ordering across M4.77–M4.81.
+- Add explicit sequence regression coverage for the guarded historical-integrity chain.
+- Add a dedicated graph validation CI gate.
+
+### Safety
+- No runtime semantics, persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.86 Machine-Readable Historical Integrity Manifest
 
 ### Engineering quality
