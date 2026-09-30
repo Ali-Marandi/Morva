@@ -1,3 +1,12 @@
+## Unreleased — M4.88 Historical Integrity Graph Fingerprint
+
+### Engineering quality
+- Add a deterministic fingerprint over the M4.77–M4.81 integrity-graph contract declared by the M4.86 manifest.
+- Add a versioned fingerprint artifact and dedicated CI gate to detect untracked architectural drift.
+
+### Safety
+- No runtime semantics, persistence schema, API contract, application fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.87 Historical Integrity Graph Validator
 
 ### Engineering quality
