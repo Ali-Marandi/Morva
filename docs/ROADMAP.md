@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.87 adds executable graph validation over the M4.86 M4.77–M4.81 integrity manifest, enforcing completeness, acyclicity and backward dependency ordering without changing runtime semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.88 adds a deterministic fingerprint over the M4.77–M4.81 integrity-graph contract declared by the M4.86 manifest, with dedicated CI drift detection and no runtime-semantic change; not production-certified for real payroll/payment.
  a structural regression guard over the M4.77/M4.78/M4.80 shared integrity primitive adoption without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
