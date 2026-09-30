@@ -1,3 +1,13 @@
+## Unreleased — M4.72 M4.71 Verification-Receipt History Integrity Snapshot
+
+### Readiness policy governance
+- Capture deterministic point-in-time integrity snapshots over the complete persisted M4.71 verification-receipt history.
+- Re-verify every M4.71 source receipt before capture, history exposure and direct snapshot verification.
+- Preserve timestamp+UUID cursor history and append-only fingerprint-idempotent snapshots.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.71 M4.70 Verification Receipt Persistence
 
 ### Readiness policy governance
