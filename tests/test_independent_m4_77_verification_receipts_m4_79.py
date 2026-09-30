@@ -37,8 +37,15 @@ def _session_m4_79():
     return engine, session
 
 
-def _persist_m4_77_snapshot(session):
-    _, receipt = _persist_m4_74_receipt(session)
+def _persist_m4_77_snapshot(session, source_fingerprint="a" * 64):
+    _persist_m4_71_receipt(session, source_fingerprint)
+    snapshot = HistoricalM471VerificationHistoryIntegrityRepository(session).capture(
+        captured_by="ministry"
+    )
+    receipt = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(session).record(
+        snapshot_id=snapshot.id,
+        recorded_by="ministry",
+    )
     HistoricalM472VerificationReceiptM475Repository(session).record(
         verification_receipt_id=receipt.id,
         recorded_by="ministry",
