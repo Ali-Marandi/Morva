@@ -1,0 +1,52 @@
+name: M4.88 Historical Integrity Graph Fingerprint
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "contracts/historical_integrity_manifest_m4_86.json"
+      - "contracts/historical_integrity_graph_m4_88.json"
+      - "tests/test_historical_integrity_graph_fingerprint_m4_88.py"
+      - "tests/test_historical_integrity_graph_m4_87.py"
+      - "tests/test_historical_integrity_contract_m4_85.py"
+      - "tests/test_historical_integrity_manifest_m4_86.py"
+      - "tests/test_historical_integrity_primitive_adoption_guard_m4_84.py"
+      - "src/morva/runtime/historical_integrity_primitives.py"
+      - ".github/workflows/m4-88-historical-integrity-graph-fingerprint.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.88-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity-graph-fingerprint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >-
+          ruff check
+          tests/test_historical_integrity_graph_fingerprint_m4_88.py
+          tests/test_historical_integrity_graph_m4_87.py
+      - name: Graph fingerprint contract
+        run: >-
+          pytest -q
+          tests/test_historical_integrity_graph_fingerprint_m4_88.py
+          tests/test_historical_integrity_graph_m4_87.py
+          tests/test_historical_integrity_contract_m4_85.py
+          tests/test_historical_integrity_manifest_m4_86.py
+          tests/test_historical_integrity_primitive_adoption_guard_m4_84.py
+      - name: Boundary
+        run: |
+          echo "M4.88 fingerprints the M4.77-M4.81 integrity graph contract from the M4.86 manifest using the shared canonical SHA-256 primitive." >> "$GITHUB_STEP_SUMMARY"
+          echo "Any guarded graph-contract drift without a matching artifact update is rejected by the fingerprint contract." >> "$GITHUB_STEP_SUMMARY"
+          echo "Architecture/readiness guard only; no persistence schema, API contract or production authority changes." >> "$GITHUB_STEP_SUMMARY"
