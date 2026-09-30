@@ -1,3 +1,12 @@
+## Unreleased — M4.87 Historical Integrity Graph Validator
+
+### Engineering quality
+- Validate the machine-readable M4.77–M4.81 integrity manifest as a complete, acyclic, backward-ordered graph.
+- Add a dedicated graph validation CI gate.
+
+### Safety
+- No runtime semantics, persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.86 Machine-Readable Historical Integrity Manifest
 
 ### Engineering quality
