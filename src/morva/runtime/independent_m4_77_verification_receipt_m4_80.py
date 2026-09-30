@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from hashlib import sha256
-import json
 from uuid import UUID
 
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
@@ -15,6 +13,7 @@ from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479PersistenceError,
     IndependentM477VerificationReceiptM479Record,
 )
+from morva.runtime.historical_integrity_primitives import canonical_sha256
 from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
     independently_verify_historical_m4_75_verification_receipt_history_integrity,
 )
@@ -175,11 +174,4 @@ def _verification_fingerprint(
         "valid": valid,
         "blockers": list(blockers),
     }
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
+    return canonical_sha256(payload)
