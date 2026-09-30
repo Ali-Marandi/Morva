@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "contract_id": "morva.historical_integrity.m4_77_m4_81",
+  "description": "Machine-readable dependency and test contract for the M4.77-M4.81 historical integrity chain.",
+  "layers": [
+    {
+      "id": "m4_77_runtime",
+      "path": "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py",
+      "required_modules": [
+        "morva.persistence.historical_m4_72_verification_receipt_m4_75",
+        "morva.runtime.historical_integrity_primitives"
+      ],
+      "forbidden_tokens": [
+        "m4_82",
+        "m4_83",
+        "m4_84",
+        "m4_85",
+        "m4_86"
+      ],
+      "test": {
+        "path": "tests/test_historical_m4_75_verification_receipt_history_integrity_m4_77.py",
+        "required_modules": [
+          "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77"
+        ],
+        "expected_symbols": [
+          "HistoricalM475VerificationReceiptHistoryIntegrityRepository"
+        ]
+      }
+    },
+    {
+      "id": "m4_78_runtime",
+      "path": "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py",
+      "required_modules": [
+        "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        "morva.persistence.historical_m4_72_verification_receipt_m4_75",
+        "morva.runtime.historical_integrity_primitives"
+      ],
+      "forbidden_tokens": [
+        "m4_83",
+        "m4_84",
+        "m4_85",
+        "m4_86"
+      ],
+      "test": {
+        "path": "tests/test_independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py",
+        "required_modules": [
+          "morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78"
+        ],
+        "expected_symbols": [
+          "independently_verify_historical_m4_75_verification_receipt_history_integrity"
+        ]
+      }
+    },
+    {
+      "id": "m4_79_persistence",
+      "path": "src/morva/persistence/independent_m4_77_verification_receipts_m4_79.py",
+      "required_modules": [
+        "morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78",
+        "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        "morva.persistence.historical_m4_72_verification_receipt_m4_75"
+      ],
+      "forbidden_tokens": [
+        "m4_80",
+        "m4_82",
+        "m4_83",
+        "m4_84",
+        "m4_85",
+        "m4_86"
+      ],
+      "test": {
+        "path": "tests/test_independent_m4_77_verification_receipts_m4_79.py",
+        "required_modules": [
+          "morva.persistence.independent_m4_77_verification_receipts_m4_79"
+        ],
+        "expected_symbols": [
+          "IndependentM477VerificationReceiptM479Repository"
+        ]
+      }
+    },
+    {
+      "id": "m4_80_runtime",
+      "path": "src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py",
+      "required_modules": [
+        "morva.persistence.independent_m4_77_verification_receipts_m4_79",
+        "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        "morva.persistence.historical_m4_72_verification_receipt_m4_75",
+        "morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78",
+        "morva.runtime.historical_integrity_primitives"
+      ],
+      "forbidden_tokens": [
+        "m4_84",
+        "m4_85",
+        "m4_86"
+      ],
+      "test": {
+        "path": "tests/test_independent_m4_77_verification_receipt_m4_80.py",
+        "required_modules": [
+          "morva.runtime.independent_m4_77_verification_receipt_m4_80"
+        ],
+        "expected_symbols": [
+          "independently_verify_m4_79_verification_receipt"
+        ]
+      }
+    },
+    {
+      "id": "m4_81_persistence",
+      "path": "src/morva/persistence/independent_m4_79_verification_receipts_m4_81.py",
+      "required_modules": [
+        "morva.persistence.independent_m4_77_verification_receipts_m4_79",
+        "morva.runtime.independent_m4_77_verification_receipt_m4_80",
+        "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        "morva.persistence.historical_m4_72_verification_receipt_m4_75"
+      ],
+      "forbidden_tokens": [
+        "m4_82",
+        "m4_83",
+        "m4_84",
+        "m4_85",
+        "m4_86"
+      ],
+      "test": {
+        "path": "tests/test_independent_m4_79_verification_receipts_m4_81.py",
+        "required_modules": [
+          "morva.persistence.independent_m4_79_verification_receipts_m4_81"
+        ],
+        "expected_symbols": [
+          "IndependentM479VerificationReceiptM481Repository"
+        ]
+      }
+    }
+  ],
+  "guards": {
+    "shared_sha256_primitive": {
+      "runtime_paths": [
+        "src/morva/runtime/historical_m4_75_verification_receipt_history_integrity_m4_77.py",
+        "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py",
+        "src/morva/runtime/independent_m4_77_verification_receipt_m4_80.py"
+      ],
+      "required_module": "morva.runtime.historical_integrity_primitives",
+      "forbidden_import_module": "hashlib",
+      "forbidden_import_name": "sha256",
+      "forbidden_call_name": "sha256"
+    }
+  }
+}
