@@ -39,7 +39,7 @@ def _session_m4_77():
 
 
 def test_m4_77_captures_and_reverifies_history() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         HistoricalM472VerificationReceiptM475Repository(session).record(
@@ -58,7 +58,7 @@ def test_m4_77_captures_and_reverifies_history() -> None:
 
 
 def test_m4_77_capture_is_fingerprint_idempotent() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         HistoricalM472VerificationReceiptM475Repository(session).record(
@@ -75,7 +75,7 @@ def test_m4_77_capture_is_fingerprint_idempotent() -> None:
 
 
 def test_m4_77_cursor_history_and_invalid_cursor() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         result_repository = HistoricalM472VerificationReceiptM475Repository(session)
         m4_74_repository = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
@@ -133,7 +133,7 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
 
 
 def test_m4_77_detects_tampered_source() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         result_repository = HistoricalM472VerificationReceiptM475Repository(session)
@@ -156,7 +156,7 @@ def test_m4_77_detects_tampered_source() -> None:
 
 
 def test_m4_77_detects_tampered_snapshot() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         _, receipt = _persist_m4_74_receipt(session)
         HistoricalM472VerificationReceiptM475Repository(session).record(
