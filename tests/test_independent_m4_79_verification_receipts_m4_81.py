@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
+    IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
 )
 from morva.persistence.independent_m4_79_verification_receipts_m4_81 import (
@@ -20,6 +21,10 @@ from tests.test_historical_m4_72_verification_receipt_m4_75 import _session_m4_7
 
 def _session_m4_81():
     engine, session = _session_m4_75()
+    IndependentM477VerificationReceiptM479Record.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
     IndependentM479VerificationReceiptM481Record.__table__.create(
         bind=engine,
         checkfirst=True,
