@@ -27,8 +27,8 @@ def _session_m4_81():
     return engine, session
 
 
-def _persist_m4_79_receipt(session):
-    snapshot = _persist_m4_77_snapshot(session)
+def _persist_m4_79_receipt(session, source_fingerprint="a" * 64):
+    snapshot = _persist_m4_77_snapshot(session, source_fingerprint)
     return IndependentM477VerificationReceiptM479Repository(session).record(
         snapshot_id=snapshot.id,
         recorded_by="ministry",
@@ -80,8 +80,8 @@ def test_m4_81_rejects_second_actor_for_same_fingerprint() -> None:
 def test_m4_81_cursor_history_and_invalid_cursor() -> None:
     engine, session = _session_m4_81()
     try:
-        first = _persist_m4_79_receipt(session)
-        second = _persist_m4_79_receipt(session)
+        first = _persist_m4_79_receipt(session, "a" * 64)
+        second = _persist_m4_79_receipt(session, "b" * 64)
         repository = IndependentM479VerificationReceiptM481Repository(session)
         first_result = repository.record(
             verification_receipt_id=first.id,
