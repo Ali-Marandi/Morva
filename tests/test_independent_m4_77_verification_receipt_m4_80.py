@@ -5,6 +5,9 @@ from uuid import UUID
 import pytest
 from sqlalchemy import select
 
+from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord,
+)
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
@@ -22,6 +25,10 @@ from tests.test_independent_m4_77_verification_receipts_m4_79 import (
 
 def _session_m4_80():
     engine, session = _session_m4_75()
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
     IndependentM477VerificationReceiptM479Record.__table__.create(
         bind=engine,
         checkfirst=True,
