@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from hashlib import sha256
-import json
-
+from datetime import datetime
 from uuid import UUID
+
+from morva.runtime.historical_integrity_primitives import (
+    canonical_sha256,
+    canonical_utc_timestamp,
+)
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475PersistenceError,
@@ -48,7 +50,6 @@ class HistoricalM475VerificationReceiptHistoryIntegrity:
                 raise HistoricalM475VerificationReceiptHistoryIntegrityError(
                     f"{name} must be SHA-256"
                 )
-
         expected = _snapshot_fingerprint(
             integrity_version=self.integrity_version,
             record_count=self.record_count,
@@ -75,7 +76,7 @@ def build_historical_m4_75_verification_receipt_history_integrity(
 ) -> HistoricalM475VerificationReceiptHistoryIntegrity:
     ordered = sorted(
         records,
-        key=lambda record: (_timestamp(record.created_at), str(record.id)),
+        key=lambda record: (canonical_utc_timestamp(record.created_at), str(record.id)),
     )
     canonical_records: list[dict[str, object]] = []
     valid_count = 0
@@ -87,10 +88,8 @@ def build_historical_m4_75_verification_receipt_history_integrity(
             raise HistoricalM475VerificationReceiptHistoryIntegrityError(
                 "M4.76 source verification result is structurally invalid"
             ) from exc
-
         if verification.valid:
             valid_count += 1
-
         canonical_records.append(
             {
                 "id": str(record.id),
@@ -98,53 +97,31 @@ def build_historical_m4_75_verification_receipt_history_integrity(
                 "persisted_fingerprint": verification.persisted_fingerprint.lower(),
                 "reconstructed_fingerprint": verification.reconstructed_fingerprint.lower(),
                 "persisted_snapshot_id": str(verification.persisted_snapshot_id),
-                "reconstructed_snapshot_id": str(
-                    verification.reconstructed_snapshot_id
-                ),
+                "reconstructed_snapshot_id": str(verification.reconstructed_snapshot_id),
                 "persisted_valid": verification.persisted_valid,
                 "reconstructed_valid": verification.reconstructed_valid,
                 "valid": verification.valid,
                 "blockers": list(verification.blockers),
                 "verification_fingerprint": verification.verification_fingerprint.lower(),
                 "recorded_by": record.recorded_by,
-                "created_at": _timestamp(record.created_at),
+                "created_at": canonical_utc_timestamp(record.created_at),
             }
         )
 
-    history_fingerprint = _canonical_sha256(canonical_records)
-    record_count = len(canonical_records)
+    history_fingerprint = canonical_sha256(canonical_records)
 
     return HistoricalM475VerificationReceiptHistoryIntegrity(
         integrity_version=1,
-        record_count=record_count,
+        record_count=len(canonical_records),
         valid_count=valid_count,
         history_fingerprint=history_fingerprint,
         fingerprint=_snapshot_fingerprint(
             integrity_version=1,
-            record_count=record_count,
+            record_count=len(canonical_records),
             valid_count=valid_count,
             history_fingerprint=history_fingerprint,
         ),
     )
-
-
-def _timestamp(value: datetime) -> str:
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc).isoformat()
-
-
-def _canonical_sha256(payload: object) -> str:
-    return sha256(
-        json.dumps(
-            payload,
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-    ).hexdigest()
-
-
 def _snapshot_fingerprint(
     *,
     integrity_version: int,
@@ -158,4 +135,4 @@ def _snapshot_fingerprint(
         "valid_count": valid_count,
         "history_fingerprint": history_fingerprint.lower(),
     }
-    return _canonical_sha256(payload)
+    return canonical_sha256(payload)
