@@ -1,5 +1,11 @@
 # Morva Payroll Platform — Enterprise Implementation Matrix
 
+### M4.87 historical integrity graph
+
+- M4.87 validates the M4.86 manifest for completeness, acyclicity and backward-only dependency ordering across M4.77–M4.81.
+- Dedicated graph CI prevents cycles or forward layer dependencies from entering the integrity chain.
+- No runtime semantics, persistence schema or API contract changes.
+
 ### M4.86 machine-readable integrity manifest
 
 - M4.86 centralizes the M4.77–M4.81 dependency/test contract in `contracts/historical_integrity_manifest_m4_86.json`.
