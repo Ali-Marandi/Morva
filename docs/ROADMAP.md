@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.83 extends the M4.82 historical-integrity primitive consolidation into the M4.80 verifier without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.84 adds a structural regression guard over the M4.77/M4.78/M4.80 shared integrity primitive adoption without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -89,6 +89,7 @@
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79/M4.77 source re-verification, ministry-managed cursor history and direct verification.
 - M4.82 centralizes canonical UTC timestamp and SHA-256 JSON integrity primitives and refactors M4.77/M4.78 runtimes without changing fingerprint semantics or production authority boundaries.
 - M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
+- M4.84 adds an AST-based guard preventing the historical-integrity runtimes from regressing to local SHA-256 or canonical JSON fingerprint implementations.
 
 ## Current execution queue
 
