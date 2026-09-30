@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.78 independently verifies persisted M4.77 point-in-time history-integrity snapshots from the M4.76 verification-result history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.79 persists independently verified M4.78 results as append-only, fingerprint-idempotent receipts with M4.77 snapshot re-validation and point-in-time M4.76 reconstruction while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
