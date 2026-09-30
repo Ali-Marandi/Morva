@@ -20,7 +20,7 @@ Morva has real persisted application paths today for:
 
 The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
 
-**Current development baseline (2026-09-30):**
+**Current development baseline (2026-10-01):**
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
 - M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
@@ -65,6 +65,10 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.80 independently verifies each persisted M4.79 receipt against the M4.77 snapshot and a fresh M4.78 reconstruction from point-in-time M4.76 result history, with deterministic mismatch blockers and a verification fingerprint.
 - M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts with M4.79 source re-verification, ministry-managed cursor history and direct verification.
 - M4.82 consolidates canonical UTC timestamp and SHA-256 JSON integrity primitives for the M4.77/M4.78 historical verification layers without changing their fingerprint semantics or authority boundary.
+- M4.83 adopts the shared canonical SHA-256 primitive in M4.80 while preserving its exact verification-fingerprint payload and semantics.
+- M4.84 adds a structural AST guard preventing local SHA-256 or canonical fingerprint serialization from returning to the guarded runtimes.
+- M4.85 adds an executable repository-wide dependency/test contract across M4.77–M4.81 and rejects forward dependencies.
+- M4.86 centralizes the M4.77–M4.81 dependency/test contract in a machine-readable manifest consumed by the M4.84/M4.85 guards.
 - M4.75 independently verifies persisted M4.74 verification receipts by reconstructing M4.73 from the M4.72 snapshot and point-in-time M4.71 receipt history, with deterministic mismatch blockers and a verification fingerprint.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
