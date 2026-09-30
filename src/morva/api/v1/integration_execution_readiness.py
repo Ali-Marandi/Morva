@@ -102,7 +102,7 @@ from morva.runtime.independent_historical_m4_71_verification_history_integrity_m
 )
 from morva.runtime.independent_historical_m4_72_verification_receipt_m4_75 import (
     IndependentHistoricalM472VerificationReceiptVerificationError,
-    independently_verify_historical_m4_72_verification_receipt,
+    independently_verify_historical_m4_72_verification_receipt as verify_historical_m4_72_receipt_runtime,
 )
 from morva.runtime.independent_historical_m4_61_receipt_history_verifier_m4_62 import (
     IndependentHistoricalM461ReceiptHistoryIntegrityError,
@@ -137,6 +137,7 @@ from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 imp
 )
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityPersistenceError,
+    HistoricalM471VerificationHistoryIntegrityRecord,
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
@@ -166,14 +167,10 @@ from morva.runtime.independent_m4_77_verification_receipt_m4_80 import (
 from morva.persistence.independent_m4_79_verification_receipts_m4_81 import (
     IndependentM479VerificationReceiptM481PersistenceError,
     IndependentM479VerificationReceiptM481Repository,
-    IndependentM479VerificationReceiptM481Record,
-)
-from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
-    IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
-    independently_verify_historical_m4_75_verification_receipt_history_integrity,
 )
 from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptPersistenceError,
+    IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
 )
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
@@ -6143,7 +6140,7 @@ def independently_verify_historical_m4_72_verification_receipt(
         )
         source_records = list(session.scalars(source_query).all())
         try:
-            verification = independently_verify_historical_m4_72_verification_receipt(
+            verification = verify_historical_m4_72_receipt_runtime(
                 receipt=receipt,
                 snapshot=snapshot,
                 source_records=source_records,
