@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select
@@ -104,7 +104,16 @@ def test_m4_80_detects_wrong_snapshot_binding() -> None:
             snapshot_id=snapshot.id,
             recorded_by="ministry",
         )
-        other_snapshot = _persist_m4_77_snapshot(session)
+        other_snapshot = HistoricalM475VerificationReceiptHistoryIntegrityRecord(
+            id=uuid4(),
+            integrity_version=snapshot.integrity_version,
+            record_count=snapshot.record_count,
+            valid_count=snapshot.valid_count,
+            history_fingerprint=snapshot.history_fingerprint,
+            fingerprint=snapshot.fingerprint,
+            captured_by="ministry",
+            created_at=snapshot.created_at,
+        )
         with pytest.raises(
             IndependentM477VerificationReceiptM480Error,
             match="snapshot binding is invalid",
@@ -114,6 +123,7 @@ def test_m4_80_detects_wrong_snapshot_binding() -> None:
                 snapshot=other_snapshot,
                 source_records=_source_records(session),
             )
+        assert receipt.snapshot_id != other_snapshot.id
     finally:
         session.close()
         engine.dispose()
