@@ -40,13 +40,15 @@ def _source_records(session):
     from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
         HistoricalM472VerificationReceiptM475Record,
     )
-    return list(
-        session.scalars(select(HistoricalM472VerificationReceiptM475Record))
+
+    statement = (
+        select(HistoricalM472VerificationReceiptM475Record)
         .order_by(
             HistoricalM472VerificationReceiptM475Record.created_at.asc(),
             HistoricalM472VerificationReceiptM475Record.id.asc(),
         )
     )
+    return list(session.scalars(statement))
 
 
 def test_m4_80_independently_verifies_m4_79_receipt() -> None:
