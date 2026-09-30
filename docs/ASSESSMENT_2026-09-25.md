@@ -1,4 +1,20 @@
-# Technical Assessment — 2026-09-25
+## M4.78 — independent M4.77 history-integrity verification
+
+M4.78 independently reconstructs persisted M4.77 point-in-time history-integrity snapshots from the M4.76 verification-result history without invoking the M4.77 builder or repository as the reconstruction source of truth.
+
+The verifier applies the snapshot timestamp as a strict point-in-time boundary, canonicalizes M4.76 results by UTC timestamp and UUID, recomputes history and aggregate fingerprints, emits deterministic mismatch blockers and produces a verification fingerprint. Invalid persisted snapshots and structurally invalid M4.76 source results fail closed.
+
+### M4.78 controls
+
+- M4.77 persisted snapshot structure is validated before comparison.
+- M4.76 source history is reconstructed independently within the snapshot boundary.
+- History fingerprint, record-count, valid-count and aggregate-integrity mismatches are separately reported.
+- The API is authenticated, read-only and verification-only.
+- No provider execution, credentials, payment mutation, legal-rate inference or production authorization is introduced.
+
+---
+
+# Technical Assessment — 2026-09-30
 
 ## Current implementation position
 
@@ -90,7 +106,7 @@ M4.69 adds append-only point-in-time integrity snapshots over the persisted M4.6
 
 ## Validation boundary
 
-M4.48–M4.69 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.78 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
