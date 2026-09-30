@@ -199,3 +199,5 @@ Morva is an **enterprise validation candidate**, not yet a production-certified 
 | 76 | M4.80 Independent M4.79 Receipt Verification | **M4.80 independently verifies persisted M4.79 receipts by validating the bound M4.77 snapshot, reconstructing M4.78 from point-in-time M4.76 results and comparing deterministic snapshot/verification/validity identities with blocker codes and a verification fingerprint; no provider execution or production authority** |
 
 | 77 | M4.81 Persisted M4.80 Independent Verification Receipts | **M4.81 persists M4.80 independent verification results as append-only, fingerprint-idempotent receipts, re-verifies the M4.79 source receipt and M4.77 snapshot, reconstructs M4.80 from point-in-time M4.76 results and exposes ministry-managed cursor history plus direct verification; no provider execution or production authority** |
+
+| 78 | M4.82 Historical Integrity Primitive Consolidation | **M4.82 centralizes canonical UTC timestamp normalization and SHA-256 JSON serialization and refactors the M4.77/M4.78 verification runtimes without changing fingerprint schemas, verification semantics or production-authority boundaries** |
