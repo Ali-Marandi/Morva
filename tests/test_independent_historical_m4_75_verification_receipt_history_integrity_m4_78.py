@@ -7,14 +7,14 @@ import pytest
 from sqlalchemy import select
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
-    HistoricalM472VerificationReceiptM475Record,
     HistoricalM472VerificationReceiptM475Repository,
 )
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
     HistoricalM475VerificationReceiptHistoryIntegrityRepository,
 )
-from morva.runtime import (
-    independent_historical_m4_75_verification_receipt_history_integrity_m4_78 as m4_78,
+from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
+    IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
+    independently_verify_historical_m4_75_verification_receipt_history_integrity,
 )
 from tests.test_historical_m4_72_verification_receipt_m4_75 import (
     _session_m4_75,
@@ -37,13 +37,15 @@ def _session_m4_78():
 
 
 def _source_records(session):
+    from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
+        HistoricalM472VerificationReceiptM475Record,
+    )
     return list(
-        session.scalars(
-            select(HistoricalM472VerificationReceiptM475Record).order_by(
-                HistoricalM472VerificationReceiptM475Record.created_at.asc(),
-                HistoricalM472VerificationReceiptM475Record.id.asc(),
-            )
-        ).all()
+        session.scalars(select(HistoricalM472VerificationReceiptM475Record))
+        .order_by(
+            HistoricalM472VerificationReceiptM475Record.created_at.asc(),
+            HistoricalM472VerificationReceiptM475Record.id.asc(),
+        )
     )
 
 
@@ -58,7 +60,7 @@ def test_m4_78_independently_verifies_m4_77_snapshot() -> None:
         snapshot = HistoricalM475VerificationReceiptHistoryIntegrityRepository(
             session
         ).capture(captured_by="ministry")
-        result = m4_78.independently_verify_historical_m4_75_verification_receipt_history_integrity(
+        result = independently_verify_historical_m4_75_verification_receipt_history_integrity(
             snapshot=snapshot,
             source_records=_source_records(session),
         )
@@ -82,7 +84,7 @@ def test_m4_78_respects_snapshot_boundary() -> None:
         ).capture(captured_by="ministry")
         _, second = _persist_m4_74_receipt(session)
         result_repository.record(verification_receipt_id=second.id, recorded_by="ministry")
-        result = m4_78.independently_verify_historical_m4_75_verification_receipt_history_integrity(
+        result = independently_verify_historical_m4_75_verification_receipt_history_integrity(
             snapshot=snapshot,
             source_records=_source_records(session),
         )
@@ -119,7 +121,7 @@ def test_m4_78_detects_tampered_snapshot() -> None:
             ).encode("utf-8")
         ).hexdigest()
         session.flush()
-        result = m4_78.independently_verify_historical_m4_75_verification_receipt_history_integrity(
+        result = independently_verify_historical_m4_75_verification_receipt_history_integrity(
             snapshot=snapshot,
             source_records=_source_records(session),
         )
@@ -146,10 +148,10 @@ def test_m4_78_fails_closed_on_invalid_source_record() -> None:
         source.verification_fingerprint = "f" * 64
         session.flush()
         with pytest.raises(
-            m4_78.IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
+            IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
             match="M4.76 source verification result is structurally invalid",
         ):
-            m4_78.independently_verify_historical_m4_75_verification_receipt_history_integrity(
+            independently_verify_historical_m4_75_verification_receipt_history_integrity(
                 snapshot=snapshot,
                 source_records=_source_records(session),
             )
@@ -172,10 +174,10 @@ def test_m4_78_rejects_invalid_persisted_snapshot_structure() -> None:
         snapshot.fingerprint = "not-a-sha"
         session.flush()
         with pytest.raises(
-            m4_78.IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
+            IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
             match="persisted M4.77 receipt-history integrity snapshot is structurally invalid",
         ):
-            m4_78.independently_verify_historical_m4_75_verification_receipt_history_integrity(
+            independently_verify_historical_m4_75_verification_receipt_history_integrity(
                 snapshot=snapshot,
                 source_records=_source_records(session),
             )
