@@ -31,8 +31,8 @@ def _source_records(session):
     return list(session.scalars(query).all())
 
 
-def _persist_m4_74_receipt(session):
-    _persist_m4_71_receipt(session)
+def _persist_m4_74_receipt(session, source_fingerprint="a" * 64):
+    _persist_m4_71_receipt(session, source_fingerprint)
     snapshot = HistoricalM471VerificationHistoryIntegrityRepository(session).capture(
         captured_by="ministry"
     )
@@ -91,8 +91,8 @@ def test_m4_75_detects_tampered_receipt() -> None:
 def test_m4_75_detects_wrong_snapshot_binding() -> None:
     engine, session = _session_m4_74()
     try:
-        snapshot, receipt = _persist_m4_74_receipt(session)
-        other_snapshot, _ = _persist_m4_74_receipt(session)
+        snapshot, receipt = _persist_m4_74_receipt(session, "a" * 64)
+        other_snapshot, _ = _persist_m4_74_receipt(session, "b" * 64)
         with pytest.raises(
             IndependentHistoricalM472VerificationReceiptVerificationError,
             match="snapshot binding is invalid",
