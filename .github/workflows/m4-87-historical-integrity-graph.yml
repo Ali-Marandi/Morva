@@ -1,0 +1,41 @@
+name: M4.87 Historical Integrity Graph
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "contracts/historical_integrity_manifest_m4_86.json"
+      - "tests/test_historical_integrity_graph_m4_87.py"
+      - ".github/workflows/m4-87-historical-integrity-graph.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: M4.87-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >-
+          ruff check
+          tests/test_historical_integrity_graph_m4_87.py
+      - name: Graph contract
+        run: >-
+          pytest -q
+          tests/test_historical_integrity_graph_m4_87.py
+          tests/test_historical_integrity_contract_m4_85.py
+      - name: Boundary
+        run: |
+          echo "M4.87 validates the machine-readable M4.77-M4.81 integrity graph for completeness, acyclicity and backward dependency ordering." >> "$GITHUB_STEP_SUMMARY"
+          echo "Architecture/readiness guard only; no persistence schema, API contract or production authority changes." >> "$GITHUB_STEP_SUMMARY"
