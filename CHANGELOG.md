@@ -1,3 +1,13 @@
+## Unreleased — M4.74 M4.73 Verification Receipt Persistence
+
+### Readiness policy governance
+- Persist M4.73 independent verification results as append-only, fingerprint-idempotent receipts.
+- Revalidate M4.72 snapshots and point-in-time M4.71 source receipts before persistence and direct verification.
+- Expose ministry-managed timestamp-plus-UUID receipt history.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.73 Independent M4.72 Verification
 
 ### Readiness policy governance
