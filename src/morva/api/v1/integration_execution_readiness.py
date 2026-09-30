@@ -144,6 +144,10 @@ from morva.runtime.independent_historical_m4_71_verification_history_integrity_m
     IndependentHistoricalM471VerificationHistoryIntegrityError,
     independently_verify_historical_m4_71_verification_history_integrity,
 )
+from morva.runtime.independent_historical_m4_72_verification_receipt_m4_75 import (
+    IndependentHistoricalM472VerificationReceiptVerificationError,
+    independently_verify_historical_m4_72_verification_receipt,
+)
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
     IndependentHistoricalM455ReceiptVerificationError,
     independently_verify_historical_m4_55_receipt as reconstruct_m4_55_receipt_verification,
@@ -5853,6 +5857,10 @@ class IndependentHistoricalM472VerificationHistoryIntegrityReceiptHistoryRespons
     next_before_id: UUID | None = None
 
 
+class IndependentHistoricalM472VerificationReceiptVerificationResponse(BaseModel):
+    verification: dict[str, object]
+
+
 @router.post(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
@@ -6001,4 +6009,65 @@ def verify_independent_historical_m4_72_verification_history_integrity_receipt(
         verification=record.to_verification().to_payload(),
         recorded_by=record.recorded_by,
         created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-72-verification-history-integrity-snapshots/"
+    "verification-receipts/{verification_id}/verify-independent",
+    response_model=IndependentHistoricalM472VerificationReceiptVerificationResponse,
+)
+def independently_verify_historical_m4_72_verification_receipt(
+    verification_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM472VerificationReceiptVerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        receipt = session.get(
+            IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
+            verification_id,
+        )
+        if receipt is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.74 independent verification receipt not found",
+            )
+        snapshot = session.get(
+            HistoricalM471VerificationHistoryIntegrityRecord,
+            receipt.snapshot_id,
+        )
+        if snapshot is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.72 receipt-history integrity snapshot not found",
+            )
+        source_repository = (
+            IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository(session)
+        )
+        source_query = (
+            select(IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord)
+            .where(
+                IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.created_at
+                < snapshot.created_at
+            )
+            .order_by(
+                IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.created_at.asc(),
+                IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.id.asc(),
+            )
+        )
+        source_records = list(session.scalars(source_query).all())
+        try:
+            verification = independently_verify_historical_m4_72_verification_receipt(
+                receipt=receipt,
+                snapshot=snapshot,
+                source_records=source_records,
+                source_repository=source_repository,
+            )
+        except IndependentHistoricalM472VerificationReceiptVerificationError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalM472VerificationReceiptVerificationResponse(
+        verification=verification.to_payload(),
     )
