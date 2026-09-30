@@ -1,6 +1,12 @@
 # Morva Payroll Platform — Enterprise Implementation Matrix
 
-`Implemented` means an actual code path exists. `Validated` means the required automated and environment evidence exists. `Production Certified` requires legal/finance/security/operations/integration sign-off. No item is marked production-certified by source code alone.
+### M4.85 integrity contract
+
+- M4.85 adds an AST-checked dependency graph over the M4.77–M4.81 historical-integrity runtime/persistence/test layers.
+- Forward dependencies on unreached M4 layers are rejected, and test coverage is structurally tied to the expected layer symbols.
+- No persistence schema, API contract or fingerprint semantics are changed.
+
+ `Validated` means the required automated and environment evidence exists. `Production Certified` requires legal/finance/security/operations/integration sign-off. No item is marked production-certified by source code alone.
 
 | # | Capability | State |
 |---|---|---|
