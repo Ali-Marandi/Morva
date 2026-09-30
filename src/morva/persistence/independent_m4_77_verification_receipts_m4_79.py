@@ -14,6 +14,7 @@ from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
     HistoricalM472VerificationReceiptM475PersistenceError,
     HistoricalM472VerificationReceiptM475Record,
+    HistoricalM472VerificationReceiptM475Repository,
 )
 from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
@@ -268,7 +269,10 @@ class IndependentM477VerificationReceiptM479Repository:
                 )
             ).all()
         )
+        source_repository = HistoricalM472VerificationReceiptM475Repository(self.session)
         try:
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
             return independently_verify_historical_m4_75_verification_receipt_history_integrity(
                 snapshot=snapshot,
                 source_records=source_records,
