@@ -139,3 +139,30 @@ def test_m4_79_openapi_routes_are_registered() -> None:
     assert "post" in paths[prefix]
     assert "get" in paths[prefix]
     assert "get" in paths[prefix + "/{verification_id}/verify"]
+
+def test_m4_79_reverifies_and_rejects_tampered_source_result() -> None:
+    engine, session = _session_m4_79()
+    try:
+        snapshot = _persist_m4_77_snapshot(session)
+        repository = IndependentM477VerificationReceiptM479Repository(session)
+        record = repository.record(snapshot_id=snapshot.id, recorded_by="ministry")
+
+        source = session.scalars(
+            __import__(
+                "morva.persistence.historical_m4_72_verification_receipt_m4_75",
+                fromlist=["HistoricalM472VerificationReceiptM475Record"],
+            ).HistoricalM472VerificationReceiptM475Record
+        ).first()
+        assert source is not None
+        source.verification_fingerprint = "f" * 64
+        session.flush()
+
+        with pytest.raises(
+            IndependentM477VerificationReceiptM479PersistenceError,
+            match="M4.78 independent reconstruction failed",
+        ):
+            repository.verify(record.id)
+    finally:
+        session.close()
+        engine.dispose()
+
