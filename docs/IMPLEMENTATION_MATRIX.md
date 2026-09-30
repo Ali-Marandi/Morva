@@ -1,5 +1,11 @@
 # Morva Payroll Platform — Enterprise Implementation Matrix
 
+### M4.88 historical integrity graph fingerprint
+
+- M4.88 computes a deterministic SHA-256 fingerprint over the M4.77–M4.81 integrity-graph contract projected from the M4.86 manifest.
+- A versioned fingerprint artifact and dedicated CI gate detect graph-contract drift without changing runtime semantics, persistence schema or APIs.
+
+
 ### M4.87 historical integrity graph
 
 - M4.87 validates the M4.86 manifest for completeness, acyclicity and backward-only dependency ordering across M4.77–M4.81.
