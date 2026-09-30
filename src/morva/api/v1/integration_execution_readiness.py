@@ -121,6 +121,10 @@ from morva.persistence.historical_m4_68_verification_history_integrity_m4_69 imp
     HistoricalM468VerificationHistoryIntegrityPersistenceError,
     HistoricalM468VerificationHistoryIntegrityRepository,
 )
+from morva.runtime.independent_historical_m4_69_verification_m4_70 import (
+    IndependentHistoricalM469VerificationError,
+    independently_verify_historical_m4_69_verification_history_integrity,
+)
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
     IndependentHistoricalM455ReceiptVerificationError,
     independently_verify_historical_m4_55_receipt as reconstruct_m4_55_receipt_verification,
@@ -2700,6 +2704,10 @@ class HistoricalM468VerificationHistoryIntegrityHistoryResponse(BaseModel):
     has_more: bool
     next_before_created_at: datetime | None = None
     next_before_id: UUID | None = None
+
+
+class IndependentHistoricalM469VerificationResponse(BaseModel):
+    verification: dict[str, object]
 
 
 class HistoricalM457VerificationReceiptHistoryIntegritySnapshotResponse(BaseModel):
@@ -5387,4 +5395,61 @@ def verify_historical_m4_68_verification_history_integrity_snapshot(
         integrity=record.to_integrity().to_payload(),
         captured_by=record.captured_by,
         created_at=record.created_at,
+    )
+
+    
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
+    "m4-68-verification-history-integrity-snapshots/{snapshot_id}/verify-independent",
+    response_model=IndependentHistoricalM469VerificationResponse,
+)
+def independently_verify_historical_m4_69_verification_history_integrity_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM469VerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        snapshot = session.get(
+            HistoricalM468VerificationHistoryIntegrityRecord,
+            snapshot_id,
+        )
+        if snapshot is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.69 verification-history integrity snapshot not found",
+            )
+        source_query = (
+            select(IndependentHistoricalM466VerificationPersistenceReceiptRecord)
+            .where(
+                IndependentHistoricalM466VerificationPersistenceReceiptRecord.created_at
+                < snapshot.created_at
+            )
+            .order_by(
+                IndependentHistoricalM466VerificationPersistenceReceiptRecord.created_at.asc(),
+                IndependentHistoricalM466VerificationPersistenceReceiptRecord.id.asc(),
+            )
+        )
+        source_records = list(session.scalars(source_query).all())
+        source_repository = (
+            IndependentHistoricalM466VerificationPersistenceReceiptRepository(session)
+        )
+        try:
+            HistoricalM468VerificationHistoryIntegrityRepository(session).verify(
+                snapshot.id
+            )
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
+            verification = independently_verify_historical_m4_69_verification_history_integrity(
+                snapshot=snapshot,
+                source_records=source_records,
+            )
+        except (
+            HistoricalM468VerificationHistoryIntegrityPersistenceError,
+            IndependentHistoricalM466VerificationPersistenceReceiptPersistenceError,
+            IndependentHistoricalM469VerificationError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return IndependentHistoricalM469VerificationResponse(
+        verification=verification.to_payload(),
     )
