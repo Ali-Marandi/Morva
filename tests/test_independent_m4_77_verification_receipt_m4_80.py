@@ -120,3 +120,48 @@ def test_m4_80_openapi_route_is_registered() -> None:
         "verification-receipts/{verification_id}/verify-independent"
     )
     assert "get" in app.openapi()["paths"][path]
+
+def test_m4_80_rejects_tampered_source_result() -> None:
+    engine, session = _session_m4_80()
+    try:
+        snapshot = _persist_m4_77_snapshot(session)
+        receipt = IndependentM477VerificationReceiptM479Repository(session).record(
+            snapshot_id=snapshot.id,
+            recorded_by="ministry",
+        )
+        source = _source_records(session)[0]
+        source.verification_fingerprint = "f" * 64
+        session.flush()
+        with pytest.raises(
+            IndependentM477VerificationReceiptM480Error,
+            match="M4.76 source verification result is structurally invalid",
+        ):
+            independently_verify_m4_79_verification_receipt(
+                receipt=receipt,
+                snapshot=snapshot,
+                source_records=_source_records(session),
+            )
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_m4_80_respects_snapshot_boundary() -> None:
+    engine, session = _session_m4_80()
+    try:
+        snapshot = _persist_m4_77_snapshot(session)
+        receipt = IndependentM477VerificationReceiptM479Repository(session).record(
+            snapshot_id=snapshot.id,
+            recorded_by="ministry",
+        )
+        result = independently_verify_m4_79_verification_receipt(
+            receipt=receipt,
+            snapshot=snapshot,
+            source_records=_source_records(session),
+        )
+        assert result.valid is True
+        assert result.reconstructed_snapshot_id == snapshot.id
+    finally:
+        session.close()
+        engine.dispose()
+
