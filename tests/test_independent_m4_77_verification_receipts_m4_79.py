@@ -3,8 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from sqlalchemy import select
 
 from morva.persistence.historical_m4_72_verification_receipt_m4_75 import (
+    HistoricalM472VerificationReceiptM475Record,
     HistoricalM472VerificationReceiptM475Repository,
 )
 from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77 import (
@@ -148,10 +150,7 @@ def test_m4_79_reverifies_and_rejects_tampered_source_result() -> None:
         record = repository.record(snapshot_id=snapshot.id, recorded_by="ministry")
 
         source = session.scalars(
-            __import__(
-                "morva.persistence.historical_m4_72_verification_receipt_m4_75",
-                fromlist=["HistoricalM472VerificationReceiptM475Record"],
-            ).HistoricalM472VerificationReceiptM475Record
+            select(HistoricalM472VerificationReceiptM475Record)
         ).first()
         assert source is not None
         source.verification_fingerprint = "f" * 64
