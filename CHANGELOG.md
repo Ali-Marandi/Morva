@@ -1,3 +1,13 @@
+## Unreleased — M4.73 Independent M4.72 Verification
+
+### Readiness policy governance
+- Independently reconstruct persisted M4.72 verification-receipt history-integrity snapshots from point-in-time M4.71 receipts.
+- Re-validate source receipts and compare deterministic history, count and aggregate fingerprints.
+- Expose the independent result through an authenticated read-only verification endpoint.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation or production authority.
+
 ## Unreleased — M4.72 M4.71 Verification-Receipt History Integrity Snapshot
 
 ### Readiness policy governance
