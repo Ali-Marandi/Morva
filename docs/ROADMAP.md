@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.87 validates the M4.86 machine-readable M4.77–M4.81 integrity graph for completeness, acyclicity and backward-only dependency ordering; runtime semantics, fingerprint semantics and the governance/readiness-only boundary remain unchanged; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.88 fingerprints the canonical M4.77–M4.81 integrity graph contract from the M4.86 machine-readable manifest using the shared canonical SHA-256 primitive and a versioned artifact; dedicated M4.88 validation is in progress; no production authority is created.
 
 ## Completed implementation foundations
 
@@ -12,6 +12,7 @@
 
 
 - M3.90 dynamic workflow execution hardening for CI integrity and production-boundary scanners (`eval`, `bash -c`, `sh -c`) with dedicated regression coverage
+- M4.88 deterministic, versioned fingerprint of the guarded M4.77–M4.81 integrity-graph contract with shared canonical SHA-256 provenance and fail-closed drift detection; dedicated CI validation pending
 - M4.1 authoritative evidence intake contract with immutable source provenance, SHA-256 identity, effective windows, approval metadata, deterministic fingerprints and fail-closed activation readiness
 - M4.2 evidence closure matrix binding the twelve certification roles to canonical evidence source types with deterministic, fail-closed closure assessment
 - M4.3 population-scoped treatment evidence binding approved legal evidence to 1405 components without embedding statutory numeric values
