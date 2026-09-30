@@ -1,3 +1,13 @@
+## Unreleased — M4.85 Historical Integrity Timestamp Primitive Guard
+
+### Engineering quality
+- Add an AST-based regression guard for the M4.77/M4.78 historical-integrity runtimes.
+- Prevent reintroduction of local UTC timestamp normalization or local `datetime.isoformat()` timestamp serialization.
+- Add a focused CI gate for the timestamp primitive adoption contract.
+
+### Safety
+- No persistence schema, API contract, fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.84 Integrity Primitive Adoption Guard
 
 ### Engineering quality
