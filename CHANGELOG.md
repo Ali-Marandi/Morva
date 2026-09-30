@@ -1,3 +1,14 @@
+## Unreleased — M4.88 Historical Integrity Graph Fingerprint
+
+### Engineering quality
+- Add a deterministic, versioned SHA-256 fingerprint over the guarded M4.77–M4.81 integrity-graph contract projected from the M4.86 manifest.
+- Store explicit scope, algorithm and canonicalization metadata in a versioned fingerprint artifact.
+- Add regression coverage for artifact consistency, deterministic stability and sensitivity to graph-contract changes.
+- Add a dedicated M4.88 CI gate running the fingerprint contract with the M4.87 graph validator and earlier structural guards.
+
+### Safety
+- No runtime semantics, persistence schema, API contract, blocker code or production authority changes.
+
 ## Unreleased — M4.87 Historical Integrity Graph Validation
 
 ### Engineering quality
