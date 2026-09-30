@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.72 captures deterministic point-in-time integrity snapshots over M4.71 verification-receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.73 independently verifies M4.72 point-in-time integrity snapshots over M4.71 verification-receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -78,9 +78,10 @@
 - M4.70 independent verification of M4.69 snapshots against point-in-time M4.68 history with deterministic blocker codes and verification fingerprint
 - M4.71 append-only, fingerprint-idempotent persistence of M4.70 verification results with snapshot/source re-verification, ministry-managed cursor history and direct verification
 - M4.72 point-in-time integrity snapshots over the complete M4.71 verification-receipt history with deterministic fingerprinting, cursor history and source re-verification
+- M4.73 independent verification of M4.72 snapshots against point-in-time M4.71 receipt history with deterministic blocker codes and verification fingerprint
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.72 point-in-time integrity snapshots over M4.71 verification-receipt history.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.73 independent verification of M4.72 integrity snapshots.
 2. Maintain the exact `main` head as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`; M4.19–M4.43 refresh recorded in `docs/ASSESSMENT_2026-09-24.md`; the M4.47–M4.72 verification-history integrity tranche is recorded in `docs/ASSESSMENT_2026-09-30.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
