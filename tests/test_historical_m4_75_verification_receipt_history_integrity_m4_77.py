@@ -27,6 +27,17 @@ from tests.test_independent_historical_m4_72_verification_receipt_m4_75 import (
 )
 
 
+
+def _session_m4_77():
+    engine, session = _session_m4_77()
+    HistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
+    return engine, session
+
+
+
 def test_m4_77_captures_and_reverifies_history() -> None:
     engine, session = _session_m4_75()
     try:
