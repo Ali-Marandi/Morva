@@ -1,0 +1,59 @@
+name: M4.79 M4.78 Verification Receipt Persistence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-79-m4-78-verification-receipts.yml"
+      - "alembic/versions/0056_independent_m4_77_verification_receipts_m4_79.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/persistence/independent_m4_77_verification_receipts_m4_79.py"
+      - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "tests/test_independent_m4_77_verification_receipts_m4_79.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/m4-79-m4-78-verification-receipts.yml"
+      - "alembic/versions/0056_independent_m4_77_verification_receipts_m4_79.py"
+      - "src/morva/api/v1/integration_execution_readiness.py"
+      - "src/morva/persistence/historical_m4_75_verification_receipt_history_integrity_m4_77.py"
+      - "src/morva/persistence/independent_m4_77_verification_receipts_m4_79.py"
+      - "src/morva/runtime/independent_historical_m4_75_verification_receipt_history_integrity_m4_78.py"
+      - "tests/test_independent_m4_77_verification_receipts_m4_79.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verification-receipts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: >
+          ruff check
+          src/morva/api/v1/integration_execution_readiness.py
+          src/morva/persistence/independent_m4_77_verification_receipts_m4_79.py
+          tests/test_independent_m4_77_verification_receipts_m4_79.py
+      - name: Pytest
+        run: >
+          pytest -q
+          tests/test_independent_m4_77_verification_receipts_m4_79.py
+      - name: Migration
+        env:
+          MORVA_DATABASE_URL: sqlite:///./m4_79.db
+        run: alembic upgrade head
+      - name: Boundary
+        run: |
+          echo "M4.79 persists independent M4.78 verification results as append-only fingerprint-idempotent receipts." >> "${{GITHUB_STEP_SUMMARY}}"
+          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "${{GITHUB_STEP_SUMMARY}}"
