@@ -5,6 +5,7 @@
 - Store explicit scope, algorithm and canonicalization metadata in a versioned fingerprint artifact.
 - Add regression coverage for artifact consistency, deterministic stability and sensitivity to graph-contract changes.
 - Add a dedicated M4.88 CI gate running the fingerprint contract with the M4.87 graph validator and earlier structural guards.
+- Align the M4.78 OpenAPI regression guard with the live M4.76 route and add a golden M4.88 graph-fingerprint regression value.
 
 ### Safety
 - No runtime semantics, persistence schema, API contract, blocker code or production authority changes.
