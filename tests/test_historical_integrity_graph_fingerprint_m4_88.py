@@ -8,6 +8,8 @@ from morva.runtime.historical_integrity_primitives import canonical_sha256
 MANIFEST_PATH = Path("contracts/historical_integrity_manifest_m4_86.json")
 FINGERPRINT_PATH = Path("contracts/historical_integrity_graph_m4_88.json")
 
+EXPECTED_GRAPH_FINGERPRINT = "5351a1f955e5ca0d7d748f53ae7573553c1e02758d1be053b681676f0173de8c"
+
 EXPECTED_ARTIFACT_KEYS = {
     "schema_version",
     "contract_id",
@@ -64,6 +66,7 @@ def test_integrity_graph_fingerprint_artifact_matches_manifest() -> None:
     assert fingerprint["graph_fingerprint"] == canonical_sha256(
         _graph_projection(manifest)
     )
+    assert fingerprint["graph_fingerprint"] == EXPECTED_GRAPH_FINGERPRINT
 
 
 def test_integrity_graph_fingerprint_is_stable_and_nonempty() -> None:
@@ -72,6 +75,7 @@ def test_integrity_graph_fingerprint_is_stable_and_nonempty() -> None:
 
     assert len(fingerprint) == 64
     assert fingerprint == canonical_sha256(_graph_projection(manifest))
+    assert fingerprint == EXPECTED_GRAPH_FINGERPRINT
 
 
 def test_integrity_graph_fingerprint_changes_when_contract_changes() -> None:
