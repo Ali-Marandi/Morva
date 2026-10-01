@@ -155,6 +155,10 @@ from morva.persistence.historical_m4_75_verification_receipt_history_integrity_m
     HistoricalM475VerificationReceiptHistoryIntegrityRepository,
     HistoricalM475VerificationReceiptHistoryIntegrityRecord,
 )
+from morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78 import (
+    IndependentHistoricalM475VerificationReceiptHistoryIntegrityError,
+    independently_verify_historical_m4_75_verification_receipt_history_integrity as verify_m4_77_snapshot_independently,
+)
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479PersistenceError,
     IndependentM477VerificationReceiptM479Repository,
@@ -747,8 +751,7 @@ def persist_scope_bound_readiness_convergence_receipt(
             record = persist_latest_scope_bound_readiness_convergence(
                 session,
                 candidate_sha=candidate_sha,
-                target_environment=target_environment,
-                organization_scope=scope_filter,
+                target_environment=target_environment,                organization_scope=scope_filter,
                 organization_scope_id=scope_id_filter,
                 checked_at=checked_at,
                 recorded_by=principal.user_id,
@@ -1497,8 +1500,7 @@ def get_historical_snapshot_bound_readiness_convergence_freshness(
     authorize(principal, "evidence.read", principal.scope)
     scope_filter, scope_id_filter = _resolve_scope_filter(
         principal,
-        organization_scope,
-        organization_scope_id,
+        organization_scope,        organization_scope_id,
     )
     if scope_filter is None or scope_id_filter is None:
         raise HTTPException(
@@ -2247,8 +2249,7 @@ def independently_verify_historical_freshness_chain_verification_receipt(
                 historical_binding=binding,
                 snapshot_id=snapshot_record.id,
                 snapshot=snapshot_record.to_snapshot(),
-                lineage=lineage,
-            )
+                lineage=lineage,            )
             independent = _verify_m4_44_receipt_independent(
                 receipt=receipt_record,
                 reconstructed=reconstructed,
@@ -2997,8 +2998,7 @@ def list_historical_freshness_verification_history_integrity_snapshots(
         except HistoricalFreshnessVerificationHistoryIntegrityPersistenceError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    items = [
-        HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(
+    items = [        HistoricalFreshnessVerificationHistoryIntegritySnapshotResponse(
             id=record.id,
             integrity=record.to_integrity().to_payload(),
             captured_by=record.captured_by,
@@ -3747,8 +3747,7 @@ def verify_historical_m4_52_verification_receipt_history_integrity_snapshot(
 @router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
-    "m4-52-history-integrity-snapshots/{snapshot_id}/verify-independent",
-    response_model=IndependentHistoricalM453ReceiptHistoryIntegrityResponse,
+    "m4-52-history-integrity-snapshots/{snapshot_id}/verify-independent",    response_model=IndependentHistoricalM453ReceiptHistoryIntegrityResponse,
 )
 def independently_verify_historical_m4_53_receipt_history_integrity_snapshot(
     snapshot_id: UUID,
@@ -4497,8 +4496,7 @@ def verify_persisted_independent_historical_m4_55_receipt_verification(
     authorize(principal, "evidence.read", principal.scope)
     with SessionLocal() as session:
         repository = IndependentHistoricalM455ReceiptVerificationRepository(session)
-        try:
-            record = repository.verify(verification_id)
+        try:            record = repository.verify(verification_id)
         except IndependentHistoricalM455ReceiptVerificationPersistenceError as exc:
             status = 404 if "not found" in str(exc) else 409
             raise HTTPException(status_code=status, detail=str(exc)) from exc
@@ -5247,8 +5245,7 @@ def independently_verify_historical_m4_66_receipt(
                 IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord.created_at.asc(),
                 IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord.id.asc(),
             )
-        )
-        source_records = list(session.scalars(source_query).all())
+        )        source_records = list(session.scalars(source_query).all())
         try:
             HistoricalM463ReceiptHistoryIntegrityRepository(session).verify(
                 snapshot.id
@@ -5997,8 +5994,7 @@ def persist_independent_historical_m4_72_verification_history_integrity_receipt(
             raise HTTPException(status_code=status, detail=str(exc)) from exc
     return IndependentHistoricalM472VerificationHistoryIntegrityReceiptResponse(
         id=record.id,
-        snapshot_id=record.snapshot_id,
-        verification=verification.to_payload(),
+        snapshot_id=record.snapshot_id,        verification=verification.to_payload(),
         recorded_by=record.recorded_by,
         created_at=record.created_at,
     )
@@ -6442,7 +6438,7 @@ def independently_verify_historical_m4_75_verification_receipt_history_integrity
         source_records = list(session.scalars(source_query).all())
         try:
             verification = (
-                independently_verify_historical_m4_75_verification_receipt_history_integrity(
+                verify_m4_77_snapshot_independently(
                     snapshot=record,
                     source_records=source_records,
                 )
@@ -6747,7 +6743,6 @@ def persist_independent_m4_79_verification_receipt_m4_81(
         created_at=record.created_at,
     )
 
-
 @router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
@@ -6832,5 +6827,4 @@ def verify_independent_m4_79_verification_receipt_m4_81(
         recorded_by=record.recorded_by,
         created_at=record.created_at,
     )
-
 
