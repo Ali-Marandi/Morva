@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import uuid4
 
+from fastapi.testclient import TestClient
 import pytest
+from sqlalchemy import create_engine, inspect
 
+import morva.persistence.database as database
+from morva.api.app import app
+from morva.persistence.database import init_db
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
+    HistoricalM471VerificationHistoryIntegrityRecord,
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
@@ -12,10 +19,26 @@ from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
+from morva.runtime.config import Settings
+from morva.security.auth import get_current_principal
+from morva.security.policy import Principal, Scope
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
     _persist_m4_71_receipt,
     _session_m4_72,
 )
+
+
+def test_m4_74_local_schema_registers_receipt_model(monkeypatch) -> None:
+    engine = create_engine("sqlite://", future=True)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    try:
+        database.init_db()
+        assert inspect(engine).has_table(
+            "independent_historical_m4_72_verification_receipts_m4_74"
+        )
+    finally:
+        engine.dispose()
 
 
 def _session_m4_74():
@@ -40,7 +63,10 @@ def test_m4_74_records_and_reverifies_independent_result() -> None:
         record = repository.record(snapshot_id=snapshot.id, recorded_by="ministry")
         assert record.to_verification().valid is True
         assert repository.verify(record.id).id == record.id
-        assert repository.record(snapshot_id=snapshot.id, recorded_by="ministry").id == record.id
+        assert (
+            repository.record(snapshot_id=snapshot.id, recorded_by="ministry").id
+            == record.id
+        )
     finally:
         session.close()
         engine.dispose()
@@ -158,8 +184,6 @@ def test_m4_74_invalid_snapshot_fails_closed() -> None:
 
 
 def test_m4_74_openapi_routes_are_registered() -> None:
-    from morva.api.app import app
-
     prefix = (
         "/api/v1/integration-execution/readiness/convergence/freshness/"
         "policy-registry-snapshot-bound/receipt-lineage/"
@@ -170,3 +194,123 @@ def test_m4_74_openapi_routes_are_registered() -> None:
     assert "post" in paths[prefix + "/{snapshot_id}/verification-receipts"]
     assert "get" in paths[prefix + "/verification-history"]
     assert "get" in paths[prefix + "/verification-receipts/{verification_id}/verify"]
+
+
+def _principal(scope: Scope) -> Principal:
+    return Principal(
+        user_id="m4-74-test",
+        role="admin",
+        scope=scope,
+        scope_id="test",
+        mfa_verified=True,
+    )
+
+
+def test_m4_74_verification_receipt_api_requires_authentication(monkeypatch) -> None:
+    previous_override = app.dependency_overrides.pop(get_current_principal, None)
+    try:
+        import morva.security.auth as auth_module
+
+        monkeypatch.setattr(
+            auth_module,
+            "settings",
+            Settings(environment="test"),
+        )
+        response = TestClient(app).get(
+            (
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-72-verification-history-integrity-snapshots/verification-history"
+            )
+        )
+        assert response.status_code == 401
+    finally:
+        if previous_override is not None:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_74_verification_receipt_api_rejects_invalid_uuid() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    try:
+        response = TestClient(app).post(
+            (
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-72-verification-history-integrity-snapshots/"
+                "not-a-uuid/verification-receipts"
+            )
+        )
+        assert response.status_code == 422
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_74_verification_receipt_api_enforces_ministry_scope() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.SCHOOL)
+    try:
+        response = TestClient(app).get(
+            (
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-72-verification-history-integrity-snapshots/verification-history"
+            )
+        )
+        assert response.status_code == 403
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_74_verification_receipt_api_returns_404_for_unknown_snapshot() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    init_db()
+    try:
+        response = TestClient(app).post(
+            (
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-72-verification-history-integrity-snapshots/"
+                f"{uuid4()}/verification-receipts"
+            )
+        )
+        assert response.status_code == 404
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_74_verification_receipt_api_returns_404_for_unknown_receipt() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    init_db()
+    try:
+        response = TestClient(app).get(
+            (
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-72-verification-history-integrity-snapshots/"
+                "verification-receipts/"
+                f"{uuid4()}/verify"
+            )
+        )
+        assert response.status_code == 404
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
