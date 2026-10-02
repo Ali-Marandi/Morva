@@ -1,6 +1,22 @@
 # Technical Assessment — 2026-09-25
 
-## Current implementation position
+## Technical Assessment — 2026-10-03
+
+## M4.74 — M4.73 verification-receipt persistence
+
+M4.74 persists the independent M4.73 verification result for an M4.72 history-integrity snapshot as append-only, fingerprint-idempotent evidence. Recording, listing and direct verification reconstruct the M4.73 result from the M4.72 snapshot and the point-in-time M4.71 receipt history before trusting persisted verification metadata.
+
+### M4.74 controls
+
+- Exact M4.72 snapshot binding is persisted.
+- Duplicate fingerprints are idempotent for the same actor and rejected for a different actor.
+- Cursor history supports snapshot/valid filters and timestamp+UUID pagination.
+- Persisted receipts are revalidated structurally and compared with a fresh M4.73 reconstruction.
+- Invalid M4.72 source snapshots fail closed.
+
+---
+
+# Current implementation position
 
 M4.48 extends the historical freshness verification chain with an independent verifier for M4.47 history-integrity snapshots. The verifier reconstructs the point-in-time M4.46 verification history separately from the M4.47 aggregate builder and compares the persisted history fingerprint, record counts, valid counts, chain-valid counts and aggregate integrity fingerprint.
 
