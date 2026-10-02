@@ -23,15 +23,11 @@ from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
 
 
 def _source_records(session):
-    return list(
-        session.scalars(
-            select(IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord)
-        )
-        .order_by(
-            IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.created_at.asc(),
-            IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.id.asc(),
-        )
+    statement = select(IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord).order_by(
+        IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.created_at.asc(),
+        IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord.id.asc(),
     )
+    return list(session.scalars(statement).all())
 
 
 def test_m4_73_independently_verifies_m4_72_snapshot() -> None:
