@@ -11,7 +11,6 @@ import morva.persistence.database as database
 from morva.api.app import app
 from morva.persistence.database import init_db
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
-    HistoricalM471VerificationHistoryIntegrityRecord,
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
