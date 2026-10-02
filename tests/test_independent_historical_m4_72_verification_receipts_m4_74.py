@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import inspect
+from sqlalchemy import create_engine, inspect
 
 import morva.persistence.database as database
 from morva.api.app import app
@@ -314,4 +314,3 @@ def test_m4_74_verification_receipt_api_returns_404_for_unknown_receipt() -> Non
             app.dependency_overrides.pop(get_current_principal, None)
         else:
             app.dependency_overrides[get_current_principal] = previous_override
-        engine.dispose()
