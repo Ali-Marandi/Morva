@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+from uuid import uuid4
 
+from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy import select
 
+from morva.api.app import app
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
+from morva.security.auth import get_current_principal
+from morva.security.policy import Principal, Scope
 from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord,
 )
@@ -159,3 +164,66 @@ def test_m4_73_openapi_route_is_registered() -> None:
         "{snapshot_id}/verify-independent-m4-72"
     )
     assert "get" in app.openapi()["paths"][path]
+
+
+_M4_73_VERIFY_PATH = (
+    "/api/v1/integration-execution/readiness/convergence/freshness/"
+    "policy-registry-snapshot-bound/receipt-lineage/"
+    "independent-verification-history-integrity/"
+    "m4-68-verification-history-integrity-snapshots/"
+    "{snapshot_id}/verify-independent-m4-72"
+)
+
+
+def test_m4_73_verification_endpoint_requires_authentication() -> None:
+    previous = app.dependency_overrides.pop(get_current_principal, None)
+    try:
+        response = TestClient(app).get(
+            _M4_73_VERIFY_PATH.format(snapshot_id=uuid4()),
+        )
+        assert response.status_code == 401
+    finally:
+        if previous is not None:
+            app.dependency_overrides[get_current_principal] = previous
+
+
+def test_m4_73_verification_endpoint_rejects_invalid_uuid() -> None:
+    previous = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id="m4-73-test",
+        role="admin",
+        scope=Scope.MINISTRY,
+        scope_id="test",
+        mfa_verified=True,
+    )
+    try:
+        response = TestClient(app).get(
+            _M4_73_VERIFY_PATH.format(snapshot_id="not-a-uuid"),
+        )
+        assert response.status_code == 422
+    finally:
+        if previous is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous
+
+
+def test_m4_73_verification_endpoint_returns_404_for_unknown_snapshot() -> None:
+    previous = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id="m4-73-test",
+        role="admin",
+        scope=Scope.MINISTRY,
+        scope_id="test",
+        mfa_verified=True,
+    )
+    try:
+        response = TestClient(app).get(
+            _M4_73_VERIFY_PATH.format(snapshot_id=uuid4()),
+        )
+        assert response.status_code == 404
+    finally:
+        if previous is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous
