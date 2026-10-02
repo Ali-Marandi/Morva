@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from morva.api.app import app
 import morva.security.auth as auth_module
+from morva.persistence.database import init_db
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
@@ -222,6 +223,7 @@ def test_m4_73_verification_endpoint_returns_404_for_unknown_snapshot() -> None:
         scope_id="test",
         mfa_verified=True,
     )
+    init_db()
     try:
         response = TestClient(app).get(
             _M4_73_VERIFY_PATH.format(snapshot_id=uuid4()),
