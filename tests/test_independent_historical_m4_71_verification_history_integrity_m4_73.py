@@ -9,9 +9,11 @@ import pytest
 from sqlalchemy import select
 
 from morva.api.app import app
+import morva.security.auth as auth_module
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityRepository,
 )
+from morva.runtime.config import Settings
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 import (
@@ -154,8 +156,6 @@ def test_m4_73_rejects_invalid_persisted_snapshot_structure() -> None:
 
 
 def test_m4_73_openapi_route_is_registered() -> None:
-    from morva.api.app import app
-
     path = (
         "/api/v1/integration-execution/readiness/convergence/freshness/"
         "policy-registry-snapshot-bound/receipt-lineage/"
@@ -175,8 +175,13 @@ _M4_73_VERIFY_PATH = (
 )
 
 
-def test_m4_73_verification_endpoint_requires_authentication() -> None:
+def test_m4_73_verification_endpoint_requires_authentication(monkeypatch) -> None:
     previous = app.dependency_overrides.pop(get_current_principal, None)
+    monkeypatch.setattr(
+        auth_module,
+        "settings",
+        Settings(environment="test"),
+    )
     try:
         response = TestClient(app).get(
             _M4_73_VERIFY_PATH.format(snapshot_id=uuid4()),
