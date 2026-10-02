@@ -5,10 +5,11 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 import morva.api.v1.integration_execution_readiness as api_module
+import morva.persistence.database as database
 from morva.api.app import app
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityRecord,
@@ -26,6 +27,19 @@ from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
     _persist_m4_71_receipt,
     _session_m4_72,
 )
+
+
+def test_m4_74_local_schema_registers_receipt_model(monkeypatch) -> None:
+    engine = create_engine("sqlite://", future=True)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    try:
+        database.init_db()
+        assert inspect(engine).has_table(
+            "independent_historical_m4_72_verification_receipts_m4_74"
+        )
+    finally:
+        engine.dispose()
 
 
 def _session_m4_74():
