@@ -139,15 +139,19 @@ def independently_verify_historical_m4_71_verification_history_integrity(
         canonical_records.append(
             {
                 "id": str(record.id),
-                "verification_receipt_id": str(record.verification_receipt_id),
-                "persisted_snapshot_id": str(record.persisted_snapshot_id),
-                "reconstructed_snapshot_id": str(record.reconstructed_snapshot_id),
-                "persisted_verification_fingerprint": (
-                    verification.persisted_verification_fingerprint.lower()
+                "snapshot_id": str(record.snapshot_id),
+                "persisted_fingerprint": verification.persisted_fingerprint.lower(),
+                "reconstructed_fingerprint": verification.reconstructed_fingerprint.lower(),
+                "persisted_history_fingerprint": (
+                    verification.persisted_history_fingerprint.lower()
                 ),
-                "reconstructed_verification_fingerprint": (
-                    verification.reconstructed_verification_fingerprint.lower()
+                "reconstructed_history_fingerprint": (
+                    verification.reconstructed_history_fingerprint.lower()
                 ),
+                "persisted_record_count": verification.persisted_record_count,
+                "reconstructed_record_count": verification.reconstructed_record_count,
+                "persisted_valid_count": verification.persisted_valid_count,
+                "reconstructed_valid_count": verification.reconstructed_valid_count,
                 "valid": verification.valid,
                 "blockers": list(verification.blockers),
                 "verification_fingerprint": verification.verification_fingerprint.lower(),
