@@ -5245,7 +5245,8 @@ def independently_verify_historical_m4_66_receipt(
                 IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord.created_at.asc(),
                 IndependentHistoricalM461ReceiptHistoryIntegrityReceiptRecord.id.asc(),
             )
-        )        source_records = list(session.scalars(source_query).all())
+        )
+        source_records = list(session.scalars(source_query).all())
         try:
             HistoricalM463ReceiptHistoryIntegrityRepository(session).verify(
                 snapshot.id
