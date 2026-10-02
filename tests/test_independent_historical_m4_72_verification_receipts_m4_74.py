@@ -5,12 +5,11 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import create_engine, inspect
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import inspect
 
-import morva.api.v1.integration_execution_readiness as api_module
 import morva.persistence.database as database
 from morva.api.app import app
+from morva.persistence.database import init_db
 from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 import (
     HistoricalM471VerificationHistoryIntegrityRecord,
     HistoricalM471VerificationHistoryIntegrityRepository,
@@ -197,28 +196,6 @@ def test_m4_74_openapi_routes_are_registered() -> None:
     assert "get" in paths[prefix + "/verification-receipts/{verification_id}/verify"]
 
 
-def _api_test_sessionmaker():
-    engine = create_engine(
-        "sqlite://",
-        future=True,
-        connect_args={"check_same_thread": False},
-    )
-    HistoricalM471VerificationHistoryIntegrityRecord.__table__.create(
-        bind=engine,
-        checkfirst=True,
-    )
-    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.__table__.create(
-        bind=engine,
-        checkfirst=True,
-    )
-    return engine, sessionmaker(
-        bind=engine,
-        autoflush=False,
-        autocommit=False,
-        future=True,
-    )
-
-
 def _principal(scope: Scope) -> Principal:
     return Principal(
         user_id="m4-74-test",
@@ -294,11 +271,10 @@ def test_m4_74_verification_receipt_api_enforces_ministry_scope() -> None:
             app.dependency_overrides[get_current_principal] = previous_override
 
 
-def test_m4_74_verification_receipt_api_returns_404_for_unknown_snapshot(monkeypatch) -> None:
+def test_m4_74_verification_receipt_api_returns_404_for_unknown_snapshot() -> None:
     previous_override = app.dependency_overrides.get(get_current_principal)
     app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
-    engine, testing_sessionmaker = _api_test_sessionmaker()
-    monkeypatch.setattr(api_module, "SessionLocal", testing_sessionmaker)
+    init_db()
     try:
         response = TestClient(app).post(
             (
@@ -315,14 +291,12 @@ def test_m4_74_verification_receipt_api_returns_404_for_unknown_snapshot(monkeyp
             app.dependency_overrides.pop(get_current_principal, None)
         else:
             app.dependency_overrides[get_current_principal] = previous_override
-        engine.dispose()
 
 
-def test_m4_74_verification_receipt_api_returns_404_for_unknown_receipt(monkeypatch) -> None:
+def test_m4_74_verification_receipt_api_returns_404_for_unknown_receipt() -> None:
     previous_override = app.dependency_overrides.get(get_current_principal)
     app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
-    engine, testing_sessionmaker = _api_test_sessionmaker()
-    monkeypatch.setattr(api_module, "SessionLocal", testing_sessionmaker)
+    init_db()
     try:
         response = TestClient(app).get(
             (
