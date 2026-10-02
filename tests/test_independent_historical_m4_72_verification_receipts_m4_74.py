@@ -19,6 +19,7 @@ from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
+from morva.runtime.config import Settings
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
@@ -222,7 +223,7 @@ def test_m4_74_verification_receipt_api_requires_authentication(monkeypatch) -> 
         monkeypatch.setattr(
             auth_module,
             "settings",
-            auth_module.Settings(environment="test"),
+            Settings(environment="test"),
         )
         response = TestClient(app).get(
             (
