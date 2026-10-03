@@ -7,10 +7,10 @@ on:
       - ".github/workflows/m4-74-verification-receipts-ci.yml"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
-- "alembic/versions/0054_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
-- "src/morva/persistence/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
-- "src/morva/runtime/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
-- "tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "alembic/versions/0054_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "src/morva/persistence/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "src/morva/runtime/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
       - "src/morva/persistence/historical_m4_71_verification_history_integrity_m4_72.py"
       - "src/morva/persistence/independent_historical_m4_69_verification_receipts_m4_71.py"
       - "src/morva/persistence/independent_historical_m4_72_verification_receipts_m4_74.py"
@@ -24,6 +24,10 @@ on:
       - ".github/workflows/m4-74-verification-receipts-ci.yml"
       - "src/morva/api/v1/integration_execution_readiness.py"
       - "src/morva/persistence/database.py"
+      - "alembic/versions/0054_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "src/morva/persistence/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "src/morva/runtime/historical_m4_74_verification_receipt_history_integrity_m4_75.py"
+      - "tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
       - "src/morva/persistence/historical_m4_71_verification_history_integrity_m4_72.py"
       - "src/morva/persistence/independent_historical_m4_69_verification_receipts_m4_71.py"
       - "src/morva/persistence/independent_historical_m4_72_verification_receipts_m4_74.py"
@@ -66,6 +70,7 @@ jobs:
           tests/test_historical_m4_71_verification_history_integrity_m4_72.py
           tests/test_independent_historical_m4_71_verification_history_integrity_m4_73.py
           tests/test_independent_historical_m4_72_verification_receipts_m4_74.py
+          tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py
       - name: Migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_74.db
