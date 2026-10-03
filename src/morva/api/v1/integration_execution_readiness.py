@@ -10,6 +10,18 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from morva.persistence.database import SessionLocal
+
+from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
+    HistoricalM474VerificationReceiptHistoryIntegrityRecord,
+)
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
+    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
+    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
+)
+from morva.runtime.independent_historical_m4_75_verification import (
+    IndependentHistoricalM475VerificationError,
+    independently_verify_historical_m4_75_snapshot,
+)
 from morva.persistence.integration_execution_readiness_records import (
     IntegrationExecutionReadinessPersistenceError,
     IntegrationExecutionReadinessVerificationRepository,
@@ -6111,3 +6123,43 @@ def verify_historical_m4_74_verification_receipt_history_integrity_snapshot(
         captured_by=record.captured_by,
         created_at=record.created_at,
     )
+
+
+class IndependentHistoricalM475VerificationResponse(BaseModel):
+    verification: dict[str, object]
+
+
+@router.get(
+    _M4_75_HISTORY_SNAPSHOT_PATH + "/{snapshot_id}/verify-independent-m4-75",
+    response_model=IndependentHistoricalM475VerificationResponse,
+)
+def independently_verify_historical_m4_75_history_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM475VerificationResponse:
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        snapshot = session.get(HistoricalM474VerificationReceiptHistoryIntegrityRecord, snapshot_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="M4.75 history-integrity snapshot not found")
+        source_repository = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(session)
+        source_records = list(
+            session.scalars(
+                select(IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord)
+                .where(IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at < snapshot.created_at)
+                .order_by(
+                    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at.asc(),
+                    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.id.asc(),
+                )
+            ).all()
+        )
+        try:
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
+            verification = independently_verify_historical_m4_75_snapshot(
+                snapshot=snapshot,
+                source_records=source_records,
+            )
+        except IndependentHistoricalM475VerificationError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return IndependentHistoricalM475VerificationResponse(verification=verification.to_payload())
