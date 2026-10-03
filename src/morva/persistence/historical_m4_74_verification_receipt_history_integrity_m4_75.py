@@ -6,24 +6,24 @@ from uuid import UUID, uuid4
 from sqlalchemy import DateTime, Index, String, select
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from morva.persistence.independent_historical_m4_75_verification_receipts_m4_74 import (
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptPersistenceError,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
 from morva.runtime.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
-    HistoricalM472VerificationReceiptHistoryIntegrity,
-    HistoricalM472VerificationReceiptHistoryIntegrityError,
+    HistoricalM474VerificationReceiptHistoryIntegrity,
+    HistoricalM474VerificationReceiptHistoryIntegrityError,
     build_historical_m4_74_verification_receipt_history_integrity,
 )
 from .models import Base
 
 
-class HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(ValueError):
+class HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(ValueError):
     """Raised when an M4.75 verification-receipt history snapshot is invalid or tampered."""
 
 
-class HistoricalM472VerificationReceiptHistoryIntegrityRecord(Base):
+class HistoricalM474VerificationReceiptHistoryIntegrityRecord(Base):
     """Append-only point-in-time integrity snapshot of M4.74 receipts."""
 
     __tablename__ = "historical_m4_74_verification_receipt_history_integrity_m4_75"
@@ -45,9 +45,9 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRecord(Base):
         default=lambda: datetime.now(timezone.utc),
     )
 
-    def to_integrity(self) -> HistoricalM472VerificationReceiptHistoryIntegrity:
+    def to_integrity(self) -> HistoricalM474VerificationReceiptHistoryIntegrity:
         try:
-            return HistoricalM472VerificationReceiptHistoryIntegrity(
+            return HistoricalM474VerificationReceiptHistoryIntegrity(
                 integrity_version=self.integrity_version,
                 record_count=self.record_count,
                 valid_count=self.valid_count,
@@ -57,14 +57,14 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRecord(Base):
         except (
             TypeError,
             ValueError,
-            HistoricalM472VerificationReceiptHistoryIntegrityError,
+            HistoricalM474VerificationReceiptHistoryIntegrityError,
         ) as exc:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "persisted M4.75 verification-receipt history integrity is structurally invalid"
             ) from exc
 
 
-class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
+class HistoricalM474VerificationReceiptHistoryIntegrityRepository:
     """Append-only M4.75 capture, history and point-in-time verification."""
 
     def __init__(self, session: Session) -> None:
@@ -73,7 +73,7 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
     def capture(self, *, captured_by: str):
         actor = captured_by.strip()
         if not actor:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "captured_by is required"
             )
         source_repository = IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
@@ -92,20 +92,20 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
 
         integrity = build_historical_m4_74_verification_receipt_history_integrity(source_records)
         existing = self.session.scalar(
-            select(HistoricalM472VerificationReceiptHistoryIntegrityRecord).where(
-                HistoricalM472VerificationReceiptHistoryIntegrityRecord.fingerprint
+            select(HistoricalM474VerificationReceiptHistoryIntegrityRecord).where(
+                HistoricalM474VerificationReceiptHistoryIntegrityRecord.fingerprint
                 == integrity.fingerprint
             )
         )
         if existing is not None:
             if existing.captured_by != actor:
-                raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+                raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                     "M4.75 history integrity fingerprint is already captured by a different actor"
                 )
             self.verify(existing.id)
             return existing
 
-        record = HistoricalM472VerificationReceiptHistoryIntegrityRecord(
+        record = HistoricalM474VerificationReceiptHistoryIntegrityRecord(
             integrity_version=integrity.integrity_version,
             record_count=integrity.record_count,
             valid_count=integrity.valid_count,
@@ -126,39 +126,39 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
         limit: int = 50,
     ):
         if limit < 1 or limit > 100:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "limit must be between 1 and 100"
             )
         if before_created_at is not None and before_created_at.tzinfo is None:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "before_created_at must be timezone-aware"
             )
-        query = select(HistoricalM472VerificationReceiptHistoryIntegrityRecord)
+        query = select(HistoricalM474VerificationReceiptHistoryIntegrityRecord)
         if before_created_at is not None and before_id is None:
             query = query.where(
-                HistoricalM472VerificationReceiptHistoryIntegrityRecord.created_at < before_created_at
+                HistoricalM474VerificationReceiptHistoryIntegrityRecord.created_at < before_created_at
             )
         elif before_created_at is not None and before_id is not None:
             query = query.where(
                 (
-                    HistoricalM472VerificationReceiptHistoryIntegrityRecord.created_at
+                    HistoricalM474VerificationReceiptHistoryIntegrityRecord.created_at
                     < before_created_at
                 )
                 | (
                     (
-                        HistoricalM472VerificationReceiptHistoryIntegrityRecord.created_at
+                        HistoricalM474VerificationReceiptHistoryIntegrityRecord.created_at
                         == before_created_at
                     )
                     & (
-                        HistoricalM472VerificationReceiptHistoryIntegrityRecord.id < before_id
+                        HistoricalM474VerificationReceiptHistoryIntegrityRecord.id < before_id
                     )
                 )
             )
         records = list(
             self.session.scalars(
                 query.order_by(
-                    HistoricalM472VerificationReceiptHistoryIntegrityRecord.created_at.desc(),
-                    HistoricalM472VerificationReceiptHistoryIntegrityRecord.id.desc(),
+                    HistoricalM474VerificationReceiptHistoryIntegrityRecord.created_at.desc(),
+                    HistoricalM474VerificationReceiptHistoryIntegrityRecord.id.desc(),
                 ).limit(limit + 1)
             ).all()
         )
@@ -169,9 +169,9 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
         return records, has_more
 
     def verify(self, snapshot_id: UUID):
-        record = self.session.get(HistoricalM472VerificationReceiptHistoryIntegrityRecord, snapshot_id)
+        record = self.session.get(HistoricalM474VerificationReceiptHistoryIntegrityRecord, snapshot_id)
         if record is None:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "M4.75 verification-receipt history integrity snapshot not found"
             )
         stored = record.to_integrity()
@@ -197,13 +197,13 @@ class HistoricalM472VerificationReceiptHistoryIntegrityRepository:
             reconstructed = build_historical_m4_74_verification_receipt_history_integrity(source_records)
         except (
             IndependentHistoricalM472VerificationHistoryIntegrityReceiptPersistenceError,
-            HistoricalM472VerificationReceiptHistoryIntegrityError,
+            HistoricalM474VerificationReceiptHistoryIntegrityError,
         ) as exc:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 f"M4.74 history reconstruction failed: {exc}"
             ) from exc
         if stored != reconstructed:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityPersistenceError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityPersistenceError(
                 "M4.75 history integrity snapshot differs from reconstructed M4.74 receipt history"
             )
         return record
