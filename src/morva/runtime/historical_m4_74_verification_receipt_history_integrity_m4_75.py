@@ -5,17 +5,17 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 
-from morva.persistence.independent_historical_m4_75_verification_receipts_m4_74 import (
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
 )
 
 
-class HistoricalM472VerificationReceiptHistoryIntegrityError(ValueError):
+class HistoricalM474VerificationReceiptHistoryIntegrityError(ValueError):
     """Raised when an M4.75 verification-receipt history integrity result is invalid."""
 
 
 @dataclass(frozen=True, slots=True)
-class HistoricalM472VerificationReceiptHistoryIntegrity:
+class HistoricalM474VerificationReceiptHistoryIntegrity:
     integrity_version: int
     record_count: int
     valid_count: int
@@ -24,7 +24,7 @@ class HistoricalM472VerificationReceiptHistoryIntegrity:
 
     def __post_init__(self) -> None:
         if self.integrity_version != 1:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityError(
                 "unsupported M4.75 verification-history integrity version"
             )
         for name, value in (
@@ -34,15 +34,15 @@ class HistoricalM472VerificationReceiptHistoryIntegrity:
             if len(value) != 64 or any(
                 char not in "0123456789abcdef" for char in value.lower()
             ):
-                raise HistoricalM472VerificationReceiptHistoryIntegrityError(
+                raise HistoricalM474VerificationReceiptHistoryIntegrityError(
                     f"{name} must be SHA-256"
                 )
         if self.record_count < 0:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityError(
                 "record_count cannot be negative"
             )
         if self.valid_count < 0 or self.valid_count > self.record_count:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityError(
                 "valid_count is outside record_count"
             )
         expected = _fingerprint(
@@ -51,7 +51,7 @@ class HistoricalM472VerificationReceiptHistoryIntegrity:
             history_fingerprint=self.history_fingerprint,
         )
         if self.fingerprint.lower() != expected:
-            raise HistoricalM472VerificationReceiptHistoryIntegrityError(
+            raise HistoricalM474VerificationReceiptHistoryIntegrityError(
                 "M4.75 verification-receipt history integrity fingerprint mismatch"
             )
 
@@ -67,7 +67,7 @@ class HistoricalM472VerificationReceiptHistoryIntegrity:
 
 def build_historical_m4_74_verification_receipt_history_integrity(
     records: list[IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord],
-) -> HistoricalM472VerificationReceiptHistoryIntegrity:
+) -> HistoricalM474VerificationReceiptHistoryIntegrity:
     canonical_records: list[dict[str, object]] = []
     valid_count = 0
     ordered = sorted(
@@ -107,7 +107,7 @@ def build_historical_m4_74_verification_receipt_history_integrity(
         ).encode("utf-8")
     ).hexdigest()
     count = len(canonical_records)
-    return HistoricalM472VerificationReceiptHistoryIntegrity(
+    return HistoricalM474VerificationReceiptHistoryIntegrity(
         integrity_version=1,
         record_count=count,
         valid_count=valid_count,
