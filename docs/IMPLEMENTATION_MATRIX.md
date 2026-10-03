@@ -82,6 +82,7 @@
 | 68 | M4.71 Receipt-History Integrity Snapshot | **M4.72 captures deterministic point-in-time integrity snapshots over the complete M4.71 verification-receipt history with source re-verification, cursor history, migration coverage and a dedicated CI gate; no production authority is introduced** |
 | 69 | Independent M4.72 Receipt-History Integrity Verification | **M4.73 independently reconstructs persisted M4.72 verification-receipt history integrity snapshots against the point-in-time M4.71 receipt history, validates deterministic counts/fingerprints with blocker codes and verification fingerprint, exposes authenticated read-only verification and dedicated CI coverage; no production authority is introduced** |
 | 70 | M4.74 M4.73 Verification-Receipt Persistence | **M4.74 persists M4.73 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct verification and point-in-time source re-verification; no production authority is introduced** |
+| 71 | M4.75 M4.74 Verification-Receipt History Integrity Snapshot | **M4.75 captures deterministic point-in-time integrity snapshots over the complete M4.74 verification-receipt history, re-verifies every selected source receipt, provides ministry-managed cursor history and direct snapshot verification; no production authority is introduced** |
 
 
 ## Canonical payroll lifecycle
