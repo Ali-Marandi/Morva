@@ -25,12 +25,14 @@ from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
     _persist_m4_71_receipt,
-    _session_m4_72,
+)
+from tests.test_independent_historical_m4_72_verification_receipts_m4_74 import (
+    _session_m4_74,
 )
 
 
 def _session_m4_75():
-    engine, session = _session_m4_72()
+    engine, session = _session_m4_74()
     HistoricalM474VerificationReceiptHistoryIntegrityRecord.__table__.create(
         bind=engine,
         checkfirst=True,
