@@ -31,7 +31,6 @@ from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
 
 def _session_m4_75():
     engine, session = _session_m4_72()
-    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository
     HistoricalM474VerificationReceiptHistoryIntegrityRecord.__table__.create(
         bind=engine,
         checkfirst=True,
