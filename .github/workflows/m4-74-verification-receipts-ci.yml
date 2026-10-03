@@ -65,6 +65,8 @@ jobs:
           tests/test_independent_historical_m4_72_verification_receipts_m4_74.py
           tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py
       - name: Targeted pytest
+        env:
+          MORVA_ENV: test
         run: >-
           pytest -q
           tests/test_historical_m4_71_verification_history_integrity_m4_72.py
