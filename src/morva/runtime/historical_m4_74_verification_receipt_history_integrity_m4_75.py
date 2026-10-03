@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 
+"""Build deterministic, point-in-time integrity identities for M4.74 receipts."""
+
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
 )
