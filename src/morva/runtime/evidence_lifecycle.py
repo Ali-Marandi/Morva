@@ -105,6 +105,19 @@ class EvidenceLifecycleAssessment:
             ):
                 raise EvidenceLifecycleError(f"{name} must be SHA-256")
 
+        expected_fingerprint = _assessment_fingerprint(
+            repository=self.repository,
+            checked_at=self.checked_at,
+            registry_fingerprint=self.registry_fingerprint,
+            link_fingerprints=self.link_fingerprints,
+            head_evidence_ids=self.head_evidence_ids,
+            superseded_evidence_ids=self.superseded_evidence_ids,
+        )
+        if self.fingerprint.lower() != expected_fingerprint:
+            raise EvidenceLifecycleError(
+                "evidence lifecycle assessment fingerprint mismatch"
+            )
+
     def to_payload(self) -> dict[str, object]:
         return {
             "assessment_version": self.assessment_version,
