@@ -89,7 +89,9 @@ class IndependentHistoricalM475VerificationReceiptM478:
             "persisted_snapshot_id": str(self.persisted_snapshot_id),
             "reconstructed_snapshot_id": str(self.reconstructed_snapshot_id),
             "persisted_verification_fingerprint": self.persisted_verification_fingerprint.lower(),
-            "reconstructed_verification_fingerprint": self.reconstructed_verification_fingerprint.lower(),
+            "reconstructed_verification_fingerprint": (
+                self.reconstructed_verification_fingerprint.lower()
+            ),
             "persisted_valid": self.persisted_valid,
             "reconstructed_valid": self.reconstructed_valid,
             "persisted_blockers": list(self.persisted_blockers),
@@ -133,9 +135,11 @@ def independently_verify_historical_m4_75_verification_receipt_m4_77(
     try:
         for source_record in ordered:
             source_repository.verify(source_record.id)
-        reconstructed = independently_verify_historical_m4_74_verification_receipt_history_integrity(
-            snapshot=snapshot,
-            source_records=ordered,
+        reconstructed = (
+            independently_verify_historical_m4_74_verification_receipt_history_integrity(
+                snapshot=snapshot,
+                source_records=ordered,
+            )
         )
     except (
         IndependentHistoricalM472VerificationHistoryIntegrityReceiptPersistenceError,
@@ -150,7 +154,10 @@ def independently_verify_historical_m4_75_verification_receipt_m4_77(
         blockers.append("M478_SNAPSHOT_BINDING_MISMATCH")
     if persisted.persisted_fingerprint.lower() != reconstructed.persisted_fingerprint.lower():
         blockers.append("M478_PERSISTED_FINGERPRINT_MISMATCH")
-    if persisted.reconstructed_fingerprint.lower() != reconstructed.reconstructed_fingerprint.lower():
+    if (
+        persisted.reconstructed_fingerprint.lower()
+        != reconstructed.reconstructed_fingerprint.lower()
+    ):
         blockers.append("M478_RECONSTRUCTED_FINGERPRINT_MISMATCH")
     if (
         persisted.persisted_history_fingerprint.lower()
