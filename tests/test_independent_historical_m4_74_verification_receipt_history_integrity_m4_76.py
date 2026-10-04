@@ -183,9 +183,10 @@ def test_m4_76_verification_endpoint_requires_authentication(monkeypatch) -> Non
     previous = app.dependency_overrides.pop(get_current_principal, None)
     monkeypatch.setattr(auth_module, "settings", Settings(environment="test"))
     try:
-        response = TestClient(app).get(
-            _M4_76_VERIFY_PATH.format(snapshot_id=uuid4()),
-        )
+        with TestClient(app) as client:
+            response = client.get(
+                _M4_76_VERIFY_PATH.format(snapshot_id=uuid4()),
+            )
         assert response.status_code == 401
     finally:
         if previous is not None:
