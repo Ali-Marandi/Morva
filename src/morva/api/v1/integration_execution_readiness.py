@@ -6248,6 +6248,71 @@ def persist_independent_historical_m4_75_verification_history_integrity_receipt(
 @router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
+    "m4-75-verification-receipt-history-integrity-snapshots/{snapshot_id}/verification-receipts",
+    response_model=IndependentHistoricalM475VerificationHistoryIntegrityReceiptHistoryResponse,
+)
+def list_independent_historical_m4_75_verification_receipts_for_snapshot(
+    snapshot_id: UUID,
+    valid: bool | None = Query(default=None),
+    before_created_at: datetime | None = Query(default=None),
+    before_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM475VerificationHistoryIntegrityReceiptHistoryResponse:
+    from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 import (
+        IndependentHistoricalM475VerificationHistoryIntegrityReceiptPersistenceError,
+        IndependentHistoricalM475VerificationHistoryIntegrityReceiptRepository,
+    )
+    authorize(principal, "evidence.read", principal.scope)
+    if principal.scope is not Scope.MINISTRY:
+        raise HTTPException(
+            status_code=403,
+            detail="M4.77 verification receipts are ministry-managed",
+        )
+    if (before_created_at is None) != (before_id is None):
+        raise HTTPException(
+            status_code=422,
+            detail="before_created_at and before_id must be supplied together",
+        )
+    if before_created_at is not None:
+        before_created_at = _normalize_history_timestamp(before_created_at)
+    with SessionLocal() as session:
+        repository = (
+            IndependentHistoricalM475VerificationHistoryIntegrityReceiptRepository(
+                session
+            )
+        )
+        try:
+            records, has_more = repository.list(
+                snapshot_id=snapshot_id,
+                valid=valid,
+                before_created_at=before_created_at,
+                before_id=before_id,
+                limit=limit,
+            )
+        except IndependentHistoricalM475VerificationHistoryIntegrityReceiptPersistenceError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+    items = [
+        IndependentHistoricalM475VerificationHistoryIntegrityReceiptResponse(
+            id=record.id,
+            snapshot_id=record.snapshot_id,
+            verification=record.to_verification().to_payload(),
+            recorded_by=record.recorded_by,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+    return IndependentHistoricalM475VerificationHistoryIntegrityReceiptHistoryResponse(
+        items=items,
+        has_more=has_more,
+        next_before_created_at=records[-1].created_at if has_more and records else None,
+        next_before_id=records[-1].id if has_more and records else None,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
     "m4-75-verification-receipt-history-integrity-snapshots/verification-history",
     response_model=IndependentHistoricalM475VerificationHistoryIntegrityReceiptHistoryResponse,
 )
