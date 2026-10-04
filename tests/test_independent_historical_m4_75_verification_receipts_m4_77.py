@@ -11,7 +11,6 @@ import morva.security.auth as auth_module
 from morva.api.app import app
 from morva.persistence.database import init_db
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
-    HistoricalM474VerificationReceiptHistoryIntegrityRecord,
     HistoricalM474VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
@@ -48,7 +47,7 @@ def _principal(scope: Scope) -> Principal:
     )
 
 
-def test_m4_77_local_schema_registers_persistence_model(monkeypatch) -> None:
+def test_m4_77_local_schema_registers_persistence_model() -> None:
     engine, session = _session_m4_75()
     try:
         assert inspect(engine).has_table(
