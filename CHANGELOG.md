@@ -8,6 +8,7 @@
 ### Safety
 - Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
 
+## Unreleased — M4.76 Independent M4.75 Verification
 
 ### Readiness policy governance
 - Independently reconstruct persisted M4.75 point-in-time integrity snapshots over the complete M4.74 verification-receipt history.
