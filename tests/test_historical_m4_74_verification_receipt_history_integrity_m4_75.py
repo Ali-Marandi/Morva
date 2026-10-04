@@ -191,8 +191,10 @@ def _principal(scope: Scope) -> Principal:
     )
 
 
-def test_m4_75_snapshot_api_requires_authentication() -> None:
+def test_m4_75_snapshot_api_requires_authentication(monkeypatch) -> None:
     previous_override = app.dependency_overrides.pop(get_current_principal, None)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    init_db()
     try:
         response = TestClient(app).get(
             "/api/v1/integration-execution/readiness/convergence/freshness/"
