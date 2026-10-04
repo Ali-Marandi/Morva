@@ -82,6 +82,7 @@
 - M4.74 persists M4.73 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct re-verification and point-in-time source reconstruction.
 - M4.75 captures deterministic point-in-time integrity snapshots over the complete M4.74 verification-receipt history with source re-verification, fingerprint idempotency, cursor history and direct snapshot verification.
 - M4.76 independently verifies persisted M4.75 snapshots against the point-in-time M4.74 verification-receipt history, re-verifies source receipts and emits deterministic blockers plus a verification fingerprint through an authenticated read-only API.
+- M4.77 persists M4.76 independent-verification results as append-only, fingerprint-idempotent receipts with M4.75 snapshot and timestamp-bounded M4.74 source re-verification, ministry-managed history and direct verification.
 ## Current execution queue
 
 1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.76 independent verification of M4.75 snapshots over the complete M4.74 verification-receipt history.
