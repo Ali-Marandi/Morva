@@ -132,12 +132,14 @@ def test_m4_77_cursor_history_and_invalid_cursor() -> None:
 def test_m4_77_detects_tampered_source_receipt() -> None:
     engine, session = _session_m4_77()
     try:
-        snapshot = _persist_m4_75_snapshot(session)
+        source = _persist_m4_74_receipt(session)
+        snapshot = HistoricalM474VerificationReceiptHistoryIntegrityRepository(
+            session
+        ).capture(captured_by="ministry")
         repository = IndependentHistoricalM475VerificationHistoryIntegrityReceiptRepository(
             session
         )
         record = repository.record(snapshot_id=snapshot.id, recorded_by="ministry")
-        source = _persist_m4_74_receipt(session, "b" * 64)
         source.blockers_json = '["TAMPERED"]'
         session.flush()
         with pytest.raises(
