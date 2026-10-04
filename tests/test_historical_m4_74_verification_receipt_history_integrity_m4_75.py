@@ -199,12 +199,13 @@ def test_m4_75_snapshot_api_requires_authentication(monkeypatch) -> None:
     monkeypatch.setattr(auth_module, "settings", Settings(environment="test"))
     init_db()
     try:
-        response = TestClient(app).get(
-            "/api/v1/integration-execution/readiness/convergence/freshness/"
-            "policy-registry-snapshot-bound/receipt-lineage/"
-            "independent-verification-history-integrity/"
-            "m4-74-verification-receipt-history-integrity-snapshots"
-        )
+        with TestClient(app) as client:
+            response = client.get(
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-74-verification-receipt-history-integrity-snapshots"
+            )
         assert response.status_code == 401
     finally:
         if previous_override is not None:
