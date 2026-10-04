@@ -194,6 +194,7 @@ def _principal(scope: Scope) -> Principal:
 def test_m4_75_snapshot_api_requires_authentication(monkeypatch) -> None:
     previous_override = app.dependency_overrides.pop(get_current_principal, None)
     monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    monkeypatch.setattr(auth_module, "settings", Settings(environment="test"))
     init_db()
     try:
         response = TestClient(app).get(
