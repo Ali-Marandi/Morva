@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine, inspect
 
 import morva.persistence.database as database
+import morva.security.auth as auth_module
 from morva.api.app import app
 from morva.persistence.database import init_db
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
@@ -21,6 +22,7 @@ from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 imp
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
+from morva.runtime.config import Settings
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
