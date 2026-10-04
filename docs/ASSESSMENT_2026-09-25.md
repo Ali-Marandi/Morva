@@ -14,6 +14,28 @@ M4.74 persists the independent M4.73 verification result for an M4.72 history-in
 - Persisted receipts are revalidated structurally and compared with a fresh M4.73 reconstruction.
 - Invalid M4.72 source snapshots fail closed.
 
+## M4.75 — M4.74 verification-receipt history integrity snapshot
+
+M4.75 captures a deterministic point-in-time integrity snapshot over the complete persisted M4.74 independent-verification receipt history. Capture validates every source receipt first; later history exposure and direct verification reconstruct only receipts created before the snapshot timestamp and re-verify them before comparison.
+
+### M4.75 controls
+
+- Snapshot identity is deterministic and fingerprinted.
+- Source M4.74 receipts are revalidated before capture and point-in-time verification.
+- Capture is append-only and fingerprint-idempotent for the same actor.
+- History is ministry-managed with timestamp+UUID cursor pagination.
+
+## M4.76 — Independent M4.75 verification
+
+M4.76 independently reconstructs each persisted M4.75 snapshot without invoking the M4.75 builder. The verifier uses the snapshot creation timestamp as the source boundary, re-verifies each selected M4.74 receipt, independently rebuilds the canonical history/count identities and compares them with the persisted snapshot.
+
+### M4.76 controls
+
+- Structurally invalid M4.75 snapshots fail closed.
+- M4.74 source receipts are independently re-verified before reconstruction.
+- Deterministic blocker codes distinguish history, count and aggregate-fingerprint mismatches.
+- Verification is exposed through an authenticated read-only endpoint and never creates production authority.
+
 ---
 
 # Current implementation position
@@ -106,7 +128,7 @@ M4.69 adds append-only point-in-time integrity snapshots over the persisted M4.6
 
 ## Validation boundary
 
-M4.48–M4.69 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
+M4.48–M4.76 are governance/readiness metadata only. They introduce no provider execution, production credentials, payroll calculation, payment mutation or production authorization.
 
 ## Verification posture
 
