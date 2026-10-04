@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import inspect, select
+from sqlalchemy import create_engine, inspect, select
 
 import morva.persistence.database as database
 import morva.security.auth as auth_module
@@ -29,6 +29,15 @@ from tests.test_historical_m4_74_verification_receipt_history_integrity_m4_75 im
 )
 
 
+def _session_m4_77():
+    engine, session = _session_m4_77()
+    IndependentHistoricalM475VerificationReceiptHistoryIntegrityRecord.__table__.create(
+        bind=engine,
+        checkfirst=True,
+    )
+    return engine, session
+
+
 def _persist_m4_75_snapshot(session, source_hash: str = "a" * 64):
     _persist_m4_74_receipt(session, source_hash)
     return HistoricalM474VerificationReceiptHistoryIntegrityRepository(session).capture(
@@ -46,19 +55,21 @@ def _principal(scope: Scope) -> Principal:
     )
 
 
-def test_m4_77_local_schema_registers_persistence_model() -> None:
-    engine, session = _session_m4_75()
+def test_m4_77_local_schema_registers_persistence_model(monkeypatch) -> None:
+    engine = create_engine("sqlite://", future=True)
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
     try:
+        database.init_db()
         assert inspect(engine).has_table(
             "independent_historical_m4_75_verification_receipts_m4_77"
         )
     finally:
-        session.close()
         engine.dispose()
 
 
 def test_m4_77_records_and_reverifies_m4_76_result() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         snapshot = _persist_m4_75_snapshot(session)
         repository = IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository(
@@ -74,7 +85,7 @@ def test_m4_77_records_and_reverifies_m4_76_result() -> None:
 
 
 def test_m4_77_rejects_second_actor_for_same_fingerprint() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         snapshot = _persist_m4_75_snapshot(session)
         repository = IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository(
@@ -92,7 +103,7 @@ def test_m4_77_rejects_second_actor_for_same_fingerprint() -> None:
 
 
 def test_m4_77_cursor_history_and_filters() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         first_snapshot = _persist_m4_75_snapshot(session, "a" * 64)
         first_record = (
@@ -132,7 +143,7 @@ def test_m4_77_cursor_history_and_filters() -> None:
 
 
 def test_m4_77_detects_tampered_source_receipt() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         snapshot = _persist_m4_75_snapshot(session)
         record = (
@@ -160,7 +171,7 @@ def test_m4_77_detects_tampered_source_receipt() -> None:
 
 
 def test_m4_77_detects_tampered_persisted_receipt() -> None:
-    engine, session = _session_m4_75()
+    engine, session = _session_m4_77()
     try:
         snapshot = _persist_m4_75_snapshot(session)
         repository = IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository(
