@@ -19,7 +19,7 @@ from morva.api.v1.integration_execution_readiness import _normalize_history_time
 router = APIRouter()
 
 _BASE_PATH = (
-    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "/integration-execution/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
     "m4-75-verification-receipt-history-integrity-snapshots"
 )
