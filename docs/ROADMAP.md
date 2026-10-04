@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.76 independently verifies M4.75 point-in-time integrity snapshots over the complete M4.74 verification-receipt history while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.77 persists independently reconstructed M4.76 verification results over M4.75 point-in-time integrity snapshots while preserving the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -82,11 +82,12 @@
 - M4.74 persists M4.73 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed cursor history, direct re-verification and point-in-time source reconstruction.
 - M4.75 captures deterministic point-in-time integrity snapshots over the complete M4.74 verification-receipt history with source re-verification, fingerprint idempotency, cursor history and direct snapshot verification.
 - M4.76 independently verifies persisted M4.75 snapshots against the point-in-time M4.74 verification-receipt history, re-verifies source receipts and emits deterministic blockers plus a verification fingerprint through an authenticated read-only API.
+- M4.77 persists M4.76 independent-verification results as append-only, fingerprint-idempotent receipts with M4.75 snapshot and timestamp-bounded M4.74 source re-verification, ministry-managed history and direct verification.
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.76 independent verification of M4.75 snapshots over the complete M4.74 verification-receipt history.
+1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line now extends the M4.30 freshness-policy registry through M4.77 persistence of M4.76 independent-verification results over M4.75 snapshots.
 2. Maintain the exact `main` head as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
-3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`; M4.19–M4.43 refresh recorded in `docs/ASSESSMENT_2026-09-24.md`; the M4.47–M4.76 verification-history integrity tranche is recorded in `docs/ASSESSMENT_2026-10-04_M4_76.md`.**
+3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`; M4.19–M4.43 refresh recorded in `docs/ASSESSMENT_2026-09-24.md`; the M4.47–M4.76 verification-history integrity tranche is recorded in `docs/ASSESSMENT_2026-10-04_M4_76.md`; M4.77 persistence is recorded in `docs/ASSESSMENT_2026-10-05_M4_77.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**
 5. Complete personnel-order lifecycle and approval evidence. **M3.18 implemented immutable order fingerprint binding and fail-closed effective-state verification; authoritative order schema and organizational approval policy remain pending.**
 6. Complete legal component matrix and annual Rule Packs from primary sources. **M3.21 enforces the primary-source evidence contract, M3.24 binds every required 1405 component to source evidence; exact primary artifacts and formal approvals remain pending.**
