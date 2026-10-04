@@ -21,7 +21,7 @@ from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityRecord,
 )
-from morva.runtime.independent_historical_m4_74_verification_receipt_history_integrity_m4_76 import (
+from .independent_historical_m4_74_verification_receipt_history_integrity_m4_76 import (
     IndependentHistoricalM474VerificationReceiptHistoryIntegrityError,
     independently_verify_historical_m4_74_verification_receipt_history_integrity,
 )
