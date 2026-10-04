@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
 
 import morva.persistence.database as database
 import morva.security.auth as auth_module
@@ -13,6 +13,9 @@ from morva.persistence.database import init_db
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
     HistoricalM474VerificationReceiptHistoryIntegrityRecord,
     HistoricalM474VerificationReceiptHistoryIntegrityRepository,
+)
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
+    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
 )
 from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 import (
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
@@ -138,12 +141,9 @@ def test_m4_77_detects_tampered_source_receipt() -> None:
             IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository(session)
             .record(snapshot_id=snapshot.id, recorded_by="ministry")
         )
-        source = session.query(
-            __import__(
-                "morva.persistence.independent_historical_m4_72_verification_receipts_m4_74",
-                fromlist=["IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord"],
-            ).IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord
-        ).first()
+        source = session.scalar(
+            select(IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord)
+        )
         source.blockers_json = '["TAMPERED"]'
         session.flush()
         with pytest.raises(
