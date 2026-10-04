@@ -1,4 +1,4 @@
-name: M4.76 Independent M4.75 Verification
+name: M4.76-M4.77 Independent Verification Persistence
 
 on:
   push:
@@ -11,6 +11,10 @@ on:
       - "src/morva/runtime/independent_historical_m4_74_verification_receipt_history_integrity_m4_76.py"
       - "tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py"
       - "tests/test_independent_historical_m4_74_verification_receipt_history_integrity_m4_76.py"
+      - "tests/test_independent_historical_m4_75_verification_receipts_m4_77.py"
+      - "alembic/versions/0055_independent_m4_75_verification_receipts_m4_77.py"
+      - "src/morva/persistence/independent_historical_m4_75_verification_receipts_m4_77.py"
+      - "src/morva/api/v1/m4_77_verification_receipts.py"
   pull_request:
     branches: [main]
     paths:
@@ -27,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: M4.76-${{ github.workflow }}-${{ github.ref }}
+  group: M4.76-M4.77-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -45,17 +49,24 @@ jobs:
           src/morva/api/v1/integration_execution_readiness.py
           src/morva/persistence/historical_m4_74_verification_receipt_history_integrity_m4_75.py
           src/morva/runtime/independent_historical_m4_74_verification_receipt_history_integrity_m4_76.py
+          src/morva/api/v1/m4_77_verification_receipts.py
+          src/morva/persistence/independent_historical_m4_75_verification_receipts_m4_77.py
           tests/test_independent_historical_m4_74_verification_receipt_history_integrity_m4_76.py
+          tests/test_independent_historical_m4_75_verification_receipts_m4_77.py
       - name: Pytest
+        env:
+          MORVA_ENV: test
         run: >
           pytest -q
           tests/test_historical_m4_74_verification_receipt_history_integrity_m4_75.py
           tests/test_independent_historical_m4_74_verification_receipt_history_integrity_m4_76.py
+          tests/test_independent_historical_m4_75_verification_receipts_m4_77.py
       - name: Migration
         env:
-          MORVA_DATABASE_URL: sqlite:///./m4_76.db
+          MORVA_DATABASE_URL: sqlite:///./m4_77.db
+          MORVA_ENV: test
         run: alembic upgrade head
       - name: Boundary
         run: |
-          echo "M4.76 independently reconstructs and verifies M4.75 point-in-time M4.74 receipt-history integrity snapshots." >> "$GITHUB_STEP_SUMMARY"
+          echo "M4.76 independently verifies M4.75 point-in-time M4.74 receipt-history integrity snapshots and M4.77 persists those verification results." >> "$GITHUB_STEP_SUMMARY"
           echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "$GITHUB_STEP_SUMMARY"
