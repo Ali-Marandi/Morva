@@ -18,7 +18,6 @@ from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 
 )
 from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 import (
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityPersistenceError,
-    IndependentHistoricalM475VerificationReceiptHistoryIntegrityRecord,
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository,
 )
 from morva.runtime.config import Settings
