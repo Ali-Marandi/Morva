@@ -56,6 +56,11 @@ def upgrade() -> None:
         ["created_at"],
     )
     op.create_index(
+        "ix_m4_77_verification_recorded_by",
+        "independent_historical_m4_75_verification_receipts_m4_77",
+        ["recorded_by"],
+    )
+    op.create_index(
         "ix_m4_77_verification_fingerprint",
         "independent_historical_m4_75_verification_receipts_m4_77",
         ["verification_fingerprint"],
