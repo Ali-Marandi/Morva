@@ -60,6 +60,7 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.74 persists M4.73 independent verification results as append-only, fingerprint-idempotent receipts with ministry-managed history, direct re-verification and point-in-time source reconstruction.
 - M4.75 captures deterministic point-in-time integrity snapshots over the complete M4.74 verification-receipt history with source re-verification, cursor history and append-only fingerprint-idempotency.
 - M4.76 independently reconstructs persisted M4.75 snapshots against the point-in-time M4.74 receipt history, emitting deterministic mismatch blockers and a verification fingerprint through a read-only endpoint.
+- M4.77 persists those M4.76 independent-verification results as append-only, fingerprint-idempotent receipts bound to exact M4.75 snapshots, with source re-verification, ministry-managed cursor history and direct receipt verification.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
 - This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.
