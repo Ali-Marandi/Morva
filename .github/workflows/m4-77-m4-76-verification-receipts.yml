@@ -31,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: M4.77-\${{ github.workflow }}-\${{ github.ref }}
+  group: M4.77-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
