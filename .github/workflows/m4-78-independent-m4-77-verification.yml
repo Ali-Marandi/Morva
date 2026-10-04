@@ -60,5 +60,5 @@ jobs:
         run: alembic upgrade head
       - name: Boundary
         run: |
-          echo "M4.78 independently verifies persisted M4.77 M4.76-verification receipts." >> "${{GITHUB_STEP_SUMMARY}}"
-          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "${{GITHUB_STEP_SUMMARY}}"
+          echo "M4.78 independently verifies persisted M4.77 M4.76-verification receipts." >> "$GITHUB_STEP_SUMMARY"
+          echo "Verification-only; no provider execution, credentials, payment mutation or production authorization." >> "$GITHUB_STEP_SUMMARY"
