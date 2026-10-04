@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/m4-78-independent-m4-77-verification.yml"
+      - "src/morva/api/app.py"
       - "src/morva/api/v1/m4_78_independent_verification.py"
       - "src/morva/runtime/independent_historical_m4_75_verification_receipt_m4_78.py"
       - "src/morva/persistence/independent_historical_m4_75_verification_receipts_m4_77.py"
