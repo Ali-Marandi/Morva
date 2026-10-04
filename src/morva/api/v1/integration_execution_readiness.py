@@ -141,6 +141,9 @@ from morva.persistence.independent_historical_m4_69_verification_receipts_m4_71 
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRecord,
     IndependentHistoricalM469VerificationHistoryIntegrityReceiptRepository,
 )
+from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
+    IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
+)
 from morva.runtime.independent_historical_m4_55_receipt_verifier_m4_56 import (
     IndependentHistoricalM455ReceiptVerificationError,
     independently_verify_historical_m4_55_receipt as reconstruct_m4_55_receipt_verification,
@@ -5970,6 +5973,10 @@ class HistoricalM474VerificationReceiptHistoryIntegritySnapshotHistoryResponse(B
     next_before_id: UUID | None = None
 
 
+class IndependentHistoricalM474VerificationReceiptHistoryIntegrityResponse(BaseModel):
+    verification: dict[str, object]
+
+
 _M4_75_HISTORY_SNAPSHOT_PATH = (
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
@@ -6110,4 +6117,73 @@ def verify_historical_m4_74_verification_receipt_history_integrity_snapshot(
         integrity=record.to_integrity().to_payload(),
         captured_by=record.captured_by,
         created_at=record.created_at,
+    )
+
+
+@router.get(
+    _M4_75_HISTORY_SNAPSHOT_PATH + "/{snapshot_id}/verify-independent",
+    response_model=IndependentHistoricalM474VerificationReceiptHistoryIntegrityResponse,
+)
+def independently_verify_historical_m4_74_verification_receipt_history_integrity_snapshot(
+    snapshot_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM474VerificationReceiptHistoryIntegrityResponse:
+    from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
+        HistoricalM474VerificationReceiptHistoryIntegrityRecord,
+    )
+    from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
+        IndependentHistoricalM472VerificationHistoryIntegrityReceiptPersistenceError,
+        IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
+    )
+    from morva.runtime.independent_historical_m4_74_verification_receipt_history_integrity_m4_76 import (
+        IndependentHistoricalM474VerificationReceiptHistoryIntegrityError,
+        independently_verify_historical_m4_74_verification_receipt_history_integrity,
+    )
+
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        snapshot = session.get(
+            HistoricalM474VerificationReceiptHistoryIntegrityRecord,
+            snapshot_id,
+        )
+        if snapshot is None:
+            raise HTTPException(
+                status_code=404,
+                detail="M4.75 verification-receipt history integrity snapshot not found",
+            )
+
+        source_repository = (
+            IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository(
+                session
+            )
+        )
+        source_query = (
+            select(IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord)
+            .where(
+                IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at
+                < snapshot.created_at
+            )
+            .order_by(
+                IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.created_at.asc(),
+                IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord.id.asc(),
+            )
+        )
+        source_records = list(session.scalars(source_query).all())
+        try:
+            for source_record in source_records:
+                source_repository.verify(source_record.id)
+            verification = (
+                independently_verify_historical_m4_74_verification_receipt_history_integrity(
+                    snapshot=snapshot,
+                    source_records=source_records,
+                )
+            )
+        except (
+            IndependentHistoricalM472VerificationHistoryIntegrityReceiptPersistenceError,
+            IndependentHistoricalM474VerificationReceiptHistoryIntegrityError,
+        ) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return IndependentHistoricalM474VerificationReceiptHistoryIntegrityResponse(
+        verification=verification.to_payload(),
     )

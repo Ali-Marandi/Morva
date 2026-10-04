@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine, inspect
 
 import morva.persistence.database as database
+import morva.security.auth as auth_module
 from morva.api.app import app
 from morva.persistence.database import init_db
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
@@ -21,6 +22,7 @@ from morva.persistence.historical_m4_71_verification_history_integrity_m4_72 imp
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
 )
+from morva.runtime.config import Settings
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope
 from tests.test_historical_m4_71_verification_history_integrity_m4_72 import (
@@ -191,15 +193,19 @@ def _principal(scope: Scope) -> Principal:
     )
 
 
-def test_m4_75_snapshot_api_requires_authentication() -> None:
+def test_m4_75_snapshot_api_requires_authentication(monkeypatch) -> None:
     previous_override = app.dependency_overrides.pop(get_current_principal, None)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    monkeypatch.setattr(auth_module, "settings", Settings(environment="test"))
+    init_db()
     try:
-        response = TestClient(app).get(
-            "/api/v1/integration-execution/readiness/convergence/freshness/"
-            "policy-registry-snapshot-bound/receipt-lineage/"
-            "independent-verification-history-integrity/"
-            "m4-74-verification-receipt-history-integrity-snapshots"
-        )
+        with TestClient(app) as client:
+            response = client.get(
+                "/api/v1/integration-execution/readiness/convergence/freshness/"
+                "policy-registry-snapshot-bound/receipt-lineage/"
+                "independent-verification-history-integrity/"
+                "m4-74-verification-receipt-history-integrity-snapshots"
+            )
         assert response.status_code == 401
     finally:
         if previous_override is not None:
