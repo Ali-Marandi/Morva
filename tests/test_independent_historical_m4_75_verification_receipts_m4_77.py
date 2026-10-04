@@ -164,7 +164,7 @@ def test_m4_77_detects_tampered_persisted_receipt() -> None:
         session.flush()
         with pytest.raises(
             IndependentHistoricalM475VerificationHistoryIntegrityReceiptPersistenceError,
-            match="persisted M4.77 blockers payload is invalid",
+            match="persisted M4.77 independent verification receipt is structurally invalid",
         ):
             repository.verify(record.id)
     finally:
