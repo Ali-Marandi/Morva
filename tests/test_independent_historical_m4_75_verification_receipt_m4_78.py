@@ -7,6 +7,7 @@ import pytest
 from sqlalchemy import select
 
 from morva.api.app import app
+from morva.persistence.database import init_db
 from morva.persistence.independent_historical_m4_72_verification_receipts_m4_74 import (
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRepository,
     IndependentHistoricalM472VerificationHistoryIntegrityReceiptRecord,
@@ -188,6 +189,7 @@ def test_m4_78_api_returns_404_for_unknown_receipt() -> None:
         mfa_verified=True,
     )
     try:
+        init_db()
         response = TestClient(app).get(
             "/api/v1/integration-execution/readiness/convergence/freshness/"
             "policy-registry-snapshot-bound/receipt-lineage/"
