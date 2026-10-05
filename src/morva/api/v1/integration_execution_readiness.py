@@ -6360,6 +6360,40 @@ def list_independent_historical_m4_75_verification_history_integrity_receipts(
 @router.get(
     "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
     "receipt-lineage/independent-verification-history-integrity/"
+    "m4-75-verification-receipt-history-integrity-snapshots/{snapshot_id}/verification-receipts/{verification_receipt_id}/verify",
+    response_model=IndependentHistoricalM475VerificationHistoryIntegrityReceiptResponse,
+)
+def verify_independent_historical_m4_75_verification_history_integrity_receipt_for_snapshot(
+    snapshot_id: UUID,
+    verification_receipt_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+) -> IndependentHistoricalM475VerificationHistoryIntegrityReceiptResponse:
+    from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 import (
+        IndependentHistoricalM475VerificationHistoryIntegrityReceiptPersistenceError,
+        IndependentHistoricalM475VerificationHistoryIntegrityReceiptRepository,
+    )
+    authorize(principal, "evidence.read", principal.scope)
+    with SessionLocal() as session:
+        repository = IndependentHistoricalM475VerificationHistoryIntegrityReceiptRepository(session)
+        try:
+            record = repository.verify(verification_receipt_id)
+            if record.snapshot_id != snapshot_id:
+                raise HTTPException(
+                    status_code=404,
+                    detail="M4.77 independent verification receipt not found for snapshot",
+                )
+        except IndependentHistoricalM475VerificationHistoryIntegrityReceiptPersistenceError as exc:
+            status = 404 if "not found" in str(exc) else 409
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+    return IndependentHistoricalM475VerificationHistoryIntegrityReceiptResponse(
+        id=record.id, snapshot_id=record.snapshot_id, verification=record.to_verification().to_payload(),
+        recorded_by=record.recorded_by, created_at=record.created_at,
+    )
+
+
+@router.get(
+    "/readiness/convergence/freshness/policy-registry-snapshot-bound/"
+    "receipt-lineage/independent-verification-history-integrity/"
     "m4-75-verification-receipt-history-integrity-snapshots/verification-receipts/{verification_id}/verify",
     response_model=IndependentHistoricalM475VerificationHistoryIntegrityReceiptResponse,
 )
