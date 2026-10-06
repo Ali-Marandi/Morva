@@ -9,9 +9,9 @@ from pydantic import BaseModel
 from morva.api.v1.integration_execution_readiness import _normalize_history_timestamp
 from morva.audit.persistence import append_audit_event
 from morva.persistence.database import SessionLocal
-from morva.persistence.independent_m4_78_verification_receipts_m4_79 import (
-    IndependentM478VerificationReceiptM479PersistenceError,
-    IndependentM478VerificationReceiptM479Repository,
+from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
+    IndependentM477VerificationReceiptM479PersistenceError,
+    IndependentM477VerificationReceiptM479Repository,
 )
 from morva.security.auth import get_current_principal
 from morva.security.policy import Principal, Scope, authorize
@@ -22,11 +22,11 @@ _BASE_PATH = (
     "/integration-execution/readiness/convergence/freshness/"
     "policy-registry-snapshot-bound/receipt-lineage/"
     "independent-verification-history-integrity/"
-    "m4-78-verification-receipts"
+    "m4-77-verification-receipts"
 )
 
 
-class IndependentM478VerificationReceiptM479Response(BaseModel):
+class IndependentM477VerificationReceiptM479Response(BaseModel):
     id: UUID
     verification_receipt_id: UUID
     verification: dict[str, object]
@@ -34,8 +34,8 @@ class IndependentM478VerificationReceiptM479Response(BaseModel):
     created_at: datetime
 
 
-class IndependentM478VerificationReceiptM479HistoryResponse(BaseModel):
-    items: list[IndependentM478VerificationReceiptM479Response]
+class IndependentM477VerificationReceiptM479HistoryResponse(BaseModel):
+    items: list[IndependentM477VerificationReceiptM479Response]
     has_more: bool
     next_before_created_at: datetime | None = None
     next_before_id: UUID | None = None
@@ -52,18 +52,18 @@ def _require_ministry(principal: Principal) -> None:
 
 @router.post(
     _BASE_PATH + "/{verification_receipt_id}/verification-receipts",
-    response_model=IndependentM478VerificationReceiptM479Response,
+    response_model=IndependentM477VerificationReceiptM479Response,
 )
 def persist_m4_78_verification_receipt(
     verification_receipt_id: UUID,
     principal: Principal = Depends(get_current_principal),
-) -> IndependentM478VerificationReceiptM479Response:
+) -> IndependentM477VerificationReceiptM479Response:
     authorize(principal, "evidence.binding.write", principal.scope, privileged=True)
     if principal.scope is not Scope.MINISTRY:
         raise HTTPException(status_code=403, detail="M4.79 independent verification receipts are ministry-managed")
 
     with SessionLocal() as session:
-        repository = IndependentM478VerificationReceiptM479Repository(session)
+        repository = IndependentM477VerificationReceiptM479Repository(session)
         try:
             record = repository.record(
                 verification_receipt_id=verification_receipt_id,
@@ -71,7 +71,7 @@ def persist_m4_78_verification_receipt(
             )
             append_audit_event(
                 event_type="integration.readiness.independent_m4_78_verification_receipt.recorded",
-                entity_type="independent_m4_78_verification_receipts_m4_79",
+                entity_type="independent_m4_77_verification_receipts_m4_79",
                 entity_id=str(record.id),
                 actor_id=principal.user_id,
                 payload={
@@ -83,12 +83,12 @@ def persist_m4_78_verification_receipt(
                 session=session,
             )
             session.commit()
-        except IndependentM478VerificationReceiptM479PersistenceError as exc:
+        except IndependentM477VerificationReceiptM479PersistenceError as exc:
             session.rollback()
             status = 404 if "not found" in str(exc) else 409
             raise HTTPException(status_code=status, detail=str(exc)) from exc
 
-    return IndependentM478VerificationReceiptM479Response(
+    return IndependentM477VerificationReceiptM479Response(
         id=record.id,
         verification_receipt_id=record.verification_receipt_id,
         verification=record.to_verification().to_payload(),
@@ -99,7 +99,7 @@ def persist_m4_78_verification_receipt(
 
 @router.get(
     _BASE_PATH + "/verification-history",
-    response_model=IndependentM478VerificationReceiptM479HistoryResponse,
+    response_model=IndependentM477VerificationReceiptM479HistoryResponse,
 )
 def list_m4_79_verification_receipts(
     verification_receipt_id: UUID | None = Query(default=None),
@@ -108,12 +108,12 @@ def list_m4_79_verification_receipts(
     before_id: UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=100),
     principal: Principal = Depends(get_current_principal),
-) -> IndependentM478VerificationReceiptM479HistoryResponse:
+) -> IndependentM477VerificationReceiptM479HistoryResponse:
     _require_ministry(principal)
     if before_created_at is not None:
         before_created_at = _normalize_history_timestamp(before_created_at)
     with SessionLocal() as session:
-        repository = IndependentM478VerificationReceiptM479Repository(session)
+        repository = IndependentM477VerificationReceiptM479Repository(session)
         try:
             records, has_more = repository.list(
                 verification_receipt_id=verification_receipt_id,
@@ -122,12 +122,12 @@ def list_m4_79_verification_receipts(
                 before_id=before_id,
                 limit=limit,
             )
-        except IndependentM478VerificationReceiptM479PersistenceError as exc:
+        except IndependentM477VerificationReceiptM479PersistenceError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    return IndependentM478VerificationReceiptM479HistoryResponse(
+    return IndependentM477VerificationReceiptM479HistoryResponse(
         items=[
-            IndependentM478VerificationReceiptM479Response(
+            IndependentM477VerificationReceiptM479Response(
                 id=record.id,
                 verification_receipt_id=record.verification_receipt_id,
                 verification=record.to_verification().to_payload(),
@@ -144,22 +144,22 @@ def list_m4_79_verification_receipts(
 
 @router.get(
     _BASE_PATH + "/verification-receipts/{verification_id}/verify",
-    response_model=IndependentM478VerificationReceiptM479Response,
+    response_model=IndependentM477VerificationReceiptM479Response,
 )
 def verify_m4_79_verification_receipt(
     verification_id: UUID,
     principal: Principal = Depends(get_current_principal),
-) -> IndependentM478VerificationReceiptM479Response:
+) -> IndependentM477VerificationReceiptM479Response:
     _require_ministry(principal)
     with SessionLocal() as session:
-        repository = IndependentM478VerificationReceiptM479Repository(session)
+        repository = IndependentM477VerificationReceiptM479Repository(session)
         try:
             record = repository.verify(verification_id)
-        except IndependentM478VerificationReceiptM479PersistenceError as exc:
+        except IndependentM477VerificationReceiptM479PersistenceError as exc:
             status = 404 if "not found" in str(exc) else 409
             raise HTTPException(status_code=status, detail=str(exc)) from exc
 
-    return IndependentM478VerificationReceiptM479Response(
+    return IndependentM477VerificationReceiptM479Response(
         id=record.id,
         verification_receipt_id=record.verification_receipt_id,
         verification=record.to_verification().to_payload(),
