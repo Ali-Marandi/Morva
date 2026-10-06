@@ -222,7 +222,7 @@ def test_m4_79_api_enforces_ministry_scope() -> None:
             "/api/v1/integration-execution/readiness/convergence/freshness/"
             "policy-registry-snapshot-bound/receipt-lineage/"
             "independent-verification-history-integrity/"
-            "m4-77-verification-receipts/independent-verification-history"
+            "m4-77-verification-receipts/verification-history"
         )
         assert response.status_code == 403
     finally:
@@ -241,7 +241,7 @@ def test_m4_79_unknown_verification_receipt_returns_404() -> None:
             "/api/v1/integration-execution/readiness/convergence/freshness/"
             "policy-registry-snapshot-bound/receipt-lineage/"
             "independent-verification-history-integrity/"
-            f"m4-77-verification-receipts/independent-verification-receipts/{uuid4()}/verify"
+            f"m4-77-verification-receipts/verification-receipts/{uuid4()}/verify"
         )
         assert response.status_code == 404
     finally:
