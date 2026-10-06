@@ -202,6 +202,7 @@ def test_m4_79_openapi_routes_are_registered() -> None:
         "independent-verification-history-integrity/"
         "m4-77-verification-receipts"
     )
+    print("M4_79_ROUTE_TABLE", [(route.path, getattr(route, "methods", None)) for route in app.routes if "m4-77-verification-receipts" in getattr(route, "path", "")])
     paths = app.openapi()["paths"]
     assert (
         "post"
