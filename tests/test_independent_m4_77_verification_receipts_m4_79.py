@@ -111,7 +111,7 @@ def test_m4_79_cursor_history_and_filter() -> None:
             verification_receipt_id=first_receipt.id,
             recorded_by="ministry",
         )
-        _, second_receipt, _, _ = _persist_m4_77_receipt(session)
+        _, second_receipt, _, _ = _persist_m4_77_receipt(session, "b" * 64)
         second = repository.record(
             verification_receipt_id=second_receipt.id,
             recorded_by="ministry",
@@ -205,7 +205,7 @@ def test_m4_79_openapi_routes_are_registered() -> None:
     paths = app.openapi()["paths"]
     assert (
         "post"
-        in paths[prefix + "/{verification_receipt_id}/independent-verification-receipts"]
+        in paths[prefix + "/{verification_receipt_id}/verification-receipts"]
     )
     assert "get" in paths[prefix + "/independent-verification-history"]
     assert (
