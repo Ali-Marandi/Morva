@@ -7,15 +7,18 @@ from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy import create_engine, inspect
 
+import morva.api.v1.m4_79_verification_receipts as m4_79_api
 import morva.persistence.database as database
 from morva.api.app import app
 from morva.persistence.database import init_db
+import morva.security.auth as auth_module
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479PersistenceError,
     IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
 )
 from morva.security.auth import get_current_principal
+from morva.runtime.config import Settings
 from morva.security.policy import Principal, Scope
 from tests.test_independent_historical_m4_75_verification_receipt_m4_78 import (
     _persist_m4_77_receipt,
@@ -193,6 +196,122 @@ def test_m4_79_detects_tampered_m4_77_source() -> None:
     finally:
         session.close()
         engine.dispose()
+
+
+class _SessionContext:
+    def __init__(self, session):
+        self.session = session
+
+    def __enter__(self):
+        return self.session
+
+    def __exit__(self, exc_type, exc, tb):
+        if exc_type is not None:
+            self.session.rollback()
+        return False
+
+
+def _m4_79_path(suffix: str = "") -> str:
+    return (
+        "/api/v1/integration-execution/readiness/convergence/freshness/"
+        "policy-registry-snapshot-bound/receipt-lineage/"
+        "independent-verification-history-integrity/m4-77-verification-receipts"
+        + suffix
+    )
+
+
+def test_m4_79_post_persists_verification_receipt(monkeypatch) -> None:
+    engine, session = _session_m4_79()
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    try:
+        _, source_receipt, _, _ = _persist_m4_77_receipt(session)
+        monkeypatch.setattr(m4_79_api, "SessionLocal", lambda: _SessionContext(session))
+        monkeypatch.setattr(m4_79_api, "append_audit_event", lambda **_: None)
+        with TestClient(app) as client:
+            response = client.post(
+                _m4_79_path(f"/{source_receipt.id}/verification-receipts")
+            )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["verification_receipt_id"] == str(source_receipt.id)
+        assert body["recorded_by"] == "m4-79-test"
+        assert body["verification"]["valid"] is True
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+        session.close()
+        engine.dispose()
+
+
+def test_m4_79_post_requires_authentication(monkeypatch) -> None:
+    previous_override = app.dependency_overrides.pop(get_current_principal, None)
+    monkeypatch.setattr(database, "ENVIRONMENT", "test")
+    monkeypatch.setattr(auth_module, "settings", Settings(environment="test"))
+    try:
+        with TestClient(app) as client:
+            response = client.post(
+                _m4_79_path(f"/{uuid4()}/verification-receipts")
+            )
+        assert response.status_code == 401
+    finally:
+        if previous_override is not None:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_79_post_requires_mfa(monkeypatch) -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id="m4-79-no-mfa",
+        role="admin",
+        scope=Scope.MINISTRY,
+        scope_id="ministry",
+        mfa_verified=False,
+    )
+    try:
+        response = TestClient(app).post(
+            _m4_79_path(f"/{uuid4()}/verification-receipts")
+        )
+        assert response.status_code == 403
+        assert response.json()["detail"] == "MFA is required for privileged actions"
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_79_post_rejects_invalid_uuid() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    try:
+        response = TestClient(app).post(
+            _m4_79_path("/not-a-uuid/verification-receipts")
+        )
+        assert response.status_code == 422
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
+
+
+def test_m4_79_post_unknown_source_receipt_returns_404() -> None:
+    previous_override = app.dependency_overrides.get(get_current_principal)
+    app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
+    init_db()
+    try:
+        response = TestClient(app).post(
+            _m4_79_path(f"/{uuid4()}/verification-receipts")
+        )
+        assert response.status_code == 404
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_current_principal, None)
+        else:
+            app.dependency_overrides[get_current_principal] = previous_override
 
 
 def test_m4_79_openapi_routes_are_registered() -> None:
