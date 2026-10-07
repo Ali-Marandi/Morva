@@ -8,8 +8,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from morva.audit.persistence import append_audit_event
 from morva.persistence.enterprise_models import PayrollArtifactRecord
-from morva.persistence.models import PersonnelSnapshotRecord
+from morva.persistence.models import PersonnelSnapshotRecord, RetroCaseRecord
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +50,60 @@ def detect_arrears_gap(
         issue_date=issue_date,
         gap_days=(issue_date - effective_from).days,
     )
+
+@dataclass(frozen=True, slots=True)
+class ArrearsPeriod:
+    period: str
+    old_net: Decimal
+    revised_net: Decimal
+
+    @property
+    def difference(self) -> Decimal:
+        return self.revised_net - self.old_net
+
+
+@dataclass(frozen=True, slots=True)
+class ArrearsResult:
+    gap: ArrearsGap
+    periods: tuple[ArrearsPeriod, ...]
+
+    @property
+    def total_difference(self) -> Decimal:
+        return sum((item.difference for item in self.periods), Decimal(0))
+
+
+def calculate_gap_arrears(
+    *,
+    gap: ArrearsGap,
+    original: Mapping[str, Decimal],
+    revised: Mapping[str, Decimal],
+) -> ArrearsResult:
+    """Calculate arrears for complete payroll periods fully enclosed by the gap.
+
+    The function consumes already-calculated historical and revised values. A period is
+    selected only when its Jalali month start is on/after the effective date and the
+    following Jalali month starts on/before the issue date. This avoids treating a
+    partially covered payroll month as a complete arrears period.
+    """
+    from morva.calendar.jalali import JalaliMonth, jalali_month_start
+
+    periods: list[ArrearsPeriod] = []
+    for period in sorted(set(original) | set(revised)):
+        try:
+            month_start = jalali_month_start(period)
+            year, month = map(int, period.split("-", 1))
+            next_month_start = jalali_month_start(JalaliMonth(year, month).next().key)
+        except (TypeError, ValueError) as exc:
+            raise RetroMismatch(f"invalid payroll period: {period!r}") from exc
+        if gap.effective_from <= month_start and next_month_start <= gap.issue_date:
+            periods.append(
+                ArrearsPeriod(
+                    period=period,
+                    old_net=Decimal(original.get(period, Decimal(0))),
+                    revised_net=Decimal(revised.get(period, Decimal(0))),
+                )
+            )
+    return ArrearsResult(gap=gap, periods=tuple(periods))
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,3 +223,51 @@ def calculate_snapshot_driven_retro(
         )
 
     return RetroResult(tuple(result))
+
+def persist_arrears_case(
+    session: Session,
+    *,
+    result: ArrearsResult,
+    reason: str,
+    actor_id: str,
+) -> RetroCaseRecord:
+    if not result.periods:
+        raise RetroMismatch("arrears gap contains no payroll periods")
+    if not reason.strip():
+        raise ValueError("reason is required")
+    if not actor_id.strip():
+        raise ValueError("actor_id is required")
+
+    original_total = sum((item.old_net for item in result.periods), Decimal(0))
+    revised_total = sum((item.revised_net for item in result.periods), Decimal(0))
+    case = RetroCaseRecord(
+        employee_no=result.gap.employee_no,
+        from_period=result.periods[0].period,
+        to_period=result.periods[-1].period,
+        original_total=original_total,
+        recalculated_total=revised_total,
+        difference=result.total_difference,
+        reason=reason,
+    )
+    session.add(case)
+    session.flush()
+    append_audit_event(
+        event_type="payroll.arrears.calculated",
+        entity_type="retro_case",
+        entity_id=case.id,
+        actor_id=actor_id,
+        reason=reason,
+        payload={
+            "employee_no": result.gap.employee_no,
+            "order_no": result.gap.order_no,
+            "effective_from": result.gap.effective_from.isoformat(),
+            "issue_date": result.gap.issue_date.isoformat(),
+            "from_period": case.from_period,
+            "to_period": case.to_period,
+            "before": {"net_total": str(original_total)},
+            "after": {"net_total": str(revised_total)},
+            "difference": str(result.total_difference),
+        },
+        session=session,
+    )
+    return case
