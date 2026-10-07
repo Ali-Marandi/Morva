@@ -33,6 +33,7 @@ def _register_models() -> None:
     from morva.persistence import independent_historical_m4_72_verification_receipts_m4_74  # noqa: F401
     from morva.persistence import historical_m4_74_verification_receipt_history_integrity_m4_75  # noqa: F401
     from morva.persistence import independent_historical_m4_75_verification_receipts_m4_77  # noqa: F401
+    from morva.persistence import independent_m4_77_verification_receipts_m4_79  # noqa: F401
 
 
 def init_db() -> None:
