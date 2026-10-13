@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** enterprise validation candidate; M4.88 adds a deterministic fingerprint over the M4.77–M4.81 integrity-graph contract declared by the M4.86 manifest, with dedicated CI drift detection and no runtime-semantic change; not production-certified for real payroll/payment.
+**Current position:** enterprise validation candidate; M4.89 independently reconstructs guarded M4.77–M4.81 dependency edges from Python AST imports, recognizes component-module aliases and verifies the corrected M4.88 canonical graph fingerprint through dedicated CI; not production-certified for real payroll/payment.
  a structural regression guard over the M4.77/M4.78/M4.80 shared integrity primitive adoption without changing fingerprint semantics or the governance/readiness-only boundary; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
