@@ -28,6 +28,8 @@ Source contract:
 
 `contracts/historical_integrity_manifest_m4_86.json`
 
+The fingerprint regression contract checks the stored artifact against the canonical projection. M4.89 extends that projection to include component-module aliases and verifies that its stored value matches the source manifest.
+
 ## Enforcement
 
 A dedicated M4.88 workflow recomputes the fingerprint and runs the M4.87 graph validator plus the M4.85 manifest contract.
