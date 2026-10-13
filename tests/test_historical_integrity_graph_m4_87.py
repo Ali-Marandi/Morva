@@ -21,7 +21,11 @@ def _graph() -> tuple[list[str], dict[str, set[str]]]:
     layers = manifest["layers"]
     sequence = manifest["graph"]["sequence"]
     ids = [layer["id"] for layer in layers]
-    module_to_id = {_layer_module(layer["path"]): layer["id"] for layer in layers}
+    module_to_id = {
+        module: layer["id"]
+        for layer in layers
+        for module in layer["component_modules"]
+    }
     edges: dict[str, set[str]] = {layer_id: set() for layer_id in ids}
 
     for layer in layers:
