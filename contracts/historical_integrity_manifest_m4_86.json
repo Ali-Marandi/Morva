@@ -25,7 +25,11 @@
         "expected_symbols": [
           "HistoricalM475VerificationReceiptHistoryIntegrityRepository"
         ]
-      }
+      },
+      "component_modules": [
+        "morva.runtime.historical_m4_75_verification_receipt_history_integrity_m4_77",
+        "morva.persistence.historical_m4_75_verification_receipt_history_integrity_m4_77"
+      ]
     },
     {
       "id": "m4_78_runtime",
@@ -49,7 +53,10 @@
         "expected_symbols": [
           "independently_verify_historical_m4_75_verification_receipt_history_integrity"
         ]
-      }
+      },
+      "component_modules": [
+        "morva.runtime.independent_historical_m4_75_verification_receipt_history_integrity_m4_78"
+      ]
     },
     {
       "id": "m4_79_persistence",
@@ -75,7 +82,10 @@
         "expected_symbols": [
           "IndependentM477VerificationReceiptM479Repository"
         ]
-      }
+      },
+      "component_modules": [
+        "morva.persistence.independent_m4_77_verification_receipts_m4_79"
+      ]
     },
     {
       "id": "m4_80_runtime",
@@ -100,7 +110,10 @@
         "expected_symbols": [
           "independently_verify_m4_79_verification_receipt"
         ]
-      }
+      },
+      "component_modules": [
+        "morva.runtime.independent_m4_77_verification_receipt_m4_80"
+      ]
     },
     {
       "id": "m4_81_persistence",
@@ -126,7 +139,10 @@
         "expected_symbols": [
           "IndependentM479VerificationReceiptM481Repository"
         ]
-      }
+      },
+      "component_modules": [
+        "morva.persistence.independent_m4_79_verification_receipts_m4_81"
+      ]
     }
   ],
   "guards": {
