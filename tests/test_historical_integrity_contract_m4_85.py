@@ -45,6 +45,9 @@ def test_manifest_schema_is_valid_and_unique() -> None:
         assert isinstance(layer["path"], str)
         assert isinstance(layer["required_modules"], list)
         assert isinstance(layer["forbidden_tokens"], list)
+        assert isinstance(layer["component_modules"], list)
+        assert layer["component_modules"]
+        assert len(layer["component_modules"]) == len(set(layer["component_modules"]))
         test = layer["test"]
         assert isinstance(test["path"], str)
         assert isinstance(test["required_modules"], list)
