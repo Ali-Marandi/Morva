@@ -20,11 +20,12 @@ Morva has real persisted application paths today for:
 
 The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
 
-**Current development baseline (2026-09-30):**
+**Current development baseline (2026-10-13):**
 - M4.85 adds an executable repository-wide integrity contract across the M4.77–M4.81 dependency chain, rejects forward dependencies, and keeps runtime/persistence/test layers structurally aligned.
 - M4.86 centralizes that contract in a machine-readable manifest consumed by the M4.84/M4.85 guards and dedicated CI, eliminating duplicated hard-coded contract tables.
 - M4.87 validates that manifest as an acyclic, backward-ordered integrity graph covering M4.77→M4.81.
 - M4.88 fingerprints the canonical M4.77–M4.81 integrity-graph contract from the M4.86 manifest, using the shared SHA-256 primitive and a versioned fingerprint artifact to detect untracked architectural drift.
+- M4.89 independently reconstructs guarded dependency edges from Python AST imports, accounts for component-module aliases including M4.77 persistence, and corrects/verifies the M4.88 canonical graph fingerprint.
 
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
