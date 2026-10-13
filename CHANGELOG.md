@@ -1,3 +1,13 @@
+## Unreleased — M4.89 Independent Historical Integrity Graph Reconstruction
+
+### Engineering quality
+- Reconstruct guarded M4.77–M4.81 dependency edges from Python AST imports and compare them exactly with manifest-declared dependencies.
+- Add component-module aliases, including the M4.77 persistence module, so the architecture graph includes milestone dependencies previously omitted by primary-path-only mapping.
+- Correct the M4.88 canonical graph fingerprint and verify graph, manifest and fingerprint together in dedicated CI.
+
+### Safety
+- No runtime behavior, persistence schema, API contract, application fingerprint payload, blocker code or production authority changes.
+
 ## Unreleased — M4.88 Historical Integrity Graph Fingerprint
 
 ### Engineering quality
