@@ -10,12 +10,6 @@ def _manifest() -> dict[str, object]:
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
 
-def _layer_module(path: str) -> str:
-    normalized = path.removesuffix(".py")
-    assert normalized.startswith("src/")
-    return normalized[4:].replace("/", ".")
-
-
 def _graph() -> tuple[list[str], dict[str, set[str]]]:
     manifest = _manifest()
     layers = manifest["layers"]
