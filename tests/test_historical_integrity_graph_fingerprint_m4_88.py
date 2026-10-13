@@ -24,6 +24,7 @@ def _graph_projection(manifest: dict[str, object]) -> dict[str, object]:
                 "required_modules": layer["required_modules"],
                 "forbidden_tokens": layer["forbidden_tokens"],
                 "test": layer["test"],
+                "component_modules": layer["component_modules"],
             }
             for layer in manifest["layers"]
         ],
