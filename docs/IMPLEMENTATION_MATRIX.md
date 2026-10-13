@@ -1,5 +1,12 @@
 # Morva Payroll Platform — Enterprise Implementation Matrix
 
+### M4.89 independent historical integrity graph reconstruction
+
+- M4.89 reconstructs guarded cross-layer imports from Python ASTs and requires exact parity with manifest-declared dependencies.
+- Component-module aliases expose the M4.77 persistence dependency to graph analysis; M4.87 and M4.88 validate/fingerprint the expanded topology consistently.
+- No runtime behavior, persistence schema or API contract changes.
+
+
 ### M4.88 historical integrity graph fingerprint
 
 - M4.88 computes a deterministic SHA-256 fingerprint over the M4.77–M4.81 integrity-graph contract projected from the M4.86 manifest.
