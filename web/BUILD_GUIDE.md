@@ -503,3 +503,9 @@ For build issues, check:
 The Dashboard reads employee, payroll, approval, and recent-payroll data through the existing React Query service hooks. It must distinguish successful empty responses from API error envelopes and transport failures, show an accessible error message, and allow users to retry the dashboard queries. It must not replace unavailable values with fabricated payroll totals.
 
 Automated coverage is in `src/__tests__/Dashboard.test.tsx` and checks successful API data, API envelope failures, transport failures, retry behavior, and the successful empty state. These are UI behavior checks only and do not certify payroll calculations or authorize real payments.
+
+## Approval queue data and action boundary
+
+The Approvals page uses the existing API hooks for request records and statistics. Status filters apply to the returned records, and loading, API error, retry, and successful-empty states are explicit. The page is intentionally read-only: it must not present inert approve/reject buttons as working operations. Enabling those mutations is a separate change that requires verified authorization, audit, and workflow behavior; the public GitHub Pages build is a demo and never performs real approvals.
+
+The demo approval statistics must remain consistent with the single pending sample request. Automated coverage is in `src/__tests__/Approvals.test.tsx` and covers API-backed rows, status filtering, error/retry behavior, loading/empty states, and the absence of fake action controls.
