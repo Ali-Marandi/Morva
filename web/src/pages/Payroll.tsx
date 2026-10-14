@@ -2,7 +2,7 @@ import React from "react";
 import { AlertCircle, CheckCircle2, Clock3, FileText, TrendingUp } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
 import { usePayrolls, usePayrollStats } from "@/services";
-import { ApiError, Payroll } from "@/types/api";
+import type { ApiError, Payroll } from "@/types/api";
 
 const formatNumber = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
 
