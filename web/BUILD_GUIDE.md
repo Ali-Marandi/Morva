@@ -1,7 +1,7 @@
 # Morva Web Platform - Build & Deployment Guide
 
-**Date:** 2026-09-03  
-**Version:** 1.0.0  
+**Reviewed:** 2026-10-14  
+**Version:** 1.0.1  
 **Status:** Build and type-check workflows exist; API integration and production validation remain incomplete
 
 ---
@@ -70,10 +70,10 @@ npm run preview
 ```bash
 cd web
 
-# Remove caches
-rm -rf node_modules package-lock.json dist .vite
+# Remove generated files and caches; keep package-lock.json under version control
+rm -rf node_modules dist .vite
 
-# Install fresh dependencies
+# Install the exact locked dependencies
 npm ci --prefer-offline
 
 # Build with source maps (debugging)
