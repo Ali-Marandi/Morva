@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BriefcaseBusiness, Download, FileText, UserRound, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { selfService } from '@/services/self-service';
@@ -7,10 +8,19 @@ const money = (value: string) => new Intl.NumberFormat('fa-IR').format(Number(va
 const date = (value: string) => new Intl.DateTimeFormat('fa-IR').format(new Date(value));
 
 function SelfService() {
+  const location = useLocation();
   const [period, setPeriod] = useState('');
   const [selectedPayslipId, setSelectedPayslipId] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (location.hash !== '#payslips') return;
+    const payslipsSection = document.getElementById('payslips');
+    if (payslipsSection && typeof payslipsSection.scrollIntoView === 'function') {
+      payslipsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash]);
 
   const profile = useQuery({ queryKey: ['self', 'profile'], queryFn: selfService.getProfile });
   const payslips = useQuery({
@@ -73,7 +83,7 @@ function SelfService() {
         </section>
       )}
 
-      <section className="rounded-xl border border-morva-200 bg-white p-6 shadow-sm">
+      <section id="payslips" className="scroll-mt-6 rounded-xl border border-morva-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3"><FileText size={22} /><h2 className="text-lg font-bold">فیش‌های حقوقی</h2></div>
           <label className="flex items-center gap-2 text-sm">
