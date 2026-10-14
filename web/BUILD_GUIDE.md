@@ -24,12 +24,6 @@ Morva Web Application
 
 ---
 
-## Data display and trust boundaries
-
-The Dashboard and Payroll pages consume the existing React Query service hooks. The Payroll page must not invent totals or payment statuses when the API is unavailable: it shows explicit loading, error, retry, and empty states instead. GitHub Pages runs in demo mode and uses clearly labelled sample data; this is not evidence of live backend integration or permission to process real payroll.
-
----
-
 ## 📦 Build Requirements
 
 ### System Requirements
@@ -497,3 +491,9 @@ For build issues, check:
 ---
 
 **Ready to Build:** The Morva web platform is fully architected and ready for production builds. Execute the build commands above to generate the distribution package.
+
+## Dashboard API failure behavior
+
+The Dashboard reads employee, payroll, approval, and recent-payroll data through the existing React Query service hooks. It must distinguish successful empty responses from API error envelopes and transport failures, show an accessible error message, and allow users to retry the dashboard queries. It must not replace unavailable values with fabricated payroll totals.
+
+Automated coverage is in `src/__tests__/Dashboard.test.tsx` and checks successful API data, API envelope failures, transport failures, retry behavior, and the successful empty state. These are UI behavior checks only and do not certify payroll calculations or authorize real payments.
