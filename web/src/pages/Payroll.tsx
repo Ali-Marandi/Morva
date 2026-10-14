@@ -1,103 +1,167 @@
 import React from "react";
+import { AlertCircle, CheckCircle2, Clock3, FileText, TrendingUp } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
-import PayrollChart from "@/components/charts/PayrollChart";
-import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
+import { usePayrolls, usePayrollStats } from "@/services";
+import { ApiError, Payroll } from "@/types/api";
 
-interface PayrollRecord {
-  month: string;
-  processed: number;
-  pending: number;
-  rejected: number;
+const formatNumber = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
+
+const formatDate = (value?: string) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("fa-IR").format(date);
+};
+
+const statusLabels: Record<Payroll["status"], string> = {
+  draft: "پیش‌نویس",
+  pending: "در انتظار تأیید",
+  approved: "تأیید شده",
+  processed: "پردازش شده",
+  paid: "پرداخت شده",
+};
+
+const statusStyles: Record<Payroll["status"], string> = {
+  draft: "bg-slate-100 text-slate-700",
+  pending: "bg-amber-100 text-amber-800",
+  approved: "bg-sky-100 text-sky-800",
+  processed: "bg-violet-100 text-violet-800",
+  paid: "bg-emerald-100 text-emerald-800",
+};
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const candidate = error as Partial<ApiError> & { message?: string };
+    return candidate.message || "دریافت اطلاعات حقوق ناموفق بود.";
+  }
+  return "دریافت اطلاعات حقوق ناموفق بود.";
 }
 
 const Payroll: React.FC = () => {
-  const payrollData: PayrollRecord[] = [
-    { month: "آذر", processed: 38, pending: 2, rejected: 2 },
-    { month: "دی", processed: 39, pending: 1, rejected: 2 },
-    { month: "بهمن", processed: 40, pending: 1, rejected: 1 },
-    { month: "اسفند", processed: 40, pending: 2, rejected: 0 },
-    { month: "فروردین", processed: 38, pending: 3, rejected: 1 },
-    { month: "اردیبهشت", processed: 39, pending: 2, rejected: 1 },
-  ];
+  const statsQuery = usePayrollStats();
+  const payrollsQuery = usePayrolls({ page: 1, limit: 50, order: "desc", sort: "createdAt" });
 
-  const stats = {
-    totalProcessed: 234,
-    avgAmount: 45000000,
-    pendingPayment: 850000000,
-    monthlyGrowth: 2.5,
+  const isLoading = statsQuery.isLoading || payrollsQuery.isLoading;
+  const stats = statsQuery.data?.success ? statsQuery.data.data : undefined;
+  const payrolls = payrollsQuery.data?.success ? payrollsQuery.data.data?.items ?? [] : [];
+  const apiError = statsQuery.data && !statsQuery.data.success
+    ? statsQuery.data.error
+    : payrollsQuery.data && !payrollsQuery.data.success
+      ? payrollsQuery.data.error
+      : undefined;
+  const error = statsQuery.error || payrollsQuery.error;
+  const errorMessage = error ? getErrorMessage(error) : apiError?.message;
+
+  const retry = () => {
+    void statsQuery.refetch();
+    void payrollsQuery.refetch();
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8" dir="rtl">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">مدیریت حقوق</h1>
-          <p className="text-gray-600 mt-2">نظارت و پردازش حقوق کارکنان</p>
-        </div>
+          <p className="mt-2 text-gray-600">خلاصه دوره‌ها و وضعیت پرداخت بر اساس اطلاعات دریافتی از API سامانه.</p>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="کل پرداخت‌ها" value={stats.totalProcessed.toString()} icon={DollarSign} trend="▲ ۳.۲%" color="green" />
-          <StatCard title="میانگین حقوق" value={`${(stats.avgAmount / 1000000).toFixed(1)}M`} icon={TrendingUp} trend="▲ ۲.۵%" color="blue" />
-          <StatCard title="در انتظار پرداخت" value={`${(stats.pendingPayment / 1000000000).toFixed(2)}B`} icon={AlertCircle} trend="▼ ۱.۸%" color="orange" />
-          <StatCard title="رشد ماهیانه" value={`${stats.monthlyGrowth.toFixed(1)}%`} icon={TrendingUp} trend="▲ ۰.۵%" color="blue" />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">روند پرداخت ماهیانه</h2>
-            <PayrollChart data={payrollData} />
+        {isLoading && (
+          <div className="mb-6 rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700" role="status" aria-live="polite">
+            در حال دریافت اطلاعات حقوق…
           </div>
+        )}
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">خلاصه وضعیت</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                <span className="font-semibold text-green-900">تکمیل‌شده</span>
-                <span className="text-2xl font-bold text-green-600">۲۳۴</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-                <span className="font-semibold text-orange-900">در انتظار</span>
-                <span className="text-2xl font-bold text-orange-600">۲۵</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
-                <span className="font-semibold text-red-900">رد‌شده</span>
-                <span className="text-2xl font-bold text-red-600">۱۲</span>
-              </div>
+        {errorMessage && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
+              <span>{errorMessage}</span>
             </div>
+            <button
+              type="button"
+              onClick={retry}
+              className="rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold text-red-800 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              تلاش دوباره
+            </button>
           </div>
-        </div>
+        )}
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">دوره‌های حقوق اخیر</h2>
+        <section aria-label="خلاصه حقوق و دستمزد" className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="تعداد دوره‌های حقوق"
+            value={stats ? formatNumber(stats.totalPayrolls) : "—"}
+            icon={FileText}
+            trend={stats ? "دریافت‌شده از API" : "داده موجود نیست"}
+            color="blue"
+          />
+          <StatCard
+            title="مجموع مبالغ دوره‌ها"
+            value={stats ? formatNumber(stats.totalAmount) : "—"}
+            icon={TrendingUp}
+            trend={stats ? "ریال" : "داده موجود نیست"}
+            color="green"
+          />
+          <StatCard
+            title="مبلغ در انتظار پرداخت"
+            value={stats ? formatNumber(stats.pendingAmount) : "—"}
+            icon={Clock3}
+            trend={stats ? "ریال" : "داده موجود نیست"}
+            color="orange"
+          />
+          <StatCard
+            title="مبلغ پرداخت‌شده"
+            value={stats ? formatNumber(stats.paidAmount) : "—"}
+            icon={CheckCircle2}
+            trend={stats ? `میانگین هر دوره: ${formatNumber(stats.averagePerPayroll)} ریال` : "داده موجود نیست"}
+            color="emerald"
+          />
+        </section>
+
+        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" aria-labelledby="recent-payrolls-heading">
+          <div className="border-b border-gray-200 px-6 py-4">
+            <h2 id="recent-payrolls-heading" className="text-xl font-bold text-gray-900">دوره‌های حقوق اخیر</h2>
+            <p className="mt-1 text-sm text-gray-600">حداکثر ۵۰ دوره اخیر؛ وضعیت هر ردیف از پاسخ API گرفته می‌شود.</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">ماه</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">تکمیل‌شده</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">در انتظار</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">رد‌شده</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">وضعیت</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {payrollData.map((record) => (
-                  <tr key={record.month} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-right text-sm font-medium text-gray-900">{record.month}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{record.processed}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{record.pending}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{record.rejected}</td>
-                    <td className="px-6 py-4 text-right text-sm">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">تکمیل</span>
-                    </td>
+
+          {!isLoading && payrolls.length === 0 && !errorMessage && (
+            <div className="p-6 text-sm text-gray-600" role="status">هیچ دوره حقوقی برای نمایش وجود ندارد.</div>
+          )}
+
+          {payrolls.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-900">دوره</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-900">تعداد کارکنان</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-900">مبلغ کل (ریال)</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-900">تاریخ پرداخت</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-900">وضعیت</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {payrolls.map((payroll: Payroll) => (
+                    <tr key={payroll.id} className="hover:bg-gray-50">
+                      <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">{payroll.period}</td>
+                      <td className="whitespace-nowrap px-4 py-4 text-gray-700">{formatNumber(payroll.employeeCount)}</td>
+                      <td className="whitespace-nowrap px-4 py-4 text-gray-700">{formatNumber(payroll.totalAmount)}</td>
+                      <td className="whitespace-nowrap px-4 py-4 text-gray-700">{formatDate(payroll.payDate)}</td>
+                      <td className="whitespace-nowrap px-4 py-4">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[payroll.status]}`}>
+                          {statusLabels[payroll.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <p className="mt-4 text-xs leading-6 text-gray-500">
+          این صفحه صرفاً داده‌های دریافتی را نمایش می‌دهد و مجوز محاسبه نهایی یا پرداخت حقوق ایجاد نمی‌کند.
+        </p>
       </div>
     </div>
   );
