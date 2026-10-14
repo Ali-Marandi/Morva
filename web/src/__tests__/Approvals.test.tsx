@@ -89,14 +89,16 @@ describe("Approvals page", () => {
     expect(screen.getByText("payroll-1405-06")).toBeInTheDocument();
     expect(screen.getByText("حقوق و دستمزد")).toBeInTheDocument();
     expect(screen.getAllByText("در انتظار")).toHaveLength(2);
-    expect(screen.queryByRole("button", { name: "تأیید", exact: true })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "رد", exact: true })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button").some((button) => button.textContent?.trim() === "تأیید")).toBe(false);
+    expect(screen.getAllByRole("button").some((button) => button.textContent?.trim() === "رد")).toBe(false);
   });
 
   it("filters the returned approval records by status", () => {
     render(<Approvals />);
 
-    fireEvent.click(screen.getByRole("button", { name: "در انتظار", exact: true }));
+    const pendingFilter = screen.getAllByRole("button").find((button) => button.textContent?.trim() === "در انتظار");
+    expect(pendingFilter).toBeDefined();
+    fireEvent.click(pendingFilter!);
 
     expect(screen.getByText("payroll-1405-06")).toBeInTheDocument();
     expect(screen.queryByText("leave-002")).not.toBeInTheDocument();
