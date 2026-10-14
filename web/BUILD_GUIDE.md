@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-03  
 **Version:** 1.0.0  
-**Status:** ✅ Architecture Complete, Ready for Build
+**Status:** Build and type-check workflows exist; API integration and production validation remain incomplete
 
 ---
 
@@ -51,8 +51,8 @@ npm --version
 ```bash
 cd web
 
-# Install dependencies (one time)
-npm install
+# Install the exact locked dependencies
+npm ci
 
 # Development server
 npm run dev
@@ -74,7 +74,7 @@ cd web
 rm -rf node_modules package-lock.json dist .vite
 
 # Install fresh dependencies
-npm install --no-cache
+npm ci --prefer-offline
 
 # Build with source maps (debugging)
 npm run build --sourcemap
@@ -157,7 +157,7 @@ npm run type-check
 Create `.env` file in web directory:
 
 ```env
-VITE_API_BASE_URL=https://api.morva.local
+VITE_API_URL=https://api.morva.local/api/v1
 VITE_AUTH_PROVIDER=oidc
 VITE_APP_VERSION=1.0.0
 VITE_ENVIRONMENT=production
@@ -165,18 +165,23 @@ VITE_ENVIRONMENT=production
 
 ---
 
-## 🧪 Testing (Ready to Implement)
+## 🧪 Testing
 
 ```bash
-# Run unit tests (configured but not yet implemented)
-npm run test
+# Run the existing unit and component test suite once
+npm test
 
-# Run E2E tests
-npm run test:e2e
+# Watch tests during development
+npm run test:watch
 
-# Generate coverage report
-npm run test:coverage
+# Run TypeScript checks
+npm run type-check
+
+# Build the production bundle
+npm run build
 ```
+
+The test command uses Vitest with the jsdom environment so component tests can exercise browser APIs. The current suite includes API/auth service tests and self-service component tests. End-to-end tests and coverage reporting are not configured yet; do not treat them as completed gates.
 
 ---
 
@@ -418,20 +423,19 @@ getTTFB(console.log);
 
 ## 🎯 Production Readiness Checklist
 
-- ✅ All components built and tested
+- ⏳ Component behavior verified by automated tests across all routes
 - ✅ TypeScript strict mode enabled
-- ✅ No console errors or warnings
-- ✅ Responsive design verified
-- ✅ Accessibility audit passed
-- ✅ Security headers configured
+- ⏳ Browser console checked on all primary routes
+- ⏳ Responsive behavior verified on real target viewports
+- ⏳ Accessibility audit completed
+- ⏳ Security headers verified in the deployed hosting environment
 - ✅ Environment variables documented
-- ✅ Performance optimized
-- ✅ Build pipeline configured
-- ✅ Error tracking setup
-- ⏳ Backend API integration
-- ⏳ E2E test suite
+- ⏳ Performance budgets measured against a production build
+- ✅ Build and type-check workflows configured
+- ⏳ Backend API contracts and authentication flow verified end to end
+- ⏳ End-to-end test suite configured
 - ⏳ Load testing completed
-- ⏳ Production deployment
+- ⏳ Production deployment verified
 
 ---
 
