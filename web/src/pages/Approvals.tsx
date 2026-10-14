@@ -1,114 +1,219 @@
 import React, { useState } from "react";
+import { AlertCircle, CheckCircle2, Clock3, Inbox, RefreshCw, XCircle } from "lucide-react";
 import StatCard from "@/components/ui/StatCard";
-import { CheckCircle, Clock, XCircle, Inbox } from "lucide-react";
+import { useApprovals, useApprovalsStats } from "@/services";
+import { DEMO_MODE } from "@/services/demo";
+import type { ApiError, Approval } from "@/types/api";
 
-interface ApprovalRequest {
-  id: string;
-  type: string;
-  employee: string;
-  amount?: string;
-  status: "pending" | "approved" | "rejected";
-  date: string;
+type ApprovalFilter = "all" | Approval["status"];
+
+const statusLabels: Record<Approval["status"], string> = {
+  pending: "در انتظار",
+  approved: "تأیید شده",
+  rejected: "رد شده",
+};
+
+const statusStyles: Record<Approval["status"], string> = {
+  pending: "bg-amber-100 text-amber-800",
+  approved: "bg-emerald-100 text-emerald-800",
+  rejected: "bg-red-100 text-red-800",
+};
+
+const typeLabels: Record<Approval["type"], string> = {
+  payroll: "حقوق و دستمزد",
+  expense: "هزینه",
+  leave: "مرخصی",
+  promotion: "ارتقا",
+};
+
+const formatNumber = (value: number) => new Intl.NumberFormat("fa-IR").format(value);
+
+const formatDate = (value?: string) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("fa-IR").format(date);
+};
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const candidate = error as Partial<ApiError> & { message?: string };
+    return candidate.message || "دریافت اطلاعات درخواست‌ها ناموفق بود.";
+  }
+  return "دریافت اطلاعات درخواست‌ها ناموفق بود.";
+}
+
+function getApiResponseError(response: unknown): string | undefined {
+  if (!response || typeof response !== "object" || !("success" in response) || response.success !== false) {
+    return undefined;
+  }
+
+  if ("error" in response && response.error && typeof response.error === "object" && "message" in response.error) {
+    const message = response.error.message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+
+  return "دریافت اطلاعات درخواست‌ها ناموفق بود.";
 }
 
 const Approvals: React.FC = () => {
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [filter, setFilter] = useState<ApprovalFilter>("all");
+  const statsQuery = useApprovalsStats();
+  const approvalsQuery = useApprovals({ page: 1, limit: 50, sort: "createdAt", order: "desc" });
 
-  const requests: ApprovalRequest[] = [
-    { id: "APR001", type: "درخواست مرخصی", employee: "علی محمدی", status: "pending", date: "۱۴۰۵-۰۶-۱۵" },
-    { id: "APR002", type: "درخواست پاداش", employee: "فاطمه احمدی", amount: "۵،۰۰۰،۰۰۰", status: "approved", date: "۱۴۰۵-۰۶-۱۴" },
-    { id: "APR003", type: "افزایش حقوق", employee: "حسن حسینی", status: "pending", date: "۱۴۰۵-۰۶-۱۳" },
-    { id: "APR004", type: "تغییر پوسیشن", employee: "نازنین رضایی", status: "rejected", date: "۱۴۰۵-۰۶-۱۲" },
-    { id: "APR005", type: "درخواست مرخصی", employee: "محمد علیپور", status: "approved", date: "۱۴۰۵-۰۶-۱۱" },
-  ];
+  const isLoading = statsQuery.isLoading || approvalsQuery.isLoading;
+  const queryError = statsQuery.isError ? statsQuery.error : approvalsQuery.isError ? approvalsQuery.error : undefined;
+  const apiError = getApiResponseError(statsQuery.data) ?? getApiResponseError(approvalsQuery.data);
+  const errorMessage = queryError ? getErrorMessage(queryError) : apiError;
 
-  const stats = { pending: 8, approved: 15, rejected: 2, total: 25 };
+  const stats = statsQuery.data?.success ? statsQuery.data.data : undefined;
+  const approvals = approvalsQuery.data?.success ? approvalsQuery.data.data?.items ?? [] : [];
+  const filteredApprovals = filter === "all" ? approvals : approvals.filter((item: Approval) => item.status === filter);
 
-  const filteredRequests =
-    filter === "all" ? requests : requests.filter((req) => req.status === filter);
+  const retry = () => {
+    void statsQuery.refetch();
+    void approvalsQuery.refetch();
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">تأیید و بررسی</h1>
-          <p className="text-gray-600 mt-2">مدیریت درخواست‌های تأیید و بررسی مستندات</p>
-        </div>
+    <div className="space-y-6 p-4 md:p-8" dir="rtl">
+      <header>
+        <h1 className="text-3xl font-bold text-morva-900">صف تأییدها</h1>
+        <p className="mt-2 text-morva-600">آمار و وضعیت درخواست‌ها از API سامانه دریافت می‌شود.</p>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="کل درخواست‌ها" value={stats.total.toString()} icon={Inbox} trend="↑ ۳" color="blue" />
-          <StatCard title="در انتظار تأیید" value={stats.pending.toString()} icon={Clock} trend={`${((stats.pending / stats.total) * 100).toFixed(0)}%`} color="orange" />
-          <StatCard title="تأیید‌شده" value={stats.approved.toString()} icon={CheckCircle} trend={`${((stats.approved / stats.total) * 100).toFixed(0)}%`} color="green" />
-          <StatCard title="رد‌شده" value={stats.rejected.toString()} icon={XCircle} trend={`${((stats.rejected / stats.total) * 100).toFixed(0)}%`} color="red" />
+      {DEMO_MODE && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900" role="note">
+          محیط نمایشی مروا: اطلاعات نمونه است و هیچ تأیید یا رد واقعی انجام نمی‌شود.
         </div>
+      )}
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {(["all", "pending", "approved", "rejected"] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === status
-                  ? status === "pending"
-                    ? "bg-orange-100 text-orange-700"
-                    : status === "approved"
-                      ? "bg-green-100 text-green-700"
-                      : status === "rejected"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
-                  : "bg-white text-gray-700 border border-gray-200"
-              }`}
-            >
-              {status === "all" ? "همه" : status === "pending" ? "در انتظار" : status === "approved" ? "تأیید‌شده" : "رد‌شده"}
-            </button>
-          ))}
+      <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm leading-6 text-morva-700">
+        این صفحه در حال حاضر فقط برای مشاهده است. عملیات تأیید و رد تا زمان تکمیل و اعتبارسنجی گردش کار مجاز، در رابط کاربری فعال نیست.
+      </div>
+
+      {isLoading && (
+        <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700" role="status" aria-live="polite">
+          در حال دریافت درخواست‌ها…
         </div>
+      )}
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">درخواست‌های تأیید</h2>
+      {errorMessage && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
+            <span>{errorMessage}</span>
           </div>
+          <button
+            type="button"
+            onClick={retry}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold text-red-800 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            <RefreshCw size={16} aria-hidden="true" />
+            تلاش دوباره
+          </button>
+        </div>
+      )}
+
+      <section aria-label="آمار درخواست‌ها" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="در انتظار بررسی"
+          value={stats ? formatNumber(stats.pendingCount) : "—"}
+          icon={Clock3}
+          trend={stats ? "در صف بررسی" : "داده موجود نیست"}
+          color="orange"
+        />
+        <StatCard
+          title="تأیید شده"
+          value={stats ? formatNumber(stats.approvedCount) : "—"}
+          icon={CheckCircle2}
+          trend={stats ? "طبق آمار API" : "داده موجود نیست"}
+          color="green"
+        />
+        <StatCard
+          title="رد شده"
+          value={stats ? formatNumber(stats.rejectedCount) : "—"}
+          icon={XCircle}
+          trend={stats ? "طبق آمار API" : "داده موجود نیست"}
+          color="red"
+        />
+        <StatCard
+          title="میانگین زمان بررسی"
+          value={stats ? formatNumber(stats.averageApprovalTime) : "—"}
+          icon={Inbox}
+          trend={stats ? "ساعت" : "داده موجود نیست"}
+          color="blue"
+        />
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-morva-200 bg-white shadow-sm" aria-labelledby="approval-list-heading">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-morva-200 px-5 py-4">
+          <div>
+            <h2 id="approval-list-heading" className="text-lg font-bold text-morva-900">درخواست‌ها</h2>
+            <p className="mt-1 text-sm text-morva-600">حداکثر ۵۰ درخواست اخیر</p>
+          </div>
+          <div className="flex flex-wrap gap-2" aria-label="فیلتر وضعیت درخواست">
+            {([
+              ["all", "همه"],
+              ["pending", "در انتظار"],
+              ["approved", "تأیید شده"],
+              ["rejected", "رد شده"],
+            ] as const).map(([status, label]) => (
+              <button
+                key={status}
+                type="button"
+                aria-pressed={filter === status}
+                onClick={() => setFilter(status)}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-morva-500 focus:ring-offset-2 ${
+                  filter === status
+                    ? "border-morva-600 bg-morva-600 text-white"
+                    : "border-morva-200 bg-white text-morva-700 hover:bg-morva-50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {!isLoading && filteredApprovals.length === 0 && !errorMessage && (
+          <div className="p-6 text-sm text-morva-700" role="status">
+            {filter === "all" ? "هیچ درخواستی برای نمایش وجود ندارد." : "درخواستی با این وضعیت وجود ندارد."}
+          </div>
+        )}
+
+        {filteredApprovals.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="w-full text-sm">
+              <thead className="bg-morva-50 text-morva-700">
                 <tr>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نوع درخواست</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نام کارمند</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">مبلغ</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">تاریخ</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">وضعیت</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">عملیات</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">نوع درخواست</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">شناسه مرجع</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">درخواست‌دهنده</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">مبلغ (ریال)</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">تاریخ ثبت</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold">وضعیت</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-right text-sm text-gray-900">{req.type}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.employee}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.amount || "—"}</td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-600">{req.date}</td>
-                    <td className="px-6 py-4 text-right text-sm">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${req.status === "pending" ? "bg-orange-100 text-orange-800" : req.status === "approved" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                        {req.status === "pending" ? "در انتظار" : req.status === "approved" ? "تأیید‌شده" : "رد‌شده"}
+              <tbody className="divide-y divide-morva-100">
+                {filteredApprovals.map((item: Approval) => (
+                  <tr key={item.id} className="hover:bg-morva-50">
+                    <td className="whitespace-nowrap px-4 py-4 font-medium text-morva-900">{typeLabels[item.type]}</td>
+                    <td className="whitespace-nowrap px-4 py-4 text-morva-700">{item.referenceId}</td>
+                    <td className="whitespace-nowrap px-4 py-4 text-morva-700">{item.requestedBy}</td>
+                    <td className="whitespace-nowrap px-4 py-4 text-morva-700">{item.amount === undefined ? "—" : formatNumber(item.amount)}</td>
+                    <td className="whitespace-nowrap px-4 py-4 text-morva-600">{formatDate(item.createdAt)}</td>
+                    <td className="whitespace-nowrap px-4 py-4">
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[item.status]}`}>
+                        {statusLabels[item.status]}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm">
-                      {req.status === "pending" ? (
-                        <div className="flex gap-2">
-                          <button className="text-green-600 hover:text-green-900 font-medium">تأیید</button>
-                          <button className="text-red-600 hover:text-red-900 font-medium">رد</button>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">—</span>
-                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 };
