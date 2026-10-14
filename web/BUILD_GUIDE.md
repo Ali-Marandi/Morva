@@ -24,6 +24,12 @@ Morva Web Application
 
 ---
 
+## Data display and trust boundaries
+
+The Dashboard and Payroll pages consume the existing React Query service hooks. The Payroll page must not invent totals or payment statuses when the API is unavailable: it shows explicit loading, error, retry, and empty states instead. GitHub Pages runs in demo mode and uses clearly labelled sample data; this is not evidence of live backend integration or permission to process real payroll.
+
+---
+
 ## 📦 Build Requirements
 
 ### System Requirements
