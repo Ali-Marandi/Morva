@@ -1,8 +1,8 @@
 # Morva Web Platform - Build & Deployment Guide
 
-**Date:** 2026-09-03  
+**Date:** 2026-10-14  
 **Version:** 1.0.0  
-**Status:** ✅ Architecture Complete, Ready for Build
+**Status:** Build, type-check, and Vitest test commands are configured
 
 ---
 
@@ -154,29 +154,34 @@ npm run type-check
 
 ## 🌐 Environment Variables
 
-Create `.env` file in web directory:
+The frontend reads its API origin from `VITE_API_URL`, matching `web/.env.example` and `web/src/services/api.ts`.
+
+Example for a local backend:
 
 ```env
-VITE_API_BASE_URL=https://api.morva.local
-VITE_AUTH_PROVIDER=oidc
-VITE_APP_VERSION=1.0.0
-VITE_ENVIRONMENT=production
+VITE_API_URL=http://localhost:8000
+VITE_DEMO_MODE=false
 ```
+
+The GitHub Pages workflow explicitly sets `VITE_DEMO_MODE=true` and publishes demo data. Do not enable demo mode when using real personnel or payroll data. Any `VITE_*` variable is bundled into browser assets and must never contain a secret.
 
 ---
 
-## 🧪 Testing (Ready to Implement)
+## 🧪 Testing
+
+Install the locked dependencies and run the same checks used by CI:
 
 ```bash
-# Run unit tests (configured but not yet implemented)
-npm run test
-
-# Run E2E tests
-npm run test:e2e
-
-# Generate coverage report
-npm run test:coverage
+cd web
+npm ci
+npm test
+npm run type-check
+npm run build
 ```
+
+- `npm test` runs the Vitest suite in a jsdom browser-like environment.
+- The current suite includes API-client/authentication tests, service-layer smoke tests, and Self Service component tests.
+- End-to-end browser tests are not configured yet; do not treat unit/component coverage as an E2E or production-readiness certification.
 
 ---
 
@@ -194,9 +199,9 @@ Test responsiveness in browser devtools:
 
 ## 🔍 Performance Optimization
 
-### Code Splitting (Automatic)
+### Bundle Splitting
 ```
-Routes are automatically code-split:
+The build currently separates selected vendor dependencies into chunks; route-level lazy loading is not yet configured:
 - Dashboard: ~45KB
 - Auth: ~38KB
 - Other pages: ~15KB each
@@ -256,16 +261,9 @@ docker push yourregistry/morva-web:latest
 
 ---
 
-## 🔒 Security Checklist
+## 🔒 Security Notes
 
-- ✅ CSP headers configured
-- ✅ XSS protection (React)
-- ✅ CSRF token support
-- ✅ No hardcoded secrets
-- ✅ Dependencies audited
-- ✅ HTTPS enforced
-- ✅ OIDC/JWT ready
-- ✅ MFA messaging
+The web build guide is not evidence of a completed security assessment. Verify CSP and other security headers at the hosting layer, validate CSRF requirements against the backend authentication model, and test OIDC/JWT behavior against staging before production use. Never put secrets in `VITE_*` variables because they are exposed to the browser. Run the dependency audit in CI and review its output rather than assuming that a configured command means the application is secure.
 
 ```bash
 # Run security audit
@@ -418,20 +416,16 @@ getTTFB(console.log);
 
 ## 🎯 Production Readiness Checklist
 
-- ✅ All components built and tested
 - ✅ TypeScript strict mode enabled
-- ✅ No console errors or warnings
-- ✅ Responsive design verified
-- ✅ Accessibility audit passed
-- ✅ Security headers configured
-- ✅ Environment variables documented
-- ✅ Performance optimized
-- ✅ Build pipeline configured
-- ✅ Error tracking setup
-- ⏳ Backend API integration
-- ⏳ E2E test suite
-- ⏳ Load testing completed
-- ⏳ Production deployment
+- ✅ Build and type-check commands configured
+- ✅ Vitest unit/component test command configured
+- ⏳ Full browser-based E2E suite
+- ⏳ Manual responsive-device verification
+- ⏳ Independent accessibility audit
+- ⏳ Verify security headers at the actual hosting layer
+- ⏳ Confirm API integration against a deployed staging backend
+- ⏳ Load testing and production monitoring
+- ⏳ Production-readiness approval
 
 ---
 
