@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import SelfService from '../pages/SelfService';
+import { MemoryRouter } from 'react-router-dom';
 import { selfService } from '../services/self-service';
 
 vi.mock('../services/self-service', () => ({
@@ -21,9 +22,11 @@ const mockedSelfService = vi.mocked(selfService);
 const renderPage = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <SelfService />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <SelfService />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 };
 
