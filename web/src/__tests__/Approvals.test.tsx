@@ -88,7 +88,7 @@ describe("Approvals page", () => {
     expect(screen.getByRole("heading", { name: "صف تأییدها" })).toBeInTheDocument();
     expect(screen.getByText("payroll-1405-06")).toBeInTheDocument();
     expect(screen.getByText("حقوق و دستمزد")).toBeInTheDocument();
-    expect(screen.getByText("در انتظار")).toBeInTheDocument();
+    expect(screen.getAllByText("در انتظار")).toHaveLength(2);
     expect(screen.queryByRole("button", { name: "تأیید", exact: true })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "رد", exact: true })).not.toBeInTheDocument();
   });
