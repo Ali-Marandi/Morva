@@ -187,7 +187,7 @@ npm run type-check
 npm run build
 ```
 
-The test command uses Vitest with the jsdom environment so component tests can exercise browser APIs. The current suite includes API/auth service tests and self-service component tests. End-to-end tests and coverage reporting are not configured yet; do not treat them as completed gates.
+The test command uses Vitest with the jsdom environment so component tests can exercise browser APIs. The current suite includes API/auth service tests and Dashboard, Payroll, Approvals, and Self-Service component tests. End-to-end tests and coverage reporting are not configured yet; do not treat them as completed gates.
 
 ---
 
