@@ -14,6 +14,8 @@ from morva.persistence.database import SessionLocal
 from morva.persistence.enterprise_models import LifecycleEventRecord, PayrollArtifactRecord
 from morva.persistence.models import ImportBatchRecord, PayrollLineRecord, PayrollRunRecord, PersonnelSnapshotRecord, RulePackRecord
 from morva.payroll import PayrollCalculator, PayrollLine
+from morva.calendar.jalali import jalali_month_start
+from morva.rules.activation import RuleActivationBlocked, require_production_rule_pack
 from morva.payroll.artifacts import materialize_run_artifacts
 from morva.payroll.lifecycle import PayrollStatus, transition
 from morva.runtime.config import settings
@@ -139,6 +141,20 @@ def calculate_persisted_run(run_id: UUID, principal: Principal = Depends(get_cur
             raise HTTPException(status_code=409, detail="payroll run contains no projected payroll lines")
         if any(line.mapping_status != "approved" for line in lines):
             raise HTTPException(status_code=423, detail="calculation is blocked: one or more payroll-line mappings require review")
+        if settings.production:
+            try:
+                activation_date = jalali_month_start(run.period)
+                require_production_rule_pack(
+                    session,
+                    pack=pack,
+                    as_of=activation_date,
+                    component_codes={line.code for line in lines},
+                )
+            except (RuleActivationBlocked, ValueError) as exc:
+                raise HTTPException(
+                    status_code=423,
+                    detail=f"payroll calculation is blocked: {exc}",
+                ) from exc
         employee_numbers = {line.employee_no for line in lines}
         snapshots = session.scalars(select(PersonnelSnapshotRecord).where(PersonnelSnapshotRecord.effective_period == run.period, PersonnelSnapshotRecord.employee_no.in_(employee_numbers))).all()
         snapshot_by_employee = {item.employee_no: item for item in snapshots}
