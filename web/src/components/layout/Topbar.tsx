@@ -6,6 +6,7 @@ import { ModuleItem, moduleMenus } from '../../config/moduleNavigation';
 function Topbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const menuReturnFocusRef = useRef<HTMLButtonElement | null>(null);
   const navigate = useNavigate();
   const openPage = (item: ModuleItem) => { navigate(`/modules/${item.id}`); setActiveMenu(null); };
 
@@ -15,7 +16,7 @@ function Topbar() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
-      menuButtonRefs.current[activeMenu]?.focus();
+      (menuReturnFocusRef.current ?? menuButtonRefs.current[activeMenu])?.focus();
       setActiveMenu(null);
     };
 
@@ -27,9 +28,9 @@ function Topbar() {
     <div className="flex min-h-14 items-center px-3 lg:px-5">
       <div className="ml-4 hidden items-center gap-2 whitespace-nowrap xl:flex"><div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/50"><ShieldCheck size={18} /></div><span className="text-sm font-bold">سیستم حقوق و دستمزد</span></div>
       <nav className="flex flex-1 items-center overflow-x-auto" aria-label="ماژول‌های سامانه">
-        {moduleMenus.map((menu) => { const Icon = menu.icon; const isOpen = activeMenu === menu.id; return <button key={menu.id} id={`module-toggle-${menu.id}`} ref={(element) => { menuButtonRefs.current[menu.id] = element; }} type="button" aria-expanded={isOpen} aria-controls={`module-menu-${menu.id}`} onMouseEnter={() => setActiveMenu(menu.id)} onClick={() => setActiveMenu(isOpen ? null : menu.id)} className={`flex shrink-0 items-center gap-2 rounded-t-xl px-3 py-3.5 text-sm font-semibold transition-colors ${isOpen ? 'bg-white text-[#244da8]' : 'hover:bg-white/15'}`}><Icon size={17} />{menu.label}</button>; })}
+        {moduleMenus.map((menu) => { const Icon = menu.icon; const isOpen = activeMenu === menu.id; return <button key={menu.id} id={`module-toggle-${menu.id}`} ref={(element) => { menuButtonRefs.current[menu.id] = element; }} type="button" aria-expanded={isOpen} aria-controls={`module-menu-${menu.id}`} onMouseEnter={() => setActiveMenu(menu.id)} onClick={(event) => { menuReturnFocusRef.current = event.currentTarget; setActiveMenu(isOpen ? null : menu.id); }} className={`flex shrink-0 items-center gap-2 rounded-t-xl px-3 py-3.5 text-sm font-semibold transition-colors ${isOpen ? 'bg-white text-[#244da8]' : 'hover:bg-white/15'}`}><Icon size={17} />{menu.label}</button>; })}
       </nav>
-      <button type="button" className="mr-2 rounded-lg p-2 hover:bg-white/15" onClick={() => setActiveMenu(activeMenu ? null : moduleMenus[0].id)} aria-label={activeMenu ? 'بستن منو' : 'باز کردن منو'} aria-expanded={Boolean(activeMenu)} aria-controls={`module-menu-${activeMenu ?? moduleMenus[0].id}`}><Menu size={21} /></button>
+      <button type="button" className="mr-2 rounded-lg p-2 hover:bg-white/15" onClick={(event) => { menuReturnFocusRef.current = event.currentTarget; setActiveMenu(activeMenu ? null : moduleMenus[0].id); }} aria-label={activeMenu ? 'بستن منو' : 'باز کردن منو'} aria-expanded={Boolean(activeMenu)} aria-controls={`module-menu-${activeMenu ?? moduleMenus[0].id}`}><Menu size={21} /></button>
       <div className="mr-2 hidden items-center gap-2 border-r border-white/30 pr-3 sm:flex"><div className="text-left leading-tight"><p className="text-xs font-medium">مدیر سامانه</p><p className="text-[10px] text-white/70">حساب محلی</p></div><User size={20} /></div>
     </div>
     {moduleMenus.map((menu) => <MegaMenu key={menu.id} menu={menu} isOpen={activeMenu === menu.id} onSelect={openPage} />)}
@@ -49,4 +50,3 @@ function MegaMenu({ menu, isOpen, onSelect }: { menu: ModuleItem; isOpen: boolea
 }
 
 export default Topbar;
-
