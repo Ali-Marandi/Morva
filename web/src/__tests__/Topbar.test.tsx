@@ -28,4 +28,21 @@ describe('Topbar navigation', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveFocus();
   });
+
+  it('returns focus to the compact menu control when that control opened the panel', () => {
+    render(
+      <MemoryRouter>
+        <Topbar />
+      </MemoryRouter>,
+    );
+
+    const compactToggle = screen.getByRole('button', { name: 'باز کردن منو' });
+    fireEvent.click(compactToggle);
+    expect(compactToggle).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(screen.queryByRole('region', { name: 'اطلاعات پایه' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'باز کردن منو' })).toHaveFocus();
+  });
 });
