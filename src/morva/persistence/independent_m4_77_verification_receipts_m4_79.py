@@ -5,6 +5,7 @@ import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
@@ -177,8 +178,28 @@ class IndependentM477VerificationReceiptM479Repository:
             verification_fingerprint=independent.verification_fingerprint,
             recorded_by=actor,
         )
-        self.session.add(record)
-        self.session.flush()
+        try:
+            with self.session.begin_nested():
+                self.session.add(record)
+                self.session.flush()
+        except IntegrityError:
+            # Concurrent requests can race after the fingerprint lookup. Reuse only
+            # the winning receipt for the same actor; preserve cross-actor rejection.
+            existing = self.session.scalar(
+                select(IndependentM477VerificationReceiptM479Record).where(
+                    IndependentM477VerificationReceiptM479Record.verification_fingerprint
+                    == independent.verification_fingerprint
+                )
+            )
+            if existing is None:
+                raise
+            if existing.recorded_by != actor:
+                raise IndependentM477VerificationReceiptM479PersistenceError(
+                    "verification fingerprint is already recorded by a different actor"
+                )
+            self.verify(existing.id)
+            return existing
+
         record.to_verification()
         return record
 
@@ -195,11 +216,14 @@ class IndependentM477VerificationReceiptM479Repository:
             raise IndependentM477VerificationReceiptM479PersistenceError(
                 "limit must be between 1 and 100"
             )
-        if before_created_at is not None and before_created_at.tzinfo is None:
+        if before_created_at is not None and (
+            before_created_at.tzinfo is None
+            or before_created_at.utcoffset() is None
+        ):
             raise IndependentM477VerificationReceiptM479PersistenceError(
                 "before_created_at must be timezone-aware"
             )
-        if before_created_at is None and before_id is not None:
+        if (before_created_at is None) != (before_id is None):
             raise IndependentM477VerificationReceiptM479PersistenceError(
                 "before_created_at and before_id must be supplied together"
             )

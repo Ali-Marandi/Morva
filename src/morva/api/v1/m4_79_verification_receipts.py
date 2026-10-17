@@ -82,19 +82,20 @@ def persist_m4_78_verification_receipt(
                 reason="M4.79 independent M4.78 verification receipt persisted",
                 session=session,
             )
+            response = IndependentM477VerificationReceiptM479Response(
+                id=record.id,
+                verification_receipt_id=record.verification_receipt_id,
+                verification=record.to_verification().to_payload(),
+                recorded_by=record.recorded_by,
+                created_at=record.created_at,
+            )
             session.commit()
         except IndependentM477VerificationReceiptM479PersistenceError as exc:
             session.rollback()
             status = 404 if "not found" in str(exc) else 409
             raise HTTPException(status_code=status, detail=str(exc)) from exc
 
-    return IndependentM477VerificationReceiptM479Response(
-        id=record.id,
-        verification_receipt_id=record.verification_receipt_id,
-        verification=record.to_verification().to_payload(),
-        recorded_by=record.recorded_by,
-        created_at=record.created_at,
-    )
+    return response
 
 
 @router.get(

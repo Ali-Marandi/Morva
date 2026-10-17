@@ -46,10 +46,6 @@ def upgrade() -> None:
         sa.Column("verification_fingerprint", sa.String(64), nullable=False),
         sa.Column("recorded_by", sa.String(100), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint(
-            "verification_fingerprint",
-            name="uq_m4_79_verification_fingerprint",
-        ),
     )
     op.create_index(
         "ix_m4_79_verification_receipt_id",

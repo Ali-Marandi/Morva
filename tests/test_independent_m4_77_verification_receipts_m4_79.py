@@ -159,6 +159,12 @@ def test_m4_79_cursor_history_and_filter() -> None:
 
         with pytest.raises(
             IndependentM477VerificationReceiptM479PersistenceError,
+            match="before_created_at and before_id",
+        ):
+            repository.list(before_created_at=datetime.now().astimezone(), limit=1)
+
+        with pytest.raises(
+            IndependentM477VerificationReceiptM479PersistenceError,
             match="timezone-aware",
         ):
             repository.list(before_created_at=datetime.now(), limit=1)
