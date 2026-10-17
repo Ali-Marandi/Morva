@@ -26,9 +26,6 @@ from morva.security.policy import Principal, Scope
 from tests.test_independent_historical_m4_75_verification_receipt_m4_78 import (
     _persist_m4_77_receipt,
 )
-from tests.test_independent_historical_m4_75_verification_receipts_m4_77 import (
-    _session_m4_77,
-)
 
 
 def _session_m4_79():
@@ -210,19 +207,6 @@ def test_m4_79_detects_tampered_m4_77_source() -> None:
     finally:
         session.close()
         engine.dispose()
-
-
-class _SessionContext:
-    def __init__(self, session):
-        self.session = session
-
-    def __enter__(self):
-        return self.session
-
-    def __exit__(self, exc_type, exc, tb):
-        if exc_type is not None:
-            self.session.rollback()
-        return False
 
 
 def _m4_79_path(suffix: str = "") -> str:
