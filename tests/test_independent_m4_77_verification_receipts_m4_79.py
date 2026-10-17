@@ -17,7 +17,6 @@ from morva.persistence.models import Base
 import morva.security.auth as auth_module
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
     IndependentM477VerificationReceiptM479PersistenceError,
-    IndependentM477VerificationReceiptM479Record,
     IndependentM477VerificationReceiptM479Repository,
 )
 from morva.security.auth import get_current_principal
