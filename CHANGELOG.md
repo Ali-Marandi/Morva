@@ -1,3 +1,21 @@
+## Unreleased — M4.79 Persisted M4.78 Verification Receipts
+
+### Readiness policy governance
+- Persist M4.78 independent-verification results as append-only, fingerprint-idempotent receipts bound to the exact M4.77 source receipt.
+- Reconstruct M4.78 from the M4.77 receipt, its M4.75 snapshot and point-in-time M4.74 sources before record/list/verify.
+- Expose authenticated, ministry-scoped create/history/verify operations with deterministic cursor pagination.
+
+### Test isolation
+- Use a shared in-memory SQLite test engine with cross-thread support and a fresh SQLAlchemy session per HTTP request, avoiding cross-thread connection reuse in the FastAPI TestClient path.
+
+### Integrity hardening
+- Reject incomplete cursor tuples and validate timezone-aware pagination cursors.
+- Handle concurrent duplicate fingerprint writes through a savepoint and preserve actor-binding rules.
+- Materialize the HTTP response while the database session is open to avoid detached ORM access after commit.
+
+### Safety
+- Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.78 Independent M4.77 Verification
 
 ### Readiness policy governance

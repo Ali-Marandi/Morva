@@ -27,8 +27,8 @@ from tests.test_independent_historical_m4_75_verification_receipts_m4_77 import 
 )
 
 
-def _persist_m4_77_receipt(session):
-    snapshot = _persist_m4_75_snapshot(session)
+def _persist_m4_77_receipt(session, source_hash: str = "a" * 64):
+    snapshot = _persist_m4_75_snapshot(session, source_hash)
     repository = IndependentHistoricalM475VerificationReceiptHistoryIntegrityRepository(
         session
     )
