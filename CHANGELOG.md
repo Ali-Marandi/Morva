@@ -8,6 +8,11 @@
 ### Test isolation
 - Use a shared in-memory SQLite test engine with cross-thread support and a fresh SQLAlchemy session per HTTP request, avoiding cross-thread connection reuse in the FastAPI TestClient path.
 
+### Integrity hardening
+- Reject incomplete cursor tuples and validate timezone-aware pagination cursors.
+- Handle concurrent duplicate fingerprint writes through a savepoint and preserve actor-binding rules.
+- Materialize the HTTP response while the database session is open to avoid detached ORM access after commit.
+
 ### Safety
 - Governance/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
 

@@ -15,3 +15,9 @@ The M4.79 API is authenticated and ministry-scoped. It exposes create, history a
 
 ## Safety
 Verification/readiness metadata only. No provider execution, credentials, payment mutation, legal-rate inference or production authorization is introduced.
+
+## Failure-mode and pagination hardening
+- Cursor pagination requires both `before_created_at` and `before_id`; supplying only one fails closed.
+- The persistence path rechecks the fingerprint after a uniqueness race and reuses a receipt only for the same actor.
+- The POST response is materialized before the SQLAlchemy session closes.
+- The TestClient success-path regression uses a cross-thread-safe in-memory engine and a fresh request session.
