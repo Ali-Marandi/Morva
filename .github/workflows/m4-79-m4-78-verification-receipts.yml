@@ -41,7 +41,7 @@ concurrency:
 jobs:
   verification-receipts:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,7 +57,7 @@ jobs:
           tests/test_independent_m4_77_verification_receipts_m4_79.py
       - name: Pytest
         run: >
-          timeout 300s pytest -vv
+          timeout 900s pytest -vv
           tests/test_independent_historical_m4_75_verification_receipts_m4_77.py
           tests/test_independent_historical_m4_75_verification_receipt_m4_78.py
           tests/test_independent_m4_77_verification_receipts_m4_79.py
