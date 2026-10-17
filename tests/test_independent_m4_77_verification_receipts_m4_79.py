@@ -224,6 +224,7 @@ def test_m4_79_post_persists_verification_receipt(monkeypatch) -> None:
     app.dependency_overrides[get_current_principal] = lambda: _principal(Scope.MINISTRY)
     try:
         _, source_receipt, _, _ = _persist_m4_77_receipt(session)
+        source_receipt_id = source_receipt.id
         session.commit()
         session.close()
         request_sessions = sessionmaker(
@@ -236,11 +237,11 @@ def test_m4_79_post_persists_verification_receipt(monkeypatch) -> None:
         monkeypatch.setattr(m4_79_api, "append_audit_event", lambda **_: None)
         with TestClient(app) as client:
             response = client.post(
-                _m4_79_path(f"/{source_receipt.id}/verification-receipts")
+                _m4_79_path(f"/{source_receipt_id}/verification-receipts")
             )
         assert response.status_code == 200
         body = response.json()
-        assert body["verification_receipt_id"] == str(source_receipt.id)
+        assert body["verification_receipt_id"] == str(source_receipt_id)
         assert body["recorded_by"] == "m4-79-test"
         assert body["verification"]["valid"] is True
     finally:
