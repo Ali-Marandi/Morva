@@ -1,81 +1,148 @@
 import React from "react";
-import StatCard from "@/components/ui/StatCard";
-import PayrollChart from "@/components/charts/PayrollChart";
-import { BarChart3, TrendingUp, FileText } from "lucide-react";
+import { AlertCircle, FileText, RefreshCw } from "lucide-react";
+import { useReports } from "@/services";
+import type { ApiError, Report } from "@/types/api";
 
-interface ReportData {
-  name: string;
-  type: string;
-  period: string;
-  status: "ready" | "processing";
-  generated: string;
+const reportTypeLabels: Record<Report["type"], string> = {
+  payroll: "حقوق و دستمزد",
+  tax: "مالیات",
+  compliance: "انطباق",
+  analytics: "تحلیلی",
+};
+
+const reportStatusLabels: Record<Report["status"], string> = {
+  draft: "پیش‌نویس",
+  generating: "در حال تولید",
+  ready: "آماده",
+  archived: "بایگانی‌شده",
+};
+
+const reportFormatLabels: Record<Report["format"], string> = {
+  pdf: "PDF",
+  excel: "Excel",
+  csv: "CSV",
+};
+
+const statusClasses: Record<Report["status"], string> = {
+  draft: "bg-gray-100 text-gray-700",
+  generating: "bg-amber-100 text-amber-800",
+  ready: "bg-emerald-100 text-emerald-800",
+  archived: "bg-morva-100 text-morva-700",
+};
+
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as Partial<ApiError> & { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "دریافت فهرست گزارش‌ها ناموفق بود.";
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(date);
 }
 
 const Reports: React.FC = () => {
-  const reports: ReportData[] = [
-    { name: "گزارش حقوق ماهیانه", type: "PDF", period: "آذر ۱۴۰۵", status: "ready", generated: "۱۴۰۵-۰۶-۱۵" },
-    { name: "گزارش کسورات", type: "Excel", period: "آذر ۱۴۰۵", status: "ready", generated: "۱۴۰۵-۰۶-۱۵" },
-    { name: "گزارش بیمه و تأمین‌اجتماعی", type: "PDF", period: "آذر ۱۴۰۵", status: "processing", generated: "—" },
-    { name: "گزارش تجدید‌نظر حقوق", type: "Excel", period: "دی ۱۴۰۵", status: "ready", generated: "۱۴۰۵-۰۶-۱۴" },
-  ];
+  const reportsQuery = useReports({ page: 1, limit: 20 });
+  const response = reportsQuery.data;
+  const apiError = response && !response.success
+    ? response.error?.message || "دریافت فهرست گزارش‌ها ناموفق بود."
+    : undefined;
+  const errorMessage = reportsQuery.isError
+    ? getErrorMessage(reportsQuery.error)
+    : apiError;
+  const reports = response?.success ? response.data?.items ?? [] : [];
 
-  const chartData = [
-    { month: "آذر", processed: 234, pending: 8, rejected: 3 },
-    { month: "دی", processed: 240, pending: 5, rejected: 2 },
-    { month: "بهمن", processed: 238, pending: 7, rejected: 3 },
-    { month: "اسفند", processed: 245, pending: 3, rejected: 1 },
-    { month: "فروردین", processed: 242, pending: 6, rejected: 2 },
-  ];
-
-  const stats = { totalReports: 24, thisMonth: 5, avgTime: "۲.۳ روز", successRate: "۹۸.۵%" };
+  const retry = () => {
+    void reportsQuery.refetch();
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">گزارش‌ها</h1>
-          <p className="text-gray-600 mt-2">تولید و مدیریت گزارش‌های تحلیلی و مالی</p>
-        </div>
+    <main className="min-h-full bg-gray-50 p-4 md:p-8" dir="rtl">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <header>
+          <h1 className="text-3xl font-bold text-morva-900">گزارش‌ها</h1>
+          <p className="mt-2 text-morva-600">
+            این صفحه سوابق گزارش‌های ثبت‌شده در سامانه را نمایش می‌دهد. تولید و دریافت فایل از این رابط فعال نیست.
+          </p>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="کل گزارش‌ها" value={stats.totalReports.toString()} icon={FileText} trend={`+ ${stats.thisMonth} این ماه`} color="blue" />
-          <StatCard title="میزان موفقیت" value={stats.successRate} icon={TrendingUp} trend="▲ ۱.۲%" color="green" />
-          <StatCard title="میانگین زمان" value={stats.avgTime} icon={BarChart3} trend="▼ ۰.۳ روز" color="blue" />
-          <StatCard title="گزارش درحال‌پردازش" value="۳" icon={FileText} trend="کاملاً سریع" color="orange" />
-        </div>
+        {reportsQuery.isLoading && (
+          <div className="rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700" role="status" aria-live="polite">
+            در حال دریافت فهرست گزارش‌ها…
+          </div>
+        )}
 
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">روند گزارش‌های ماهیانه</h2>
-          <PayrollChart data={chartData} />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          {reports.map((report) => (
-            <div key={`${report.name}-${report.period}`} className="bg-white rounded-lg shadow p-6 flex items-center justify-between hover:shadow-lg transition-shadow">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900">{report.name}</h3>
-                <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                  <span>دوره: {report.period}</span>
-                  <span>نوع: {report.type}</span>
-                  {report.generated !== "—" && <span>تاریخ: {report.generated}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${report.status === "ready" ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}>
-                  {report.status === "ready" ? "آماده" : "درحال‌پردازش"}
-                </span>
-                <button
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${report.status === "ready" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-gray-100 text-gray-500 cursor-not-allowed"}`}
-                  disabled={report.status !== "ready"}
-                >
-                  {report.status === "ready" ? "دانلود" : "در انتظار..."}
-                </button>
-              </div>
+        {errorMessage && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
+              <span>{errorMessage}</span>
             </div>
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={retry}
+              disabled={reportsQuery.isFetching}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+            >
+              <RefreshCw size={16} aria-hidden="true" className={reportsQuery.isFetching ? "animate-spin" : ""} />
+              تلاش دوباره
+            </button>
+          </div>
+        )}
+
+        <section className="overflow-hidden rounded-xl border border-morva-200 bg-white shadow-sm" aria-labelledby="reports-list-heading">
+          <div className="flex items-center gap-3 border-b border-morva-200 px-5 py-4">
+            <FileText className="text-morva-700" aria-hidden="true" />
+            <div>
+              <h2 id="reports-list-heading" className="font-bold text-morva-900">سوابق گزارش</h2>
+              <p className="mt-1 text-sm text-morva-600">حداکثر ۲۰ گزارش اخیر</p>
+            </div>
+          </div>
+
+          {!reportsQuery.isLoading && !errorMessage && reports.length === 0 && (
+            <p className="p-6 text-sm text-morva-700" role="status">
+              گزارشی برای نمایش ثبت نشده است.
+            </p>
+          )}
+
+          {reports.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-right text-morva-700">
+                  <tr>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">نام گزارش</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">نوع</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">دوره</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">قالب</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">وضعیت</th>
+                    <th scope="col" className="whitespace-nowrap px-4 py-3 font-semibold">تاریخ ثبت</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-morva-100">
+                  {reports.map((report: Report) => (
+                    <tr key={report.id}>
+                      <th scope="row" className="whitespace-nowrap px-4 py-3 text-right font-medium text-morva-900">{report.name}</th>
+                      <td className="whitespace-nowrap px-4 py-3 text-morva-700">{reportTypeLabels[report.type]}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-morva-700">{report.period}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-morva-700">{reportFormatLabels[report.format]}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusClasses[report.status]}`}>
+                          {reportStatusLabels[report.status]}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-morva-600">{formatDate(report.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 
