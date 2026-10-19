@@ -17,6 +17,9 @@ from morva.api.v1.m4_77_verification_receipts import (
 from morva.api.v1.m4_78_independent_verification import (
     router as m4_78_independent_verification_router,
 )
+from morva.api.v1.m4_79_verification_receipts import (
+    router as m4_79_verification_receipts_router,
+)
 from morva.api.v1.masterdata import router as masterdata_router
 from morva.api.v1.masterdata_acceptance import router as masterdata_acceptance_router
 from morva.api.v1.masterdata_validation import router as masterdata_validation_router
@@ -54,6 +57,7 @@ app.include_router(evidence_submissions_router, prefix="/api/v1", dependencies=p
 app.include_router(integration_execution_readiness_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(m4_77_verification_receipts_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(m4_78_independent_verification_router, prefix="/api/v1", dependencies=protected_dependencies)
+app.include_router(m4_79_verification_receipts_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(core_hr_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_router, prefix="/api/v1", dependencies=protected_dependencies)
 app.include_router(masterdata_validation_router, prefix="/api/v1", dependencies=protected_dependencies)
