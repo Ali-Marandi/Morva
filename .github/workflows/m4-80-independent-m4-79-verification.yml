@@ -86,7 +86,7 @@ jobs:
       - name: Install web dependencies
         run: npm ci --prefix web
       - name: Web type check
-        run: npm run typecheck --prefix web
+        run: npm run type-check --prefix web
       - name: Web production build
         run: npm run build --prefix web
       - name: Safety boundary

@@ -9,8 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 import morva.api.v1.m4_80_independent_verification as m4_80_api
-import morva.api.v1.m4_79_verification_receipts as m4_79_api
-import morva.persistence.database as database
 from morva.api.app import app
 from morva.persistence.historical_m4_74_verification_receipt_history_integrity_m4_75 import (
     HistoricalM474VerificationReceiptHistoryIntegrityRecord,
@@ -23,7 +21,6 @@ from morva.persistence.independent_historical_m4_75_verification_receipts_m4_77 
     IndependentHistoricalM475VerificationReceiptHistoryIntegrityRecord,
 )
 from morva.persistence.independent_m4_77_verification_receipts_m4_79 import (
-    IndependentM477VerificationReceiptM479PersistenceError,
     IndependentM477VerificationReceiptM479Repository,
 )
 from morva.runtime.config import Settings
@@ -80,7 +77,7 @@ def _seed_m4_79_receipt(session):
     return source_receipt, receipt, snapshot, source_records, source_repository
 
 
-def _verify(session, source_receipt, receipt, snapshot, source_records, source_repository):
+def _verify(source_receipt, receipt, snapshot, source_records, source_repository):
     return independently_verify_m4_79_verification_receipt(
         receipt=receipt,
         source_receipt=source_receipt,
@@ -97,7 +94,6 @@ def test_m4_80_independently_reconstructs_persisted_m4_79_receipt() -> None:
             _seed_m4_79_receipt(session)
         )
         verification = _verify(
-            session,
             source_receipt,
             receipt,
             snapshot,
@@ -231,7 +227,6 @@ def test_m4_80_api_returns_fresh_verification(monkeypatch) -> None:
             future=True,
         )
         monkeypatch.setattr(m4_80_api, "SessionLocal", request_sessions)
-        monkeypatch.setattr(m4_79_api, "SessionLocal", request_sessions)
         with TestClient(app) as client:
             response = client.get(
                 "/api/v1"
