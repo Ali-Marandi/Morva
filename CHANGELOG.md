@@ -1,3 +1,17 @@
+## Unreleased — M4.80 Independent M4.79 Receipt Verification
+
+### Integrity and reconstruction
+- Independently verify persisted M4.79 receipts without using the M4.79 persistence repository as reconstruction authority.
+- Reconstruct M4.78 from the bound M4.77 receipt, M4.75 snapshot and timestamp-bounded M4.74 source history.
+- Compare source identity, snapshot IDs, fingerprints, validity, blocker tuples and the verification fingerprint with deterministic mismatch blockers.
+- Add an authenticated, ministry-scoped, read-only API endpoint and regression coverage for tampering and source-binding failures.
+
+### Validation
+- Candidate CI validation is pending; the M4.80 milestone is not yet considered green.
+
+### Safety
+- Verification/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.79 Persisted M4.78 Verification Receipts
 
 ### Readiness policy governance
