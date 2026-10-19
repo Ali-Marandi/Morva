@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** M4.79 implementation candidate on a clean branch from verified mainline; the prior candidate exposed a SQLite cross-thread test-isolation failure, the test fixture is corrected, and clean-mainline CI revalidation is pending; not production-certified for real payroll/payment.
+**Current position:** M4.79 is merged to `main` at `1060b9b0c200da945c38a813852ea6c96735a504`; dedicated M4.79 verification run `39230201296` and migration gates succeeded, while broader merge-HEAD `Morva CI` and `Tests` were still running at last inspection. M4.80 is implemented on a clean branch from that exact main HEAD and its CI is pending; not production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
@@ -84,10 +84,11 @@
 - M4.76 independently verifies persisted M4.75 snapshots against the point-in-time M4.74 verification-receipt history, re-verifies source receipts and emits deterministic blockers plus a verification fingerprint through an authenticated read-only API.
 - M4.77 persists M4.76 independent-verification results as append-only, fingerprint-idempotent receipts with M4.75 snapshot and timestamp-bounded M4.74 source re-verification, ministry-managed history and direct verification.
 - M4.78 independently verifies persisted M4.77 receipts by reconstructing the M4.76 result from the M4.75 snapshot and timestamp-bounded M4.74 source history, with deterministic mismatch blockers, fingerprint binding and an authenticated ministry-scoped read-only endpoint.
-- M4.79 persists M4.78 independent-verification results as append-only, fingerprint-idempotent receipts bound to the exact M4.77 source receipt, with fresh M4.75/M4.74 reconstruction, ministry-managed cursor history and direct verification; clean-mainline CI revalidation pending.
+- M4.79 persists M4.78 independent-verification results as append-only, fingerprint-idempotent receipts bound to the exact M4.77 source receipt, with fresh M4.75/M4.74 reconstruction, ministry-managed cursor history and direct verification; merged to main at `1060b9b0c200da945c38a813852ea6c96735a504`, its dedicated verification run `39230201296` and migration gate `39230201658` succeeded.
+- M4.80 independently reconstructs persisted M4.79 receipts from the M4.77 source receipt, M4.75 snapshot and point-in-time M4.74 history, comparing IDs, fingerprints, validity and blockers behind an authenticated ministry-scoped read-only endpoint; clean-mainline CI validation pending.
 ## Current execution queue
 
-1. Keep exact `main` head green across compilation, Ruff, PostgreSQL migrations, pytest, pip-audit and web build; the active development line is revalidating the M4.79 persistence edge on a clean branch from the verified M4.78 mainline.
+1. Complete the M4.80 focused workflow and relevant full CI on clean main HEAD `1060b9b0c200da945c38a813852ea6c96735a504`; resolve real Ruff, PostgreSQL, regression, migration, dependency-audit and web failures before declaring the milestone green.
 2. Maintain the exact `main` head as the software baseline; real authoritative artifacts and staging/pilot execution remain external to the codebase and must be independently supplied, independently verified, approved and validated before any production authority is granted.
 3. Refresh the technical assessment after each material implementation tranche. **M3.16/M3.17 refresh recorded in `docs/ASSESSMENT_2026-09-09.md`; M3.18 personnel-order governance recorded in `docs/M3_17_PERSONNEL_ORDER_LIFECYCLE.md`; M4.19–M4.43 refresh recorded in `docs/ASSESSMENT_2026-09-24.md`; the M4.47–M4.76 verification-history integrity tranche is recorded in `docs/ASSESSMENT_2026-10-04_M4_76.md`; M4.77 persistence is recorded in `docs/ASSESSMENT_2026-10-05_M4_77.md`; M4.78 independent receipt verification is recorded in `docs/ASSESSMENT_2026-10-05_M4_78.md`; M4.79 revalidation is recorded in `docs/ASSESSMENT_2026-10-07_M4_79.md`.**
 4. Complete authoritative organization/personnel/rank/attendance master data. **M3.17 strengthened referential, temporal and workflow-integrity gates; M3.19 added accepted/current/untampered readiness; M3.20 adds explicit drift detection against accepted evidence; M3.23 adds exact population attestation. Authoritative source confirmation and complete population evidence remain pending outside the codebase.**

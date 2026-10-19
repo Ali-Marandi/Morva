@@ -1,3 +1,18 @@
+## Unreleased — M4.80 Independent M4.79 Receipt Verification
+
+### Integrity and reconstruction
+- Independently verify persisted M4.79 receipts without using the M4.79 persistence repository as reconstruction authority.
+- Reconstruct M4.78 from the bound M4.77 receipt, M4.75 snapshot and timestamp-bounded M4.74 source history.
+- Compare source identity, snapshot IDs, fingerprints, validity and blocker tuples with deterministic mismatch blockers and a versioned SHA-256 result fingerprint.
+- Add an authenticated, ministry-scoped, read-only verification endpoint and regression tests for reconstruction, tampering, snapshot binding, OpenAPI, authentication and scope.
+
+### Validation and delivery
+- Correct the PostgreSQL CI URL to use the installed psycopg 3 driver, isolate the PostgreSQL migration database from test data, and install `pip-audit` explicitly.
+- Fix an inconsistent verification-test helper invocation discovered during review. Clean-mainline M4.80 validation remains pending.
+
+### Safety
+- Verification/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
+
 ## Unreleased — M4.79 Persisted M4.78 Verification Receipts
 
 ### Readiness policy governance
