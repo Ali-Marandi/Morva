@@ -71,16 +71,22 @@ jobs:
         run: ruff check src tests
       - name: Full test suite (PostgreSQL)
         env:
-          MORVA_DATABASE_URL: postgresql+psycopg2://morva:morva@localhost:5432/morva_test
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva_test
         run: pytest -q
+      - name: Create isolated PostgreSQL migration database
+        env:
+          PGPASSWORD: morva
+        run: createdb -h localhost -U morva -p 5432 morva_migration_test
       - name: PostgreSQL migration
         env:
-          MORVA_DATABASE_URL: postgresql+psycopg2://morva:morva@localhost:5432/morva_test
+          MORVA_DATABASE_URL: postgresql+psycopg://morva:morva@localhost:5432/morva_migration_test
         run: alembic upgrade head
       - name: SQLite migration
         env:
           MORVA_DATABASE_URL: sqlite:///./m4_80.db
         run: alembic upgrade head
+      - name: Install dependency auditor
+        run: python -m pip install pip-audit
       - name: Dependency audit
         run: pip-audit
       - name: Install web dependencies

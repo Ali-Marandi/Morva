@@ -5,6 +5,7 @@
 - Reconstruct M4.78 from the bound M4.77 receipt, M4.75 snapshot and timestamp-bounded M4.74 source history.
 - Compare source identity, snapshot IDs, fingerprints, validity, blocker tuples and the verification fingerprint with deterministic mismatch blockers.
 - Add an authenticated, ministry-scoped, read-only API endpoint and regression coverage for tampering and source-binding failures.
+- Align PostgreSQL validation with the declared psycopg 3 driver, isolate the migration database from test data, and install the dependency auditor explicitly.
 
 ### Validation
 - Candidate CI validation is pending; the M4.80 milestone is not yet considered green.
