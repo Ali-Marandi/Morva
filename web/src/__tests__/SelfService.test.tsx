@@ -111,4 +111,14 @@ describe('SelfService', () => {
     expect(await screen.findByText(/دریافت فایل PDF ناموفق بود/)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'PDF' })).not.toBeDisabled());
   });
+  it('keeps malformed API order dates from crashing the self-service page', async () => {
+    mockedSelfService.getProfile.mockResolvedValue({ data: { employee_no: 'E-100', first_name: 'علی', last_name: 'مرندی', employment_type: 'official', status: 'active', organization_unit_id: 'org-1', position_id: 'pos-1' } } as never);
+    mockedSelfService.getPayslips.mockResolvedValue({ data: [] } as never);
+    mockedSelfService.getOrders.mockResolvedValue({ data: [{ order_no: 'ORD-1', order_type: 'appointment', issue_date: 'not-a-date', effective_date: '2026-09-01' }] } as never);
+
+    renderPage();
+
+    expect(await screen.findByText(/تاریخ صدور: not-a-date/)).toBeInTheDocument();
+    expect(screen.getByText(/تاریخ اجرا:/)).toBeInTheDocument();
+  });
 });

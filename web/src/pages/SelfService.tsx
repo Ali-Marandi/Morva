@@ -5,7 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { selfService } from '@/services/self-service';
 
 const money = (value: string) => new Intl.NumberFormat('fa-IR').format(Number(value));
-const date = (value: string) => new Intl.DateTimeFormat('fa-IR').format(new Date(value));
+const date = (value: string) => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : new Intl.DateTimeFormat('fa-IR').format(parsed);
+};
 
 function SelfService() {
   const location = useLocation();
