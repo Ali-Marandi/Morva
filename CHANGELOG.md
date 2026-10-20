@@ -8,7 +8,9 @@
 
 ### Validation and delivery
 - Correct the PostgreSQL CI URL to use the installed psycopg 3 driver, isolate the PostgreSQL migration database from test data, and install `pip-audit` explicitly.
-- Fix an inconsistent verification-test helper invocation discovered during review. Clean-mainline M4.80 validation remains pending.
+- Fix an inconsistent verification-test helper invocation discovered during review.
+- CI run `39371676859` exposed four certification-gate test failures (1,186 tests passed) because synthetic positive evidence expired on 2026-10-19 while the verifier correctly evaluated certification at the current 2026-10-20 time.
+- Give positive test-only evidence a stable far-future expiry and add regression coverage proving the fixture remains valid at the previously failing 2026-10-20 timestamp. Dedicated negative cases retain explicit past timestamps. Production expiry checks and live certification-time ordering remain unchanged; focused remediation CI is pending.
 
 ### Safety
 - Verification/readiness metadata only; no provider execution, credentials, payment mutation, legal-rate inference or production authorization.
