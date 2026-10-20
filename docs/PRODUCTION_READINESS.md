@@ -44,7 +44,7 @@
 2. [x] Unapproved external execution is fail-closed.
 3. [x] Official adapter evidence is represented by the existing governed evidence boundary.
 4. [x] Separate integration ports and treatment catalogs exist for the Central Civil Servants Pension Fund and Social Security Organization.
-5. [ ] The six-layer architecture from the feasibility study is available in repository documentation or formally supplied for implementation.
+5. [ ] The accountable owner has supplied the referenced six-layer study or formally confirmed whether it is authoritative; any binding study is versioned and mapped before implementation. See [the statutory fund architecture review](integrations/STATUTORY_FUNDS_ARCHITECTURE_REVIEW.md).
 6. [ ] Official Central Civil Servants Pension Fund schema/endpoint contract is accepted.
 7. [ ] Official Social Security Organization schema/endpoint contract is accepted.
 8. [ ] Non-production staging acknowledgements, retries and idempotency are evidenced.
