@@ -32,7 +32,7 @@ const approvals: Approval[] = [
 
 const employeeStats: EmployeeStats = { totalEmployees: 24, activeEmployees: 22, inactiveEmployees: 1, onLeaveEmployees: 1, averageSalary: 192500000, totalPayroll: 4620000000 };
 const payrollStats: PayrollStats = { totalPayrolls: 12, totalAmount: 48600000000, pendingAmount: 4300000000, paidAmount: 44300000000, averagePerPayroll: 4050000000 };
-const approvalStats: ApprovalStats = { pendingCount: 1, approvedCount: 18, rejectedCount: 2, averageApprovalTime: 6.4 };
+const approvalStats: ApprovalStats = { pendingCount: 1, approvedCount: 0, rejectedCount: 0, averageApprovalTime: 0 };
 const reportStats: ReportStats = { totalReports: 37, reportsThisMonth: 5, averageGenerationTime: 2.7 };
 
 const ok = <T,>(data: T): ApiResponse<T> => ({ success: true, data });
