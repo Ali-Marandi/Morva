@@ -18,6 +18,8 @@ from morva.runtime.external_certification_evidence import (
 REPOSITORY = "Ali-Marandi/Morva"
 SHA = "a" * 40
 CHECKED_AT = datetime.fromisoformat("2026-09-20T00:00:00+00:00")
+# Keep synthetic positive evidence valid across wall-clock changes; negative cases override expiry.
+EVIDENCE_EXPIRY = "2099-12-31T23:59:59+00:00"
 
 
 def _write_evidence(root: Path, role: str, **overrides) -> Path:
@@ -32,7 +34,7 @@ def _write_evidence(root: Path, role: str, **overrides) -> Path:
         "status": "verified",
         "digest_sha256": "b" * 64,
         "verified_at": "2026-09-19T23:00:00+00:00",
-        "expires_at": "2026-10-19T23:00:00+00:00",
+        "expires_at": EVIDENCE_EXPIRY,
     }
     payload.update(overrides)
     path = root / f"{role}.json"
@@ -60,6 +62,25 @@ def test_complete_registry_roundtrip(tmp_path: Path):
     )
     assert len(registry.items) == len(REQUIRED_ROLES)
     assert len(registry.fingerprint) == 64
+
+
+def test_positive_fixture_remains_valid_after_previous_expiry_day(tmp_path: Path):
+    paths = tuple(_write_evidence(tmp_path, role) for role in REQUIRED_ROLES)
+    checked_at = datetime.fromisoformat("2026-10-20T00:00:00+00:00")
+
+    items = build_evidence_registry(
+        paths,
+        repository=REPOSITORY,
+        candidate_sha=SHA,
+        checked_at=checked_at,
+    )
+
+    assert len(items) == len(REQUIRED_ROLES)
+    assert all(
+        item.expires_at is not None
+        and datetime.fromisoformat(item.expires_at) > checked_at
+        for item in items
+    )
 
 
 def test_missing_role_is_rejected(tmp_path: Path):

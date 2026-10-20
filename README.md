@@ -20,7 +20,7 @@ Morva has real persisted application paths today for:
 
 The following remain explicitly fail-closed governance/operations boundaries rather than invented production authority: authoritative population-specific legal rates and matrices, official external adapter credentials/endpoints, authoritative ministry master-data acceptance, KMS/HSM custody and operational key rotation, target-environment DR/load evidence, and formal legal/finance/security/operations certification. The canonical status lives in [`docs/IMPLEMENTATION_MATRIX.md`](docs/IMPLEMENTATION_MATRIX.md); this section is intentionally only a map.
 
-**Current development baseline (2026-10-19):**
+**Current development baseline (2026-10-20):**
 - M4.22–M4.30 establish append-only readiness receipts, scope-bound convergence, explicit freshness policies and registry-bound evaluation.
 - M4.31–M4.35 add deterministic registry history/integrity plus registry-bound freshness receipts with fail-closed reconstruction.
 - M4.36–M4.40 add immutable historical registry snapshots, historical policy resolution, historical freshness evaluation and append-only historical freshness receipts.
@@ -62,8 +62,8 @@ The following remain explicitly fail-closed governance/operations boundaries rat
 - M4.76 independently reconstructs persisted M4.75 snapshots against the point-in-time M4.74 receipt history, emitting deterministic mismatch blockers and a verification fingerprint through a read-only endpoint.
 - M4.77 persists M4.76 independent-verification results as append-only, fingerprint-idempotent receipts with M4.75 snapshot and timestamp-bounded M4.74 source re-verification, ministry-managed history and direct verification.
 - M4.78 independently verifies each persisted M4.77 receipt against an independent reconstruction of the M4.76 result; verification is authenticated, ministry-scoped and read-only with deterministic mismatch blockers and fingerprinting.
-- M4.79 persistence is merged to `main` at `1060b9b0c200da945c38a813852ea6c96735a504`; its dedicated M4.79 verification workflow (run `39230201296`) and migration checks passed. The broader `Morva CI` and `Tests` workflows were still running at last inspection.
-- M4.80 independently reconstructs persisted M4.79 receipts from the bound M4.77 receipt, the M4.75 snapshot and timestamp-bounded M4.74 history; its clean-mainline PR is awaiting focused and full validation.
+- M4.79 persistence is merged to `main` at `1060b9b0c200da945c38a813852ea6c96735a504`; its dedicated verification workflow (run `39230201296`) and migration checks succeeded before M4.80 was added.
+- M4.80 independently reconstructs persisted M4.79 receipts from the bound M4.77 receipt, the M4.75 snapshot and timestamp-bounded M4.74 history. The cumulative `Tests` run `39371676859` failed 4 legacy certification-gate tests (1,186 passed) because synthetic positive certification evidence expired on 2026-10-19 while the verifier correctly checked certification at the 2026-10-20 wall clock. The focused correction gives positive test-only evidence a stable far-future expiry and preserves negative expiry tests; CI is pending.
 - Dedicated contracts for M4.44–M4.48 are documented in `docs/M4_44_HISTORICAL_FRESHNESS_CHAIN_VERIFICATION_RECEIPTS.md` through `docs/M4_48_INDEPENDENT_HISTORICAL_VERIFICATION_HISTORY_INTEGRITY.md`.
 - Release/security hardening adds version consistency checks, HKDF-based new field-encryption derivation with legacy decrypt compatibility, independent-review hooks, a reproducible local verification script and externally visible CI badges.
 - This entire M4 freshness/history line is governance/readiness metadata only; no provider execution or production authority is created.

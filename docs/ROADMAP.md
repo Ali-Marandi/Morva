@@ -1,7 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** M4.79 is merged to `main` at `1060b9b0c200da945c38a813852ea6c96735a504`; dedicated M4.79 verification run `39230201296` and migration gates succeeded, while broader merge-HEAD `Morva CI` and `Tests` were still running at last inspection. M4.80 is implemented on a clean branch from that exact main HEAD and its CI is pending; not production-certified for real payroll/payment.
+**Current position:** M4.80 is committed to `main` at `7976f21b8de62d539afa43e459cc49bcdcfc3ed0`. Cumulative `Tests` run `39371676859` failed with 4 failures and 1,186 passes because synthetic positive evidence expired on 2026-10-19 while the verifier correctly evaluated certification at the 2026-10-20 wall clock. The focused fix gives positive test-only evidence a stable far-future expiry; negative expiry checks and production validation remain unchanged. PR `fix/m4-80-certification-fixture-expiry` is pending CI. M4.79's dedicated verification run `39230201296` and migration gate `39230201658` succeeded. M4.80 is not validated or production-certified for real payroll/payment.
 
 ## Completed implementation foundations
 
