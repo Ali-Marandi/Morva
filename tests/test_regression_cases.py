@@ -97,7 +97,7 @@ def test_1405_golden_repository_must_match_registered_legal_evidence():
 
 
 def test_validator_checks_every_golden_case_for_a_component(monkeypatch):
-    # The invalid earlier case must not be hidden by a later valid case for the same component.
+    # نمونه نامعتبر قبلی نباید با نمونه معتبر بعدی همان مؤلفه پنهان شود.
     invalid_case = _case("tax-missing-output", expected_output_missing=True)
     valid_case = _case("tax-valid")
     monkeypatch.setattr(
@@ -124,7 +124,7 @@ def test_validator_rejects_duplicate_golden_case_ids(monkeypatch):
 
 
 def test_evidence_validation_checks_every_case_for_a_component(monkeypatch):
-    # A source mismatch in an earlier case must not be hidden by a later matching case.
+    # مغایرت منبع در نمونه قبلی نباید با نمونه منطبق بعدی پنهان شود.
     mismatched_case = _case("tax-wrong-source", legal_source_hash="b" * 64)
     matching_case = _case("tax-matching-source")
     monkeypatch.setattr(
