@@ -1,6 +1,8 @@
+import json
 from datetime import datetime
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -234,3 +236,17 @@ def test_evidence_validation_requires_evidence_for_unrequested_components(monkey
         )
 
     assert "missing rule evidence for golden case extra-without-evidence" in blockers
+
+
+@pytest.mark.parametrize("case_id", [None, "", "   ", 123])
+def test_load_cases_rejects_empty_or_non_string_case_ids(monkeypatch, tmp_path, case_id):
+    cases_dir = tmp_path / "1405.1"
+    cases_dir.mkdir()
+    (cases_dir / "cases.json").write_text(
+        json.dumps([{"case_id": case_id}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
+
+    with pytest.raises(ValueError, match="case_id must be a non-empty string"):
+        load_cases("1405.1")
