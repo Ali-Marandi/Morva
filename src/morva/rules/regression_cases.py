@@ -101,7 +101,7 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
     blockers: list[str] = []
     required = required_components or REQUIRED_1405_COMPONENTS
 
-    # Keep every case so a later scenario cannot silently replace an earlier case for the same component.
+    # همه نمونه‌ها را حفظ می‌کنیم تا سناریوی بعدی، نمونه قبلی همان مؤلفه را بی‌صدا جایگزین نکند.
     cases_by_component: dict[str, list[RegressionCase]] = {}
     seen_case_ids: set[str] = set()
     for case in cases:
@@ -179,7 +179,7 @@ def validate_repository_against_evidence(
             )
             continue
 
-        # Validate every case against the component's governed evidence; never select just one case.
+        # شواهد همان مؤلفه را برای تک‌تک نمونه‌ها بررسی می‌کنیم؛ هیچ نمونه‌ای نباید نادیده گرفته شود.
         for case in component_cases:
             if case.legal_source_hash and case.legal_source_hash != evidence.source_hash:
                 blockers.append(f"golden case {case.case_id} source hash mismatch")
