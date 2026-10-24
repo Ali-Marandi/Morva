@@ -66,12 +66,15 @@ def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
     for item in raw:
         if not isinstance(item, dict):
             raise ValueError("golden regression cases must be JSON objects")
+        case_id = item.get("case_id")
+        if not isinstance(case_id, str) or not case_id.strip():
+            raise ValueError("case_id must be a non-empty string")
         values = item.get("input_values", {})
         if not isinstance(values, dict):
             raise ValueError("input_values must be an object")
         cases.append(
             RegressionCase(
-                case_id=str(item["case_id"]),
+                case_id=case_id,
                 rule_pack_version=str(item["rule_pack_version"]),
                 component_code=str(item["component_code"]),
                 population_scope=str(item["population_scope"]),
