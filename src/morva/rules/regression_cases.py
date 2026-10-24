@@ -100,36 +100,47 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
     cases = load_cases(rule_pack_version)
     blockers: list[str] = []
     required = required_components or REQUIRED_1405_COMPONENTS
-    by_component = {case.component_code: case for case in cases}
+
+    # Keep every case so a later scenario cannot silently replace an earlier case for the same component.
+    cases_by_component: dict[str, list[RegressionCase]] = {}
+    seen_case_ids: set[str] = set()
+    for case in cases:
+        if case.case_id in seen_case_ids:
+            blockers.append(f"duplicate golden case_id {case.case_id}")
+        seen_case_ids.add(case.case_id)
+        cases_by_component.setdefault(case.component_code, []).append(case)
+
     for component in required:
-        case = by_component.get(component)
-        if case is None:
+        component_cases = cases_by_component.get(component, [])
+        if not component_cases:
             blockers.append(f"missing golden regression case for component {component}")
             continue
-        if case.rule_pack_version != rule_pack_version:
-            blockers.append(f"golden case {case.case_id} has a mismatched rule-pack version")
-        if case.status not in _ALLOWED_STATUSES:
-            blockers.append(f"golden case {case.case_id} has an invalid status")
-        if case.status not in {"approved", "published"}:
-            blockers.append(f"golden case {case.case_id} is not approved")
-        if not case.population_scope.strip():
-            blockers.append(f"golden case {case.case_id} requires population_scope")
-        if not case.input_values:
-            blockers.append(f"golden case {case.case_id} has no governed input values")
-        elif case.input_fingerprint is None:
-            blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
-        elif fingerprint_values(case.input_values) != case.input_fingerprint:
-            blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
-        if case.expected_output is None:
-            blockers.append(f"golden case {case.case_id} is missing expected output")
-        if not case.expected_output_fingerprint:
-            blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
-        if not case.legal_source_hash:
-            blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
-        elif len(case.legal_source_hash) != 64 or not set(case.legal_source_hash) <= _HEX64:
-            blockers.append(f"golden case {case.case_id} has an invalid legal_source_hash")
-        if not case.legal_article or not case.legal_article.strip():
-            blockers.append(f"golden case {case.case_id} is missing legal_article")
+
+        for case in component_cases:
+            if case.rule_pack_version != rule_pack_version:
+                blockers.append(f"golden case {case.case_id} has a mismatched rule-pack version")
+            if case.status not in _ALLOWED_STATUSES:
+                blockers.append(f"golden case {case.case_id} has an invalid status")
+            if case.status not in {"approved", "published"}:
+                blockers.append(f"golden case {case.case_id} is not approved")
+            if not case.population_scope.strip():
+                blockers.append(f"golden case {case.case_id} requires population_scope")
+            if not case.input_values:
+                blockers.append(f"golden case {case.case_id} has no governed input values")
+            elif case.input_fingerprint is None:
+                blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
+            elif fingerprint_values(case.input_values) != case.input_fingerprint:
+                blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
+            if case.expected_output is None:
+                blockers.append(f"golden case {case.case_id} is missing expected output")
+            if not case.expected_output_fingerprint:
+                blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
+            if not case.legal_source_hash:
+                blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
+            elif len(case.legal_source_hash) != 64 or not set(case.legal_source_hash) <= _HEX64:
+                blockers.append(f"golden case {case.case_id} has an invalid legal_source_hash")
+            if not case.legal_article or not case.legal_article.strip():
+                blockers.append(f"golden case {case.case_id} is missing legal_article")
     return tuple(blockers)
 
 
@@ -141,11 +152,15 @@ def validate_repository_against_evidence(
 ) -> tuple[str, ...]:
     blockers = list(validate_repository(rule_pack_version, required_components=required_components))
     required = required_components or REQUIRED_1405_COMPONENTS
-    cases = {case.component_code: case for case in load_cases(rule_pack_version)}
+    cases_by_component: dict[str, list[RegressionCase]] = {}
+    for case in load_cases(rule_pack_version):
+        cases_by_component.setdefault(case.component_code, []).append(case)
+
     for component in required:
-        case = cases.get(component)
-        if case is None:
+        component_cases = cases_by_component.get(component, [])
+        if not component_cases:
             continue
+
         evidence = session.scalar(
             select(RuleEvidenceRecord).where(
                 RuleEvidenceRecord.rule_pack_version == rule_pack_version,
@@ -153,26 +168,33 @@ def validate_repository_against_evidence(
             )
         )
         if evidence is None:
-            blockers.append(f"missing rule evidence for golden case {case.case_id}")
+            blockers.extend(
+                f"missing rule evidence for golden case {case.case_id}" for case in component_cases
+            )
             continue
         source = session.get(LegalSourceRecord, evidence.legal_source_id)
         if source is None:
-            blockers.append(f"missing legal source for golden case {case.case_id}")
+            blockers.extend(
+                f"missing legal source for golden case {case.case_id}" for case in component_cases
+            )
             continue
-        if case.legal_source_hash and case.legal_source_hash != evidence.source_hash:
-            blockers.append(f"golden case {case.case_id} source hash mismatch")
-        if case.legal_source_hash and case.legal_source_hash != source.document_hash:
-            blockers.append(f"golden case {case.case_id} legal source hash mismatch")
-        if case.legal_article and case.legal_article.strip() != evidence.article.strip():
-            blockers.append(f"golden case {case.case_id} article mismatch")
-        if (case.legal_clause or "").strip() != (evidence.clause or "").strip():
-            blockers.append(f"golden case {case.case_id} clause mismatch")
-        if case.population_scope.strip() != evidence.population_scope.strip():
-            blockers.append(f"golden case {case.case_id} population scope mismatch")
-        if evidence.status not in {"approved", "published"}:
-            blockers.append(f"rule evidence for golden case {case.case_id} is not approved")
-        if source.status not in {"approved", "published"}:
-            blockers.append(f"legal source for golden case {case.case_id} is not approved")
+
+        # Validate every case against the component's governed evidence; never select just one case.
+        for case in component_cases:
+            if case.legal_source_hash and case.legal_source_hash != evidence.source_hash:
+                blockers.append(f"golden case {case.case_id} source hash mismatch")
+            if case.legal_source_hash and case.legal_source_hash != source.document_hash:
+                blockers.append(f"golden case {case.case_id} legal source hash mismatch")
+            if case.legal_article and case.legal_article.strip() != evidence.article.strip():
+                blockers.append(f"golden case {case.case_id} article mismatch")
+            if (case.legal_clause or "").strip() != (evidence.clause or "").strip():
+                blockers.append(f"golden case {case.case_id} clause mismatch")
+            if case.population_scope.strip() != evidence.population_scope.strip():
+                blockers.append(f"golden case {case.case_id} population scope mismatch")
+            if evidence.status not in {"approved", "published"}:
+                blockers.append(f"rule evidence for golden case {case.case_id} is not approved")
+            if source.status not in {"approved", "published"}:
+                blockers.append(f"legal source for golden case {case.case_id} is not approved")
     return tuple(blockers)
 
 
