@@ -152,16 +152,12 @@ def validate_repository_against_evidence(
     required_components: tuple[str, ...] = (),
 ) -> tuple[str, ...]:
     blockers = list(validate_repository(rule_pack_version, required_components=required_components))
-    required = required_components or REQUIRED_1405_COMPONENTS
     cases_by_component: dict[str, list[RegressionCase]] = {}
     for case in load_cases(rule_pack_version):
         cases_by_component.setdefault(case.component_code, []).append(case)
 
-    for component in required:
-        component_cases = cases_by_component.get(component, [])
-        if not component_cases:
-            continue
-
+    # شواهد هر مؤلفه‌ای که در مخزن نمونه دارد باید بررسی شود؛ نه فقط مؤلفه‌های اجباری.
+    for component, component_cases in cases_by_component.items():
         evidence = session.scalar(
             select(RuleEvidenceRecord).where(
                 RuleEvidenceRecord.rule_pack_version == rule_pack_version,
