@@ -169,3 +169,19 @@ def test_evidence_validation_checks_every_case_for_a_component(monkeypatch):
         )
 
     assert "golden case tax-wrong-source source hash mismatch" in blockers
+
+def test_validator_checks_unrequested_cases_in_the_repository(monkeypatch):
+    valid_required_case = _case("tax-valid", component_code="TAX")
+    invalid_additional_case = _case(
+        "extra-missing-output",
+        component_code="EXTRA",
+        expected_output_missing=True,
+    )
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (valid_required_case, invalid_additional_case),
+    )
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert "golden case extra-missing-output is missing expected output" in blockers
