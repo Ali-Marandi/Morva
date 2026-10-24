@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
+from morva.persistence.models import Base
 from morva.rules.regression import fingerprint_values
 from morva.rules.regression_cases import (
     RegressionCase,
