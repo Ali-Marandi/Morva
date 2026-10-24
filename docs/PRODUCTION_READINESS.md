@@ -16,6 +16,7 @@
 7. [ ] Primary-source legal evidence is present for every active production rule.
 8. [ ] Formal legal/finance approval exists for the complete 1405 production Rule Pack.
 9. [ ] Certified golden corpus covers all legally active components and employee-population variants.
+10. [x] Golden-case validation checks every repository case, verifies required-component coverage and rejects duplicate or empty `case_id` values.
 
 **Release criterion:** zero unresolved legal-source, approval, version-binding or golden-regression blockers.
 
