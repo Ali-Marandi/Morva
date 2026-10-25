@@ -43,7 +43,9 @@ describe("Topbar module navigation", () => {
 
     expect(screen.getByTestId("current-path")).toHaveTextContent("/modules/personnel");
     expect(screen.getByRole("button", { name: "باز کردن منوی ماژول‌ها" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByRole("navigation", { name: "منوی ماژول‌ها در موبایل", hidden: true })).not.toBeVisible();
+    const mobileNavigation = document.getElementById("morva-mobile-module-navigation");
+    expect(mobileNavigation).not.toBeNull();
+    expect(mobileNavigation).not.toBeVisible();
   });
 
   it("closes an open navigation on Escape and restores focus to its trigger", () => {
