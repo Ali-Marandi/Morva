@@ -342,6 +342,14 @@ def test_load_cases_requires_expected_output_object_or_null(monkeypatch, tmp_pat
         load_cases("1405.1")
 
 
+def test_load_cases_rejects_non_finite_expected_output_numbers(monkeypatch, tmp_path):
+    raw_case = _raw_case(expected_output={"amount": float("nan")})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="expected_output must not contain non-finite numbers"):
+        load_cases("1405.1")
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
