@@ -114,6 +114,7 @@ function Topbar() {
         id="morva-mobile-module-navigation"
         aria-label="منوی ماژول‌ها در موبایل"
         aria-hidden={!mobileOpen}
+        hidden={!mobileOpen}
         className={'absolute right-0 left-0 top-full border-t border-white/15 bg-white p-3 text-slate-800 shadow-xl md:hidden ' + (mobileOpen ? 'block' : 'hidden')}
       >
         <p className="px-2 pb-2 pt-1 text-xs font-semibold text-slate-500">انتخاب بخش سامانه</p>

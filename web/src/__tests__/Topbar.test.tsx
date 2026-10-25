@@ -39,7 +39,7 @@ describe("Topbar module navigation", () => {
     renderTopbar();
 
     fireEvent.click(screen.getByRole("button", { name: "باز کردن منوی ماژول‌ها" }));
-    fireEvent.click(screen.getByRole("link", { name: /پرسنل/ }));
+    fireEvent.click(screen.getByRole("link", { name: /^پرسنل/ }));
 
     expect(screen.getByTestId("current-path")).toHaveTextContent("/modules/personnel");
     expect(screen.getByRole("button", { name: "باز کردن منوی ماژول‌ها" })).toHaveAttribute("aria-expanded", "false");
