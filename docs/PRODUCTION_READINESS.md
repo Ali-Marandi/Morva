@@ -17,6 +17,7 @@
 8. [ ] Formal legal/finance approval exists for the complete 1405 production Rule Pack.
 9. [ ] Certified golden corpus covers all legally active components and employee-population variants.
 10. [x] Golden-case validation checks every repository case, verifies required-component coverage and rejects duplicate or empty `case_id` values.
+11. [x] Golden-case loading rejects unsafe version path identifiers, malformed field types, non-finite numbers and malformed SHA-256 fingerprints.
 
 **Release criterion:** zero unresolved legal-source, approval, version-binding or golden-regression blockers.
 
