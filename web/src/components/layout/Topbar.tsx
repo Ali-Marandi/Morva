@@ -145,25 +145,29 @@ function Topbar() {
         </div>
       </nav>
 
-      {current && (
+      {moduleMenus.map((menu) => (
         <MegaMenu
-          menu={current}
-          panelId={'morva-module-panel-' + current.id}
-          triggerId={'morva-module-trigger-' + current.id}
+          key={menu.id}
+          menu={menu}
+          isOpen={activeMenu === menu.id}
+          panelId={'morva-module-panel-' + menu.id}
+          triggerId={'morva-module-trigger-' + menu.id}
           onSelect={openPage}
         />
-      )}
+      ))}
     </header>
   );
 }
 
 function MegaMenu({
   menu,
+  isOpen,
   panelId,
   triggerId,
   onSelect,
 }: {
   menu: (typeof moduleMenus)[number];
+  isOpen: boolean;
   panelId: string;
   triggerId: string;
   onSelect: (item: ModuleItem) => void;
@@ -173,7 +177,8 @@ function MegaMenu({
       id={panelId}
       role="region"
       aria-labelledby={triggerId}
-      className="absolute right-3 left-3 top-full rounded-b-2xl bg-white p-5 text-slate-800 shadow-2xl ring-1 ring-black/10 md:left-auto md:w-[min(920px,calc(100vw-24px))]"
+      hidden={!isOpen}
+      className={'absolute right-3 left-3 top-full rounded-b-2xl bg-white p-5 text-slate-800 shadow-2xl ring-1 ring-black/10 md:left-auto md:w-[min(920px,calc(100vw-24px))] ' + (isOpen ? 'block' : 'hidden')}
     >
       <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>

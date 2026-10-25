@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import Topbar from "../components/layout/Topbar";
@@ -20,6 +20,25 @@ function renderTopbar(initialPath = "/") {
 }
 
 describe("Topbar module navigation", () => {
+  it("keeps every desktop module trigger connected to its own panel", () => {
+    renderTopbar();
+
+    const moduleNavigation = screen.getByRole("navigation", { name: "ماژول‌های سامانه" });
+    const triggers = within(moduleNavigation).getAllByRole("button");
+
+    expect(triggers.length).toBeGreaterThan(0);
+    for (const trigger of triggers) {
+      const panelId = trigger.getAttribute("aria-controls");
+      expect(panelId).toBeTruthy();
+      const panel = document.getElementById(panelId as string);
+      expect(panel).not.toBeNull();
+      if (trigger.getAttribute("aria-expanded") === "false") {
+        expect(panel).not.toBeVisible();
+      }
+    }
+  });
+
+
   it("opens the complete mobile module list with an announced expanded state", () => {
     renderTopbar();
 
