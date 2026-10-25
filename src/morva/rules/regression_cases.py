@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import re
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Mapping
 
@@ -12,12 +14,17 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 
-from .regression import fingerprint_rule_result, fingerprint_values
+from .regression import (
+    MAX_DECIMAL_REPRESENTATION_CHARS,
+    fingerprint_rule_result,
+    fingerprint_values,
+)
 from .rule_pack_1405 import REQUIRED_1405_COMPONENTS
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3] / "docs" / "legal" / "golden-cases"
 _ALLOWED_STATUSES = {"review_required", "approved", "published"}
 _HEX64 = set("0123456789abcdefABCDEF")
+_SAFE_VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +42,80 @@ class RegressionCase:
     legal_source_hash: str | None
     legal_article: str | None
     legal_clause: str | None
+
+
+def _validate_rule_pack_version(rule_pack_version: str) -> None:
+    # نسخه مستقیماً نام پوشه مخزن را می‌سازد؛ فقط شناسه تک‌مسیره و محدود را می‌پذیریم.
+    if not isinstance(rule_pack_version, str) or not _SAFE_VERSION.fullmatch(rule_pack_version):
+        raise ValueError("rule_pack_version must be a safe version identifier")
+
+
+def _required_text(item: dict[str, object], field: str) -> str:
+    value = item.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must be a non-empty string")
+    return value
+
+
+def _optional_text(item: dict[str, object], field: str) -> str | None:
+    value = item.get(field)
+    if value is not None and not isinstance(value, str):
+        raise ValueError(f"{field} must be a string or null")
+    return value
+
+
+def _fixed_point_representation_length(value: Decimal) -> int:
+    sign, digits, exponent = value.as_tuple()
+    digit_count = len(digits)
+    if exponent >= 0:
+        length = digit_count + exponent
+    else:
+        decimal_point = digit_count + exponent
+        length = (
+            digit_count + 1
+            if decimal_point > 0
+            else 2 - decimal_point + digit_count
+        )
+    return length + int(bool(sign))
+
+
+def _decimal_input_values(values: dict[str, object]) -> dict[str, Decimal]:
+    converted: dict[str, Decimal] = {}
+    for key, value in values.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError("input_values keys must be non-empty strings")
+        if value is None or isinstance(value, bool) or isinstance(value, (dict, list)):
+            raise ValueError(f"input value {key} must be a finite decimal")
+        try:
+            decimal_value = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError) as exc:
+            raise ValueError(f"input value {key} must be a finite decimal") from exc
+        if not decimal_value.is_finite():
+            raise ValueError(f"input value {key} must be a finite decimal")
+        if (
+            _fixed_point_representation_length(decimal_value)
+            > MAX_DECIMAL_REPRESENTATION_CHARS
+        ):
+            raise ValueError(
+                f"input value {key} exceeds the maximum decimal representation length"
+            )
+        converted[key] = decimal_value
+    return converted
+
+
+def _is_hex64(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and set(value) <= _HEX64
+
+
+def _validate_finite_json(value: object) -> None:
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("expected_output must not contain non-finite numbers")
+    if isinstance(value, dict):
+        for nested in value.values():
+            _validate_finite_json(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            _validate_finite_json(nested)
 
 
 def _canonical_case(case: RegressionCase) -> dict[str, object]:
@@ -56,6 +137,7 @@ def _canonical_case(case: RegressionCase) -> dict[str, object]:
 
 
 def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
+    _validate_rule_pack_version(rule_pack_version)
     path = _REPOSITORY_ROOT / rule_pack_version / "cases.json"
     if not path.is_file():
         return ()
@@ -72,21 +154,26 @@ def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
         values = item.get("input_values", {})
         if not isinstance(values, dict):
             raise ValueError("input_values must be an object")
+        expected_output = item.get("expected_output")
+        if expected_output is not None and not isinstance(expected_output, dict):
+            raise ValueError("expected_output must be an object or null")
+        if expected_output is not None:
+            _validate_finite_json(expected_output)
         cases.append(
             RegressionCase(
                 case_id=case_id,
-                rule_pack_version=str(item["rule_pack_version"]),
-                component_code=str(item["component_code"]),
-                population_scope=str(item["population_scope"]),
-                effective_date=str(item["effective_date"]),
-                status=str(item["status"]),
-                input_values={key: Decimal(str(value)) for key, value in values.items()},
-                expected_output=item.get("expected_output"),
-                input_fingerprint=item.get("input_fingerprint"),
-                expected_output_fingerprint=item.get("expected_output_fingerprint"),
-                legal_source_hash=item.get("legal_source_hash"),
-                legal_article=item.get("legal_article"),
-                legal_clause=item.get("legal_clause"),
+                rule_pack_version=_required_text(item, "rule_pack_version"),
+                component_code=_required_text(item, "component_code"),
+                population_scope=_required_text(item, "population_scope"),
+                effective_date=_required_text(item, "effective_date"),
+                status=_required_text(item, "status"),
+                input_values=_decimal_input_values(values),
+                expected_output=expected_output,
+                input_fingerprint=_optional_text(item, "input_fingerprint"),
+                expected_output_fingerprint=_optional_text(item, "expected_output_fingerprint"),
+                legal_source_hash=_optional_text(item, "legal_source_hash"),
+                legal_article=_optional_text(item, "legal_article"),
+                legal_clause=_optional_text(item, "legal_clause"),
             )
         )
     return tuple(cases)
@@ -133,15 +220,19 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} has no governed input values")
         elif case.input_fingerprint is None:
             blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
+        elif not _is_hex64(case.input_fingerprint):
+            blockers.append(f"golden case {case.case_id} has an invalid input fingerprint")
         elif fingerprint_values(case.input_values) != case.input_fingerprint:
             blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
         if case.expected_output is None:
             blockers.append(f"golden case {case.case_id} is missing expected output")
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
+        elif not _is_hex64(case.expected_output_fingerprint):
+            blockers.append(f"golden case {case.case_id} has an invalid expected output fingerprint")
         if not case.legal_source_hash:
             blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
-        elif len(case.legal_source_hash) != 64 or not set(case.legal_source_hash) <= _HEX64:
+        elif not _is_hex64(case.legal_source_hash):
             blockers.append(f"golden case {case.case_id} has an invalid legal_source_hash")
         if not case.legal_article or not case.legal_article.strip():
             blockers.append(f"golden case {case.case_id} is missing legal_article")
@@ -199,8 +290,8 @@ def validate_repository_against_evidence(
 
 
 def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
-    if case.expected_output_fingerprint is None:
-        raise ValueError(f"golden case {case.case_id} has no expected output fingerprint")
+    if not _is_hex64(case.expected_output_fingerprint):
+        raise ValueError(f"golden case {case.case_id} has no valid expected output fingerprint")
     actual = fingerprint_rule_result(actual_result)
     if actual != case.expected_output_fingerprint:
         raise ValueError(f"golden case {case.case_id} output fingerprint mismatch")

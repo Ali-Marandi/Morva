@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from datetime import datetime
 from decimal import Decimal
 
@@ -249,4 +250,174 @@ def test_load_cases_rejects_empty_or_non_string_case_ids(monkeypatch, tmp_path, 
     monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
 
     with pytest.raises(ValueError, match="case_id must be a non-empty string"):
+        load_cases("1405.1")
+
+
+def _raw_case(**overrides):
+    value = {
+        "case_id": "schema-case-001",
+        "rule_pack_version": "1405.1",
+        "component_code": "TAX",
+        "population_scope": "all",
+        "effective_date": "1405-01-01",
+        "status": "review_required",
+        "input_values": {"taxable_base": "100.00"},
+        "expected_output": None,
+        "input_fingerprint": None,
+        "expected_output_fingerprint": None,
+        "legal_source_hash": None,
+        "legal_article": None,
+        "legal_clause": None,
+    }
+    value.update(overrides)
+    return value
+
+
+def _write_case_file(tmp_path, monkeypatch, case):
+    cases_dir = tmp_path / "1405.1"
+    cases_dir.mkdir(exist_ok=True)
+    (cases_dir / "cases.json").write_text(json.dumps([case]), encoding="utf-8")
+    monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
+
+
+@pytest.mark.parametrize("version", ["../outside", "nested/1405.1", r"..\\outside", ".."])
+def test_load_cases_rejects_unsafe_rule_pack_path_identifiers(monkeypatch, tmp_path, version):
+    monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
+
+    with pytest.raises(ValueError, match="rule_pack_version must be a safe version identifier"):
+        load_cases(version)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("rule_pack_version", None),
+        ("rule_pack_version", 1405),
+        ("rule_pack_version", "   "),
+        ("component_code", None),
+        ("component_code", 7),
+        ("component_code", ""),
+        ("population_scope", None),
+        ("population_scope", 12),
+        ("population_scope", " "),
+        ("effective_date", None),
+        ("effective_date", 20260101),
+        ("effective_date", ""),
+        ("status", None),
+        ("status", False),
+        ("status", " "),
+    ],
+)
+def test_load_cases_rejects_malformed_required_text_fields(monkeypatch, tmp_path, field, value):
+    raw_case = _raw_case(**{field: value})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match=f"{field} must be a non-empty string"):
+        load_cases("1405.1")
+
+
+@pytest.mark.parametrize("input_value", [None, True, "NaN", "Infinity", "-Infinity", "not-decimal", {}, []])
+def test_load_cases_rejects_non_finite_or_non_decimal_inputs(monkeypatch, tmp_path, input_value):
+    raw_case = _raw_case(input_values={"taxable_base": input_value})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="input value taxable_base must be a finite decimal"):
+        load_cases("1405.1")
+
+
+def test_load_cases_rejects_blank_input_value_keys(monkeypatch, tmp_path):
+    raw_case = _raw_case(input_values={"  ": "1"})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="input_values keys must be non-empty strings"):
+        load_cases("1405.1")
+
+
+@pytest.mark.parametrize("expected_output", ["10.00", [], 3])
+def test_load_cases_requires_expected_output_object_or_null(monkeypatch, tmp_path, expected_output):
+    raw_case = _raw_case(expected_output=expected_output)
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="expected_output must be an object or null"):
+        load_cases("1405.1")
+
+
+def test_load_cases_rejects_non_finite_expected_output_numbers(monkeypatch, tmp_path):
+    raw_case = _raw_case(expected_output={"amount": float("nan")})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="expected_output must not contain non-finite numbers"):
+        load_cases("1405.1")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("input_fingerprint", 123),
+        ("expected_output_fingerprint", {}),
+        ("legal_source_hash", 123),
+        ("legal_article", False),
+        ("legal_clause", 3),
+    ],
+)
+def test_load_cases_rejects_wrong_optional_metadata_types(monkeypatch, tmp_path, field, value):
+    raw_case = _raw_case(**{field: value})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match=f"{field} must be a string or null"):
+        load_cases("1405.1")
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("input_fingerprint", "not-a-sha256", "invalid input fingerprint"),
+        ("expected_output_fingerprint", "not-a-sha256", "invalid expected output fingerprint"),
+        ("legal_source_hash", "not-a-sha256", "invalid legal_source_hash"),
+    ],
+)
+def test_validator_rejects_malformed_sha256_fingerprints(
+    monkeypatch, field, value, message
+):
+    case = replace(_case("schema-fingerprint-001"), **{field: value})
+    monkeypatch.setattr("morva.rules.regression_cases.load_cases", lambda _version: (case,))
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert f"golden case {case.case_id} has an {message}" in blockers
+
+
+
+
+def test_fingerprint_values_preserves_significant_digits_beyond_decimal_context():
+    first = fingerprint_values(
+        {"amount": Decimal("123456789012345678901234567890")}
+    )
+    second = fingerprint_values(
+        {"amount": Decimal("123456789012345678901234567891")}
+    )
+
+    assert first != second
+
+
+@pytest.mark.parametrize(
+    "value",
+    [Decimal("1e999999999"), Decimal("1e-999999999")],
+)
+def test_fingerprint_values_rejects_unbounded_decimal_representations(value):
+    with pytest.raises(ValueError, match="maximum representation length"):
+        fingerprint_values({"amount": value})
+
+
+@pytest.mark.parametrize(
+    "input_value",
+    ["1e999999999", "1e-999999999", "0e-999999999", "1." + ("0" * 300)],
+)
+def test_load_cases_rejects_unbounded_decimal_representations(
+    monkeypatch, tmp_path, input_value
+):
+    raw_case = _raw_case(input_values={"taxable_base": input_value})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="maximum decimal representation length"):
         load_cases("1405.1")
