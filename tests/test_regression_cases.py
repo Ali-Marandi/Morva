@@ -276,7 +276,7 @@ def _raw_case(**overrides):
 def _write_case_file(tmp_path, monkeypatch, case):
     cases_dir = tmp_path / "1405.1"
     cases_dir.mkdir(exist_ok=True)
-    (cases_dir / "cases.json").write_text(json.dumps([case), encoding="utf-8")
+    (cases_dir / "cases.json").write_text(json.dumps([case]), encoding="utf-8")
     monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
 
 
