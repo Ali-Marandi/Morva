@@ -192,6 +192,8 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} requires population_scope")
         if not case.input_values:
             blockers.append(f"golden case {case.case_id} has no governed input values")
+        elif case.input_fingerprint is None:
+            blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
         elif not _is_hex64(case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} has an invalid input fingerprint")
         elif fingerprint_values(case.input_values) != case.input_fingerprint:
