@@ -14,7 +14,11 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 
-from .regression import fingerprint_rule_result, fingerprint_values
+from .regression import (
+    MAX_DECIMAL_REPRESENTATION_CHARS,
+    fingerprint_rule_result,
+    fingerprint_values,
+)
 from .rule_pack_1405 import REQUIRED_1405_COMPONENTS
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3] / "docs" / "legal" / "golden-cases"
@@ -60,6 +64,21 @@ def _optional_text(item: dict[str, object], field: str) -> str | None:
     return value
 
 
+def _fixed_point_representation_length(value: Decimal) -> int:
+    sign, digits, exponent = value.as_tuple()
+    digit_count = len(digits)
+    if exponent >= 0:
+        length = digit_count + exponent
+    else:
+        decimal_point = digit_count + exponent
+        length = (
+            digit_count + 1
+            if decimal_point > 0
+            else 2 - decimal_point + digit_count
+        )
+    return length + int(bool(sign))
+
+
 def _decimal_input_values(values: dict[str, object]) -> dict[str, Decimal]:
     converted: dict[str, Decimal] = {}
     for key, value in values.items():
@@ -73,6 +92,13 @@ def _decimal_input_values(values: dict[str, object]) -> dict[str, Decimal]:
             raise ValueError(f"input value {key} must be a finite decimal") from exc
         if not decimal_value.is_finite():
             raise ValueError(f"input value {key} must be a finite decimal")
+        if (
+            _fixed_point_representation_length(decimal_value)
+            > MAX_DECIMAL_REPRESENTATION_CHARS
+        ):
+            raise ValueError(
+                f"input value {key} exceeds the maximum decimal representation length"
+            )
         converted[key] = decimal_value
     return converted
 

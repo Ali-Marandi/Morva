@@ -17,6 +17,7 @@ This tranche hardens that input boundary only. It does not invent legal inputs, 
 - Require non-empty string values for the Rule Pack version, component code, population scope, effective date and status.
 - Require optional fingerprint/legal metadata fields to be strings or null.
 - Convert input values to finite `Decimal` values, rejecting booleans, nulls, collections, invalid numbers, NaN and infinities.
+- Bound fixed-point input serialization to 256 characters and canonicalize decimal fingerprints without context-dependent rounding, preventing extreme exponents from exhausting resources and distinct high-precision values from collapsing to the same fingerprint.
 - Require `expected_output` to be an object or null and reject non-finite numbers within the object.
 - Require input, expected-output and legal-source fingerprints to be 64-character hexadecimal SHA-256 values when supplied.
 - Preserve the existing canonical suite-hash regression for unchanged repository data.

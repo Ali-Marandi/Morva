@@ -4,6 +4,7 @@
 - Restrict Rule Pack version identifiers before using them as golden-case repository path components.
 - Reject blank or non-string required metadata, malformed optional metadata types, non-object expected outputs, empty input keys, and non-finite numeric values.
 - Validate input, expected-output and legal-source SHA-256 fingerprint shape while preserving the existing canonical golden-suite hash for unchanged repository data.
+- Canonicalize decimal fingerprints without context rounding and reject unbounded fixed-point representations before hashing or suite serialization.
 - Add focused regression tests for unsafe path identifiers and malformed case payloads.
 
 ### Safety

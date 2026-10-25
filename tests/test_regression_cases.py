@@ -386,3 +386,38 @@ def test_validator_rejects_malformed_sha256_fingerprints(
 
     assert f"golden case {case.case_id} has an {message}" in blockers
 
+
+
+
+def test_fingerprint_values_preserves_significant_digits_beyond_decimal_context():
+    first = fingerprint_values(
+        {"amount": Decimal("123456789012345678901234567890")}
+    )
+    second = fingerprint_values(
+        {"amount": Decimal("123456789012345678901234567891")}
+    )
+
+    assert first != second
+
+
+@pytest.mark.parametrize(
+    "value",
+    [Decimal("1e999999999"), Decimal("1e-999999999")],
+)
+def test_fingerprint_values_rejects_unbounded_decimal_representations(value):
+    with pytest.raises(ValueError, match="maximum representation length"):
+        fingerprint_values({"amount": value})
+
+
+@pytest.mark.parametrize(
+    "input_value",
+    ["1e999999999", "1e-999999999", "0e-999999999", "1." + ("0" * 300)],
+)
+def test_load_cases_rejects_unbounded_decimal_representations(
+    monkeypatch, tmp_path, input_value
+):
+    raw_case = _raw_case(input_values={"taxable_base": input_value})
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(ValueError, match="maximum decimal representation length"):
+        load_cases("1405.1")
