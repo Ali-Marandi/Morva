@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -80,6 +81,17 @@ def _is_hex64(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and set(value) <= _HEX64
 
 
+def _validate_finite_json(value: object) -> None:
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("expected_output must not contain non-finite numbers")
+    if isinstance(value, dict):
+        for nested in value.values():
+            _validate_finite_json(nested)
+    elif isinstance(value, list):
+        for nested in value:
+            _validate_finite_json(nested)
+
+
 def _canonical_case(case: RegressionCase) -> dict[str, object]:
     return {
         "case_id": case.case_id,
@@ -119,6 +131,8 @@ def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
         expected_output = item.get("expected_output")
         if expected_output is not None and not isinstance(expected_output, dict):
             raise ValueError("expected_output must be an object or null")
+        if expected_output is not None:
+            _validate_finite_json(expected_output)
         cases.append(
             RegressionCase(
                 case_id=case_id,
