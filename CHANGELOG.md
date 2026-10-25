@@ -1,3 +1,15 @@
+## Unreleased — Golden-case loader schema and path guard
+
+### Validation integrity
+- Restrict Rule Pack version identifiers before using them as golden-case repository path components.
+- Reject blank or non-string required metadata, malformed optional metadata types, non-object expected outputs, empty input keys, and non-finite numeric values.
+- Validate input, expected-output and legal-source SHA-256 fingerprint shape while preserving the existing canonical golden-suite hash for unchanged repository data.
+- Add focused regression tests for unsafe path identifiers and malformed case payloads.
+
+### Safety
+- Engineering validation only. No legal expected outputs, statutory values, authority evidence or production approvals are fabricated.
+- The 1405.1 corpus remains incomplete and Gate 1 remains blocked.
+
 ## Unreleased — M4.80 Independent M4.79 Receipt Verification
 
 ### Integrity and reconstruction
