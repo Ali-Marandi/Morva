@@ -20,7 +20,7 @@ This follow-up is limited to Gate 1's Golden Case input boundary. It does not ch
 
 ## CI finding and corrective action
 
-The first CI attempt failed at Ruff/compile time because the new multiline `json.loads()` call was accidentally committed with literal `\\n` text instead of actual source line breaks. The same syntax error caused downstream test collection to fail. The call has been corrected; no tests were removed or weakened. CI must be rerun on the corrected HEAD.
+The first CI attempt failed at Ruff/compile time because the new multiline `json.loads()` call was accidentally committed with literal `\\n` text instead of actual source line breaks. The same syntax error caused downstream test collection to fail. The call was corrected in commit `563b375a8b05a6f817a9510696a2a0ba75bbd596`; no tests were removed or weakened. On that exact code HEAD, all 15 associated workflow runs and all 49 check runs completed successfully, including the Golden Case Repository Gate (run [40402076428](https://github.com/Ali-Marandi/Morva/actions/runs/40402076428)), full Morva CI (run [40402076587](https://github.com/Ali-Marandi/Morva/actions/runs/40402076587)) and Python 3.12/3.13 jobs. The earlier failure was confined to the malformed source formatting in `bb98c10`; the correction retained the tests. A later documentation-only synchronization records this verified result without changing runtime or test code.
 
 ## Acceptance criteria
 
