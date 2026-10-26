@@ -136,12 +136,22 @@ def _canonical_case(case: RegressionCase) -> dict[str, object]:
     }
 
 
+def _reject_duplicate_json_object_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate keys before Python's JSON decoder can silently overwrite them."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key {key!r}")
+        result[key] = value
+    return result
+
+
 def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
     _validate_rule_pack_version(rule_pack_version)
     path = _REPOSITORY_ROOT / rule_pack_version / "cases.json"
     if not path.is_file():
         return ()
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(\n        path.read_text(encoding="utf-8"),\n        object_pairs_hook=_reject_duplicate_json_object_keys,\n    )
     if not isinstance(raw, list):
         raise ValueError("golden case repository must contain a JSON list")
     cases: list[RegressionCase] = []

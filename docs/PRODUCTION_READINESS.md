@@ -18,6 +18,7 @@
 9. [ ] Certified golden corpus covers all legally active components and employee-population variants.
 10. [x] Golden-case validation checks every repository case, verifies required-component coverage and rejects duplicate or empty `case_id` values.
 11. [x] Golden-case loading rejects unsafe version path identifiers, malformed field types, non-finite or oversized decimal representations and malformed SHA-256 fingerprints; decimal fingerprint canonicalization preserves significant digits without context rounding.
+12. [x] Golden-case JSON loading rejects duplicate object keys at every nesting level before duplicate values can be silently overwritten.
 
 **Release criterion:** zero unresolved legal-source, approval, version-binding or golden-regression blockers.
 

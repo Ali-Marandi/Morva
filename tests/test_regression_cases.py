@@ -280,6 +280,24 @@ def _write_case_file(tmp_path, monkeypatch, case):
     monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
 
 
+@pytest.mark.parametrize(
+    "raw_json",
+    [
+        '[{"case_id":"first","case_id":"second"}]',
+        '[{"case_id":"duplicate-input","input_values":{"taxable_base":"100.00","taxable_base":"1.00"}}]',
+        '[{"case_id":"duplicate-output","expected_output":{"amount":"100.00","amount":"1.00"}}]',
+    ],
+)
+def test_load_cases_rejects_duplicate_json_object_keys(monkeypatch, tmp_path, raw_json):
+    cases_dir = tmp_path / "1405.1"
+    cases_dir.mkdir()
+    (cases_dir / "cases.json").write_text(raw_json, encoding="utf-8")
+    monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
+
+    with pytest.raises(ValueError, match="duplicate JSON object key"):
+        load_cases("1405.1")
+
+
 @pytest.mark.parametrize("version", ["../outside", "nested/1405.1", r"..\\outside", ".."])
 def test_load_cases_rejects_unsafe_rule_pack_path_identifiers(monkeypatch, tmp_path, version):
     monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)

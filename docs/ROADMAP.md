@@ -2,8 +2,8 @@
 
 **Canonical branch:** `main`  
 **Last confirmed main baseline for this engineering chain:** `528e946f743e4718225543e7a7883809bcd698ef`. M4.80 landed at `7976f21b8de62d539afa43e459cc49bcdcfc3ed0`; the test-only certification-fixture expiry correction was subsequently merged through PR #209. That fixture correction does not relax production expiry checks or certify real payroll/payment.  
-**Latest verified Gate 1 candidate baseline:** PR #210 head `96a4e6d04f2e9e0aa7afff1b188b30b7c8782ca0`; all 48 associated GitHub Actions workflow runs completed successfully. PR #210 remains open and unmerged pending independent review, so its head is a green candidate baseline rather than a mainline commit.  
-**Selected follow-up tranche:** strict golden-case repository schema/path validation plus exact, bounded decimal fingerprint canonicalization on branch `fix/golden-case-schema-guard-20261025`. The prior schema-only head passed CI; the new fingerprint-hardening commit requires its own focused and full CI evidence. Legal expected outputs, statutory values and production approvals remain outside code-generated evidence.
+**Latest verified Gate 1 candidate baseline:** PR #211 head `0de3f1b3b9a944ca659d9ce7ba696e8cd4d44043`; all 15 associated GitHub Actions workflow runs and 49 check runs completed successfully. PR #211 is open on top of PR #210 and still requires independent review; neither candidate is merged to `main`.  
+**Selected follow-up tranche:** reject duplicate keys recursively in Golden Case JSON objects, including nested input and expected-output objects, on branch `fix/golden-case-duplicate-json-keys-20261027`, based on PR #211's verified candidate HEAD. CI for this new child candidate is pending until its exact HEAD is tested. Legal expected outputs, statutory values and production approvals remain outside code-generated evidence; Gate 1 remains blocked.
 
 ## Completed implementation foundations
 
