@@ -32,7 +32,7 @@ export const moduleMenus: ModuleMenu[] = [
   {
     id: 'personnel-pay', label: 'حقوق پرسنل', icon: WalletCards,
     children: [
-      { id: 'pay-factors', label: 'عوامل موثر بر حقوق', children: [{ id: 'benefits', label: 'مزایا' }, { id: 'deductions', label: 'کسور' }, { id: 'other-benefits', label: 'سایر مزایا' }, { id: 'employer-obligations', label: 'تعهدات کارفرما' }, { id: 'work-types', label: 'نوع کارکرد' }] },
+      { id: 'pay-factors', label: 'عوامل موثر بر حقوق', children: [{ id: 'pay-benefits', label: 'مزایا' }, { id: 'pay-deductions', label: 'کسور' }, { id: 'pay-other-benefits', label: 'سایر مزایا' }, { id: 'pay-employer-obligations', label: 'تعهدات کارفرما' }, { id: 'pay-work-types', label: 'نوع کارکرد' }] },
       { id: 'pay-details', label: 'اطلاعات محاسبه حقوق' },
       { id: 'current-payroll', label: 'محاسبه جاری', children: [{ id: 'current-request', label: 'درخواست محاسبه' }, { id: 'current-results', label: 'نتایج محاسبه حقوق' }] },
       { id: 'deferred-payroll', label: 'محاسبه معوق', children: [{ id: 'deferred-request', label: 'درخواست محاسبه معوق' }, { id: 'deferred-results', label: 'نتایج محاسبه معوق' }] },

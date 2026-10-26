@@ -1,3 +1,14 @@
+## Unreleased — Accessible Responsive Web Navigation
+
+### Web UX and accessibility
+- Provide a complete mobile module catalogue instead of opening only the first navigation category.
+- Announce navigation expanded/current states, close menus on Escape or focus leaving the header, and restore focus to the menu trigger.
+- Add a skip-to-main-content link, preserve a visible keyboard-focus outline on its destination, and respect reduced-motion preferences.
+- Resolve colliding nested module route IDs and add regression tests for navigation controls, route-ID uniqueness, and skip-link focus affordances.
+
+### Validation boundary
+- The web navigation candidate is tracked in PR #212. Acceptance requires tests, TypeScript type-check, lint, production build, and relevant quality gates to complete successfully on the exact latest PR head; older green runs do not validate newer commits.
+- No payroll calculation, statutory rule, database migration, production authorization, payment operation, or secret is changed by this UI tranche.
 ## Unreleased — M4.80 Independent M4.79 Receipt Verification
 
 ### Integrity and reconstruction

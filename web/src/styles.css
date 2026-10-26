@@ -59,6 +59,34 @@ a:hover {
   color: #45618d;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1000;
+  transform: translateY(-180%);
+  border: 2px solid #1d4ed8;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  color: #1e3a8a;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+#main-content:focus {
+  outline: 3px solid #1d4ed8;
+  outline-offset: -3px;
+}
+
 .shell {
   max-width: 100%;
   margin: 0 auto;
@@ -158,6 +186,21 @@ a:hover {
   color: #627287;
   line-height: 1.8;
   border-left: 4px solid #5a7fb0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media (max-width: 1024px) {
