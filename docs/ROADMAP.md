@@ -3,6 +3,12 @@
 **Canonical branch:** `main`  
 **Current position:** M4.80 is committed to `main` at `7976f21b8de62d539afa43e459cc49bcdcfc3ed0`. Cumulative `Tests` run `39371676859` failed with 4 failures and 1,186 passes because synthetic positive evidence expired on 2026-10-19 while the verifier correctly evaluated certification at the 2026-10-20 wall clock. The focused fix gives positive test-only evidence a stable far-future expiry; negative expiry checks and production validation remain unchanged. PR `fix/m4-80-certification-fixture-expiry` is pending CI. M4.79's dedicated verification run `39230201296` and migration gate `39230201658` succeeded. M4.80 is not validated or production-certified for real payroll/payment.
 
+## Active web-quality candidate — PR #212
+
+The focused navigation/accessibility tranche is being developed on `feat/web-accessible-responsive-navigation-20261025`, based on the current `main` baseline. It provides the complete mobile module catalogue, explicit menu state semantics, Escape/focus restoration, unique nested route IDs, a skip link, and a visible focus indicator on the main landmark. A second-pass review found and corrected the previous `outline: none` behavior. Regression coverage now verifies the skip-link target and keyboard-focus utility classes.
+
+The current candidate is still unmerged. Validation must be read from GitHub Actions for the exact latest PR head, including the full test workflow, type check, lint, production web build, M3.16 UX gate, and relevant regression checks. Failures observed on earlier candidate commits remain part of the review history and must not be confused with current-head results. This UI work does not change payroll rules or authorize production use.
+
 ## Completed implementation foundations
 
 - M3.87 CI workflow integrity gate
