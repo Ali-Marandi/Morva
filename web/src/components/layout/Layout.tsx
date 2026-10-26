@@ -16,7 +16,7 @@ function Layout() {
       <div className="h-screen overflow-hidden bg-slate-100" dir="rtl">
         <SkipLink />
         <Topbar />
-        <main id="main-content" tabIndex={-1} className="h-[calc(100vh-48px)] overflow-auto">
+        <main id="main-content" tabIndex={-1} className="h-[calc(100vh-48px)] overflow-auto focus:outline focus:outline-2 focus:outline-blue-700 focus:outline-offset-[-3px]">
           <Outlet />
         </main>
       </div>
@@ -29,7 +29,7 @@ function Layout() {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto focus:outline focus:outline-2 focus:outline-blue-700 focus:outline-offset-[-3px]">
           <Outlet />
         </main>
       </div>
