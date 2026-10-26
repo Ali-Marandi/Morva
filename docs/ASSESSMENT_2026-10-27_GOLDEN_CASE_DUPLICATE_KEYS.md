@@ -18,6 +18,10 @@ This follow-up is limited to Gate 1's Golden Case input boundary. It does not ch
 - Add regression cases for duplicate `case_id`, nested `input_values` and nested `expected_output` keys.
 - Update Changelog, Roadmap, Implementation Matrix, and Production Readiness evidence notes.
 
+## CI finding and corrective action
+
+The first CI attempt failed at Ruff/compile time because the new multiline `json.loads()` call was accidentally committed with literal `\\n` text instead of actual source line breaks. The same syntax error caused downstream test collection to fail. The call has been corrected; no tests were removed or weakened. CI must be rerun on the corrected HEAD.
+
 ## Acceptance criteria
 
 - The focused Golden Case regression tests pass on the exact latest commit.

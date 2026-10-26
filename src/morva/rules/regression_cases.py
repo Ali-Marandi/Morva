@@ -151,7 +151,10 @@ def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
     path = _REPOSITORY_ROOT / rule_pack_version / "cases.json"
     if not path.is_file():
         return ()
-    raw = json.loads(\n        path.read_text(encoding="utf-8"),\n        object_pairs_hook=_reject_duplicate_json_object_keys,\n    )
+    raw = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_reject_duplicate_json_object_keys,
+    )
     if not isinstance(raw, list):
         raise ValueError("golden case repository must contain a JSON list")
     cases: list[RegressionCase] = []
