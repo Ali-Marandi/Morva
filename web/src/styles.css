@@ -83,7 +83,8 @@ a:hover {
 }
 
 #main-content:focus {
-  outline: none;
+  outline: 3px solid #1d4ed8;
+  outline-offset: -3px;
 }
 
 .shell {
