@@ -1,10 +1,11 @@
 import "@testing-library/jest-dom/vitest";
 import React from "react";
+import { readFileSync } from "node:fs";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import Layout from "../components/layout/Layout";
-import styles from "../styles.css?raw";
+const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
 
 describe("skip link", () => {
   it("targets the keyboard-focusable main landmark", () => {
