@@ -263,6 +263,8 @@ def validate_repository_against_evidence(
     for case in load_cases(rule_pack_version):
         cases_by_component.setdefault(case.component_code, []).append(case)
 
+    current_suite_hash = regression_suite_hash(rule_pack_version)
+
     # شواهد هر مؤلفه‌ای که در مخزن نمونه دارد باید بررسی شود؛ نه فقط مؤلفه‌های اجباری.
     for component, component_cases in cases_by_component.items():
         evidence = session.scalar(
@@ -276,6 +278,11 @@ def validate_repository_against_evidence(
                 f"missing rule evidence for golden case {case.case_id}" for case in component_cases
             )
             continue
+        if evidence.regression_suite_hash != current_suite_hash:
+            blockers.extend(
+                f"rule evidence regression suite hash mismatch for golden case {case.case_id}"
+                for case in component_cases
+            )
         source = session.get(LegalSourceRecord, evidence.legal_source_id)
         if source is None:
             blockers.extend(
