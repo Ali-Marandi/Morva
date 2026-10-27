@@ -97,6 +97,7 @@ def test_1405_golden_repository_must_match_registered_legal_evidence():
         blockers = validate_repository_against_evidence(session, "1405.1", required_components=("TAX", "PENSION", "INSURANCE", "LOAN", "COURT_ORDER"))
         assert any("source hash mismatch" in blocker for blocker in blockers)
         assert any("missing legal_article" in blocker for blocker in blockers)
+        assert not any("regression suite hash mismatch" in blocker for blocker in blockers)
 
 
 def test_validator_checks_every_golden_case_for_a_component(monkeypatch):
@@ -439,3 +440,52 @@ def test_load_cases_rejects_unbounded_decimal_representations(
 
     with pytest.raises(ValueError, match="maximum decimal representation length"):
         load_cases("1405.1")
+
+
+
+def test_evidence_validation_rejects_stale_regression_suite_hash(monkeypatch):
+    case = _case("tax-stale-suite-hash")
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    with _session() as session:
+        source = LegalSourceRecord(
+            citation="Synthetic authority source",
+            issuer="Synthetic issuer",
+            adoption_date="2026-01-01",
+            effective_from="2026-01-01",
+            document_hash="a" * 64,
+            status="approved",
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            RuleEvidenceRecord(
+                rule_pack_version="1405.1",
+                component_code="TAX",
+                legal_source_id=source.id,
+                issuer=source.issuer,
+                article="1",
+                clause=None,
+                population_scope="all",
+                source_hash=source.document_hash,
+                regression_suite_hash="c" * 64,
+                status="approved",
+                reviewed_by="reviewer",
+                approved_by="approver",
+                approved_at=datetime(2026, 1, 3),
+            )
+        )
+        session.commit()
+
+        blockers = validate_repository_against_evidence(
+            session,
+            "1405.1",
+            required_components=("TAX",),
+        )
+
+    assert blockers == (
+        "rule evidence regression suite hash mismatch for golden case tax-stale-suite-hash",
+    )
