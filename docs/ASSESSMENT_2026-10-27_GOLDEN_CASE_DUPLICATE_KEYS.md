@@ -20,15 +20,13 @@ This follow-up is limited to Gate 1's Golden Case input boundary. It does not ch
 
 ## CI finding and corrective action
 
-The first CI attempt failed at Ruff/compile time because the new multiline `json.loads()` call was accidentally committed with literal `\\n` text instead of actual source line breaks. The same syntax error caused downstream test collection to fail. The call was corrected in commit `563b375a8b05a6f817a9510696a2a0ba75bbd596`; no tests were removed or weakened. On that exact code HEAD, all 15 associated workflow runs and all 49 check runs completed successfully, including the Golden Case Repository Gate (run [40402076428](https://github.com/Ali-Marandi/Morva/actions/runs/40402076428)), full Morva CI (run [40402076587](https://github.com/Ali-Marandi/Morva/actions/runs/40402076587)) and Python 3.12/3.13 jobs. The earlier failure was confined to the malformed source formatting in `bb98c10`; the correction retained the tests. A later documentation-only synchronization records this verified result without changing runtime or test code.
+The first CI attempt failed at Ruff/compile time because the new multiline `json.loads()` call was accidentally committed with literal `\\n` text instead of actual source line breaks. The same syntax error caused downstream test collection to fail. The corrective code commit `563b375a8b05a6f817a9510696a2a0ba75bbd596` removed the syntax error without weakening tests. The combined code/evidence-binding HEAD `d7b4e500c389ebc90509b941d4f6786b5bafa0ac` passed all 14 associated workflow runs and 48 checks, including full Morva CI. The documentation-only follow-up HEAD `121b703546db2743d9ff69744fd2e3b2d47951f5` also passed all 14 workflows and 48 checks; links are recorded in the PR description.
 
 ## Acceptance criteria
 
-- The focused Golden Case regression tests pass on the exact latest commit.
-- Ruff and the Golden Case Repository Gate pass.
-- The full Python Tests and Morva CI workflows pass on the same commit.
+- Focused Golden Case regression tests and full Morva CI passed on the code/test HEAD; the subsequent documentation-only HEAD also passed 14 workflows and 48 checks.
 - Existing valid Golden Case repository hash remains unchanged.
-- The candidate is independently reviewed and its ancestry remains stacked on PR #211.
+- The candidate is independently reviewed and its ancestry remains stacked on PR #211; parent PRs are still open and unmerged.
 - Gate 1 remains blocked unless authoritative primary-source legal evidence, formal legal/finance approval and a certified golden corpus are supplied.
 
 ## Boundary

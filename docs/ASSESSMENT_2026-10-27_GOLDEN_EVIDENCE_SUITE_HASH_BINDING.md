@@ -4,7 +4,7 @@
 **Repository:** `Ali-Marandi/Morva`  
 **Branch:** `fix/golden-case-duplicate-json-keys-20261027`  
 **Parent chain:** PR #210 → PR #211 → PR #213  
-**Validation status:** Code HEAD `d7b4e500c389ebc90509b941d4f6786b5bafa0ac` passed all 14 associated GitHub Actions workflow runs and all 48 check runs. The full Morva CI completed successfully, including Python 3.12/3.13 tests; the focused Golden Case Repository Gate, Web Type Check, Backend Security Regression, and M3.13/M3.15/M3.16/M3.22/M3.23/M3.24 gates also passed. Local test execution was not performed in this environment.
+**Validation status:** Code/test HEAD `d7b4e500c389ebc90509b941d4f6786b5bafa0ac` and subsequent documentation-only HEAD `121b703546db2743d9ff69744fd2e3b2d47951f5` each passed all 14 associated GitHub Actions workflow runs and all 48 check runs. The full Morva CI completed successfully, including Python 3.12/3.13 tests; focused Golden Case, Web Type Check, Backend Security Regression and M3.13/M3.15/M3.16/M3.22/M3.23/M3.24 gates also passed. Local test execution was not performed in this environment.
 
 ## Finding
 
