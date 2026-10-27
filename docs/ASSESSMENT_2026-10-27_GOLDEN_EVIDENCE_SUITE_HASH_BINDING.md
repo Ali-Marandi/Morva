@@ -4,7 +4,7 @@
 **Repository:** `Ali-Marandi/Morva`  
 **Branch:** `fix/golden-case-duplicate-json-keys-20261027`  
 **Parent chain:** PR #210 → PR #211 → PR #213  
-**Validation status:** Exact-HEAD GitHub Actions pending; local test execution was not performed in this environment.
+**Validation status:** Code HEAD `d7b4e500c389ebc90509b941d4f6786b5bafa0ac` passed all 14 associated GitHub Actions workflow runs and all 48 check runs. The full Morva CI completed successfully, including Python 3.12/3.13 tests; the focused Golden Case Repository Gate, Web Type Check, Backend Security Regression, and M3.13/M3.15/M3.16/M3.22/M3.23/M3.24 gates also passed. Local test execution was not performed in this environment.
 
 ## Finding
 
@@ -22,9 +22,9 @@ The calculation-matrix gate compared the stored evidence hash with the matrix en
 
 ## Verification
 
-- New focused regression test: added; execution awaits exact-HEAD GitHub Actions.
-- Ruff, full Python tests, migrations, security checks and web build: not run locally in this environment; exact-HEAD CI evidence is pending.
-- Earlier successful CI for PR #213 does not validate this new code change and is not reused as evidence for the new HEAD.
+- The focused stale/matching suite-hash regression test passed in the exact-code-HEAD Golden Case Repository Gate: [run 40460021049](https://github.com/Ali-Marandi/Morva/actions/runs/40460021049).
+- Full CI on the same code HEAD completed successfully: [Morva CI run 40460020931](https://github.com/Ali-Marandi/Morva/actions/runs/40460020931), including Python 3.12/3.13, repository-wide lint, migration upgrade and web build.
+- The exact code HEAD has 14 successful workflow runs and 48 successful checks. Local pytest/Ruff were not run in this execution environment; validation claims are based on GitHub Actions.
 - No database schema or migration change is required.
 
 ## Safety boundary
