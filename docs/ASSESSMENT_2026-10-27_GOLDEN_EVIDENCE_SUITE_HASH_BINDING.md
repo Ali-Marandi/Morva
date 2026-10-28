@@ -27,6 +27,18 @@ The calculation-matrix gate compared the stored evidence hash with the matrix en
 - The exact code HEAD has 14 successful workflow runs and 48 successful checks. Local pytest/Ruff were not run in this execution environment; validation claims are based on GitHub Actions.
 - No database schema or migration change is required.
 
+## Exact-HEAD CI reconciliation (2026-10-28)
+
+The previously described documentation-only HEAD `9763abc3df0d84126aa79b2c4cf0d5dab2f7c900` has now completed its GitHub validation. The exact commit's check-runs API reports **48/48 successful checks**; all 10 associated PR-triggered workflow runs returned by the workflow-run query completed successfully.
+
+Key exact-HEAD evidence:
+- [Morva CI](https://github.com/Ali-Marandi/Morva/actions/runs/40583928308) succeeded, including full pytest on Python 3.12 and 3.13, repository-wide Ruff, `alembic upgrade head`, `pip-audit`, release hygiene and the web production build.
+- [Golden Case Repository Gate](https://github.com/Ali-Marandi/Morva/actions/runs/40583928499) succeeded.
+- [Morva Web Type Check](https://github.com/Ali-Marandi/Morva/actions/runs/40583928498) and [Backend Security Regression](https://github.com/Ali-Marandi/Morva/actions/runs/40583928486) succeeded.
+- The M3.13, M3.15, M3.16, M3.22, M3.23 and M3.24 associated gates also completed successfully.
+
+This addendum is documentation-only and does not alter runtime code. GitHub Actions must validate the new documentation commit independently; the evidence above applies to the prior exact HEAD only. Local pytest/Ruff were not run in this environment.
+
 ## Safety boundary
 
 This is evidence-binding validation only. It does not invent legal sources, statutory rates, coefficients or expected payroll outputs. It does not change payroll arithmetic, credentials, official endpoints, payment execution or production authorization. Gate 1 and all six Production Readiness Gates remain **BLOCKED** until authoritative legal evidence, formal legal/finance/security/operations approvals and a certified golden corpus are retained.
