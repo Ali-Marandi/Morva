@@ -136,12 +136,25 @@ def _canonical_case(case: RegressionCase) -> dict[str, object]:
     }
 
 
+def _reject_duplicate_json_object_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate keys before Python's JSON decoder can silently overwrite them."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key {key!r}")
+        result[key] = value
+    return result
+
+
 def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
     _validate_rule_pack_version(rule_pack_version)
     path = _REPOSITORY_ROOT / rule_pack_version / "cases.json"
     if not path.is_file():
         return ()
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    raw = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_reject_duplicate_json_object_keys,
+    )
     if not isinstance(raw, list):
         raise ValueError("golden case repository must contain a JSON list")
     cases: list[RegressionCase] = []
@@ -250,6 +263,8 @@ def validate_repository_against_evidence(
     for case in load_cases(rule_pack_version):
         cases_by_component.setdefault(case.component_code, []).append(case)
 
+    current_suite_hash = regression_suite_hash(rule_pack_version)
+
     # شواهد هر مؤلفه‌ای که در مخزن نمونه دارد باید بررسی شود؛ نه فقط مؤلفه‌های اجباری.
     for component, component_cases in cases_by_component.items():
         evidence = session.scalar(
@@ -263,6 +278,11 @@ def validate_repository_against_evidence(
                 f"missing rule evidence for golden case {case.case_id}" for case in component_cases
             )
             continue
+        if evidence.regression_suite_hash != current_suite_hash:
+            blockers.extend(
+                f"rule evidence regression suite hash mismatch for golden case {case.case_id}"
+                for case in component_cases
+            )
         source = session.get(LegalSourceRecord, evidence.legal_source_id)
         if source is None:
             blockers.extend(
