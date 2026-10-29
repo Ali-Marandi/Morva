@@ -42,3 +42,10 @@ This addendum is documentation-only and does not alter runtime code. GitHub Acti
 ## Safety boundary
 
 This is evidence-binding validation only. It does not invent legal sources, statutory rates, coefficients or expected payroll outputs. It does not change payroll arithmetic, credentials, official endpoints, payment execution or production authorization. Gate 1 and all six Production Readiness Gates remain **BLOCKED** until authoritative legal evidence, formal legal/finance/security/operations approvals and a certified golden corpus are retained.
+
+
+## Exact-HEAD CI reconciliation (2026-10-29)
+
+The current code/evidence-binding HEAD `9b9005fab64846073d514f19a2eae0ea0af81107` has now completed validation. The GitHub check-runs API returned **48/48 successful checks** for this exact SHA. Both the [PR-triggered Morva CI run 40643415123](https://github.com/Ali-Marandi/Morva/actions/runs/40643415123) and [push-triggered Morva CI run 40643408909](https://github.com/Ali-Marandi/Morva/actions/runs/40643408909) completed successfully. The full test jobs for Python 3.12 and 3.13, Web Build, Golden Case Repository Gate, Web Type Check, and Backend Security Regression are successful.
+
+This evidence applies to `9b9005fab64846073d514f19a2eae0ea0af81107` only. The present addendum changes documentation only; GitHub Actions must validate the new documentation HEAD independently. Local pytest/Ruff were not run in this environment.
