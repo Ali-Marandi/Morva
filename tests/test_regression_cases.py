@@ -287,6 +287,8 @@ def _write_case_file(tmp_path, monkeypatch, case):
         '[{"case_id":"first","case_id":"second"}]',
         '[{"case_id":"duplicate-input","input_values":{"taxable_base":"100.00","taxable_base":"1.00"}}]',
         '[{"case_id":"duplicate-output","expected_output":{"amount":"100.00","amount":"1.00"}}]',
+        '[{"case_id":"nested-duplicate","expected_output":{"details":{"amount":"100.00","amount":"1.00"}}}]',
+        '[{"case_id":"escaped-key-duplicate","expected_output":{"amount":"100.00","\\u0061mount":"1.00"}}]',
     ],
 )
 def test_load_cases_rejects_duplicate_json_object_keys(monkeypatch, tmp_path, raw_json):
