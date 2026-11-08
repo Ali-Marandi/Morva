@@ -22,9 +22,20 @@ const Employees: React.FC = () => {
   const statsQuery = useEmployeeStats();
   const employeesQuery = useEmployees({ page: 1, limit: 50, sort: "name", order: "asc" });
   const isLoading = statsQuery.isLoading || employeesQuery.isLoading;
-  const error = statsQuery.error || employeesQuery.error;
+  const apiError = [statsQuery.data, employeesQuery.data]
+    .map((response) => response && !response.success
+      ? response.error?.message || "دریافت اطلاعات کارکنان ناموفق بود."
+      : undefined)
+    .find((message): message is string => Boolean(message));
+  const queryError = statsQuery.error || employeesQuery.error;
+  const errorMessage = queryError ? getErrorMessage(queryError) : apiError;
   const stats = statsQuery.data?.success ? statsQuery.data.data : undefined;
   const employees = employeesQuery.data?.success ? employeesQuery.data.data?.items ?? [] : [];
+
+  const retry = () => {
+    void statsQuery.refetch();
+    void employeesQuery.refetch();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8" dir="rtl">
@@ -35,14 +46,22 @@ const Employees: React.FC = () => {
         </div>
 
         {isLoading && (
-          <div className="mb-6 rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700">
+          <div className="mb-6 rounded-xl border border-morva-200 bg-white p-4 text-sm text-morva-700" role="status" aria-live="polite">
             در حال دریافت اطلاعات کارکنان…
           </div>
         )}
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
-            {getErrorMessage(error)}
+        {errorMessage && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <span>{errorMessage}</span>
+            <button
+              type="button"
+              onClick={retry}
+              disabled={statsQuery.isFetching || employeesQuery.isFetching}
+              className="rounded-lg border border-red-300 bg-white px-3 py-2 font-semibold text-red-800 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-wait disabled:opacity-60"
+            >
+              تلاش دوباره
+            </button>
           </div>
         )}
 
@@ -75,8 +94,8 @@ const Employees: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900">فهرست کارکنان</h2>
           </div>
 
-          {!isLoading && employees.length === 0 && !error && (
-            <div className="p-6 text-sm text-gray-600">هیچ رکوردی برای نمایش وجود ندارد.</div>
+          {!isLoading && employeesQuery.data?.success && employees.length === 0 && !errorMessage && (
+            <div className="p-6 text-sm text-gray-600" role="status">هیچ رکوردی برای نمایش وجود ندارد.</div>
           )}
 
           {employees.length > 0 && (
@@ -84,16 +103,16 @@ const Employees: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نام</th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">بخش</th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">سمت</th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">وضعیت</th>
+                    <th scope="col" className="px-6 py-3 text-right text-sm font-semibold text-gray-900">نام</th>
+                    <th scope="col" className="px-6 py-3 text-right text-sm font-semibold text-gray-900">بخش</th>
+                    <th scope="col" className="px-6 py-3 text-right text-sm font-semibold text-gray-900">سمت</th>
+                    <th scope="col" className="px-6 py-3 text-right text-sm font-semibold text-gray-900">وضعیت</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {employees.map((employee: Employee) => (
                     <tr key={employee.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-right text-sm text-gray-900">{employee.name}</td>
+                      <th scope="row" className="px-6 py-4 text-right text-sm font-medium text-gray-900">{employee.name}</th>
                       <td className="px-6 py-4 text-right text-sm text-gray-600">{employee.department}</td>
                       <td className="px-6 py-4 text-right text-sm text-gray-600">{employee.position}</td>
                       <td className="px-6 py-4 text-right text-sm">
@@ -114,3 +133,4 @@ const Employees: React.FC = () => {
 };
 
 export default Employees;
+
