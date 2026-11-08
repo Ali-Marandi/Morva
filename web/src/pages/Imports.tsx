@@ -18,17 +18,18 @@ function Imports() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [summaryError, setSummaryError] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   const loadSummary = useCallback(async () => {
     setIsLoading(true);
-    setError('');
+    setSummaryError('');
     try {
       const response = await importService.getSummary();
       if (!response.success || !response.data) throw new Error(response.error?.message || 'دریافت وضعیت واردسازی ناموفق بود.');
       setSummary(response.data);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'ارتباط با سرور برقرار نشد.');
+      setSummaryError(requestError instanceof Error ? requestError.message : 'ارتباط با سرور برقرار نشد.');
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +43,7 @@ function Imports() {
     if (!file) return;
 
     setMessage('');
-    setError('');
+    setUploadError('');
     setIsUploading(true);
     try {
       const response = await importService.upload(file);
@@ -50,7 +51,7 @@ function Imports() {
       setMessage(response.data.message);
       await loadSummary();
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'امکان بارگذاری فایل وجود ندارد.');
+      setUploadError(uploadError instanceof Error ? uploadError.message : 'امکان بارگذاری فایل وجود ندارد.');
     } finally {
       setIsUploading(false);
     }
@@ -84,15 +85,25 @@ function Imports() {
           </ul>
         </div>
 
-        {message && <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"><CheckCircle2 size={18} />{message}</div>}
-        {error && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert"><AlertCircle size={18} />{error}</div>}
+        {message && <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800" role="status"><CheckCircle2 size={18} aria-hidden="true" />{message}</div>}
+        {uploadError && <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert"><AlertCircle size={18} aria-hidden="true" />{uploadError}</div>}
       </section>
 
       <section className="bg-white rounded-2xl border border-morva-200 p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3"><Database className="text-morva-700" /><div><h2 className="text-lg font-bold text-morva-900">وضعیت داده‌های واردشده</h2><p className="text-sm text-morva-600">شمارش رکوردهای ذخیره‌شده در هر گروه</p></div></div>
-          <button type="button" onClick={() => void loadSummary()} disabled={isLoading} className="p-2 rounded-lg text-morva-700 hover:bg-morva-50 disabled:opacity-50"><RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} /></button>
+          <button type="button" onClick={() => void loadSummary()} disabled={isLoading} aria-label="به‌روزرسانی وضعیت واردسازی" aria-busy={isLoading} className="p-2 rounded-lg text-morva-700 hover:bg-morva-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"><RefreshCw size={20} aria-hidden="true" className={isLoading ? 'animate-spin' : ''} /></button>
         </div>
+
+        {isLoading && !summary && <p className="mt-5 text-sm text-morva-600" role="status" aria-live="polite">در حال دریافت وضعیت واردسازی…</p>}
+        {summaryError && (
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <span className="flex items-center gap-2"><AlertCircle size={18} aria-hidden="true" />{summaryError}</span>
+            <button type="button" onClick={() => void loadSummary()} disabled={isLoading} className="rounded-md border border-red-300 bg-white px-3 py-2 font-semibold text-red-800 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:opacity-50">
+              تلاش دوباره
+            </button>
+          </div>
+        )}
 
         {summary && <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Object.entries(summary.categories).map(([key, label]) => <div key={key} className="rounded-xl border border-morva-200 p-4"><p className="text-sm text-morva-600">{label}</p><p className="mt-1 text-2xl font-bold text-morva-900">{number(summary.totals[key] || 0)}</p><p className="text-xs text-morva-600">رکورد</p></div>)}
@@ -106,7 +117,13 @@ function Imports() {
 
 function ImportedFiles({ sources }: { sources: ImportSource[] }) {
   if (!sources.length) return <p className="mt-6 rounded-lg bg-morva-50 p-4 text-sm text-morva-700">هنوز فایلی وارد نشده است.</p>;
-  return <div className="mt-6 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-morva-200 text-right text-morva-700"><th className="p-3">فایل</th><th className="p-3">گروه</th><th className="p-3">شیت</th><th className="p-3">تعداد ردیف</th><th className="p-3">آخرین واردسازی</th></tr></thead><tbody className="divide-y divide-morva-100">{sources.map((source) => <tr key={source.sourceKey}><td className="p-3 font-medium text-morva-900">{source.fileName}</td><td className="p-3 text-morva-700">{source.categoryLabel}</td><td className="p-3 text-morva-700">{source.sheetName}</td><td className="p-3 text-morva-700">{number(source.recordCount)}</td><td className="p-3 text-morva-600">{new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(source.importedAt))}</td></tr>)}</tbody></table></div>;
+  return <div className="mt-6 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-morva-200 text-right text-morva-700"><th scope="col" className="p-3">فایل</th><th scope="col" className="p-3">گروه</th><th scope="col" className="p-3">شیت</th><th scope="col" className="p-3">تعداد ردیف</th><th scope="col" className="p-3">آخرین واردسازی</th></tr></thead><tbody className="divide-y divide-morva-100">{sources.map((source) => <tr key={source.sourceKey}><th scope="row" className="p-3 text-right font-medium text-morva-900">{source.fileName}</th><td className="p-3 text-morva-700">{source.categoryLabel}</td><td className="p-3 text-morva-700">{source.sheetName}</td><td className="p-3 text-morva-700">{number(source.recordCount)}</td><td className="p-3 text-morva-600">{formatDate(source.importedAt)}</td></tr>)}</tbody></table></div>;
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
 }
 
 export default Imports;
