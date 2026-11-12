@@ -1,8 +1,7 @@
 # Morva Payroll Platform — Delivery Roadmap
 
 **Canonical branch:** `main`  
-**Current position:** M4.80 is committed to `main` at `7976f21b8de62d539afa43e459cc49bcdcfc3ed0`. Cumulative `Tests` run `39371676859` failed with 4 failures and 1,186 passes because synthetic positive evidence expired on 2026-10-19 while the verifier correctly evaluated certification at the 2026-10-20 wall clock. The focused fix gives positive test-only evidence a stable far-future expiry; negative expiry checks and production validation remain unchanged. PR `fix/m4-80-certification-fixture-expiry` is pending CI. M4.79's dedicated verification run `39230201296` and migration gate `39230201658` succeeded. M4.80 is not validated or production-certified for real payroll/payment.
-
+**Current position (audited 2026-11-12):** M4.80 is implemented on `main` at `7976f21b8de62d539afa43e459cc49bcdcfc3ed0`. Its test-only certification-evidence expiry fixture correction is on `main` at `528e946f743e4718225543e7a7883809bcd698ef` (2026-10-20). The latest observed exact-HEAD [Morva CI run 42527034231, attempt 19](https://github.com/Ali-Marandi/Morva/actions/runs/42527034231) completed successfully on 2026-11-08 with 18/18 jobs successful. The full exact-HEAD history contains 47/48 successful workflow runs (one cancelled) and 115/117 successful check runs (two cancelled). The fixture correction uses stable future expiry only for synthetic positive test evidence; explicit past-expiry negative tests and production expiry validation remain unchanged. This is software-validation evidence only: M4.80 is not production-certified for real payroll/payment, and all six production-readiness gates remain blocked.
 ## Completed implementation foundations
 
 - M3.87 CI workflow integrity gate
