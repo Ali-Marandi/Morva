@@ -20,6 +20,15 @@ _ALLOWED_STATUSES = {"review_required", "approved", "published"}
 _HEX64 = set("0123456789abcdefABCDEF")
 
 
+def _is_non_placeholder_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and set(value) <= _HEX64
+        and value.lower() != "0" * 64
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class RegressionCase:
     case_id: str
@@ -139,10 +148,12 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} is missing expected output")
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
+        elif not _is_non_placeholder_sha256(case.expected_output_fingerprint):
+            blockers.append(f"golden case {case.case_id} has an invalid or placeholder expected_output_fingerprint")
         if not case.legal_source_hash:
             blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
-        elif len(case.legal_source_hash) != 64 or not set(case.legal_source_hash) <= _HEX64:
-            blockers.append(f"golden case {case.case_id} has an invalid legal_source_hash")
+        elif not _is_non_placeholder_sha256(case.legal_source_hash):
+            blockers.append(f"golden case {case.case_id} has an invalid or placeholder legal_source_hash")
         if not case.legal_article or not case.legal_article.strip():
             blockers.append(f"golden case {case.case_id} is missing legal_article")
     return tuple(blockers)
