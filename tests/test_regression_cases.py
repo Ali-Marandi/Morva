@@ -29,6 +29,7 @@ def _case(
     *,
     component_code: str = "TAX",
     legal_source_hash: str = "a" * 64,
+    expected_output_fingerprint: str | None = "b" * 64,
     expected_output_missing: bool = False,
 ) -> RegressionCase:
     input_values = {"taxable_base": Decimal("100.00")}
@@ -42,7 +43,7 @@ def _case(
         input_values=input_values,
         expected_output=None if expected_output_missing else {"amount": "10.00"},
         input_fingerprint=fingerprint_values(input_values),
-        expected_output_fingerprint="b" * 64,
+        expected_output_fingerprint=expected_output_fingerprint,
         legal_source_hash=legal_source_hash,
         legal_article="1",
         legal_clause=None,
@@ -111,6 +112,29 @@ def test_validator_checks_every_golden_case_for_a_component(monkeypatch):
 
     assert "golden case tax-missing-output is missing expected output" in blockers
 
+
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("legal_source_hash", "0" * 64),
+        ("legal_source_hash", "g" * 64),
+        ("expected_output_fingerprint", "0" * 64),
+        ("expected_output_fingerprint", "g" * 64),
+        ("expected_output_fingerprint", "short"),
+    ],
+)
+def test_validator_rejects_invalid_or_placeholder_evidence_hashes(monkeypatch, field, value):
+    case = _case("invalid-evidence-hash", **{field: value})
+    monkeypatch.setattr("morva.rules.regression_cases.load_cases", lambda _version: (case,))
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert (
+        f"golden case invalid-evidence-hash has an invalid or placeholder {field}"
+        in blockers
+    )
 
 def test_validator_rejects_duplicate_golden_case_ids(monkeypatch):
     duplicate_id = "same-case-id"
