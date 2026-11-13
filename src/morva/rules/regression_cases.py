@@ -149,11 +149,17 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
         elif not _is_non_placeholder_sha256(case.expected_output_fingerprint):
-            blockers.append(f"golden case {case.case_id} has an invalid or placeholder expected_output_fingerprint")
+            blockers.append(
+                f"golden case {case.case_id} has an invalid or placeholder "
+                "expected_output_fingerprint"
+            )
         if not case.legal_source_hash:
             blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
         elif not _is_non_placeholder_sha256(case.legal_source_hash):
-            blockers.append(f"golden case {case.case_id} has an invalid or placeholder legal_source_hash")
+            blockers.append(
+                f"golden case {case.case_id} has an invalid or placeholder "
+                "legal_source_hash"
+            )
         if not case.legal_article or not case.legal_article.strip():
             blockers.append(f"golden case {case.case_id} is missing legal_article")
     return tuple(blockers)

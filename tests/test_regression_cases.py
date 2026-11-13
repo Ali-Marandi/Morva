@@ -114,7 +114,6 @@ def test_validator_checks_every_golden_case_for_a_component(monkeypatch):
 
 
 
-
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -125,9 +124,14 @@ def test_validator_checks_every_golden_case_for_a_component(monkeypatch):
         ("expected_output_fingerprint", "short"),
     ],
 )
-def test_validator_rejects_invalid_or_placeholder_evidence_hashes(monkeypatch, field, value):
+def test_validator_rejects_invalid_or_placeholder_evidence_hashes(
+    monkeypatch, field, value
+):
     case = _case("invalid-evidence-hash", **{field: value})
-    monkeypatch.setattr("morva.rules.regression_cases.load_cases", lambda _version: (case,))
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
 
     blockers = validate_repository("1405.1", required_components=("TAX",))
 
@@ -135,6 +139,7 @@ def test_validator_rejects_invalid_or_placeholder_evidence_hashes(monkeypatch, f
         f"golden case invalid-evidence-hash has an invalid or placeholder {field}"
         in blockers
     )
+
 
 def test_validator_rejects_duplicate_golden_case_ids(monkeypatch):
     duplicate_id = "same-case-id"
