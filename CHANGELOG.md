@@ -6,6 +6,8 @@
 - Validate input, expected-output and legal-source SHA-256 fingerprint shape while preserving the existing canonical golden-suite hash for unchanged repository data.
 - Canonicalize decimal fingerprints without context rounding and reject unbounded fixed-point representations before hashing or suite serialization.
 - Add focused regression tests for unsafe path identifiers and malformed case payloads.
+- Reject duplicate JSON object keys recursively, including case metadata, calculation inputs and expected-output objects, rather than accepting Python's last-key-wins behavior.
+- Require registered rule evidence to bind to the current canonical golden-suite hash; stale suite evidence now creates explicit Gate 1 blockers for affected cases.
 
 ### Safety
 - Engineering validation only. No legal expected outputs, statutory values, authority evidence or production approvals are fabricated.
