@@ -421,3 +421,23 @@ def test_load_cases_rejects_unbounded_decimal_representations(
 
     with pytest.raises(ValueError, match="maximum decimal representation length"):
         load_cases("1405.1")
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        ("input_fingerprint", "invalid input fingerprint"),
+        ("expected_output_fingerprint", "invalid expected output fingerprint"),
+        ("legal_source_hash", "invalid legal_source_hash"),
+    ],
+)
+def test_validator_rejects_all_zero_placeholder_hashes(monkeypatch, field, message):
+    case = replace(_case("placeholder-hash"), **{field: "0" * 64})
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert f"golden case {case.case_id} has an {message}" in blockers
