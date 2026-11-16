@@ -255,7 +255,13 @@ def _approved_matrix_entry(session, pack, source, evidence):
             "expression": {
                 "op": "mul",
                 "args": [
-                    {"op": "value", "name": "base"},
+                    {
+                        "op": "add",
+                        "args": [
+                            {"op": "value", "name": "base"},
+                            {"op": "const", "value": "0"},
+                        ],
+                    },
                     {"op": "value", "name": "rate"},
                 ],
             },
@@ -441,6 +447,32 @@ def test_resolver_rejects_golden_case_source_hash_mismatch():
         case = replace(_resolver_case(pack, source, evidence), legal_source_hash="d" * 64)
 
         with pytest.raises(MatrixResolutionError, match="legal-source hash"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+
+@pytest.mark.parametrize("missing_name", ["base", "rate"])
+def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_name):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        remaining_inputs = dict(case.input_values)
+        remaining_inputs.pop(missing_name)
+        case = replace(
+            case,
+            input_values=remaining_inputs,
+            input_fingerprint=fingerprint_values(remaining_inputs),
+        )
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="missing required rule inputs",
+        ):
             resolve_rule_definition_for_case(
                 session,
                 case,
