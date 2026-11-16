@@ -104,6 +104,26 @@ describe("Payroll page", () => {
     expect(payrollsRefetch).toHaveBeenCalledTimes(1);
   });
 
+  it("disables retry while either query is already fetching", () => {
+    mockedUsePayrollStats.mockReturnValue({
+      isLoading: false,
+      isFetching: false,
+      error: new Error("دریافت آمار ناموفق بود"),
+      data: undefined,
+      refetch: vi.fn(),
+    } as never);
+    mockedUsePayrolls.mockReturnValue({
+      isLoading: false,
+      isFetching: true,
+      error: null,
+      data: undefined,
+      refetch: vi.fn(),
+    } as never);
+
+    render(<Payroll />);
+    expect(screen.getByRole("button", { name: "تلاش دوباره" })).toBeDisabled();
+  });
+
   it("shows an explicit empty state when the API returns no payroll periods", () => {
     setSuccessfulQueries([]);
     render(<Payroll />);
