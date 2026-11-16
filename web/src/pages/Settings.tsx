@@ -1,122 +1,72 @@
-import React, { useState } from "react";
-import StatCard from "@/components/ui/StatCard";
-import { Settings as SettingsIcon, Lock, Bell, Database, Shield } from "lucide-react";
+import React from "react";
+import { Bell, Database, Shield } from "lucide-react";
 
 interface SettingGroup {
   name: string;
   description: string;
   icon: React.ReactNode;
-  items: SettingItem[];
+  items: string[];
 }
 
-interface SettingItem {
-  label: string;
-  value: boolean | string;
-}
+const settingGroups: SettingGroup[] = [
+  {
+    name: "اطلاعیه‌ها",
+    description: "تنظیم شیوه دریافت اطلاعیه‌های سامانه",
+    icon: <Bell className="h-6 w-6" aria-hidden="true" />,
+    items: ["اطلاعیه‌های درون‌برنامه", "اطلاعیه‌های ایمیل"],
+  },
+  {
+    name: "امنیت حساب",
+    description: "مدیریت روش‌های محافظت از حساب کاربری",
+    icon: <Shield className="h-6 w-6" aria-hidden="true" />,
+    items: ["تأیید دومرحله‌ای"],
+  },
+  {
+    name: "پشتیبان‌گیری",
+    description: "مدیریت نسخه‌های پشتیبان اطلاعات",
+    icon: <Database className="h-6 w-6" aria-hidden="true" />,
+    items: ["پشتیبان‌گیری خودکار"],
+  },
+];
 
-const Settings: React.FC = () => {
-  const [settings, setSettings] = useState({
-    notifications: true,
-    emailNotifications: true,
-    dataBackup: true,
-    twoFactor: false,
-    theme: "light",
-  });
+const Settings: React.FC = () => (
+  <main className="min-h-screen bg-gray-50 p-4 md:p-8" dir="rtl">
+    <div className="mx-auto max-w-7xl">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">تنظیمات</h1>
+        <p className="mt-2 text-gray-600">اطلاع از گزینه‌های تنظیماتی سامانه</p>
+      </header>
 
-  const settingGroups: SettingGroup[] = [
-    {
-      name: "اطلاعیه‌ها",
-      description: "مدیریت اطلاعیه‌های سیستم",
-      icon: <Bell className="w-6 h-6" />,
-      items: [
-        { label: "اطلاعیه‌های درون‌برنامه", value: settings.notifications },
-        { label: "اطلاعیه‌های ایمیل", value: settings.emailNotifications },
-      ],
-    },
-    {
-      name: "امنیت",
-      description: "تنظیمات امنیتی حساب",
-      icon: <Shield className="w-6 h-6" />,
-      items: [{ label: "تأیید دورمرحله‌ای", value: settings.twoFactor }],
-    },
-    {
-      name: "داده‌ها",
-      description: "مدیریت و بکاپ داده‌ها",
-      icon: <Database className="w-6 h-6" />,
-      items: [{ label: "پشتیبان‌گیری خودکار", value: settings.dataBackup }],
-    },
-  ];
+      <section className="mb-8 rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950" role="status" aria-live="polite">
+        <h2 className="font-bold">ذخیره تنظیمات هنوز در دسترس نیست</h2>
+        <p className="mt-2 text-sm leading-6">
+          این گزینه‌ها هنوز به سرویس ذخیره‌سازی سامانه متصل نشده‌اند. در این صفحه چیزی تغییر یا ذخیره نمی‌شود؛ وضعیت پشتیبان‌گیری و امنیت حساب را از اینجا نمی‌توان بررسی کرد.
+        </p>
+      </section>
 
-  const stats = {
-    lastBackup: "۱۴۰۵-۰۶-۱۵",
-    accountAge: "۲ سال",
-    securityScore: "۹۸/۱۰۰",
-  };
-
-  const toggleSetting = (key: keyof typeof settings) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: typeof prev[key] === "boolean" ? !prev[key] : prev[key],
-    }));
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">تنظیمات</h1>
-          <p className="text-gray-600 mt-2">مدیریت تنظیمات سیستم و حساب کاربری</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard title="امتیاز امنیتی" value={stats.securityScore} icon={Shield} trend="عالی" color="green" />
-          <StatCard title="آخرین پشتیبان‌گیری" value={stats.lastBackup} icon={Database} trend="امروز" color="blue" />
-          <StatCard title="عمر حساب" value={stats.accountAge} icon={Lock} trend="فعال" color="blue" />
-          <StatCard title="وضعیت سیستم" value="سالم" icon={SettingsIcon} trend="۱۰۰%" color="green" />
-        </div>
-
-        <div className="space-y-6">
-          {settingGroups.map((group, idx) => (
-            <div key={idx} className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-4">
-                <div className="text-blue-600">{group.icon}</div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{group.name}</h2>
-                  <p className="text-sm text-gray-600">{group.description}</p>
-                </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {settingGroups.map((group) => (
+          <section key={group.name} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" aria-labelledby={`settings-${group.name}`}>
+            <header className="flex items-center gap-4 border-b border-gray-200 px-5 py-4">
+              <div className="text-blue-700">{group.icon}</div>
+              <div>
+                <h2 id={`settings-${group.name}`} className="font-bold text-gray-900">{group.name}</h2>
+                <p className="mt-1 text-sm text-gray-600">{group.description}</p>
               </div>
-              <div className="p-6 space-y-4">
-                {group.items.map((item, itemIdx) => (
-                  <div key={itemIdx} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg">
-                    <span className="font-medium text-gray-900">{item.label}</span>
-                    {typeof item.value === "boolean" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (item.label === "اطلاعیه‌های درون‌برنامه") toggleSetting("notifications");
-                          else if (item.label === "اطلاعیه‌های ایمیل") toggleSetting("emailNotifications");
-                          else if (item.label === "تأیید دورمرحله‌ای") toggleSetting("twoFactor");
-                          else if (item.label === "پشتیبان‌گیری خودکار") toggleSetting("dataBackup");
-                        }}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.value ? "bg-green-600" : "bg-gray-300"}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.value ? "translate-x-6" : "translate-x-1"}`} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 flex justify-end gap-4">
-          <button className="px-6 py-2 border border-gray-300 text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-colors">انصراف</button>
-          <button className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">ذخیره تنظیمات</button>
-        </div>
+            </header>
+            <ul className="divide-y divide-gray-100 px-5">
+              {group.items.map((item) => (
+                <li key={item} className="flex flex-wrap items-center justify-between gap-3 py-4">
+                  <span className="font-medium text-gray-900">{item}</span>
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">در دسترس نیست</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </div>
-  );
-};
+  </main>
+);
 
 export default Settings;
