@@ -371,7 +371,11 @@ def test_resolver_rejects_raw_date_bypass():
         case = _resolver_case(pack, source, evidence)
 
         with pytest.raises(TypeError):
-            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
 
 
 def test_resolver_rejects_calendar_source_value_mismatch(monkeypatch):
