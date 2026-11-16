@@ -17,7 +17,7 @@
 8. [ ] Formal legal/finance approval exists for the complete 1405 production Rule Pack.
 9. [ ] Certified golden corpus covers all legally active components and employee-population variants.
 10. [x] Golden-case validation checks every repository case, verifies required-component coverage and rejects duplicate or empty `case_id` values.
-11. [x] Golden-case loading rejects unsafe version path identifiers, malformed field types, non-finite or oversized decimal representations and malformed SHA-256 fingerprints; decimal fingerprint canonicalization preserves significant digits without context rounding.
+11. [x] Golden-case loading rejects unsafe version path identifiers, malformed field types, non-finite or oversized decimal representations and malformed or all-zero placeholder SHA-256 fingerprints; decimal fingerprint canonicalization preserves significant digits without context rounding.
 12. [x] Golden-case JSON loading rejects duplicate object keys at every nesting level before duplicate values can be silently overwritten.
 13. [x] Registered rule evidence regression-suite hashes are checked against the current canonical golden corpus; stale evidence blocks each affected case.
 

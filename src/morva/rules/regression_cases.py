@@ -103,8 +103,13 @@ def _decimal_input_values(values: dict[str, object]) -> dict[str, Decimal]:
     return converted
 
 
-def _is_hex64(value: object) -> bool:
-    return isinstance(value, str) and len(value) == 64 and set(value) <= _HEX64
+def _is_non_placeholder_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and set(value) <= _HEX64
+        and value.lower() != "0" * 64
+    )
 
 
 def _validate_finite_json(value: object) -> None:
@@ -233,7 +238,7 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} has no governed input values")
         elif case.input_fingerprint is None:
             blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
-        elif not _is_hex64(case.input_fingerprint):
+        elif not _is_non_placeholder_sha256(case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} has an invalid input fingerprint")
         elif fingerprint_values(case.input_values) != case.input_fingerprint:
             blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
@@ -241,11 +246,11 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} is missing expected output")
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
-        elif not _is_hex64(case.expected_output_fingerprint):
+        elif not _is_non_placeholder_sha256(case.expected_output_fingerprint):
             blockers.append(f"golden case {case.case_id} has an invalid expected output fingerprint")
         if not case.legal_source_hash:
             blockers.append(f"golden case {case.case_id} is missing legal_source_hash")
-        elif not _is_hex64(case.legal_source_hash):
+        elif not _is_non_placeholder_sha256(case.legal_source_hash):
             blockers.append(f"golden case {case.case_id} has an invalid legal_source_hash")
         if not case.legal_article or not case.legal_article.strip():
             blockers.append(f"golden case {case.case_id} is missing legal_article")
@@ -310,7 +315,7 @@ def validate_repository_against_evidence(
 
 
 def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
-    if not _is_hex64(case.expected_output_fingerprint):
+    if not _is_non_placeholder_sha256(case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} has no valid expected output fingerprint")
     actual = fingerprint_rule_result(actual_result)
     if actual != case.expected_output_fingerprint:

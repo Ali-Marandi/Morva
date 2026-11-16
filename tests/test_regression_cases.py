@@ -491,3 +491,23 @@ def test_evidence_validation_rejects_stale_regression_suite_hash(monkeypatch):
     assert blockers == (
         "rule evidence regression suite hash mismatch for golden case tax-stale-suite-hash",
     )
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        ("input_fingerprint", "invalid input fingerprint"),
+        ("expected_output_fingerprint", "invalid expected output fingerprint"),
+        ("legal_source_hash", "invalid legal_source_hash"),
+    ],
+)
+def test_validator_rejects_all_zero_placeholder_hashes(monkeypatch, field, message):
+    case = replace(_case("placeholder-hash"), **{field: "0" * 64})
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert f"golden case {case.case_id} has an {message}" in blockers
