@@ -248,6 +248,17 @@ def _resolver_case(pack, source, evidence):
     )
 
 
+def _bind_case_to_test_repository(monkeypatch, case):
+    monkeypatch.setattr(
+        "morva.rules.calculation_matrix.load_cases",
+        lambda _version: (case,),
+    )
+    monkeypatch.setattr(
+        "morva.rules.calculation_matrix.regression_suite_hash",
+        lambda _version: "b" * 64,
+    )
+
+
 def _approved_matrix_entry(session, pack, source, evidence):
     entry = create_matrix_entry(
         session,
@@ -292,11 +303,12 @@ def _approved_matrix_entry(session, pack, source, evidence):
     return session.get(CalculationMatrixRecord, entry.id)
 
 
-def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_source_date():
+def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_source_date(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
 
         class _SyntheticCalendarAdapter:
             def resolve_jalali_date(self, source_value: str) -> CalendarDateResolution:
@@ -357,12 +369,13 @@ def test_resolver_rejects_implicit_source_date_parsing():
             )
 
 
-def test_resolver_requires_exact_population_scope():
+def test_resolver_requires_exact_population_scope(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
         case = replace(case, population_scope="not-the-approved-population")
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="no calculation-matrix mapping"):
             resolve_rule_definition_for_case(
@@ -372,11 +385,12 @@ def test_resolver_requires_exact_population_scope():
             )
 
 
-def test_resolver_rejects_date_outside_matrix_effective_window():
+def test_resolver_rejects_date_outside_matrix_effective_window(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="no calculation-matrix entry is effective"):
             resolve_rule_definition_for_case(
@@ -386,11 +400,12 @@ def test_resolver_rejects_date_outside_matrix_effective_window():
             )
 
 
-def test_resolver_rejects_unapproved_rule_pack():
+def test_resolver_rejects_unapproved_rule_pack(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="reviewed")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="not activation-ready"):
             resolve_rule_definition_for_case(
@@ -400,7 +415,7 @@ def test_resolver_rejects_unapproved_rule_pack():
             )
 
 
-def test_resolver_rejects_unapproved_matrix_entry():
+def test_resolver_rejects_unapproved_matrix_entry(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         create_matrix_entry(
@@ -425,6 +440,7 @@ def test_resolver_rejects_unapproved_matrix_entry():
             "matrix-creator",
         )
         case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="not approved"):
             resolve_rule_definition_for_case(
@@ -449,7 +465,7 @@ def test_matrix_selector_fails_closed_when_two_entries_overlap():
             )
 
 
-def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix():
+def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
@@ -461,6 +477,7 @@ def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix():
             expected_output=changed,
             expected_output_fingerprint=fingerprint_expected_result_payload(changed),
         )
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="legal reference does not match"):
             resolve_rule_definition_for_case(
@@ -470,11 +487,12 @@ def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix():
             )
 
 
-def test_resolver_rejects_golden_case_source_hash_mismatch():
+def test_resolver_rejects_golden_case_source_hash_mismatch(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = replace(_resolver_case(pack, source, evidence), legal_source_hash="d" * 64)
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="legal-source hash"):
             resolve_rule_definition_for_case(
@@ -484,9 +502,8 @@ def test_resolver_rejects_golden_case_source_hash_mismatch():
             )
 
 
-
 @pytest.mark.parametrize("missing_name", ["base", "rate"])
-def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_name):
+def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_name, monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
@@ -498,10 +515,99 @@ def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_nam
             input_values=remaining_inputs,
             input_fingerprint=fingerprint_values(remaining_inputs),
         )
+        _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(
             MatrixResolutionError,
             match="missing required rule inputs",
+        ):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_case_not_registered_in_canonical_repository(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.load_cases",
+            lambda _version: (),
+        )
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="must occur exactly once in the canonical repository",
+        ):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_case_payload_drift_from_canonical_repository(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        canonical_case = _resolver_case(pack, source, evidence)
+        changed_values = {**canonical_case.input_values, "base": Decimal("999")}
+        supplied_case = replace(
+            canonical_case,
+            input_values=changed_values,
+            input_fingerprint=fingerprint_values(changed_values),
+        )
+        _bind_case_to_test_repository(monkeypatch, canonical_case)
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="does not match its canonical repository entry",
+        ):
+            resolve_rule_definition_for_case(
+                session,
+                supplied_case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_duplicate_case_ids_in_canonical_repository(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.load_cases",
+            lambda _version: (case, case),
+        )
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="must occur exactly once in the canonical repository",
+        ):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_stale_rule_evidence_suite_hash(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.regression_suite_hash",
+            lambda _version: "c" * 64,
+        )
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="regression suite hash does not match the canonical repository",
         ):
             resolve_rule_definition_for_case(
                 session,
