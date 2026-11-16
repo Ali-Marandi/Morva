@@ -18,6 +18,10 @@ from morva.rules.calculation_matrix import (
     resolve_rule_definition_for_case,
     validate_matrix_payload,
 )
+from morva.rules.calendar_adapter import (
+    CalendarDateResolution,
+    resolve_case_effective_on,
+)
 from morva.rules.engine import RuleContext, RuleEngine
 from morva.rules.regression import fingerprint_expected_result_payload, fingerprint_values
 from morva.rules.regression_cases import RegressionCase, verify_expected_result
@@ -289,12 +293,38 @@ def _approved_matrix_entry(session, pack, source, evidence):
 
 
 def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_source_date():
-    effective_on = date(2030, 12, 31)
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
 
+        class _SyntheticCalendarAdapter:
+            def resolve_jalali_date(self, source_value: str) -> CalendarDateResolution:
+                return CalendarDateResolution(
+                    source_calendar="jalali",
+                    target_calendar="gregorian",
+                    source_value=source_value,
+                    effective_on=date(2030, 12, 31),
+                    adapter_id="synthetic-calendar-adapter",
+                    adapter_version="test-1",
+                    authority_reference="synthetic-test-calendar-evidence",
+                    evidence_sha256="d" * 64,
+                    approval_status="approved",
+                    reviewed_by="synthetic-reviewer",
+                    reviewed_at=datetime(2030, 1, 1),
+                    approved_by="synthetic-approver",
+                    approved_at=datetime(2030, 1, 2),
+                )
+
+        class _SyntheticCalendarVerifier:
+            def verify(self, resolution: CalendarDateResolution) -> bool:
+                return resolution.adapter_id == "synthetic-calendar-adapter"
+
+        effective_on = resolve_case_effective_on(
+            case,
+            adapter=_SyntheticCalendarAdapter(),
+            evidence_verifier=_SyntheticCalendarVerifier(),
+        )
         definition = resolve_rule_definition_for_case(
             session,
             case,

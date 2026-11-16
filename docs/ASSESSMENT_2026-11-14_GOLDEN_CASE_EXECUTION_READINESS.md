@@ -103,3 +103,12 @@ Source inspection found that the shared expression evaluator returns `Decimal(0)
 The next stacked engineering change therefore adds a recursive collector over the validated calculation-matrix expression tree and rejects a Golden Case before RuleEngine execution whenever any referenced `value` key is missing from `case.input_values`. Synthetic tests cover a missing direct operand and a missing operand nested beneath another operation. The resolver does not invent values, alter expression arithmetic or modify the general evaluator default.
 
 This remains a software input-completeness control, not proof that the supplied values are legally authoritative or correctly unit-normalized. The 1405.1 corpus and all six Production Readiness Gates remain **BLOCKED / fail-closed**.
+
+
+## Jalali calendar adapter contract follow-up — 2026-11-16
+
+The Golden Case date boundary now has a typed, dependency-injected contract. `resolve_case_effective_on` passes `RegressionCase.effective_date` to the adapter unchanged, validates a structured Jalali-to-Gregorian resolution, requires separate review/approval actors and timestamps, validates a non-placeholder SHA-256 evidence identifier, and delegates the independent evidence decision to an injected verifier. Only a verified result with an exact Python `date` is returned.
+
+No Jalali conversion algorithm, package dependency, default adapter or trust-store verifier is included. The contract cannot itself prove that an authority reference is official; the independently trusted verifier must bind the evidence hash and approval to an accepted official calendar source. Synthetic test adapters only exercise the interface and are not evidence of calendar correctness.
+
+The matrix resolver can consume the verified date returned by this contract. The original Jalali value is retained; payroll period keys remain Jalali source identifiers; issue/effective/arrears/end dates remain independent. Until a real official adapter and independently trusted evidence verifier are supplied and accepted, production date resolution remains unavailable and Gate 1 plus all six Production Readiness Gates remain **BLOCKED / fail-closed**.
