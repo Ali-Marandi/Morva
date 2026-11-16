@@ -13,6 +13,12 @@ from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.persistence.models import RulePackRecord
 from morva.rules.activation import RuleActivationBlocked, require_authoritative_pack
+from morva.rules.calendar_adapter import (
+    CalendarAdapterContractError,
+    CalendarEvidenceVerifier,
+    JalaliCalendarAdapter,
+    resolve_case_effective_on,
+)
 from morva.rules.engine import RuleDefinition
 from morva.rules.regression import (
     canonical_expected_result_payload,
@@ -260,20 +266,17 @@ def resolve_rule_definition_for_case(
     session: Session,
     case: RegressionCase,
     *,
-    effective_on: date,
+    calendar_adapter: JalaliCalendarAdapter,
+    calendar_evidence_verifier: CalendarEvidenceVerifier,
 ) -> RuleDefinition:
-    """Resolve one approved matrix row into a RuleDefinition for a loaded Golden Case.
+    """Resolve one approved matrix row using independently verified source-date evidence.
 
-    This function deliberately does not parse or convert case.effective_date. The caller
-    must preserve that original source string and supply effective_on from an independently
-    approved calendar adapter. No Jalali/Gregorian conversion is performed here.
+    A raw Gregorian date is deliberately not accepted. The resolver obtains the date from
+    the injected adapter, verifies its evidence independently, and binds the resolution to
+    the exact unchanged effective_date stored in the canonical Golden Case.
     """
     if not isinstance(case, RegressionCase):
         raise MatrixResolutionError("case must be a loaded RegressionCase")
-    if type(effective_on) is not date:
-        raise MatrixResolutionError(
-            "effective_on must be an explicit date supplied by an approved calendar adapter"
-        )
     if case.status not in {"approved", "published"}:
         raise MatrixResolutionError("golden case is not approved/published")
     if (
@@ -283,6 +286,16 @@ def resolve_rule_definition_for_case(
         or not case.effective_date.strip()
     ):
         raise MatrixResolutionError("golden case identity and source effective date are required")
+    try:
+        effective_on = resolve_case_effective_on(
+            case,
+            adapter=calendar_adapter,
+            evidence_verifier=calendar_evidence_verifier,
+        )
+    except CalendarAdapterContractError as exc:
+        raise MatrixResolutionError(
+            f"calendar source/evidence resolution is not trusted: {exc}"
+        ) from exc
     try:
         canonical_cases = load_cases(case.rule_pack_version)
     except (OSError, ValueError) as exc:
