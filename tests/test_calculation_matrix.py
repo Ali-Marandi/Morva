@@ -555,6 +555,12 @@ def test_resolver_rejects_case_not_registered_in_canonical_repository(monkeypatc
             "morva.rules.calculation_matrix.load_cases",
             lambda _version: (),
         )
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.resolve_case_effective_on",
+            lambda *args, **kwargs: pytest.fail(
+                "calendar trust boundary must not receive a non-canonical case"
+            ),
+        )
 
         with pytest.raises(
             MatrixResolutionError,
@@ -575,6 +581,12 @@ def test_resolver_rejects_case_payload_drift_from_canonical_repository(monkeypat
             input_fingerprint=fingerprint_values(changed_values),
         )
         _bind_case_to_test_repository(monkeypatch, canonical_case)
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.resolve_case_effective_on",
+            lambda *args, **kwargs: pytest.fail(
+                "calendar trust boundary must not receive a drifted case"
+            ),
+        )
 
         with pytest.raises(
             MatrixResolutionError,
