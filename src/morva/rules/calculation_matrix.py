@@ -63,6 +63,24 @@ def _validate_expression(node: object) -> None:
         _validate_expression(child)
 
 
+def _expression_value_names(node: dict[str, object]) -> set[str]:
+    """Collect every value-node input name recursively from a validated expression."""
+    operation = node.get("op")
+    if operation == "const":
+        return set()
+    if operation == "value":
+        name = node.get("name")
+        return {name} if isinstance(name, str) else set()
+
+    names: set[str] = set()
+    args = node.get("args")
+    if isinstance(args, list):
+        for child in args:
+            if isinstance(child, dict):
+                names.update(_expression_value_names(child))
+    return names
+
+
 def validate_matrix_payload(*, treatment: str, effective_from: date, effective_to: date | None, regression_suite_hash: str, expression: dict[str, object], legal_article: str, population_scope: str, taxable: object | None = None, pensionable: object | None = None, insurable: object | None = None) -> None:
     if treatment not in _TREATMENTS:
         raise ValueError("treatment must be earning, deduction or informational")
@@ -373,6 +391,12 @@ def resolve_rule_definition_for_case(
         pensionable=entry.pensionable,
         insurable=entry.insurable,
     )
+    required_inputs = _expression_value_names(entry.expression)
+    missing_inputs = sorted(required_inputs - set(case.input_values))
+    if missing_inputs:
+        raise MatrixResolutionError(
+            f"golden case is missing required rule inputs: {missing_inputs}"
+        )
     if pack.effective_from is not None and effective_on < pack.effective_from:
         raise MatrixResolutionError("supplied date precedes the Rule Pack effective period")
     if pack.effective_to is not None and effective_on > pack.effective_to:

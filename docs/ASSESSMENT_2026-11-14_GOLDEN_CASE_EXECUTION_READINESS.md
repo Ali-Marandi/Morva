@@ -94,3 +94,12 @@ The current schema contains an explicit mapping boundary: `CalculationMatrixReco
 - Synthetic tests exercise the resolver into the actual RuleEngine and verifier. They are software contract tests only and supply no statutory rate, payroll value or certified corpus data.
 
 The existing database unique constraint allows one row per Rule Pack/component/population triple, so future multi-period rule changes within the same population may require a separately reviewed schema decision; this tranche does not weaken or bypass that constraint. The 1405.1 corpus and production matrix remain unready; Gate 1 and all six Production Readiness Gates remain **BLOCKED / fail-closed**.
+
+
+## Expression-input completeness follow-up — 2026-11-16
+
+Source inspection found that the shared expression evaluator returns `Decimal(0)` when a referenced `value` name is absent from its input mapping. That behavior may be retained for existing non-Golden-Case callers, but it is unsafe as an implicit fallback for governed regression vectors.
+
+The next stacked engineering change therefore adds a recursive collector over the validated calculation-matrix expression tree and rejects a Golden Case before RuleEngine execution whenever any referenced `value` key is missing from `case.input_values`. Synthetic tests cover a missing direct operand and a missing operand nested beneath another operation. The resolver does not invent values, alter expression arithmetic or modify the general evaluator default.
+
+This remains a software input-completeness control, not proof that the supplied values are legally authoritative or correctly unit-normalized. The 1405.1 corpus and all six Production Readiness Gates remain **BLOCKED / fail-closed**.
