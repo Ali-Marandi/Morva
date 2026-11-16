@@ -115,6 +115,16 @@ def _is_non_placeholder_sha256(value: object) -> bool:
         and value.lower() != "0" * 64
     )
 
+def _sha256_matches(left: object, right: object) -> bool:
+    """Compare non-placeholder SHA-256 digests independent of hex letter case."""
+    return (
+        isinstance(left, str)
+        and isinstance(right, str)
+        and _is_non_placeholder_sha256(left)
+        and _is_non_placeholder_sha256(right)
+        and left.lower() == right.lower()
+    )
+
 
 def _validate_finite_json(value: object) -> None:
     if isinstance(value, float) and not math.isfinite(value):
@@ -244,7 +254,7 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
         elif not _is_non_placeholder_sha256(case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} has an invalid input fingerprint")
-        elif fingerprint_values(case.input_values) != case.input_fingerprint:
+        elif not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
         if case.expected_output is None:
             blockers.append(f"golden case {case.case_id} is missing expected output")
@@ -258,8 +268,10 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             else:
                 if _is_non_placeholder_sha256(case.expected_output_fingerprint):
                     if (
-                        fingerprint_expected_result_payload(expected_payload)
-                        != case.expected_output_fingerprint
+                        not _sha256_matches(
+                            fingerprint_expected_result_payload(expected_payload),
+                            case.expected_output_fingerprint,
+                        )
                     ):
                         blockers.append(
                             f"golden case {case.case_id} expected output fingerprint mismatch"
@@ -303,7 +315,7 @@ def validate_repository_against_evidence(
                 f"missing rule evidence for golden case {case.case_id}" for case in component_cases
             )
             continue
-        if evidence.regression_suite_hash != current_suite_hash:
+        if not _sha256_matches(evidence.regression_suite_hash, current_suite_hash):
             blockers.extend(
                 f"rule evidence regression suite hash mismatch for golden case {case.case_id}"
                 for case in component_cases
@@ -317,9 +329,9 @@ def validate_repository_against_evidence(
 
         # شواهد همان مؤلفه را برای تک‌تک نمونه‌ها بررسی می‌کنیم؛ هیچ نمونه‌ای نباید نادیده گرفته شود.
         for case in component_cases:
-            if case.legal_source_hash and case.legal_source_hash != evidence.source_hash:
+            if case.legal_source_hash and not _sha256_matches(case.legal_source_hash, evidence.source_hash):
                 blockers.append(f"golden case {case.case_id} source hash mismatch")
-            if case.legal_source_hash and case.legal_source_hash != source.document_hash:
+            if case.legal_source_hash and not _sha256_matches(case.legal_source_hash, source.document_hash):
                 blockers.append(f"golden case {case.case_id} legal source hash mismatch")
             if case.legal_article and case.legal_article.strip() != evidence.article.strip():
                 blockers.append(f"golden case {case.case_id} article mismatch")
@@ -342,7 +354,7 @@ def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
 
     expected_payload = canonical_expected_result_payload(case.expected_output)
     expected_fingerprint = fingerprint_expected_result_payload(expected_payload)
-    if expected_fingerprint != case.expected_output_fingerprint:
+    if not _sha256_matches(expected_fingerprint, case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} expected output fingerprint mismatch")
 
     if not isinstance(actual_result, RuleResult):
@@ -351,5 +363,5 @@ def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
     if actual_payload != expected_payload:
         raise ValueError(f"golden case {case.case_id} output payload mismatch")
 
-    if fingerprint_rule_result(actual_result) != case.expected_output_fingerprint:
+    if not _sha256_matches(fingerprint_rule_result(actual_result), case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} output fingerprint mismatch")

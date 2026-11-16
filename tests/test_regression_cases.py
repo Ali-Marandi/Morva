@@ -655,3 +655,77 @@ def test_verify_expected_result_rejects_non_rule_result_objects():
 
     with pytest.raises(ValueError, match="actual result must be a RuleResult"):
         verify_expected_result(case, {"code": "TAX"})
+
+def test_validator_accepts_uppercase_sha256_case_fingerprints(monkeypatch):
+    case = _case("uppercase-case-fingerprints")
+    case = replace(
+        case,
+        input_fingerprint=(case.input_fingerprint or "").upper(),
+        expected_output_fingerprint=(case.expected_output_fingerprint or "").upper(),
+        legal_source_hash=(case.legal_source_hash or "").upper(),
+    )
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    assert validate_repository("1405.1", required_components=("TAX",)) == ()
+
+
+def test_evidence_validation_compares_sha256_values_case_insensitively(monkeypatch):
+    case = _case("uppercase-evidence-fingerprints")
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+    current_suite_hash = regression_suite_hash("1405.1")
+
+    with _session() as session:
+        source_hash = (case.legal_source_hash or "").upper()
+        source = LegalSourceRecord(
+            citation="Synthetic authority source",
+            issuer="Synthetic issuer",
+            adoption_date="2026-01-01",
+            effective_from="2026-01-01",
+            document_hash=source_hash,
+            status="approved",
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            RuleEvidenceRecord(
+                rule_pack_version="1405.1",
+                component_code="TAX",
+                legal_source_id=source.id,
+                issuer=source.issuer,
+                article="1",
+                clause=None,
+                population_scope="all",
+                source_hash=source_hash,
+                regression_suite_hash=current_suite_hash.upper(),
+                status="approved",
+                reviewed_by="reviewer",
+                approved_by="approver",
+                approved_at=datetime(2026, 1, 3),
+            )
+        )
+        session.commit()
+
+        blockers = validate_repository_against_evidence(
+            session,
+            "1405.1",
+            required_components=("TAX",),
+        )
+
+    assert blockers == ()
+
+
+def test_verify_expected_result_accepts_uppercase_sha256_fingerprint():
+    case = _case("uppercase-expected-output-fingerprint")
+    case = replace(
+        case,
+        expected_output_fingerprint=(case.expected_output_fingerprint or "").upper(),
+    )
+
+    verify_expected_result(case, _actual_result())
+
