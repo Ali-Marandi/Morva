@@ -18,10 +18,7 @@ from morva.rules.calculation_matrix import (
     resolve_rule_definition_for_case,
     validate_matrix_payload,
 )
-from morva.rules.calendar_adapter import (
-    CalendarDateResolution,
-    resolve_case_effective_on,
-)
+from morva.rules.calendar_adapter import CalendarDateResolution
 from morva.rules.engine import RuleContext, RuleEngine
 from morva.rules.regression import fingerprint_expected_result_payload, fingerprint_values
 from morva.rules.regression_cases import RegressionCase, verify_expected_result
@@ -259,6 +256,46 @@ def _bind_case_to_test_repository(monkeypatch, case):
     )
 
 
+def _calendar_dependencies(effective_on, *, source_override=None, verified=True):
+    class _SyntheticCalendarAdapter:
+        def resolve_jalali_date(self, source_value: str) -> CalendarDateResolution:
+            return CalendarDateResolution(
+                source_calendar="jalali",
+                target_calendar="gregorian",
+                source_value=source_override if source_override is not None else source_value,
+                effective_on=effective_on,
+                adapter_id="synthetic-calendar-adapter",
+                adapter_version="test-1",
+                authority_reference="synthetic-test-calendar-evidence",
+                evidence_sha256="d" * 64,
+                approval_status="approved",
+                reviewed_by="synthetic-reviewer",
+                reviewed_at=datetime(2030, 1, 1),
+                approved_by="synthetic-approver",
+                approved_at=datetime(2030, 1, 2),
+            )
+
+    class _SyntheticCalendarVerifier:
+        def verify(self, resolution: CalendarDateResolution) -> bool:
+            return verified and resolution.adapter_id == "synthetic-calendar-adapter"
+
+    return _SyntheticCalendarAdapter(), _SyntheticCalendarVerifier()
+
+
+def _resolve_rule_definition(session, case, *, effective_on, source_override=None, verified=True):
+    adapter, verifier = _calendar_dependencies(
+        effective_on,
+        source_override=source_override,
+        verified=verified,
+    )
+    return resolve_rule_definition_for_case(
+        session,
+        case,
+        calendar_adapter=adapter,
+        calendar_evidence_verifier=verifier,
+    )
+
+
 def _approved_matrix_entry(session, pack, source, evidence):
     entry = create_matrix_entry(
         session,
@@ -310,41 +347,14 @@ def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_sourc
         case = _resolver_case(pack, source, evidence)
         _bind_case_to_test_repository(monkeypatch, case)
 
-        class _SyntheticCalendarAdapter:
-            def resolve_jalali_date(self, source_value: str) -> CalendarDateResolution:
-                return CalendarDateResolution(
-                    source_calendar="jalali",
-                    target_calendar="gregorian",
-                    source_value=source_value,
-                    effective_on=date(2030, 12, 31),
-                    adapter_id="synthetic-calendar-adapter",
-                    adapter_version="test-1",
-                    authority_reference="synthetic-test-calendar-evidence",
-                    evidence_sha256="d" * 64,
-                    approval_status="approved",
-                    reviewed_by="synthetic-reviewer",
-                    reviewed_at=datetime(2030, 1, 1),
-                    approved_by="synthetic-approver",
-                    approved_at=datetime(2030, 1, 2),
-                )
-
-        class _SyntheticCalendarVerifier:
-            def verify(self, resolution: CalendarDateResolution) -> bool:
-                return resolution.adapter_id == "synthetic-calendar-adapter"
-
-        effective_on = resolve_case_effective_on(
-            case,
-            adapter=_SyntheticCalendarAdapter(),
-            evidence_verifier=_SyntheticCalendarVerifier(),
-        )
-        definition = resolve_rule_definition_for_case(
+        definition = _resolve_rule_definition(
             session,
             case,
-            effective_on=effective_on,
+            effective_on=date(2030, 12, 31),
         )
         result = RuleEngine([definition]).calculate(
             definition.code,
-            RuleContext(effective_on, case.input_values),
+            RuleContext(date(2030, 12, 31), case.input_values),
             production=True,
             rule_pack_version=pack.version,
         )
@@ -354,20 +364,52 @@ def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_sourc
         assert definition.regression_case_ids == (case.case_id,)
         verify_expected_result(case, result)
 
-
-def test_resolver_rejects_implicit_source_date_parsing():
+def test_resolver_rejects_raw_date_bypass():
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
         _approved_matrix_entry(session, pack, source, evidence)
         case = _resolver_case(pack, source, evidence)
 
-        with pytest.raises(MatrixResolutionError, match="explicit date supplied"):
-            resolve_rule_definition_for_case(
+        with pytest.raises(TypeError):
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
+
+
+def test_resolver_rejects_calendar_source_value_mismatch(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="calendar source/evidence resolution is not trusted",
+        ):
+            _resolve_rule_definition(
                 session,
                 case,
-                effective_on=case.effective_date,
+                effective_on=date(2030, 6, 1),
+                source_override="1405-01-02",
             )
 
+
+def test_resolver_rejects_unverified_calendar_evidence(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        _bind_case_to_test_repository(monkeypatch, case)
+
+        with pytest.raises(
+            MatrixResolutionError,
+            match="calendar source/evidence resolution is not trusted",
+        ):
+            _resolve_rule_definition(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+                verified=False,
+            )
 
 def test_resolver_requires_exact_population_scope(monkeypatch):
     with _session() as session:
@@ -378,11 +420,7 @@ def test_resolver_requires_exact_population_scope(monkeypatch):
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="no calculation-matrix mapping"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_date_outside_matrix_effective_window(monkeypatch):
@@ -393,11 +431,7 @@ def test_resolver_rejects_date_outside_matrix_effective_window(monkeypatch):
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="no calculation-matrix entry is effective"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2031, 1, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2031, 1, 1))
 
 
 def test_resolver_rejects_unapproved_rule_pack(monkeypatch):
@@ -408,11 +442,7 @@ def test_resolver_rejects_unapproved_rule_pack(monkeypatch):
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="not activation-ready"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_unapproved_matrix_entry(monkeypatch):
@@ -443,11 +473,7 @@ def test_resolver_rejects_unapproved_matrix_entry(monkeypatch):
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="not approved"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_matrix_selector_fails_closed_when_two_entries_overlap():
@@ -480,11 +506,7 @@ def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix(mo
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="legal reference does not match"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_golden_case_source_hash_mismatch(monkeypatch):
@@ -495,11 +517,7 @@ def test_resolver_rejects_golden_case_source_hash_mismatch(monkeypatch):
         _bind_case_to_test_repository(monkeypatch, case)
 
         with pytest.raises(MatrixResolutionError, match="legal-source hash"):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 @pytest.mark.parametrize("missing_name", ["base", "rate"])
@@ -521,11 +539,7 @@ def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_nam
             MatrixResolutionError,
             match="missing required rule inputs",
         ):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_case_not_registered_in_canonical_repository(monkeypatch):
@@ -542,11 +556,7 @@ def test_resolver_rejects_case_not_registered_in_canonical_repository(monkeypatc
             MatrixResolutionError,
             match="must occur exactly once in the canonical repository",
         ):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_case_payload_drift_from_canonical_repository(monkeypatch):
@@ -566,11 +576,7 @@ def test_resolver_rejects_case_payload_drift_from_canonical_repository(monkeypat
             MatrixResolutionError,
             match="does not match its canonical repository entry",
         ):
-            resolve_rule_definition_for_case(
-                session,
-                supplied_case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, supplied_case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_duplicate_case_ids_in_canonical_repository(monkeypatch):
@@ -587,11 +593,7 @@ def test_resolver_rejects_duplicate_case_ids_in_canonical_repository(monkeypatch
             MatrixResolutionError,
             match="must occur exactly once in the canonical repository",
         ):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
 
 def test_resolver_rejects_stale_rule_evidence_suite_hash(monkeypatch):
@@ -609,8 +611,4 @@ def test_resolver_rejects_stale_rule_evidence_suite_hash(monkeypatch):
             MatrixResolutionError,
             match="regression suite hash does not match the canonical repository",
         ):
-            resolve_rule_definition_for_case(
-                session,
-                case,
-                effective_on=date(2030, 6, 1),
-            )
+            _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
