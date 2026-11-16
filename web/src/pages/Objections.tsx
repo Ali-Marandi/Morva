@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, MessageSquareText } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { selfService } from '@/services/self-service';
+import type { ApiError } from '@/types/api';
 
 const statusLabel: Record<string, string> = {
   open: 'ثبت‌شده',
@@ -10,6 +11,14 @@ const statusLabel: Record<string, string> = {
   rejected: 'ردشده',
   closed: 'مختومه',
 };
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const candidate = error as Partial<ApiError> & { message?: string };
+    return candidate.message || fallback;
+  }
+  return fallback;
+}
 
 function Objections() {
   const queryClient = useQueryClient();
@@ -20,13 +29,25 @@ function Objections() {
 
   const cases = useQuery({ queryKey: ['self', 'cases'], queryFn: () => selfService.getCases() });
   const createCase = useMutation({
-    mutationFn: () => selfService.createCase({ category, priority, title, description }),
+    mutationFn: async () => {
+      const response = await selfService.createCase({ category, priority, title, description });
+      if (!response.success) {
+        throw new Error(response.error?.message || 'ثبت درخواست ناموفق بود.');
+      }
+      return response;
+    },
     onSuccess: () => {
       setTitle('');
       setDescription('');
       queryClient.invalidateQueries({ queryKey: ['self', 'cases'] });
     },
   });
+  const casesError = cases.error
+    ? getErrorMessage(cases.error, 'دریافت پرونده‌ها ناموفق بود.')
+    : cases.data && !cases.data.success
+      ? cases.data.error?.message || 'دریافت پرونده‌ها ناموفق بود.'
+      : undefined;
+  const caseItems = cases.data?.success ? cases.data.data ?? [] : [];
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
@@ -40,16 +61,17 @@ function Objections() {
           <label className="text-sm md:col-span-2">عنوان<input className="mt-1 w-full rounded-lg border p-2" value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="text-sm md:col-span-2">شرح<textarea className="mt-1 w-full rounded-lg border p-2 min-h-32" value={description} onChange={(e) => setDescription(e.target.value)} /></label>
         </div>
-        {createCase.isError && <p className="text-sm text-red-700 mt-3">ثبت درخواست ناموفق بود. اطلاعات احراز هویت و اتصال به پرونده پرسنلی را بررسی کنید.</p>}
-        <button disabled={createCase.isPending || title.trim().length < 3 || description.trim().length < 10} onClick={() => createCase.mutate()} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-morva-600 px-4 py-2 text-white disabled:opacity-50"><Send size={17} />ثبت</button>
+        {createCase.isError && <p className="mt-3 text-sm text-red-700" role="alert">{getErrorMessage(createCase.error, 'ثبت درخواست ناموفق بود.')}</p>}
+        {createCase.isSuccess && <p className="mt-3 text-sm text-green-800" role="status" aria-live="polite">درخواست با موفقیت ثبت شد.</p>}
+        <button type="button" disabled={createCase.isPending || title.trim().length < 3 || description.trim().length < 10} onClick={() => createCase.mutate()} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-morva-600 px-4 py-2 text-white disabled:cursor-wait disabled:opacity-50"><Send size={17} aria-hidden="true" />{createCase.isPending ? 'در حال ثبت…' : 'ثبت'}</button>
       </section>
 
       <section className="bg-white rounded-xl border border-morva-200 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4"><MessageSquareText size={22} /><h2 className="text-lg font-bold">پرونده‌های من</h2></div>
-        {cases.isLoading && <p className="text-sm text-morva-600">در حال دریافت…</p>}
-        {cases.isError && <p className="text-sm text-red-700">دریافت پرونده‌ها ناموفق بود.</p>}
-        {!cases.isLoading && !cases.isError && (cases.data?.data ?? []).length === 0 && <p className="text-sm text-morva-600">پرونده‌ای ثبت نشده است.</p>}
-        {(cases.data?.data ?? []).map((item) => <article key={item.id} className="border-b border-morva-100 py-4 last:border-b-0"><div className="flex flex-wrap gap-2 items-center justify-between"><div className="font-semibold">{item.title}</div><span className="text-xs rounded-full bg-morva-50 px-3 py-1">{statusLabel[item.status] || item.status}</span></div><p className="text-sm text-morva-700 mt-2">{item.description}</p><div className="text-xs text-morva-500 mt-2">شناسه: {item.id} · ثبت: {new Date(item.submitted_at).toLocaleString('fa-IR')}</div>{item.resolution && <div className="mt-2 text-sm rounded-lg bg-morva-50 p-3">نتیجه: {item.resolution}</div>}</article>)}
+        {cases.isLoading && <p className="text-sm text-morva-600" role="status" aria-live="polite">در حال دریافت…</p>}
+        {casesError && <div className="flex flex-wrap items-center justify-between gap-3" role="alert"><p className="text-sm text-red-700">{casesError}</p><button type="button" onClick={() => void cases.refetch()} disabled={cases.isFetching} className="rounded-lg border px-3 py-2 text-sm font-semibold text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-60">تلاش دوباره</button></div>}
+        {!cases.isLoading && !casesError && cases.data?.success && caseItems.length === 0 && <p className="text-sm text-morva-600" role="status">پرونده‌ای ثبت نشده است.</p>}
+        {caseItems.map((item) => <article key={item.id} className="border-b border-morva-100 py-4 last:border-b-0"><div className="flex flex-wrap gap-2 items-center justify-between"><div className="font-semibold">{item.title}</div><span className="text-xs rounded-full bg-morva-50 px-3 py-1">{statusLabel[item.status] || item.status}</span></div><p className="text-sm text-morva-700 mt-2">{item.description}</p><div className="text-xs text-morva-500 mt-2">شناسه: {item.id} · ثبت: {new Date(item.submitted_at).toLocaleString('fa-IR')}</div>{item.resolution && <div className="mt-2 text-sm rounded-lg bg-morva-50 p-3">نتیجه: {item.resolution}</div>}</article>)}
       </section>
     </div>
   );
