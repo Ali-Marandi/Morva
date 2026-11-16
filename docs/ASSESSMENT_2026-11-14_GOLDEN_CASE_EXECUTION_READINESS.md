@@ -112,3 +112,12 @@ The Golden Case date boundary now has a typed, dependency-injected contract. `re
 No Jalali conversion algorithm, package dependency, default adapter or trust-store verifier is included. The contract cannot itself prove that an authority reference is official; the independently trusted verifier must bind the evidence hash and approval to an accepted official calendar source. Synthetic test adapters only exercise the interface and are not evidence of calendar correctness.
 
 The matrix resolver can consume the verified date returned by this contract. The original Jalali value is retained; payroll period keys remain Jalali source identifiers; issue/effective/arrears/end dates remain independent. Until a real official adapter and independently trusted evidence verifier are supplied and accepted, production date resolution remains unavailable and Gate 1 plus all six Production Readiness Gates remain **BLOCKED / fail-closed**.
+
+
+## Canonical Golden Case membership follow-up — 2026-11-16
+
+Source review of the matrix resolver found that it accepted any in-memory `RegressionCase` with internally consistent fields and fingerprints. It did not prove that the supplied case ID and complete payload were present exactly once in the canonical repository. For non-1405 Rule Packs, the resolver also compared the matrix suite hash only with the evidence-recorded suite hash, not with the current canonical repository hash.
+
+The follow-up now loads the canonical case set for the exact Rule Pack version, requires exactly one matching case ID, compares the complete immutable dataclass payload with that canonical entry, and recomputes the repository suite hash against both the rule-evidence and matrix hashes. Missing, duplicate, altered or stale cases fail closed before a RuleDefinition is returned.
+
+Synthetic tests exercise missing membership, duplicate IDs, payload drift and stale suite evidence. These tests do not supply statutory data or certify a real Rule Pack. The production 1405.1 corpus remains placeholder-only; Gate 1 and all six Production Readiness Gates remain **BLOCKED / fail-closed**.

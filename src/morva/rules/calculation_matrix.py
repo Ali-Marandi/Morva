@@ -19,7 +19,12 @@ from morva.rules.regression import (
     fingerprint_expected_result_payload,
     fingerprint_values,
 )
-from morva.rules.regression_cases import RegressionCase, validate_repository_against_evidence
+from morva.rules.regression_cases import (
+    RegressionCase,
+    load_cases,
+    regression_suite_hash,
+    validate_repository_against_evidence,
+)
 from morva.security.policy import require_distinct_actors
 from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS, is_1405_rule_pack
 
@@ -278,6 +283,19 @@ def resolve_rule_definition_for_case(
         or not case.effective_date.strip()
     ):
         raise MatrixResolutionError("golden case identity and source effective date are required")
+    try:
+        canonical_cases = load_cases(case.rule_pack_version)
+    except (OSError, ValueError) as exc:
+        raise MatrixResolutionError("canonical golden case repository cannot be loaded") from exc
+    matching_cases = [item for item in canonical_cases if item.case_id == case.case_id]
+    if len(matching_cases) != 1:
+        raise MatrixResolutionError(
+            "golden case must occur exactly once in the canonical repository"
+        )
+    if matching_cases[0] != case:
+        raise MatrixResolutionError(
+            "golden case payload does not match its canonical repository entry"
+        )
     if not case.input_values:
         raise MatrixResolutionError("golden case has no governed input values")
     if not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
@@ -346,6 +364,18 @@ def resolve_rule_definition_for_case(
         raise MatrixResolutionError("golden case legal-source hash does not match the approved source")
     if not _sha256_matches(entry.regression_suite_hash, evidence.regression_suite_hash):
         raise MatrixResolutionError("matrix and rule-evidence suite hashes do not match")
+    try:
+        current_suite_hash = regression_suite_hash(case.rule_pack_version)
+    except (OSError, ValueError) as exc:
+        raise MatrixResolutionError("canonical golden case suite cannot be fingerprinted") from exc
+    if not _sha256_matches(current_suite_hash, evidence.regression_suite_hash):
+        raise MatrixResolutionError(
+            "rule evidence regression suite hash does not match the canonical repository"
+        )
+    if not _sha256_matches(entry.regression_suite_hash, current_suite_hash):
+        raise MatrixResolutionError(
+            "calculation-matrix suite hash does not match the canonical repository"
+        )
     if (
         entry.legal_article.strip() != evidence.article.strip()
         or (entry.legal_clause or "").strip() != (evidence.clause or "").strip()
