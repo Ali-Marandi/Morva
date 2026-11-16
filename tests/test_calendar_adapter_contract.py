@@ -117,6 +117,7 @@ def test_calendar_contract_rejects_unverified_evidence():
         ({"evidence_sha256": "0" * 64}, "non-placeholder SHA-256"),
         ({"evidence_sha256": "not-a-hash"}, "non-placeholder SHA-256"),
         ({"approval_status": "review_required"}, "not approved/published"),
+        ({"approval_status": []}, "not approved/published"),
         ({"approved_by": "synthetic-reviewer"}, "must be distinct"),
         ({"approved_at": datetime(2025, 12, 31)}, "cannot precede its review"),
     ],

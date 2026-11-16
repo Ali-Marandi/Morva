@@ -92,7 +92,10 @@ def _validate_resolution(
         raise CalendarAdapterContractError(
             "calendar resolution evidence_sha256 must be a non-placeholder SHA-256"
         )
-    if resolution.approval_status not in _APPROVED_STATUSES:
+    if (
+        not isinstance(resolution.approval_status, str)
+        or resolution.approval_status not in _APPROVED_STATUSES
+    ):
         raise CalendarAdapterContractError(
             "calendar conversion evidence is not approved/published"
         )
@@ -104,7 +107,19 @@ def _validate_resolution(
         raise CalendarAdapterContractError("calendar evidence reviewed_at is required")
     if type(resolution.approved_at) is not datetime:
         raise CalendarAdapterContractError("calendar evidence approved_at is required")
-    if resolution.approved_at < resolution.reviewed_at:
+    review_is_aware = resolution.reviewed_at.utcoffset() is not None
+    approval_is_aware = resolution.approved_at.utcoffset() is not None
+    if review_is_aware != approval_is_aware:
+        raise CalendarAdapterContractError(
+            "calendar evidence timestamps must use consistent timezone awareness"
+        )
+    try:
+        approval_precedes_review = resolution.approved_at < resolution.reviewed_at
+    except TypeError as exc:
+        raise CalendarAdapterContractError(
+            "calendar evidence timestamps cannot be compared"
+        ) from exc
+    if approval_precedes_review:
         raise CalendarAdapterContractError(
             "calendar evidence approval cannot precede its review"
         )
