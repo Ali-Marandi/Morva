@@ -110,6 +110,8 @@ Each registered personnel order receives a deterministic SHA-256 content fingerp
 
 Each executable component mapping is required to bind a Rule Pack and population scope to a safe expression, effective dates, legal source/article, tax/pension/insurance treatment and a regression-suite fingerprint. Legal source and rule evidence must already be approved, and matrix entries require distinct review and approval actors before the matrix readiness gate can pass.
 
+The 2026-11-16 resolver follow-up adds exact-key selection by Rule Pack version, component code and population scope, plus inclusive effective-date filtering. It fails closed on missing/ambiguous matches, unapproved Rule Packs or matrix entries, incomplete review provenance, source/evidence/hash drift and expected-output metadata that disagrees with the approved matrix. The resolver maps the component code directly to the RuleEngine rule code and uses the persisted legal-source citation as the RuleResult legal reference. It accepts an already-resolved Python date only; it never parses the Golden Case source date or performs Jalali/Gregorian conversion. The 1405.1 placeholder corpus remains non-executable and blocks readiness.
+
 ## Ledger Treatment Governance
 
 `TAX`, `PENSION`, `INSURANCE`, `LOAN` and `COURT_ORDER` now have an explicit treatment-governance boundary. Classification flags are explicit rather than inferred, and approval requires primary-source metadata, effective dates, independent review/approval and regression evidence. Missing approval leaves execution fail-closed. This does not constitute legal approval or populate rates/thresholds.

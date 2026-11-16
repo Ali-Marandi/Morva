@@ -11,8 +11,16 @@ from sqlalchemy.orm import Session
 from morva.audit.persistence import append_audit_event
 from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
+from morva.persistence.models import RulePackRecord
+from morva.rules.activation import RuleActivationBlocked, require_authoritative_pack
+from morva.rules.engine import RuleDefinition
+from morva.rules.regression import (
+    canonical_expected_result_payload,
+    fingerprint_expected_result_payload,
+    fingerprint_values,
+)
+from morva.rules.regression_cases import RegressionCase, validate_repository_against_evidence
 from morva.security.policy import require_distinct_actors
-from morva.rules.regression_cases import validate_repository_against_evidence
 from morva.rules.rule_pack_1405 import REQUIRED_1405_COMPONENTS, is_1405_rule_pack
 
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -157,3 +165,230 @@ def create_matrix_entry(session: Session, payload: dict[str, object], actor_id: 
     session.flush()
     append_audit_event(event_type="rule.matrix.created", entity_type="calculation_matrix", entity_id=str(entry.id), actor_id=actor_id, payload={"rule_pack_version": version, "component_code": component, "population_scope": population}, reason="register calculation matrix entry", session=session)
     return entry
+
+
+
+class MatrixResolutionError(ValueError):
+    """A Rule Pack/component/population/date mapping cannot be resolved safely."""
+
+
+def _sha256_matches(left: object, right: object) -> bool:
+    return (
+        isinstance(left, str)
+        and isinstance(right, str)
+        and _HEX64.fullmatch(left) is not None
+        and _HEX64.fullmatch(right) is not None
+        and left.lower() != "0" * 64
+        and right.lower() != "0" * 64
+        and left.lower() == right.lower()
+    )
+
+
+def _select_active_matrix_entry(
+    entries: list[CalculationMatrixRecord],
+    *,
+    rule_pack_version: str,
+    component_code: str,
+    population_scope: str,
+    effective_on: date,
+) -> CalculationMatrixRecord:
+    """Select exactly one entry by exact keys and inclusive effective-date bounds."""
+    if type(effective_on) is not date:
+        raise MatrixResolutionError(
+            "effective_on must be an explicit date supplied by an approved calendar adapter"
+        )
+
+    keyed = [
+        entry
+        for entry in entries
+        if entry.rule_pack_version == rule_pack_version
+        and entry.component_code == component_code
+        and entry.population_scope == population_scope
+    ]
+    if not keyed:
+        raise MatrixResolutionError(
+            "no calculation-matrix mapping for the exact Rule Pack, component and population"
+        )
+
+    for entry in keyed:
+        if type(entry.effective_from) is not date:
+            raise MatrixResolutionError("matrix effective_from must be a date")
+        if entry.effective_to is not None and type(entry.effective_to) is not date:
+            raise MatrixResolutionError("matrix effective_to must be a date or null")
+
+    active = [
+        entry
+        for entry in keyed
+        if entry.effective_from <= effective_on
+        and (entry.effective_to is None or effective_on <= entry.effective_to)
+    ]
+    if not active:
+        raise MatrixResolutionError(
+            "no calculation-matrix entry is effective on the supplied date"
+        )
+    if len(active) != 1:
+        raise MatrixResolutionError(
+            "ambiguous calculation-matrix mapping: more than one entry is effective"
+        )
+    return active[0]
+
+
+def resolve_rule_definition_for_case(
+    session: Session,
+    case: RegressionCase,
+    *,
+    effective_on: date,
+) -> RuleDefinition:
+    """Resolve one approved matrix row into a RuleDefinition for a loaded Golden Case.
+
+    This function deliberately does not parse or convert case.effective_date. The caller
+    must preserve that original source string and supply effective_on from an independently
+    approved calendar adapter. No Jalali/Gregorian conversion is performed here.
+    """
+    if not isinstance(case, RegressionCase):
+        raise MatrixResolutionError("case must be a loaded RegressionCase")
+    if type(effective_on) is not date:
+        raise MatrixResolutionError(
+            "effective_on must be an explicit date supplied by an approved calendar adapter"
+        )
+    if case.status not in {"approved", "published"}:
+        raise MatrixResolutionError("golden case is not approved/published")
+    if (
+        not isinstance(case.case_id, str)
+        or not case.case_id.strip()
+        or not isinstance(case.effective_date, str)
+        or not case.effective_date.strip()
+    ):
+        raise MatrixResolutionError("golden case identity and source effective date are required")
+    if not case.input_values:
+        raise MatrixResolutionError("golden case has no governed input values")
+    if not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
+        raise MatrixResolutionError("golden case input fingerprint is invalid or mismatched")
+    if case.expected_output is None:
+        raise MatrixResolutionError("golden case expected output is missing")
+    try:
+        expected_payload = canonical_expected_result_payload(case.expected_output)
+    except ValueError as exc:
+        raise MatrixResolutionError(f"golden case expected output is invalid: {exc}") from exc
+    expected_fingerprint = fingerprint_expected_result_payload(expected_payload)
+    if not _sha256_matches(expected_fingerprint, case.expected_output_fingerprint):
+        raise MatrixResolutionError("golden case expected-output fingerprint is invalid or mismatched")
+
+    pack = session.scalar(
+        select(RulePackRecord).where(RulePackRecord.version == case.rule_pack_version)
+    )
+    if pack is None:
+        raise MatrixResolutionError("Rule Pack is not registered")
+    entries = session.scalars(
+        select(CalculationMatrixRecord).where(
+            CalculationMatrixRecord.rule_pack_version == case.rule_pack_version,
+        )
+    ).all()
+    entry = _select_active_matrix_entry(
+        list(entries),
+        rule_pack_version=case.rule_pack_version,
+        component_code=case.component_code,
+        population_scope=case.population_scope,
+        effective_on=effective_on,
+    )
+    if entry.status != "approved":
+        raise MatrixResolutionError("calculation-matrix entry is not approved")
+    if (
+        not entry.reviewed_by
+        or entry.reviewed_at is None
+        or not entry.approved_by
+        or entry.approved_at is None
+        or entry.reviewed_by == entry.approved_by
+    ):
+        raise MatrixResolutionError("calculation-matrix review/approval provenance is incomplete")
+
+    try:
+        require_authoritative_pack(
+            session,
+            pack=pack,
+            component_codes={case.component_code},
+        )
+    except RuleActivationBlocked as exc:
+        raise MatrixResolutionError(f"Rule Pack evidence is not activation-ready: {exc}") from exc
+
+    evidence = session.scalar(
+        select(RuleEvidenceRecord).where(
+            RuleEvidenceRecord.rule_pack_version == case.rule_pack_version,
+            RuleEvidenceRecord.component_code == case.component_code,
+        )
+    )
+    if evidence is None:
+        raise MatrixResolutionError("registered rule evidence is missing")
+    source = session.get(LegalSourceRecord, entry.legal_source_id)
+    if source is None or evidence.legal_source_id != entry.legal_source_id:
+        raise MatrixResolutionError("matrix and rule evidence do not reference the same legal source")
+    if not _sha256_matches(source.document_hash, evidence.source_hash):
+        raise MatrixResolutionError("legal-source and rule-evidence hashes do not match")
+    if not _sha256_matches(case.legal_source_hash, source.document_hash):
+        raise MatrixResolutionError("golden case legal-source hash does not match the approved source")
+    if not _sha256_matches(entry.regression_suite_hash, evidence.regression_suite_hash):
+        raise MatrixResolutionError("matrix and rule-evidence suite hashes do not match")
+    if (
+        entry.legal_article.strip() != evidence.article.strip()
+        or (entry.legal_clause or "").strip() != (evidence.clause or "").strip()
+        or entry.population_scope.strip() != evidence.population_scope.strip()
+    ):
+        raise MatrixResolutionError("matrix metadata does not match registered rule evidence")
+    if (
+        not case.legal_article
+        or case.legal_article.strip() != evidence.article.strip()
+        or (case.legal_clause or "").strip() != (evidence.clause or "").strip()
+        or case.population_scope.strip() != evidence.population_scope.strip()
+    ):
+        raise MatrixResolutionError("golden case legal metadata does not match registered evidence")
+    if not source.citation or not source.citation.strip():
+        raise MatrixResolutionError("legal source citation is missing")
+    if expected_payload["code"] != case.component_code:
+        raise MatrixResolutionError("expected output code does not match the golden component")
+    if expected_payload["rule_version"] != case.rule_pack_version:
+        raise MatrixResolutionError("expected output rule version does not match the Rule Pack")
+    if expected_payload["legal_reference"] != source.citation:
+        raise MatrixResolutionError("expected output legal reference does not match the source citation")
+    if (
+        expected_payload["taxable"] != entry.taxable
+        or expected_payload["pensionable"] != entry.pensionable
+        or expected_payload["insurable"] != entry.insurable
+    ):
+        raise MatrixResolutionError("expected output classifications do not match the approved matrix")
+
+    readiness = matrix_readiness(session, case.rule_pack_version)
+    if not readiness.ready:
+        details = "; ".join(readiness.blockers)
+        raise MatrixResolutionError(f"calculation matrix is not ready: {details}")
+
+    validate_matrix_payload(
+        treatment=entry.treatment,
+        effective_from=entry.effective_from,
+        effective_to=entry.effective_to,
+        regression_suite_hash=entry.regression_suite_hash,
+        expression=entry.expression,
+        legal_article=entry.legal_article,
+        population_scope=entry.population_scope,
+        taxable=entry.taxable,
+        pensionable=entry.pensionable,
+        insurable=entry.insurable,
+    )
+    if pack.effective_from is not None and effective_on < pack.effective_from:
+        raise MatrixResolutionError("supplied date precedes the Rule Pack effective period")
+    if pack.effective_to is not None and effective_on > pack.effective_to:
+        raise MatrixResolutionError("supplied date follows the Rule Pack effective period")
+
+    return RuleDefinition(
+        code=entry.component_code,
+        title=entry.component_code,
+        effective_from=entry.effective_from,
+        effective_to=entry.effective_to,
+        taxable=entry.taxable,
+        pensionable=entry.pensionable,
+        insurable=entry.insurable,
+        expression=dict(entry.expression),
+        legal_reference=source.citation,
+        rule_version=entry.rule_pack_version,
+        review_status=entry.status,
+        regression_case_ids=(case.case_id,),
+    )

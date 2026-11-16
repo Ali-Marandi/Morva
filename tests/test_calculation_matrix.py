@@ -1,5 +1,7 @@
 from datetime import date, datetime
+from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -7,11 +9,17 @@ from morva.persistence.calculation_matrix_records import CalculationMatrixRecord
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.persistence.models import Base, RulePackRecord
 from morva.rules.calculation_matrix import (
+    MatrixResolutionError,
+    _select_active_matrix_entry,
     approve_matrix_entry,
     create_matrix_entry,
     matrix_readiness,
+    resolve_rule_definition_for_case,
     validate_matrix_payload,
 )
+from morva.rules.engine import RuleContext, RuleEngine
+from morva.rules.regression import fingerprint_expected_result_payload, fingerprint_values
+from morva.rules.regression_cases import RegressionCase, verify_expected_result
 
 
 def _session():
@@ -20,8 +28,23 @@ def _session():
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)()
 
 
-def _setup(session, *, source_status="approved", evidence_status="approved"):
-    pack = RulePackRecord(version="TEST-MATRIX-1.0", status="reviewed", reviewed_by="legal-reviewer")
+def _setup(
+    session,
+    *,
+    source_status="approved",
+    evidence_status="approved",
+    pack_status="reviewed",
+):
+    pack = RulePackRecord(
+        version="TEST-MATRIX-1.0",
+        status=pack_status,
+        legal_source_hash="a" * 64,
+        rules_hash="c" * 64,
+        reviewed_by="legal-reviewer",
+        reviewed_at=datetime(2026, 1, 2),
+        approved_by="pack-approver" if pack_status in {"approved", "published"} else None,
+        approved_at=datetime(2026, 1, 3) if pack_status in {"approved", "published"} else None,
+    )
     source = LegalSourceRecord(
         citation="Synthetic authority source",
         issuer="Synthetic issuer",
@@ -190,3 +213,235 @@ def test_empty_matrix_is_blocking():
         readiness = matrix_readiness(session, "1405.empty")
         assert readiness.ready is False
         assert "no calculation-matrix entries" in readiness.blockers[0]
+
+
+def _resolver_case(pack, source, evidence):
+    input_values = {"base": Decimal("2"), "rate": Decimal("3")}
+    expected_output = {
+        "code": evidence.component_code,
+        "amount": "6.00",
+        "legal_reference": source.citation,
+        "rule_version": pack.version,
+        "taxable": True,
+        "pensionable": False,
+        "insurable": True,
+    }
+    return RegressionCase(
+        case_id="synthetic-matrix-case-001",
+        rule_pack_version=pack.version,
+        component_code=evidence.component_code,
+        population_scope=evidence.population_scope,
+        effective_date="jalali-source:1405-01-01",
+        status="approved",
+        input_values=input_values,
+        expected_output=expected_output,
+        input_fingerprint=fingerprint_values(input_values),
+        expected_output_fingerprint=fingerprint_expected_result_payload(expected_output),
+        legal_source_hash=source.document_hash,
+        legal_article=evidence.article,
+        legal_clause=evidence.clause,
+    )
+
+
+def _approved_matrix_entry(session, pack, source, evidence):
+    entry = create_matrix_entry(
+        session,
+        {
+            "rule_pack_version": pack.version,
+            "component_code": evidence.component_code,
+            "population_scope": evidence.population_scope,
+            "treatment": "earning",
+            "expression": {
+                "op": "mul",
+                "args": [
+                    {"op": "value", "name": "base"},
+                    {"op": "value", "name": "rate"},
+                ],
+            },
+            "effective_from": date(2030, 1, 1),
+            "effective_to": date(2030, 12, 31),
+            "legal_source_id": source.id,
+            "legal_article": evidence.article,
+            "legal_clause": evidence.clause,
+            "taxable": True,
+            "pensionable": False,
+            "insurable": True,
+            "regression_suite_hash": evidence.regression_suite_hash,
+            "notes": None,
+        },
+        "matrix-creator",
+    )
+    entry.reviewed_by = "matrix-reviewer"
+    entry.reviewed_at = datetime(2030, 1, 2)
+    entry.status = "reviewed"
+    session.commit()
+    entry = session.get(CalculationMatrixRecord, entry.id)
+    approve_matrix_entry(entry, "matrix-approver")
+    session.commit()
+    return session.get(CalculationMatrixRecord, entry.id)
+
+
+def test_resolver_maps_approved_golden_case_to_rule_engine_without_parsing_source_date():
+    effective_on = date(2030, 12, 31)
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+
+        definition = resolve_rule_definition_for_case(
+            session,
+            case,
+            effective_on=effective_on,
+        )
+        result = RuleEngine([definition]).calculate(
+            definition.code,
+            RuleContext(effective_on, case.input_values),
+            production=True,
+            rule_pack_version=pack.version,
+        )
+
+        assert case.effective_date == "jalali-source:1405-01-01"
+        assert definition.code == case.component_code
+        assert definition.regression_case_ids == (case.case_id,)
+        verify_expected_result(case, result)
+
+
+def test_resolver_rejects_implicit_source_date_parsing():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+
+        with pytest.raises(MatrixResolutionError, match="explicit date supplied"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=case.effective_date,
+            )
+
+
+def test_resolver_requires_exact_population_scope():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        case = replace(case, population_scope="not-the-approved-population")
+
+        with pytest.raises(MatrixResolutionError, match="no calculation-matrix mapping"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_date_outside_matrix_effective_window():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+
+        with pytest.raises(MatrixResolutionError, match="no calculation-matrix entry is effective"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2031, 1, 1),
+            )
+
+
+def test_resolver_rejects_unapproved_rule_pack():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="reviewed")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+
+        with pytest.raises(MatrixResolutionError, match="not activation-ready"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_unapproved_matrix_entry():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        create_matrix_entry(
+            session,
+            {
+                "rule_pack_version": pack.version,
+                "component_code": evidence.component_code,
+                "population_scope": evidence.population_scope,
+                "treatment": "earning",
+                "expression": {"op": "value", "name": "base"},
+                "effective_from": date(2030, 1, 1),
+                "effective_to": None,
+                "legal_source_id": source.id,
+                "legal_article": evidence.article,
+                "legal_clause": evidence.clause,
+                "taxable": True,
+                "pensionable": False,
+                "insurable": True,
+                "regression_suite_hash": evidence.regression_suite_hash,
+                "notes": None,
+            },
+            "matrix-creator",
+        )
+        case = _resolver_case(pack, source, evidence)
+
+        with pytest.raises(MatrixResolutionError, match="not approved"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_matrix_selector_fails_closed_when_two_entries_overlap():
+    with _session() as session:
+        pack, source, evidence = _setup(session)
+        entry = _approved_matrix_entry(session, pack, source, evidence)
+
+        with pytest.raises(MatrixResolutionError, match="ambiguous calculation-matrix mapping"):
+            _select_active_matrix_entry(
+                [entry, entry],
+                rule_pack_version=pack.version,
+                component_code=evidence.component_code,
+                population_scope=evidence.population_scope,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_expected_output_metadata_that_disagrees_with_matrix():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = _resolver_case(pack, source, evidence)
+        changed = dict(case.expected_output or {})
+        changed["legal_reference"] = "different-source"
+        case = replace(
+            case,
+            expected_output=changed,
+            expected_output_fingerprint=fingerprint_expected_result_payload(changed),
+        )
+
+        with pytest.raises(MatrixResolutionError, match="legal reference does not match"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
+
+
+def test_resolver_rejects_golden_case_source_hash_mismatch():
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        case = replace(_resolver_case(pack, source, evidence), legal_source_hash="d" * 64)
+
+        with pytest.raises(MatrixResolutionError, match="legal-source hash"):
+            resolve_rule_definition_for_case(
+                session,
+                case,
+                effective_on=date(2030, 6, 1),
+            )
