@@ -248,8 +248,6 @@ def _resolver_case(pack, source, evidence):
     )
 
 
-
-
 def _bind_case_to_test_repository(monkeypatch, case):
     monkeypatch.setattr(
         "morva.rules.calculation_matrix.load_cases",
@@ -259,6 +257,7 @@ def _bind_case_to_test_repository(monkeypatch, case):
         "morva.rules.calculation_matrix.regression_suite_hash",
         lambda _version: "b" * 64,
     )
+
 
 def _approved_matrix_entry(session, pack, source, evidence):
     entry = create_matrix_entry(
@@ -503,7 +502,6 @@ def test_resolver_rejects_golden_case_source_hash_mismatch(monkeypatch):
             )
 
 
-
 @pytest.mark.parametrize("missing_name", ["base", "rate"])
 def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_name, monkeypatch):
     with _session() as session:
@@ -528,7 +526,6 @@ def test_resolver_rejects_missing_names_from_nested_rule_expressions(missing_nam
                 case,
                 effective_on=date(2030, 6, 1),
             )
-
 
 
 def test_resolver_rejects_case_not_registered_in_canonical_repository(monkeypatch):

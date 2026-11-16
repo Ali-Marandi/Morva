@@ -296,6 +296,7 @@ def resolve_rule_definition_for_case(
         raise MatrixResolutionError(
             "golden case payload does not match its canonical repository entry"
         )
+    case = matching_cases[0]
     if not case.input_values:
         raise MatrixResolutionError("golden case has no governed input values")
     if not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
