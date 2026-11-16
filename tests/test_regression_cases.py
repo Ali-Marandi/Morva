@@ -9,13 +9,15 @@ from sqlalchemy.orm import sessionmaker
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 from morva.persistence.models import Base
-from morva.rules.regression import fingerprint_values
+from morva.rules.engine import RuleResult
+from morva.rules.regression import fingerprint_expected_result_payload, fingerprint_values
 from morva.rules.regression_cases import (
     RegressionCase,
     load_cases,
     regression_suite_hash,
     validate_repository,
     validate_repository_against_evidence,
+    verify_expected_result,
 )
 
 
@@ -23,6 +25,18 @@ def _session():
     engine = create_engine("sqlite://")
     Base.metadata.create_all(bind=engine)
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)()
+
+
+def _expected_output_payload(component_code: str = "TAX") -> dict[str, object]:
+    return {
+        "code": component_code,
+        "amount": "10.00",
+        "legal_reference": f"synthetic:{component_code}",
+        "rule_version": "1405.1",
+        "taxable": True,
+        "pensionable": False,
+        "insurable": False,
+    }
 
 
 def _case(
@@ -33,6 +47,7 @@ def _case(
     expected_output_missing: bool = False,
 ) -> RegressionCase:
     input_values = {"taxable_base": Decimal("100.00")}
+    expected_output = _expected_output_payload(component_code)
     return RegressionCase(
         case_id=case_id,
         rule_pack_version="1405.1",
@@ -41,13 +56,31 @@ def _case(
         effective_date="1405-01-01",
         status="approved",
         input_values=input_values,
-        expected_output=None if expected_output_missing else {"amount": "10.00"},
+        expected_output=None if expected_output_missing else expected_output,
         input_fingerprint=fingerprint_values(input_values),
-        expected_output_fingerprint="b" * 64,
+        expected_output_fingerprint=(
+            "b" * 64
+            if expected_output_missing
+            else fingerprint_expected_result_payload(expected_output)
+        ),
         legal_source_hash=legal_source_hash,
         legal_article="1",
         legal_clause=None,
     )
+
+
+def _actual_result(**overrides: object) -> RuleResult:
+    result = RuleResult(
+        code="TAX",
+        amount=Decimal("10.000"),
+        explanation="synthetic fixture",
+        legal_reference="synthetic:TAX",
+        taxable=True,
+        pensionable=False,
+        insurable=False,
+        rule_version="1405.1",
+    )
+    return replace(result, **overrides)
 
 
 def test_1405_golden_repository_has_five_core_cases():
@@ -511,3 +544,114 @@ def test_validator_rejects_all_zero_placeholder_hashes(monkeypatch, field, messa
     blockers = validate_repository("1405.1", required_components=("TAX",))
 
     assert f"golden case {case.case_id} has an {message}" in blockers
+
+
+def test_validator_binds_expected_output_object_to_its_fingerprint(monkeypatch):
+    case = _case("expected-output-fingerprint-mismatch")
+    changed_output = dict(case.expected_output or {})
+    changed_output["amount"] = "11.00"
+    case = replace(case, expected_output=changed_output)
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert (
+        f"golden case {case.case_id} expected output fingerprint mismatch"
+        in blockers
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "missing_field",
+        "extra_field",
+        "numeric_amount",
+        "non_finite_amount",
+        "wrong_code_type",
+        "wrong_classification_type",
+        "wrong_legal_reference_type",
+    ],
+)
+def test_validator_rejects_noncanonical_expected_output_payloads(
+    monkeypatch, mutation
+):
+    output = _expected_output_payload()
+    if mutation == "missing_field":
+        output.pop("insurable")
+    elif mutation == "extra_field":
+        output["explanation"] = "not part of the canonical fingerprint"
+    elif mutation == "numeric_amount":
+        output["amount"] = 10
+    elif mutation == "non_finite_amount":
+        output["amount"] = "NaN"
+    elif mutation == "wrong_code_type":
+        output["code"] = 7
+    elif mutation == "wrong_classification_type":
+        output["taxable"] = "true"
+    elif mutation == "wrong_legal_reference_type":
+        output["legal_reference"] = 1
+    case = replace(_case("invalid-expected-output"), expected_output=output)
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (case,),
+    )
+
+    blockers = validate_repository("1405.1", required_components=("TAX",))
+
+    assert any(
+        blocker.startswith(f"golden case {case.case_id} has invalid expected output:")
+        for blocker in blockers
+    )
+
+
+def test_verify_expected_result_compares_the_full_payload_and_normalizes_decimal():
+    case = _case("full-output-verification")
+
+    verify_expected_result(case, _actual_result())
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("code", "PENSION"),
+        ("amount", Decimal("11")),
+        ("legal_reference", "synthetic:OTHER"),
+        ("rule_version", "1405.2"),
+        ("taxable", False),
+        ("pensionable", True),
+        ("insurable", True),
+    ],
+)
+def test_verify_expected_result_rejects_each_canonical_field_mismatch(field, value):
+    case = _case("field-mismatch")
+
+    with pytest.raises(ValueError, match="output payload mismatch"):
+        verify_expected_result(case, _actual_result(**{field: value}))
+
+
+def test_verify_expected_result_rejects_a_corrupted_expected_fingerprint():
+    case = replace(
+        _case("corrupted-expected-fingerprint"),
+        expected_output_fingerprint="c" * 64,
+    )
+
+    with pytest.raises(ValueError, match="expected output fingerprint mismatch"):
+        verify_expected_result(case, _actual_result())
+
+
+def test_verify_expected_result_rejects_a_missing_expected_payload():
+    case = _case("missing-expected-payload", expected_output_missing=True)
+
+    with pytest.raises(ValueError, match="has no expected output"):
+        verify_expected_result(case, _actual_result())
+
+
+def test_verify_expected_result_rejects_non_rule_result_objects():
+    case = _case("wrong-actual-result-type")
+
+    with pytest.raises(ValueError, match="actual result must be a RuleResult"):
+        verify_expected_result(case, {"code": "TAX"})

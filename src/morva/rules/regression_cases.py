@@ -14,8 +14,12 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 
+from .engine import RuleResult
 from .regression import (
     MAX_DECIMAL_REPRESENTATION_CHARS,
+    canonical_expected_result_payload,
+    canonical_result_payload,
+    fingerprint_expected_result_payload,
     fingerprint_rule_result,
     fingerprint_values,
 )
@@ -244,6 +248,22 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
         if case.expected_output is None:
             blockers.append(f"golden case {case.case_id} is missing expected output")
+        else:
+            try:
+                expected_payload = canonical_expected_result_payload(case.expected_output)
+            except ValueError as exc:
+                blockers.append(
+                    f"golden case {case.case_id} has invalid expected output: {exc}"
+                )
+            else:
+                if _is_non_placeholder_sha256(case.expected_output_fingerprint):
+                    if (
+                        fingerprint_expected_result_payload(expected_payload)
+                        != case.expected_output_fingerprint
+                    ):
+                        blockers.append(
+                            f"golden case {case.case_id} expected output fingerprint mismatch"
+                        )
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
         elif not _is_non_placeholder_sha256(case.expected_output_fingerprint):
@@ -315,8 +335,21 @@ def validate_repository_against_evidence(
 
 
 def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
+    if case.expected_output is None:
+        raise ValueError(f"golden case {case.case_id} has no expected output")
     if not _is_non_placeholder_sha256(case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} has no valid expected output fingerprint")
-    actual = fingerprint_rule_result(actual_result)
-    if actual != case.expected_output_fingerprint:
+
+    expected_payload = canonical_expected_result_payload(case.expected_output)
+    expected_fingerprint = fingerprint_expected_result_payload(expected_payload)
+    if expected_fingerprint != case.expected_output_fingerprint:
+        raise ValueError(f"golden case {case.case_id} expected output fingerprint mismatch")
+
+    if not isinstance(actual_result, RuleResult):
+        raise ValueError(f"golden case {case.case_id} actual result must be a RuleResult")
+    actual_payload = canonical_result_payload(actual_result)
+    if actual_payload != expected_payload:
+        raise ValueError(f"golden case {case.case_id} output payload mismatch")
+
+    if fingerprint_rule_result(actual_result) != case.expected_output_fingerprint:
         raise ValueError(f"golden case {case.case_id} output fingerprint mismatch")
