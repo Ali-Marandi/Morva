@@ -628,3 +628,31 @@ def test_resolver_rejects_stale_rule_evidence_suite_hash(monkeypatch):
             match="regression suite hash does not match the canonical repository",
         ):
             _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
+
+def test_resolver_passes_canonical_repository_object_to_calendar_trust_boundary(monkeypatch):
+    with _session() as session:
+        pack, source, evidence = _setup(session, pack_status="approved")
+        _approved_matrix_entry(session, pack, source, evidence)
+        canonical_case = _resolver_case(pack, source, evidence)
+        supplied_case = replace(canonical_case)
+        assert supplied_case is not canonical_case
+        _bind_case_to_test_repository(monkeypatch, canonical_case)
+        received_cases = []
+
+        def _capture_calendar_case(case, *, adapter, evidence_verifier):
+            received_cases.append(case)
+            return date(2030, 6, 1)
+
+        monkeypatch.setattr(
+            "morva.rules.calculation_matrix.resolve_case_effective_on",
+            _capture_calendar_case,
+        )
+
+        _resolve_rule_definition(
+            session,
+            supplied_case,
+            effective_on=date(2030, 6, 1),
+        )
+
+        assert received_cases == [canonical_case]
+        assert received_cases[0] is canonical_case
