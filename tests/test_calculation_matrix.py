@@ -629,6 +629,7 @@ def test_resolver_rejects_stale_rule_evidence_suite_hash(monkeypatch):
         ):
             _resolve_rule_definition(session, case, effective_on=date(2030, 6, 1))
 
+
 def test_resolver_passes_canonical_repository_object_to_calendar_trust_boundary(monkeypatch):
     with _session() as session:
         pack, source, evidence = _setup(session, pack_status="approved")
