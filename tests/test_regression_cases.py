@@ -31,13 +31,16 @@ def _case(
     legal_source_hash: str = "a" * 64,
     expected_output_fingerprint: str | None = "b" * 64,
     expected_output_missing: bool = False,
+    population_scope: str = "all",
+    legal_article: str | None = "1",
+    legal_clause: str | None = None,
 ) -> RegressionCase:
     input_values = {"taxable_base": Decimal("100.00")}
     return RegressionCase(
         case_id=case_id,
         rule_pack_version="1405.1",
         component_code=component_code,
-        population_scope="all",
+        population_scope=population_scope,
         effective_date="1405-01-01",
         status="approved",
         input_values=input_values,
@@ -45,8 +48,8 @@ def _case(
         input_fingerprint=fingerprint_values(input_values),
         expected_output_fingerprint=expected_output_fingerprint,
         legal_source_hash=legal_source_hash,
-        legal_article="1",
-        legal_clause=None,
+        legal_article=legal_article,
+        legal_clause=legal_clause,
     )
 
 
@@ -154,10 +157,21 @@ def test_validator_rejects_duplicate_golden_case_ids(monkeypatch):
     assert f"duplicate golden case_id {duplicate_id}" in blockers
 
 
-def test_evidence_validation_checks_every_case_for_a_component(monkeypatch):
-    # مغایرت منبع در نمونه قبلی نباید با نمونه منطبق بعدی پنهان شود.
-    mismatched_case = _case("tax-wrong-source", legal_source_hash="b" * 64)
-    matching_case = _case("tax-matching-source")
+@pytest.mark.parametrize(
+    ("case_overrides", "expected_blocker"),
+    [
+        ({"legal_source_hash": "b" * 64}, "source hash mismatch"),
+        ({"legal_article": "2"}, "article mismatch"),
+        ({"legal_clause": "part-b"}, "clause mismatch"),
+        ({"population_scope": "teachers-only"}, "population scope mismatch"),
+    ],
+)
+def test_evidence_validation_checks_every_case_metadata_for_a_component(
+    monkeypatch, case_overrides, expected_blocker
+):
+    # مغایرت هر فیلد در نمونه قبلی نباید با نمونه منطبق بعدی پنهان شود.
+    mismatched_case = _case("tax-mismatched", **case_overrides)
+    matching_case = _case("tax-matching")
     monkeypatch.setattr(
         "morva.rules.regression_cases.load_cases",
         lambda _version: (mismatched_case, matching_case),
@@ -199,7 +213,7 @@ def test_evidence_validation_checks_every_case_for_a_component(monkeypatch):
             required_components=("TAX",),
         )
 
-    assert "golden case tax-wrong-source source hash mismatch" in blockers
+    assert f"golden case tax-mismatched {expected_blocker}" in blockers
 
 
 def test_validator_checks_unrequested_cases_in_the_repository(monkeypatch):
