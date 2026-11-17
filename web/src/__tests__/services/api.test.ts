@@ -110,6 +110,30 @@ describe('API Client', () => {
     });
   });
 
+  describe('Refresh failure handling', () => {
+    it('rejects queued requests when the shared refresh attempt fails', async () => {
+      const client = (apiClient as any).client;
+      const rejectResponse = client.interceptors.response.handlers[0].rejected;
+      const queuedConfig = { headers: {}, _retry: false };
+
+      (apiClient as any).isRefreshing = true;
+      const queuedRequest = rejectResponse({ response: { status: 401 }, config: queuedConfig });
+
+      (apiClient as any).isRefreshing = false;
+      const refreshSpy = vi.spyOn(apiClient as any, 'refreshAccessToken')
+        .mockRejectedValue(new Error('refresh failed'));
+      const activeRequest = rejectResponse({
+        response: { status: 401 },
+        config: { headers: {}, _retry: false },
+      });
+
+      await expect(activeRequest).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+      await expect(queuedRequest).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+      expect((apiClient as any).refreshSubscribers).toHaveLength(0);
+      refreshSpy.mockRestore();
+    });
+  });
+
   describe('HTTP Method Signatures', () => {
     it('should have get method', () => {
       expect(apiClient.get).toBeDefined();
