@@ -271,9 +271,9 @@ def resolve_rule_definition_for_case(
 ) -> RuleDefinition:
     """Resolve one approved matrix row using independently verified source-date evidence.
 
-    A raw Gregorian date is deliberately not accepted. The resolver obtains the date from
-    the injected adapter, verifies its evidence independently, and binds the resolution to
-    the exact unchanged effective_date stored in the canonical Golden Case.
+    A raw Gregorian date is deliberately not accepted. Canonical repository membership and
+    payload integrity are checked before the case reaches the injected calendar trust
+    boundary; the adapter result is then bound to the unchanged canonical source date.
     """
     if not isinstance(case, RegressionCase):
         raise MatrixResolutionError("case must be a loaded RegressionCase")
@@ -286,16 +286,6 @@ def resolve_rule_definition_for_case(
         or not case.effective_date.strip()
     ):
         raise MatrixResolutionError("golden case identity and source effective date are required")
-    try:
-        effective_on = resolve_case_effective_on(
-            case,
-            adapter=calendar_adapter,
-            evidence_verifier=calendar_evidence_verifier,
-        )
-    except CalendarAdapterContractError as exc:
-        raise MatrixResolutionError(
-            f"calendar source/evidence resolution is not trusted: {exc}"
-        ) from exc
     try:
         canonical_cases = load_cases(case.rule_pack_version)
     except (OSError, ValueError) as exc:
@@ -310,6 +300,16 @@ def resolve_rule_definition_for_case(
             "golden case payload does not match its canonical repository entry"
         )
     case = matching_cases[0]
+    try:
+        effective_on = resolve_case_effective_on(
+            case,
+            adapter=calendar_adapter,
+            evidence_verifier=calendar_evidence_verifier,
+        )
+    except CalendarAdapterContractError as exc:
+        raise MatrixResolutionError(
+            f"calendar source/evidence resolution is not trusted: {exc}"
+        ) from exc
     if not case.input_values:
         raise MatrixResolutionError("golden case has no governed input values")
     if not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
