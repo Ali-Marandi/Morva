@@ -293,3 +293,17 @@ def test_load_cases_rejects_empty_or_non_string_case_ids(monkeypatch, tmp_path, 
 
     with pytest.raises(ValueError, match="case_id must be a non-empty string"):
         load_cases("1405.1")
+
+
+
+def test_load_cases_rejects_case_ids_with_surrounding_whitespace(monkeypatch, tmp_path):
+    cases_dir = tmp_path / "1405.1"
+    cases_dir.mkdir()
+    (cases_dir / "cases.json").write_text(
+        json.dumps([{"case_id": "  padded-case-id  "}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
+
+    with pytest.raises(ValueError, match="case_id must not contain leading or trailing whitespace"):
+        load_cases("1405.1")
