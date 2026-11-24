@@ -293,6 +293,17 @@ def _write_case_file(tmp_path, monkeypatch, case):
     (cases_dir / "cases.json").write_text(json.dumps([case]), encoding="utf-8")
     monkeypatch.setattr("morva.rules.regression_cases._REPOSITORY_ROOT", tmp_path)
 
+def test_load_cases_rejects_case_ids_with_surrounding_whitespace(monkeypatch, tmp_path):
+    raw_case = _raw_case(case_id="  padded-case-id  ")
+    _write_case_file(tmp_path, monkeypatch, raw_case)
+
+    with pytest.raises(
+        ValueError,
+        match="case_id must not contain leading or trailing whitespace",
+    ):
+        load_cases("1405.1")
+
+
 
 @pytest.mark.parametrize("version", ["../outside", "nested/1405.1", r"..\\outside", ".."])
 def test_load_cases_rejects_unsafe_rule_pack_path_identifiers(monkeypatch, tmp_path, version):
