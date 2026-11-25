@@ -169,6 +169,8 @@ def load_cases(rule_pack_version: str) -> tuple[RegressionCase, ...]:
         case_id = item.get("case_id")
         if not isinstance(case_id, str) or not case_id.strip():
             raise ValueError("case_id must be a non-empty string")
+        if case_id != case_id.strip():
+            raise ValueError("case_id must not contain leading or trailing whitespace")
         values = item.get("input_values", {})
         if not isinstance(values, dict):
             raise ValueError("input_values must be an object")
