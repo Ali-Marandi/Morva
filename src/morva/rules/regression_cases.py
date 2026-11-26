@@ -14,8 +14,12 @@ from sqlalchemy.orm import Session
 
 from morva.persistence.enterprise_models import LegalSourceRecord, RuleEvidenceRecord
 
+from .engine import RuleResult
 from .regression import (
     MAX_DECIMAL_REPRESENTATION_CHARS,
+    canonical_expected_result_payload,
+    canonical_result_payload,
+    fingerprint_expected_result_payload,
     fingerprint_rule_result,
     fingerprint_values,
 )
@@ -109,6 +113,16 @@ def _is_non_placeholder_sha256(value: object) -> bool:
         and len(value) == 64
         and set(value) <= _HEX64
         and value.lower() != "0" * 64
+    )
+
+def _sha256_matches(left: object, right: object) -> bool:
+    """Compare non-placeholder SHA-256 digests independent of hex letter case."""
+    return (
+        isinstance(left, str)
+        and isinstance(right, str)
+        and _is_non_placeholder_sha256(left)
+        and _is_non_placeholder_sha256(right)
+        and left.lower() == right.lower()
     )
 
 
@@ -242,10 +256,28 @@ def validate_repository(rule_pack_version: str, *, required_components: tuple[st
             blockers.append(f"golden case {case.case_id} is missing input_fingerprint")
         elif not _is_non_placeholder_sha256(case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} has an invalid input fingerprint")
-        elif fingerprint_values(case.input_values) != case.input_fingerprint:
+        elif not _sha256_matches(fingerprint_values(case.input_values), case.input_fingerprint):
             blockers.append(f"golden case {case.case_id} input fingerprint mismatch")
         if case.expected_output is None:
             blockers.append(f"golden case {case.case_id} is missing expected output")
+        else:
+            try:
+                expected_payload = canonical_expected_result_payload(case.expected_output)
+            except ValueError as exc:
+                blockers.append(
+                    f"golden case {case.case_id} has invalid expected output: {exc}"
+                )
+            else:
+                if _is_non_placeholder_sha256(case.expected_output_fingerprint):
+                    if (
+                        not _sha256_matches(
+                            fingerprint_expected_result_payload(expected_payload),
+                            case.expected_output_fingerprint,
+                        )
+                    ):
+                        blockers.append(
+                            f"golden case {case.case_id} expected output fingerprint mismatch"
+                        )
         if not case.expected_output_fingerprint:
             blockers.append(f"golden case {case.case_id} is missing expected output fingerprint")
         elif not _is_non_placeholder_sha256(case.expected_output_fingerprint):
@@ -285,7 +317,7 @@ def validate_repository_against_evidence(
                 f"missing rule evidence for golden case {case.case_id}" for case in component_cases
             )
             continue
-        if evidence.regression_suite_hash != current_suite_hash:
+        if not _sha256_matches(evidence.regression_suite_hash, current_suite_hash):
             blockers.extend(
                 f"rule evidence regression suite hash mismatch for golden case {case.case_id}"
                 for case in component_cases
@@ -299,9 +331,9 @@ def validate_repository_against_evidence(
 
         # شواهد همان مؤلفه را برای تک‌تک نمونه‌ها بررسی می‌کنیم؛ هیچ نمونه‌ای نباید نادیده گرفته شود.
         for case in component_cases:
-            if case.legal_source_hash and case.legal_source_hash != evidence.source_hash:
+            if case.legal_source_hash and not _sha256_matches(case.legal_source_hash, evidence.source_hash):
                 blockers.append(f"golden case {case.case_id} source hash mismatch")
-            if case.legal_source_hash and case.legal_source_hash != source.document_hash:
+            if case.legal_source_hash and not _sha256_matches(case.legal_source_hash, source.document_hash):
                 blockers.append(f"golden case {case.case_id} legal source hash mismatch")
             if case.legal_article and case.legal_article.strip() != evidence.article.strip():
                 blockers.append(f"golden case {case.case_id} article mismatch")
@@ -317,8 +349,21 @@ def validate_repository_against_evidence(
 
 
 def verify_expected_result(case: RegressionCase, actual_result: object) -> None:
+    if case.expected_output is None:
+        raise ValueError(f"golden case {case.case_id} has no expected output")
     if not _is_non_placeholder_sha256(case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} has no valid expected output fingerprint")
-    actual = fingerprint_rule_result(actual_result)
-    if actual != case.expected_output_fingerprint:
+
+    expected_payload = canonical_expected_result_payload(case.expected_output)
+    expected_fingerprint = fingerprint_expected_result_payload(expected_payload)
+    if not _sha256_matches(expected_fingerprint, case.expected_output_fingerprint):
+        raise ValueError(f"golden case {case.case_id} expected output fingerprint mismatch")
+
+    if not isinstance(actual_result, RuleResult):
+        raise ValueError(f"golden case {case.case_id} actual result must be a RuleResult")
+    actual_payload = canonical_result_payload(actual_result)
+    if actual_payload != expected_payload:
+        raise ValueError(f"golden case {case.case_id} output payload mismatch")
+
+    if not _sha256_matches(fingerprint_rule_result(actual_result), case.expected_output_fingerprint):
         raise ValueError(f"golden case {case.case_id} output fingerprint mismatch")

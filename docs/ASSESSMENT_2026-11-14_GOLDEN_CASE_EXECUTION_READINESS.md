@@ -67,3 +67,16 @@ The following must be agreed and encoded before creating an execution adapter:
 - No Production Readiness Gate is cleared by this engineering assessment.
 
 **Conclusion:** the safe next tranche is a contract-first, test-backed adapter and runner after the schema, date semantics and rule mapping are authoritative. Until then, preserve Gate 1 and all six Production Readiness Gates as **BLOCKED / fail-closed**.
+
+
+## Implementation follow-up — 2026-11-16
+
+The expected-result integrity gap described in finding 2 has now been addressed in the successor engineering change stacked on PR #213:
+
+- The canonical expected payload is the exact seven-field `RuleResult` shape: `code`, `amount`, `legal_reference`, `rule_version`, `taxable`, `pensionable` and `insurable`. Missing or additional keys are rejected.
+- Amounts in the expected JSON payload must be finite decimal strings and are normalized by the same bounded, context-independent decimal canonicalizer used by runtime results. Reference/version values must be strings or null; classification fields must be actual booleans.
+- The stored expected-output fingerprint is recomputed from the canonical expected object during repository validation. A schema-valid object paired with a stale or unrelated fingerprint is blocked.
+- `verify_expected_result` now validates the stored object/fingerprint binding, requires an actual `RuleResult`, compares every canonical field and checks the runtime fingerprint.
+- Regression coverage exercises missing/extra keys, invalid field types, non-finite amounts, object/fingerprint disagreement, decimal normalization, per-field result mismatches, corrupted fingerprints and invalid result types.
+
+This closes only the expected-output representation/fingerprint contract. It does **not** implement the per-case execution runner, authoritative Jalali calendar adapter, approved input mapping or unique component/population-to-RuleDefinition resolution. The 1405.1 corpus remains placeholder evidence; no synthetic fixture is presented as a statutory expected result. Gate 1 and all six Production Readiness Gates remain **BLOCKED**.

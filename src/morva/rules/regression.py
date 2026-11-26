@@ -2,13 +2,24 @@ from __future__ import annotations
 
 import hashlib
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Mapping
 
 from .engine import RuleResult
 
 
 MAX_DECIMAL_REPRESENTATION_CHARS = 256
+_EXPECTED_RESULT_FIELDS = frozenset(
+    {
+        "code",
+        "amount",
+        "legal_reference",
+        "rule_version",
+        "taxable",
+        "pensionable",
+        "insurable",
+    }
+)
 
 
 def _canonical_decimal(value: Decimal) -> str:
@@ -61,14 +72,63 @@ def canonical_result_payload(result: RuleResult) -> dict[str, object]:
     }
 
 
-def fingerprint_rule_result(result: RuleResult) -> str:
-    payload = json.dumps(
-        canonical_result_payload(result),
+
+def canonical_expected_result_payload(payload: Mapping[str, object]) -> dict[str, object]:
+    """Validate and canonicalize the complete JSON representation of a RuleResult."""
+    if not isinstance(payload, Mapping):
+        raise ValueError("expected output must be an object")
+
+    if set(payload) != _EXPECTED_RESULT_FIELDS:
+        raise ValueError("expected output must contain exactly the canonical RuleResult fields")
+
+    code = payload["code"]
+    if not isinstance(code, str) or not code.strip():
+        raise ValueError("expected output code must be a non-empty string")
+
+    raw_amount = payload["amount"]
+    if not isinstance(raw_amount, str) or not raw_amount.strip():
+        raise ValueError("expected output amount must be a decimal string")
+    try:
+        amount = _canonical_decimal(Decimal(raw_amount))
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError("expected output amount must be a finite bounded decimal string") from exc
+
+    canonical: dict[str, object] = {
+        "code": code,
+        "amount": amount,
+    }
+    for field in ("legal_reference", "rule_version"):
+        value = payload[field]
+        if value is not None and not isinstance(value, str):
+            raise ValueError(f"expected output {field} must be a string or null")
+        canonical[field] = value
+
+    for field in ("taxable", "pensionable", "insurable"):
+        value = payload[field]
+        if not isinstance(value, bool):
+            raise ValueError(f"expected output {field} must be a boolean")
+        canonical[field] = value
+
+    return canonical
+
+
+def _fingerprint_payload(payload: Mapping[str, object]) -> str:
+    serialized = json.dumps(
+        payload,
         ensure_ascii=True,
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+    return hashlib.sha256(serialized).hexdigest()
+
+
+def fingerprint_expected_result_payload(payload: Mapping[str, object]) -> str:
+    """Fingerprint the canonical seven-field expected RuleResult payload."""
+    return _fingerprint_payload(canonical_expected_result_payload(payload))
+
+
+def fingerprint_rule_result(result: RuleResult) -> str:
+    return _fingerprint_payload(canonical_result_payload(result))
 
 
 def fingerprint_values(values: Mapping[str, Decimal]) -> str:
