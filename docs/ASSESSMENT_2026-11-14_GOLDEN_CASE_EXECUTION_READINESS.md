@@ -80,3 +80,17 @@ The expected-result integrity gap described in finding 2 has now been addressed 
 - Regression coverage exercises missing/extra keys, invalid field types, non-finite amounts, object/fingerprint disagreement, decimal normalization, per-field result mismatches, corrupted fingerprints and invalid result types.
 
 This closes only the expected-output representation/fingerprint contract. It does **not** implement the per-case execution runner, authoritative Jalali calendar adapter, approved input mapping or unique component/population-to-RuleDefinition resolution. The 1405.1 corpus remains placeholder evidence; no synthetic fixture is presented as a statutory expected result. Gate 1 and all six Production Readiness Gates remain **BLOCKED**.
+
+
+## Matrix-to-RuleDefinition resolution follow-up — 2026-11-16
+
+The current schema contains an explicit mapping boundary: `CalculationMatrixRecord` is keyed by `rule_pack_version`, `component_code` and `population_scope`, stores one effective-date interval, a safe expression, explicit tax/pension/insurance flags, legal-source identity and a regression-suite hash. The 2026-11-16 successor tranche adds a fail-closed resolver from a loaded `RegressionCase` to one `RuleDefinition` using that existing contract.
+
+- Component identity is exact: `RegressionCase.component_code` becomes `RuleDefinition.code`; no guessed alias table is introduced.
+- Population and Rule Pack keys must match exactly. The selected matrix row must be uniquely active for the supplied date; effective-from and effective-to bounds are inclusive.
+- The Rule Pack, source, evidence and matrix entry must be approved/activation-ready. Review and approval actors must remain distinct. Source hashes, suite hashes, article, clause, population, result version, legal citation and classification flags are bound across the case/evidence/matrix.
+- The expected-result amount remains checked against the actual RuleEngine result by `verify_expected_result`; this resolver binds the other metadata to the governed matrix before execution.
+- The original case `effective_date` remains an opaque source string. The resolver requires a separately supplied `date` from an approved calendar adapter and rejects strings/datetimes. It performs no Jalali/Gregorian conversion and does not claim that an approved calendar adapter currently exists.
+- Synthetic tests exercise the resolver into the actual RuleEngine and verifier. They are software contract tests only and supply no statutory rate, payroll value or certified corpus data.
+
+The existing database unique constraint allows one row per Rule Pack/component/population triple, so future multi-period rule changes within the same population may require a separately reviewed schema decision; this tranche does not weaken or bypass that constraint. The 1405.1 corpus and production matrix remain unready; Gate 1 and all six Production Readiness Gates remain **BLOCKED / fail-closed**.
