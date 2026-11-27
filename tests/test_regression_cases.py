@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -237,9 +238,10 @@ def test_evidence_validation_requires_evidence_for_unrequested_components(monkey
     # نمونه خارج از فهرست اجباری نیز باید شواهد مستقل مؤلفه خودش را داشته باشد.
     tax_case = _case("tax-valid", component_code="TAX")
     extra_case = _case("extra-without-evidence", component_code="EXTRA")
+    extra_case_second = _case("extra-without-evidence-second", component_code="EXTRA")
     monkeypatch.setattr(
         "morva.rules.regression_cases.load_cases",
-        lambda _version: (tax_case, extra_case),
+        lambda _version: (tax_case, extra_case, extra_case_second),
     )
 
     with _session() as session:
@@ -279,6 +281,45 @@ def test_evidence_validation_requires_evidence_for_unrequested_components(monkey
         )
 
     assert "missing rule evidence for golden case extra-without-evidence" in blockers
+    assert "missing rule evidence for golden case extra-without-evidence-second" in blockers
+
+
+def test_evidence_validation_reports_missing_source_for_every_case(monkeypatch):
+    first_case = _case("tax-without-source")
+    second_case = _case("tax-without-source-second")
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (first_case, second_case),
+    )
+
+    with _session() as session:
+        session.add(
+            RuleEvidenceRecord(
+                rule_pack_version="1405.1",
+                component_code="TAX",
+                legal_source_id=uuid4(),
+                issuer="Synthetic issuer",
+                article="1",
+                clause=None,
+                population_scope="all",
+                source_hash="a" * 64,
+                regression_suite_hash="c" * 64,
+                status="approved",
+                reviewed_by="reviewer",
+                approved_by="approver",
+                approved_at=datetime(2026, 1, 3),
+            )
+        )
+        session.commit()
+
+        blockers = validate_repository_against_evidence(
+            session,
+            "1405.1",
+            required_components=("TAX",),
+        )
+
+    assert "missing legal source for golden case tax-without-source" in blockers
+    assert "missing legal source for golden case tax-without-source-second" in blockers
 
 
 @pytest.mark.parametrize("case_id", [None, "", "   ", 123])
