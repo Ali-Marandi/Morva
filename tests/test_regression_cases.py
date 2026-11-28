@@ -348,3 +348,62 @@ def test_load_cases_rejects_case_ids_with_surrounding_whitespace(monkeypatch, tm
 
     with pytest.raises(ValueError, match="case_id must not contain leading or trailing whitespace"):
         load_cases("1405.1")
+
+
+@pytest.mark.parametrize(
+    ("evidence_status", "source_status", "expected_blocker"),
+    [
+        ("review_required", "approved", "rule evidence for golden case {case_id} is not approved"),
+        ("approved", "review_required", "legal source for golden case {case_id} is not approved"),
+    ],
+)
+def test_evidence_approval_state_is_checked_for_every_case(
+    monkeypatch, evidence_status, source_status, expected_blocker
+):
+    first_case = _case("tax-unapproved-evidence-first")
+    second_case = _case("tax-unapproved-evidence-second")
+    monkeypatch.setattr(
+        "morva.rules.regression_cases.load_cases",
+        lambda _version: (first_case, second_case),
+    )
+
+    with _session() as session:
+        source = LegalSourceRecord(
+            citation="Synthetic authority source",
+            issuer="Synthetic issuer",
+            adoption_date="2026-01-01",
+            effective_from="2026-01-01",
+            document_hash="a" * 64,
+            status=source_status,
+        )
+        session.add(source)
+        session.flush()
+        session.add(
+            RuleEvidenceRecord(
+                rule_pack_version="1405.1",
+                component_code="TAX",
+                legal_source_id=source.id,
+                issuer=source.issuer,
+                article="1",
+                clause=None,
+                population_scope="all",
+                source_hash=source.document_hash,
+                regression_suite_hash="c" * 64,
+                status=evidence_status,
+                reviewed_by="reviewer",
+                approved_by="approver",
+                approved_at=datetime(2026, 1, 3),
+            )
+        )
+        session.commit()
+
+        blockers = validate_repository_against_evidence(
+            session,
+            "1405.1",
+            required_components=("TAX",),
+        )
+
+    assert blockers == (
+        expected_blocker.format(case_id=first_case.case_id),
+        expected_blocker.format(case_id=second_case.case_id),
+    )
